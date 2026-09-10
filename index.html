@@ -4,115 +4,221 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bailey-Harris Desks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-  :root{
-    --paper:#ECEFF1; --surface:#fff; --surface-2:#F5F8F9;
-    --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
-    --line:#CBD6DC; --line-soft:#E0E8EC;
-    --accent:#17505F; --accent-soft:#D9E8EC;
-    --ok:#2A6E52; --ok-soft:#DBEDE4;
-    --crit:#983026; --crit-soft:#F7DFDB;
+:root{
+  --paper:#ECEFF1; --surface:#FFFFFF; --surface-2:#F5F8F9;
+  --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
+  --line:#CBD6DC; --line-soft:#E0E8EC;
+  --accent:#17505F; --accent-ink:#0C3644; --accent-soft:#D9E8EC;
+  --ok:#2A6E52; --ok-soft:#DBEDE4;
+  --warn:#8A5710; --warn-soft:#F6E9CD;
+  --crit:#983026; --crit-soft:#F7DFDB;
+  --shadow:0 1px 2px rgba(16,35,42,.06),0 8px 24px -16px rgba(16,35,42,.24);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+    --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+    --line:#27353C; --line-soft:#1F2C32;
+    --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+    --ok:#69C095; --ok-soft:#132D22;
+    --warn:#D3A153; --warn-soft:#32260F;
+    --crit:#E08279; --crit-soft:#341C1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);
-    font:15px/1.5 "Source Sans 3",system-ui,-apple-system,Segoe UI,sans-serif}
-  .wrap{max-width:860px;margin:0 auto;padding:28px 22px 80px}
-  h1{font-size:22px;margin:0 0 4px;letter-spacing:-.015em}
-  .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:3px;
-    padding:18px;margin-bottom:14px}
-  h2{font-size:14px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
-  .btn{font:600 13px/1 inherit;background:var(--accent);color:#fff;border:1px solid var(--accent);
-    border-radius:2px;padding:10px 16px;cursor:pointer}
-  .btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
-  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin:0;font-size:13.5px}
-  dt{color:var(--muted)}
-  dd{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;word-break:break-all}
-  .pill{display:inline-block;font:600 10.5px/1 inherit;letter-spacing:.08em;text-transform:uppercase;
-    padding:4px 7px;border-radius:2px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
-  .pill.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
-  .pill.bad{background:var(--crit-soft);color:var(--crit);border-color:var(--crit)}
-  pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:2px;
-    padding:12px;overflow-x:auto;font-size:12px;margin:0;white-space:pre-wrap;word-break:break-word}
-  .err{background:var(--crit-soft);border:1px solid var(--crit);color:var(--crit);
-    border-radius:2px;padding:12px;font-size:13.5px;margin-bottom:14px}
-  .err b{display:block;margin-bottom:4px}
-  ul.groups{margin:0;padding-left:18px;font-family:ui-monospace,monospace;font-size:12.5px}
-  ul.groups li{margin-bottom:4px}
-  .note{font-size:12.5px;color:var(--faint);margin-top:10px}
+}
+:root[data-theme="dark"]{
+  --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+  --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+  --line:#27353C; --line-soft:#1F2C32;
+  --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+  --ok:#69C095; --ok-soft:#132D22;
+  --warn:#D3A153; --warn-soft:#32260F;
+  --crit:#E08279; --crit-soft:#341C1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Source Sans 3",ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Archivo,ui-sans-serif,system-ui,sans-serif;margin:0;letter-spacing:-.015em;text-wrap:balance}
+.mono,.num{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.masthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:18px 0}
+.masthead h1{font-size:21px;font-weight:700}
+.masthead .sub{color:var(--muted);font-size:13.5px}
+.acct{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.btn{appearance:none;font:600 12.5px/1 Archivo,sans-serif;letter-spacing:.03em;background:var(--accent);
+  color:#fff;border:1px solid var(--accent);border-radius:2px;padding:9px 14px;cursor:pointer;text-decoration:none;
+  display:inline-block}
+.btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn:not(.ghost){color:#08171C}}
+:root[data-theme="dark"] .btn:not(.ghost){color:#08171C}
+
+main{padding:26px 0 72px}
+.lede{color:var(--muted);font-size:14.5px;margin:0 0 22px;max-width:70ch}
+
+.tiles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));align-items:stretch}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  padding:20px;display:flex;flex-direction:column;min-width:0}
+.tile h2{font-size:17px;font-weight:700;margin-bottom:6px}
+.tile p{color:var(--muted);font-size:13.5px;margin:0 0 16px;flex:1}
+.tile .stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:3px;
+  overflow:hidden;margin-bottom:16px}
+.tile .stat{flex:1 1 90px;padding:10px 12px;border-right:1px solid var(--line-soft);background:var(--surface-2)}
+.tile .stat:last-child{border-right:0}
+.tile .stat .k{font:600 9.5px/1 Archivo,sans-serif;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:5px}
+.tile .stat .v{font:600 17px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.tile.locked{background:var(--surface-2)}
+.tile.locked h2{color:var(--muted)}
+.tag{font:600 10px/1 Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;
+  padding:3px 6px;display:inline-block}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.crit{background:var(--crit-soft);color:var(--crit)}
+.tag.neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+.tilehead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.tilehead h2{margin:0}
+.tilehead .tag{margin-left:auto;flex:none}
+
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  padding:34px 24px;text-align:center;max-width:440px;margin:40px auto}
+.gate h2{font-size:18px;margin-bottom:8px}
+.gate p{color:var(--muted);font-size:14px;margin:0 0 20px}
+
+.banner{border-radius:3px;padding:12px 15px;font-size:13.5px;margin-bottom:18px;
+  border:1px solid var(--crit);background:var(--crit-soft);color:var(--crit)}
+.banner b{display:block;margin-bottom:3px}
+.banner.warn{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+details.diag{margin-top:34px;border-top:1px solid var(--line);padding-top:14px}
+details.diag summary{font:600 11px/1 Archivo,sans-serif;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer}
+details.diag summary:hover{color:var(--ink)}
+.diagbody{margin-top:12px}
+pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:2px;padding:12px;
+  overflow-x:auto;font:400 12px/1.55 "JetBrains Mono",monospace;margin:0 0 10px;white-space:pre-wrap;word-break:break-word}
+.foot{color:var(--faint);font-size:12px;margin-top:26px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Bailey-Harris Desks</h1>
-  <p class="sub">Step 3 of the build — proving the sign-in chain before anything reads SharePoint.</p>
 
-  <div id="fatal" class="err" hidden></div>
-
-  <div class="card">
-    <h2>Sign-in</h2>
-    <div class="row">
-      <button class="btn" id="signin" hidden>Sign in with Microsoft</button>
-      <button class="btn ghost" id="signout" hidden>Sign out</button>
-      <span id="state" class="pill">starting…</span>
+<header class="top">
+  <div class="wrap">
+    <div class="masthead">
+      <h1>Bailey-Harris Desks</h1>
+      <div class="sub">Compliance, precon and subcontractor data</div>
+      <div class="acct" id="acct" hidden>
+        <span id="acctname"></span>
+        <button class="btn ghost" id="signout">Sign out</button>
+      </div>
     </div>
   </div>
+</header>
 
-  <div class="card" id="whocard" hidden>
-    <h2>Who you are</h2>
-    <dl id="who"></dl>
-  </div>
+<main class="wrap">
+  <div id="fatal" class="banner" hidden></div>
 
-  <div class="card" id="graphcard" hidden>
-    <h2>Graph call — <span class="pill" id="graphpill">…</span></h2>
-    <pre id="graph"></pre>
-  </div>
+  <section id="gate" class="gate" hidden>
+    <h2>Sign in to continue</h2>
+    <p>Use your Bailey-Harris Microsoft account. Which desks you see depends on your access.</p>
+    <button class="btn" id="signin">Sign in with Microsoft</button>
+  </section>
 
-  <div class="card" id="groupcard" hidden>
-    <h2>Security groups in your token</h2>
-    <ul class="groups" id="groups"></ul>
-    <p class="note">These GUIDs are what the hub will match on to show or hide each desk tile.</p>
-  </div>
+  <section id="hub" hidden>
+    <p class="lede">Pick a desk. Figures are read live from SharePoint each time this page loads, so what you see here is what the desk holds right now.</p>
+    <div class="tiles" id="tiles"></div>
+    <p class="foot" id="asof"></p>
 
-  <div class="card">
-    <h2>Diagnostics</h2>
-    <div class="row"><button class="btn ghost" id="copy">Copy diagnostics</button>
-      <span id="copied" class="pill" hidden>copied</span></div>
-    <pre id="diag" style="margin-top:12px">…</pre>
-  </div>
-</div>
+    <details class="diag">
+      <summary>Diagnostics</summary>
+      <div class="diagbody">
+        <pre id="diag">…</pre>
+        <button class="btn ghost" id="copy">Copy diagnostics</button>
+        <span class="tag ok" id="copied" hidden>copied</span>
+      </div>
+    </details>
+  </section>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
 <script>
 "use strict";
 
-/* ---- the only two values that change ---- */
+/* ============ configuration ============ */
 const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
 const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
 const SCOPES    = ["User.Read", "GroupMember.Read.All", "Sites.Read.All"];
 
+const SP_HOST = "baileyharris.sharepoint.com";
+const SP_PATH = "/sites/Dashboard";
+
+const ACCESS_CONTACT = "itadmin@baileyharris.com";
+
+const DESKS = [
+  {
+    key: "compliance",
+    title: "Compliance Desk",
+    blurb: "Subcontractor and vendor insurance compliance, licences and expiries. Open to everyone.",
+    href: "https://compliance.baileyharris.com",
+    group: null,
+    external: true
+  },
+  {
+    key: "prequal",
+    title: "Prequal & Sub Rating Desk",
+    blurb: "How subcontractors actually performed — ratings, notes, prequalification and diversity classifications.",
+    href: "/prequal/",
+    group: "b32fdca5-a99d-40d8-aabd-54975d34c386",
+    groupName: "BH-Desk-Prequal",
+    library: "PrequalData",
+    file: "ratings.json",
+    stats: d => [
+      ["Ratings", d.rows.length],
+      ["Jobs", new Set(d.rows.map(r => r.jn).filter(Boolean)).size]
+    ]
+  },
+  {
+    key: "precon",
+    title: "Precon Desk",
+    blurb: "What we have built, for pricing what we are about to bid — $/SF, schedule duration and comparables.",
+    href: "/precon/",
+    group: "41c5a747-de87-4e3a-9523-3e0da1bd08ac",
+    groupName: "BH-Desk-Precon",
+    library: "PreconData",
+    file: "projects.json",
+    stats: d => [
+      ["Jobs", d.rows.length],
+      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp).length]
+    ]
+  }
+];
+
+/* ============ plumbing ============ */
 const $ = s => document.querySelector(s);
 const D = [];
-const log = (k, v) => { D.push(k + ": " + v); paintDiag(); };
-function paintDiag(){ $("#diag").textContent = D.join("\n"); }
+const log = (k, v) => { D.push(k + ": " + v); const el = $("#diag"); if (el) el.textContent = D.join("\n"); };
+const n0 = v => v == null ? "—" : Math.round(v).toLocaleString("en-US");
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
 function fatal(title, detail){
   const el = $("#fatal");
   el.hidden = false;
-  el.innerHTML = "<b></b><span></span>";
-  el.querySelector("b").textContent = title;
-  el.querySelector("span").textContent = detail;
+  el.innerHTML = "<b>" + esc(title) + "</b>" + esc(detail);
   log("ERROR", title + " — " + detail);
 }
-function setState(text, cls){
-  const el = $("#state");
-  el.textContent = text;
-  el.className = "pill" + (cls ? " " + cls : "");
-}
 
-log("page", location.origin + location.pathname);
-log("msal loaded", typeof msal !== "undefined");
+let app, token;
 
 const cfg = {
   auth: {
@@ -124,105 +230,169 @@ const cfg = {
   cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
 };
 
-let app;
+async function graph(path){
+  const res = await fetch("https://graph.microsoft.com/v1.0" + path, {
+    headers: { Authorization: "Bearer " + token }
+  });
+  let body = null;
+  try { body = await res.json(); } catch(_) {}
+  return { ok: res.ok, status: res.status, body };
+}
+async function graphRaw(path){
+  const res = await fetch("https://graph.microsoft.com/v1.0" + path, {
+    headers: { Authorization: "Bearer " + token }
+  });
+  if (!res.ok) return { ok: false, status: res.status };
+  return { ok: true, status: res.status, text: await res.text() };
+}
 
+/* ============ boot ============ */
 async function main(){
   if (typeof msal === "undefined")
     return fatal("MSAL did not load",
-      "The library script was blocked or failed to fetch. Check the browser console Network tab for cdn.jsdelivr.net.");
+      "The library script was blocked or failed to fetch. Check the Network tab for cdn.jsdelivr.net.");
 
   app = new msal.PublicClientApplication(cfg);
   await app.initialize();
-  log("msal initialised", "yes");
+  log("page", location.origin + location.pathname);
 
-  let result = null;
-  try {
-    result = await app.handleRedirectPromise();
-  } catch (e) {
-    return fatal("Sign-in was rejected", (e && (e.errorCode || e.name) || "") + " " + (e && e.errorMessage || e));
-  }
-  if (result) log("returned from redirect", "yes");
+  try { await app.handleRedirectPromise(); }
+  catch (e) { return fatal("Sign-in was rejected",
+    ((e && (e.errorCode || e.name)) || "") + " " + ((e && e.errorMessage) || e)); }
 
   const accounts = app.getAllAccounts();
-  if (!accounts.length){
-    setState("not signed in");
-    $("#signin").hidden = false;
-    return;
-  }
+  if (!accounts.length){ $("#gate").hidden = false; return; }
 
   const acct = accounts[0];
   app.setActiveAccount(acct);
-  setState("signed in", "ok");
-  $("#signout").hidden = false;
-
-  const c = acct.idTokenClaims || {};
-  $("#whocard").hidden = false;
-  $("#who").innerHTML = "";
-  const put = (k, v) => {
-    const dt = document.createElement("dt"); dt.textContent = k;
-    const dd = document.createElement("dd"); dd.textContent = v == null ? "—" : String(v);
-    $("#who").append(dt, dd);
-  };
-  put("Name", acct.name);
-  put("Username", acct.username);
-  put("Tenant", acct.tenantId);
-  put("Object ID", acct.localAccountId);
+  $("#acct").hidden = false;
+  $("#acctname").textContent = acct.name || acct.username;
+  $("#hub").hidden = false;
   log("signed in as", acct.username);
 
-  /* groups claim */
-  $("#groupcard").hidden = false;
-  const gl = $("#groups");
-  gl.innerHTML = "";
-  const groups = c.groups;
-  if (Array.isArray(groups) && groups.length){
-    groups.forEach(g => { const li = document.createElement("li"); li.textContent = g; gl.append(li); });
-    log("groups in token", groups.length);
-  } else if (c._claim_names || c._claim_sources){
-    const li = document.createElement("li");
-    li.textContent = "Too many groups to fit in the token (overage) — the hub will call Graph instead.";
-    gl.append(li);
-    log("groups in token", "overage");
-  } else {
-    const li = document.createElement("li");
-    li.textContent = "No groups claim present. Token configuration → Add groups claim → Security groups.";
-    gl.append(li);
-    log("groups in token", "none — claim not configured");
-  }
+  const claims = acct.idTokenClaims || {};
+  const myGroups = new Set(Array.isArray(claims.groups) ? claims.groups : []);
+  const overage = !!(claims._claim_names || claims._claim_sources);
+  log("groups in token", overage ? "overage" : myGroups.size);
 
-  /* Graph test */
-  $("#graphcard").hidden = false;
-  let token;
   try {
     const r = await app.acquireTokenSilent({ scopes: SCOPES, account: acct });
     token = r.accessToken;
-    log("token acquired", "silently");
   } catch (e) {
-    if (e instanceof msal.InteractionRequiredAuthError){
-      log("token", "interaction required — redirecting");
-      return app.acquireTokenRedirect({ scopes: SCOPES });
-    }
-    $("#graphpill").textContent = "token failed";
-    $("#graphpill").className = "pill bad";
-    $("#graph").textContent = (e && e.errorCode || "") + "\n" + (e && e.errorMessage || e);
-    return log("token error", (e && e.errorCode) || e);
+    if (e instanceof msal.InteractionRequiredAuthError) return app.acquireTokenRedirect({ scopes: SCOPES });
+    return fatal("Could not get a token", ((e && e.errorCode) || "") + " " + ((e && e.errorMessage) || e));
+  }
+  log("token", "acquired");
+
+  /* if the token overflowed, ask Graph for the groups instead */
+  if (overage){
+    const g = await graph("/me/transitiveMemberOf/microsoft.graph.group?$select=id&$top=999");
+    if (g.ok && g.body && g.body.value){
+      g.body.value.forEach(x => myGroups.add(x.id));
+      log("groups from graph", myGroups.size);
+    } else log("groups from graph", "failed HTTP " + g.status);
   }
 
-  try {
-    const res = await fetch("https://graph.microsoft.com/v1.0/me", {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const body = await res.text();
-    $("#graphpill").textContent = res.ok ? "HTTP " + res.status : "HTTP " + res.status;
-    $("#graphpill").className = "pill " + (res.ok ? "ok" : "bad");
-    try { $("#graph").textContent = JSON.stringify(JSON.parse(body), null, 1); }
-    catch { $("#graph").textContent = body.slice(0, 1200); }
-    log("graph /me", "HTTP " + res.status);
-  } catch (e) {
-    $("#graphpill").textContent = "network error";
-    $("#graphpill").className = "pill bad";
-    $("#graph").textContent = String(e);
-    log("graph /me", "network error " + e);
+  /* resolve the SharePoint site once */
+  let siteId = null, drives = {};
+  const site = await graph("/sites/" + SP_HOST + ":" + SP_PATH);
+  if (site.ok && site.body && site.body.id){
+    siteId = site.body.id;
+    log("site", SP_PATH + " resolved");
+    const dr = await graph("/sites/" + siteId + "/drives?$select=id,name");
+    if (dr.ok && dr.body && dr.body.value){
+      dr.body.value.forEach(d => { drives[d.name] = d.id; });
+      log("libraries", dr.body.value.map(d => d.name).join(", ") || "none");
+    } else log("libraries", "could not list — HTTP " + dr.status);
+  } else if (site.status === 404){
+    fatal("The SharePoint site was not found",
+      "Nothing at " + SP_HOST + SP_PATH + ". Create the communication site, or correct SP_PATH in this page.");
+    log("site", "404");
+  } else if (site.status === 403){
+    fatal("You cannot read the SharePoint site",
+      "Graph returned 403 for " + SP_PATH + ". The site itself must stay readable — gate the libraries, not the site.");
+    log("site", "403");
+  } else {
+    fatal("Could not reach SharePoint", "Graph returned HTTP " + site.status + " for " + SP_PATH + ".");
+    log("site", "HTTP " + site.status);
   }
+
+  /* build the tiles */
+  const host = $("#tiles");
+  host.innerHTML = "";
+  for (const desk of DESKS){
+    const allowed = !desk.group || myGroups.has(desk.group);
+    const el = document.createElement("article");
+    el.className = "tile" + (allowed ? "" : " locked");
+
+    if (!allowed){
+      el.innerHTML =
+        '<div class="tilehead"><h2>' + esc(desk.title) + '</h2>' +
+        '<span class="tag neutral">no access</span></div>' +
+        '<p>' + esc(desk.blurb) + '</p>' +
+        '<p style="font-size:12.5px;margin-bottom:14px">Access is granted through <span class="mono">' +
+          esc(desk.groupName) + '</span>.</p>' +
+        '<a class="btn ghost" href="mailto:' + esc(ACCESS_CONTACT) +
+          '?subject=' + encodeURIComponent("Access request: " + desk.title) +
+          '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") +
+          '">Request access</a>';
+      host.append(el);
+      log("tile " + desk.key, "locked");
+      continue;
+    }
+
+    let statsHtml = "", tag = '<span class="tag ok">open</span>';
+
+    if (desk.library && siteId){
+      const driveId = drives[desk.library];
+      if (!driveId){
+        tag = '<span class="tag crit">no library</span>';
+        statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
+          'No document library called <span class="mono">' + esc(desk.library) + '</span> on the site.</p>';
+        log("tile " + desk.key, "library missing");
+      } else {
+        const f = await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content");
+        if (f.ok){
+          try {
+            const data = JSON.parse(f.text);
+            const pairs = desk.stats(data);
+            statsHtml = '<div class="stats">' + pairs.map(p =>
+              '<div class="stat"><span class="k">' + esc(p[0]) + '</span>' +
+              '<span class="v">' + n0(p[1]) + '</span></div>').join("") + '</div>';
+            log("tile " + desk.key, desk.file + " read, " + (data.rows ? data.rows.length : "?") + " rows");
+          } catch (e) {
+            tag = '<span class="tag crit">bad file</span>';
+            statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
+              esc(desk.file) + ' is not valid JSON.</p>';
+            log("tile " + desk.key, desk.file + " parse failed");
+          }
+        } else if (f.status === 403){
+          tag = '<span class="tag crit">403</span>';
+          statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
+            'You are in <span class="mono">' + esc(desk.groupName) + '</span> but SharePoint denied the read. ' +
+            'The group has not been granted on the <span class="mono">' + esc(desk.library) + '</span> library.</p>';
+          log("tile " + desk.key, "403 — Entra membership without a SharePoint grant");
+        } else if (f.status === 404){
+          tag = '<span class="tag warn">no data</span>';
+          statsHtml = '<p style="font-size:12.5px;color:var(--warn);margin-bottom:14px">' +
+            esc(desk.file) + ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.</p>';
+          log("tile " + desk.key, desk.file + " 404");
+        } else {
+          tag = '<span class="tag crit">HTTP ' + f.status + '</span>';
+          log("tile " + desk.key, "HTTP " + f.status);
+        }
+      }
+    }
+
+    el.innerHTML =
+      '<div class="tilehead"><h2>' + esc(desk.title) + '</h2>' + tag + '</div>' +
+      '<p>' + esc(desk.blurb) + '</p>' + statsHtml +
+      '<a class="btn" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') + '>Open</a>';
+    host.append(el);
+  }
+
+  $("#asof").textContent = "Read " + new Date().toLocaleString("en-US") +
+    " · figures come from SharePoint, not from this page.";
 }
 
 $("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
@@ -232,7 +402,7 @@ $("#copy").addEventListener("click", async () => {
     await navigator.clipboard.writeText($("#diag").textContent);
     $("#copied").hidden = false;
     setTimeout(() => { $("#copied").hidden = true; }, 1800);
-  } catch { /* select the block manually */ }
+  } catch(_) {}
 });
 
 main().catch(e => fatal("Unexpected failure", (e && e.stack) || String(e)));
