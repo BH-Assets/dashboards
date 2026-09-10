@@ -1527,23 +1527,181 @@ $$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{go(b.dataset.pa
 function redrawAll(){fillAll();renderPrice();renderHist();renderCov();renderEdited();renderSources();renderEscTable();
   try{syncBars();}catch(_){}}
 redrawAll();
-/* ---------- data store: SharePoint, read through Microsoft Graph ----------
-   The artifact build read from claude.use('db'). This build signs the viewer
-   in against Entra and reads the same records out of the PreconData library,
-   with SharePoint enforcing access against their own token. S.db stays null,
-   which every write path already checks, so the editing paths degrade safely
-   rather than half-writing. The escalation index falls back to its published
-   BLS/AGC seed, which is what the desk was running on anyway. */
+/* ---------- graphDb: the artifact database API, backed by SharePoint lists ----------
+   The desks were written against a small store interface:
+
+     db.collection(name).add(record)
+     db.collection(name).doc(id).set(value) / .delete()
+     db.doc('collection/id').set(value)     / .delete()
+
+   Rather than rewrite every call site, this implements exactly that surface
+   against Graph. Each collection maps to one SharePoint list; the list's
+   built-in Title column is the document id and a plain-text Payload column
+   holds the JSON. The Ratings list additionally gets real typed columns, so
+   it stays readable in SharePoint and Power BI rather than only through
+   the desk.
+
+   The artifact store pushed changes back with onSnapshot. There is no
+   equivalent here, so every successful write reloads the collection it
+   touched and calls the desk's own redraw. That keeps a writer's own view
+   correct; a second person editing at the same time sees the change on
+   their next load, not live. */
+function makeGraphDb(opts){
+  const token  = opts.token;
+  const base   = 'https://graph.microsoft.com/v1.0/sites/' + opts.siteId;
+  const LISTS  = opts.lists;          // { collectionName: 'SharePointListName' }
+  const onWrite= opts.onWrite || (async()=>{});
+
+  const H = () => ({ Authorization:'Bearer '+token, 'Content-Type':'application/json' });
+  const ids = {};
+
+  async function listId(coll){
+    const want = LISTS[coll];
+    if(!want) throw new Error('no list is mapped for "'+coll+'"');
+    if(ids[want]) return ids[want];
+    const r = await fetch(base+'/lists?$select=id,name,displayName&$top=200', {headers:H()});
+    if(!r.ok) throw new Error('could not list the site’s lists (HTTP '+r.status+')');
+    const j = await r.json();
+    (j.value||[]).forEach(l=>{
+      if(l.displayName) ids[l.displayName]=l.id;
+      if(l.name && !ids[l.name]) ids[l.name]=l.id;
+    });
+    if(!ids[want]) throw new Error('there is no list called "'+want+'" on this site');
+    return ids[want];
+  }
+
+  const q = s => String(s).replace(/'/g, "''");
+
+  async function findItem(coll, key){
+    const id = await listId(coll);
+    const url = base+'/lists/'+id+"/items?$expand=fields&$filter=fields/Title eq '"+q(key)+"'&$top=1";
+    const r = await fetch(url, {headers:Object.assign(H(),
+      {Prefer:'HonorNonIndexedQueriesWarningMayFailRandomly'})});
+    if(!r.ok) throw new Error('lookup failed (HTTP '+r.status+')');
+    const j = await r.json();
+    return (j.value && j.value[0]) || null;
+  }
+
+  const n = v => (typeof v==='number' && isFinite(v)) ? v : null;
+
+  function fieldsFor(coll, key, value){
+    let f;
+    if(coll === 'ratings'){
+      f = {
+        Title: String(key),
+        Subcontractor: value.s || '',
+        JobNumber:     value.jn || '',
+        CsiDivision:   n(value.csi),
+        PmRating:      n(value.pm),
+        SuperRating:   n(value.sp),
+        AvgRating:     n(value.r),
+        ContractAmount:n(value.amt),
+        EnteredBy:     value.by || '',
+        EnteredOn:     value.on || null,
+        Payload:       JSON.stringify(value)
+      };
+    } else {
+      f = { Title:String(key), Payload: JSON.stringify(value) };
+    }
+    Object.keys(f).forEach(k=>{ if(f[k]===null||f[k]===undefined) delete f[k]; });
+    return f;
+  }
+
+  async function setDoc(coll, key, value){
+    const id = await listId(coll);
+    const existing = await findItem(coll, key);
+    const fields = fieldsFor(coll, key, value);
+    let r;
+    if(existing){
+      r = await fetch(base+'/lists/'+id+'/items/'+existing.id+'/fields',
+        {method:'PATCH', headers:H(), body:JSON.stringify(fields)});
+    } else {
+      r = await fetch(base+'/lists/'+id+'/items',
+        {method:'POST', headers:H(), body:JSON.stringify({fields})});
+    }
+    if(!r.ok){
+      const e = new Error('save failed (HTTP '+r.status+')');
+      e.code = r.status===403 ? 'forbidden' : ('http'+r.status);
+      throw e;
+    }
+    await onWrite(coll);
+  }
+
+  async function delDoc(coll, key){
+    const id = await listId(coll);
+    const it = await findItem(coll, key);
+    if(it){
+      const r = await fetch(base+'/lists/'+id+'/items/'+it.id, {method:'DELETE', headers:H()});
+      if(!r.ok && r.status!==204){
+        const e = new Error('delete failed (HTTP '+r.status+')');
+        e.code = r.status===403 ? 'forbidden' : ('http'+r.status);
+        throw e;
+      }
+    }
+    await onWrite(coll);
+  }
+
+  /* every document in a collection, as {id, data} */
+  async function loadAll(coll){
+    let id;
+    try { id = await listId(coll); } catch(_) { return []; }
+    let url = base+'/lists/'+id+'/items?$expand=fields&$top=500';
+    const out = [];
+    while(url){
+      const r = await fetch(url, {headers:H()});
+      if(!r.ok) throw new Error('could not read '+LISTS[coll]+' (HTTP '+r.status+')');
+      const j = await r.json();
+      (j.value||[]).forEach(it=>{
+        const f = it.fields || {};
+        if(!f.Payload) return;
+        let v=null; try{ v=JSON.parse(f.Payload); }catch(_){ return; }
+        out.push({ id: f.Title, data: v });
+      });
+      url = j['@odata.nextLink'] || null;
+    }
+    return out;
+  }
+
+  function docRef(coll, key){
+    return { set: v => setDoc(coll, key, v), delete: () => delDoc(coll, key) };
+  }
+
+  const newKey = () => 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  return {
+    loadAll,
+    collection(name){
+      return {
+        add: rec => setDoc(name, newKey(), rec),
+        doc: id  => docRef(name, id)
+      };
+    },
+    doc(path){
+      const i = path.indexOf('/');
+      if(i < 0) throw new Error('a document path needs a collection: '+path);
+      return docRef(path.slice(0,i), path.slice(i+1));
+    }
+  };
+}
+
+/* ---------- data store: SharePoint, through Microsoft Graph ----------
+   Reads the imported project records from the PreconData library and puts
+   hand-entered and corrected jobs, plus the escalation index, into
+   SharePoint lists through graphDb, which implements the same store
+   interface the desk was written against. SharePoint enforces access
+   against the viewer's own token, so a reader simply cannot save. */
 (async function(){
   const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
   const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
-  const SCOPES    = ["User.Read","GroupMember.Read.All","Sites.Read.All"];
+  const SCOPES    = ["User.Read","GroupMember.Read.All","Sites.Selected"];
   const SP_HOST   = "baileyharris.sharepoint.com";
   const SP_PATH   = "/sites/Dashboard";
   const LIBRARY   = "PreconData";
   const GROUP     = "BH-Desk-Precon";
   const CONTACT   = "itadmin@baileyharris.com";
   const BH_LOGO   = "data:image/png;base64,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";
+
+  const LISTS = { projects:'ProjectEdits', settings:'Settings' };
 
   if(BH_LOGO){
     const l=$('#bhlogo'); if(l){ l.src=BH_LOGO; l.hidden=false; }
@@ -1555,20 +1713,9 @@ redrawAll();
   const conn=$('#conn');
   const setConn=(t,c)=>{ conn.textContent=t; conn.className='stamp'+(c?' '+c:''); };
 
-  /* read-only build: drop the tab that writes, and the tab that needs a
-     Claude capability with no equivalent outside an artifact */
-  ['edit','ask'].forEach(k=>{
-    const b=document.querySelector('nav.tabs button[data-panel="'+k+'"]');
-    if(b) b.remove();
-  });
-  const ro=document.createElement('div');
-  ro.className='readonly';
-  ro.innerHTML='<b>Read-only for now.</b>Pricing, project history and coverage are live from SharePoint. '+
-    'Adding or correcting a job comes back when the write path is switched on. '+
-    'The Ask tab is not here — it ran on a Claude feature that has no equivalent on this host, '+
-    'and Price a job and Project history answer the same questions with filters.';
-  const firstPanel=$('#p-price');
-  firstPanel.insertBefore(ro, firstPanel.firstChild);
+  /* the Ask tab ran on a Claude capability with no equivalent on this host */
+  const askTab=document.querySelector('nav.tabs button[data-panel="ask"]');
+  if(askTab) askTab.remove();
 
   function gate(html){
     let g=$('#bhgate');
@@ -1631,13 +1778,13 @@ redrawAll();
   const site=await G('/sites/'+SP_HOST+':'+SP_PATH);
   if(!site.ok||!site.body||!site.body.id)
     return fail('Could not reach the data','SharePoint returned HTTP '+site.status+' for '+SP_PATH+'.');
+  const siteId=site.body.id;
 
-  const dr=await G('/sites/'+site.body.id+'/drives?$select=id,name');
+  const dr=await G('/sites/'+siteId+'/drives?$select=id,name');
   const drive=(dr.ok&&dr.body&&dr.body.value||[]).find(d=>d.name===LIBRARY);
-  if(!drive)
-    return fail('The project library is missing','No document library called '+LIBRARY+' on this site.');
+  if(!drive) return fail('The project library is missing','No document library called '+LIBRARY+' on this site.');
 
-  async function load(name, required){
+  async function loadFile(name, required){
     const f=await GTEXT('/drives/'+drive.id+'/root:/'+name+':/content');
     if(f.ok){ try{ return JSON.parse(f.text); }catch(_){ return null; } }
     if(f.status===403 && required){
@@ -1656,18 +1803,54 @@ redrawAll();
     return null;
   }
 
+  let db;
+  async function pull(coll){
+    const rows = await db.loadAll(coll);
+    if(coll==='projects'){
+      const m=new Map();
+      rows.forEach(d=>{ if(d.data && d.data.num_!=null) m.set(String(d.data.num_), d.data); });
+      S.user=m; redrawAll();
+    } else if(coll==='settings'){
+      const e = rows.find(d=>d.id==='escalation');
+      S.esc = e ? e.data : null;
+      redrawAll();
+    }
+  }
+  db = makeGraphDb({ token, siteId, lists:LISTS, onWrite:pull });
+
   try{
-    const projects=await load('projects.json', true);
+    const projects=await loadFile('projects.json', true);
     if(!projects||!Array.isArray(projects.rows))
       return fail('The project file could not be read','projects.json is not valid JSON, or has no rows.');
     S.arch=projects.rows;
-    S.meta=await load('meta.json', false);
+    S.meta=await loadFile('meta.json', false);
   }catch(_){ return; }
 
   ungate();
-  setConn('Live · read-only','live');
   redrawAll();
+
+  let writable=true, why='';
+  try{
+    for(const c of ['projects','settings']) await pull(c);
+  }catch(e){
+    writable=false; why=(e&&e.message)||String(e);
+  }
+
+  if(writable){
+    S.db=db;
+    setConn('Live','live');
+  } else {
+    S.db=null;
+    setConn('Read-only','off');
+    const b=document.createElement('div');
+    b.className='readonly';
+    b.innerHTML='<b>Read-only — saving is not available.</b>'+
+      'Everything below is current, but a job cannot be added or corrected yet: '+esc(why)+
+      ' Ask IT to finish the SharePoint lists.';
+    const p=$('#p-price'); p.insertBefore(b, p.firstChild);
+  }
 })();
+
 </script>
 </body>
 </html>
