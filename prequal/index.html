@@ -340,6 +340,12 @@ a{color:var(--maroon)}
   background:var(--cream);color:var(--ink)}
 .readonly b{color:var(--ink)}
 
+/* The artifact shell supplied this and the desks were written against it;
+   without it any element that is both [hidden] and styled with a display
+   value renders anyway — which is how the offline banner showed on a
+   page that had loaded perfectly well. */
+[hidden]:not([hidden="until-found"]){display:none!important}
+
 </style>
 <style>
 #bhgate{position:fixed;inset:0;z-index:999;background:var(--paper);display:grid;place-items:center;padding:24px}
