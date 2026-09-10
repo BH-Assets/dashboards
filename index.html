@@ -1,411 +1,638 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bailey-Harris Desks</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+
+<title>Compliance Dashboard</title>
 <style>
-:root{
-  --paper:#ECEFF1; --surface:#FFFFFF; --surface-2:#F5F8F9;
-  --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
-  --line:#CBD6DC; --line-soft:#E0E8EC;
-  --accent:#17505F; --accent-ink:#0C3644; --accent-soft:#D9E8EC;
-  --ok:#2A6E52; --ok-soft:#DBEDE4;
-  --warn:#8A5710; --warn-soft:#F6E9CD;
-  --crit:#983026; --crit-soft:#F7DFDB;
-  --shadow:0 1px 2px rgba(16,35,42,.06),0 8px 24px -16px rgba(16,35,42,.24);
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
-    --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
-    --line:#27353C; --line-soft:#1F2C32;
-    --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
-    --ok:#69C095; --ok-soft:#132D22;
-    --warn:#D3A153; --warn-soft:#32260F;
-    --crit:#E08279; --crit-soft:#341C1A;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: 'Montserrat', Arial, Helvetica, sans-serif; background:#f5f7fa; color:#211E1E; }
+  .wrap { max-width:1300px; margin:0 auto; padding:20px; }
+.bh-header{background:#fff;border-bottom:1px solid #E8E6E7;border-radius:0;padding:12px 6px 14px 2px;display:flex;align-items:center;gap:18px;margin-bottom:18px}
+  .bh-logo{height:64px;width:auto;flex:none}
+  .bh-titles{line-height:1.2}
+  .bh-title{color:#211E1E;font-size:22px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .bh-sub{color:#5b6472;font-size:12.5px;margin-top:3px}
+  h1{font-size:22px;margin:0 0 2px;color:#7F1B29}
+  .sub { color:#5b6472; font-size:13px; margin-bottom:14px; }
+  .banner{background:#fff7e6;border:1px solid #f0d089;color:#7a5a12;padding:9px 13px;border-radius:8px;font-size:13px;margin-bottom:14px}
+  .err{background:#FFC7CE;border-color:#e6a3a3;color:#9C0006}
+  .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  .controls label { font-size:13px; color:#40485a; font-weight:bold; }
+  select { padding:8px 12px; border:1px solid #c7cfdb; border-radius:8px; font-size:14px; background:#fff; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:12px; margin-bottom:20px; }
+  .card { background:#fff; border:1px solid #e3e8f0; border-radius:10px; padding:13px 15px; }
+  .card .n { font-size:25px; font-weight:bold; } .card .l { font-size:11.5px; color:#5b6472; margin-top:2px; text-transform:uppercase; letter-spacing:.03em; }
+  .total .n{color:#7F1B29} .ok .n{color:#1a7f37} .soon .n{color:#9a6a00} .bad .n{color:#b3261e} .gap .n{color:#1a4fb0}
+  .section-title { font-size:15px; font-weight:bold; color:#7F1B29; margin:22px 0 10px; }
+  .tablescroll { overflow-x:auto; border-radius:10px; }
+  .scrolltop { overflow-x:auto; overflow-y:hidden; }
+  .scrolltop > div { height:1px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); font-size:12px; }
+  th,td { padding:7px 8px; text-align:center; border-bottom:1px solid #eef1f6; white-space:nowrap; }
+  th { background:#484B4D; color:#fff; font-size:11px; position:sticky; top:0; }
+  td.l, th.l { text-align:left; }
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:bold}
+  .g{background:#C6EFCE;color:#006100}.y{background:#FFEB9C;color:#9C6500}.r{background:#FFC7CE;color:#9C0006}.b{background:#DDEBF7;color:#1F3864}.muted{color:#9aa2b1}
+  .nc-card{background:#fff;border:1px solid #f0c2c2;border-left:4px solid #b3261e;border-radius:8px;padding:11px 13px;margin-bottom:9px}
+  .gap-card{background:#fff;border:1px solid #b7ccf5;border-left:4px solid #1a4fb0;border-radius:8px;padding:11px 13px;margin-bottom:9px}
+  .nc-card h4,.gap-card h4{margin:0 0 3px;font-size:13.5px}
+  .nc-proj{font-size:12px;color:#5b6472;font-weight:normal}
+  .rsn{margin:5px 0 0;padding-left:16px;font-size:12px;color:#7a1d16}
+  .gap-card .rsn{color:#1a3a7a}
+  .flags{font-size:11px;color:#5b6472;margin-top:3px}
+  .empty{color:#5b6472;font-style:italic;padding:10px 0}
+  .loading{padding:40px;text-align:center;color:#5b6472}
+  .legend{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:12.5px;line-height:2;color:#40485a}
+  .legend b{color:#7F1B29}
+  .legend .pill{margin:0 2px}
+  .legend .grp{display:inline-block;margin-right:18px;white-space:nowrap}
+  .vcard{background:#fff;border:1px solid #e3e8f0;border-left:6px solid #1a4fb0;border-radius:10px;padding:11px 15px;margin-bottom:11px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .vcard.g{border-left-color:#1a7f37}.vcard.y{border-left-color:#c99a00}.vcard.r{border-left-color:#b3261e}
+  .vhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .vname{font-weight:bold;font-size:14.5px;color:#211E1E}
+  a.vlink{text-decoration:none}a.vlink:hover{color:#ED2B30;text-decoration:underline}
+  .vtype{font-size:12px;color:#5b6472}
+  .gtag{background:#DDEBF7;color:#1F3864;border:1px solid #b7ccf5;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:bold}
+  .wtag{background:#FFE9C7;color:#8a5a00;border:1px solid #f0cf8e;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:bold}
+  .itag{background:#e9ecf1;color:#6b7480;border:1px solid #cfd6e0;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:bold}
+  .vright{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11px;color:#8a92a1}
+  .vsub{font-size:11.5px;color:#8a92a1;margin-top:2px}
+  .vcov{margin-top:8px;display:grid;grid-template-columns:repeat(7,minmax(72px,1fr));gap:9px 10px;align-items:start}
+  .mini{font-size:11px;color:#40485a;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap}
+  .mlabel{color:#7a828f;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em}
+  .mdate{color:#8a92a1;font-size:10px}
+  .cpill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:bold}
+  .cpill.g{background:#C6EFCE;color:#006100}.cpill.y{background:#FFEB9C;color:#9C6500}.cpill.r{background:#FFC7CE;color:#9C0006}.cpill.muted{background:#eef1f6;color:#8a92a1}
+  .vnotes{margin-top:7px;font-size:11.5px;line-height:1.55;color:#40485a;border-top:1px solid #f0f2f6;padding-top:6px}
+  .vact{margin-top:9px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .reqwhen{font-size:11px;font-style:italic;color:#8a92a1}
+  .projgrp{margin:18px 0 8px;padding:6px 10px;background:#eef2f8;border-left:4px solid #484B4D;border-radius:4px;font-weight:bold;font-size:13.5px;color:#211E1E;display:flex;align-items:center;gap:8px}
+  .projgrp:first-child{margin-top:0}
+  .projgrp .cnt{font-weight:normal;font-size:11.5px;color:#6b7480}
+  .exportbar{margin:22px 0 8px;text-align:right;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  #exportbtn{padding:10px 20px;border:1px solid #211E1E;background:#211E1E;color:#fff;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer}
+  #exportbtn:hover{background:#484B4D}
+  .recbtn{padding:10px 20px;border:1px solid #211E1E;background:#211E1E;color:#fff;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer}
+  .recbtn:hover{background:#484B4D}
+  .projpick{display:inline-block;vertical-align:top;min-width:250px}
+  #projsearch{width:100%;padding:7px 10px;border:1px solid #c7cfdb;border-radius:8px 8px 0 0;font-size:13px;border-bottom:none}
+  .projlist-actions{font-size:11px;padding:3px 8px;background:#f1f4f9;border:1px solid #c7cfdb;border-bottom:none}
+  .projlist-actions a{color:#ED2B30;text-decoration:none}
+  .projlist{max-height:150px;overflow-y:auto;border:1px solid #c7cfdb;border-radius:0 0 8px 8px;background:#fff}
+  .projopt{display:block;padding:4px 9px;font-size:12.5px;font-weight:normal;cursor:pointer;white-space:nowrap}
+  .projopt:hover{background:#eef2f8}
+  .projopt input{margin-right:6px;vertical-align:middle}
+  .tabbar{display:flex;gap:4px;border-bottom:2px solid #d7deea;margin-bottom:16px}
+  .tab{padding:10px 22px;border:none;background:transparent;color:#5b6472;font-size:14px;font-weight:bold;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tab:hover{color:#211E1E}
+  .tab.active{color:#211E1E;border-bottom-color:#ED2B30;background:#F2ECE1;border-radius:6px 6px 0 0}
+  .subnav{display:flex;gap:8px;margin-bottom:14px}
+  .subtab{padding:6px 14px;border:1px solid #c7cfdb;background:#fff;color:#5b6472;border-radius:999px;font-size:12.5px;font-weight:bold;cursor:pointer}
+  .subtab.active{background:#211E1E;border-color:#211E1E;color:#fff}
+  .lookup-help{font-size:12.5px;color:#5b6472;margin-bottom:8px}
+  #lookupInput{width:100%;padding:10px 12px;border:1px solid #c7cfdb;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical}
+  .lookup-actions{margin:10px 0;display:flex;gap:10px;flex-wrap:wrap}
+  #lookupBtn{padding:9px 18px;border:1px solid #211E1E;background:#211E1E;color:#fff;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer}
+  #lookupExport{padding:9px 18px;border:1px solid #211E1E;background:#211E1E;color:#fff;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer}
+  #lookupExport:hover{background:#484B4D}
+  .lktable{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .lktable th{background:#484B4D;color:#fff;padding:7px 8px;text-align:left;font-size:11px;white-space:nowrap}
+  .lktable td{padding:6px 8px;border-bottom:1px solid #eef1f6;white-space:nowrap}
+  .lktable tr.notfound td{background:#FFF3F3;color:#9C0006}
+  .lktable tr.warn td{background:#FFF9E9}
+  .lkmini{font-size:11px;color:#8a92a1}
+  .reqbtn{display:inline-block;padding:6px 12px;border:1px solid #484B4D;color:#484B4D;background:#fff;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none}
+  .reqbtn:hover{background:#484B4D;color:#fff}
+  .reqbtn:disabled{opacity:.45;cursor:not-allowed;border-color:#aab3c0;color:#8a92a1;background:#fff}
+  .reqbtn:disabled:hover{background:#fff;color:#8a92a1}
+  .upbtn{display:inline-block;padding:6px 12px;border:1px solid #484B4D;color:#484B4D;background:#fff;border-radius:8px;font-size:12px;font-weight:bold;text-decoration:none}
+  .upbtn:hover{background:#484B4D;color:#fff}
+  @media(max-width:640px){
+    .wrap{padding:12px}
+    h1{font-size:19px}
+    .controls{gap:8px}
+    .controls label{width:100%;margin:0}
+    .controls select,.controls input{width:100%;min-width:0}
+    #syncbtn{margin-left:0!important;width:100%}
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .vcov{grid-template-columns:repeat(3,1fr)}
+    .vhead{gap:6px}
+    .vright{margin-left:0;width:100%;justify-content:flex-start}
+    .legend{font-size:11px;line-height:1.8}
   }
-}
-:root[data-theme="dark"]{
-  --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
-  --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
-  --line:#27353C; --line-soft:#1F2C32;
-  --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
-  --ok:#69C095; --ok-soft:#132D22;
-  --warn:#D3A153; --warn-soft:#32260F;
-  --crit:#E08279; --crit-soft:#341C1A;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-  font-family:"Source Sans 3",ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
-  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:Archivo,ui-sans-serif,system-ui,sans-serif;margin:0;letter-spacing:-.015em;text-wrap:balance}
-.mono,.num{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
-.num{font-variant-numeric:tabular-nums}
-a{color:var(--accent)}
-.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
-
-header.top{background:var(--surface);border-bottom:1px solid var(--line)}
-.masthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:18px 0}
-.masthead h1{font-size:21px;font-weight:700}
-.masthead .sub{color:var(--muted);font-size:13.5px}
-.acct{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
-.btn{appearance:none;font:600 12.5px/1 Archivo,sans-serif;letter-spacing:.03em;background:var(--accent);
-  color:#fff;border:1px solid var(--accent);border-radius:2px;padding:9px 14px;cursor:pointer;text-decoration:none;
-  display:inline-block}
-.btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
-.btn.ghost:hover{border-color:var(--accent)}
-.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn:not(.ghost){color:#08171C}}
-:root[data-theme="dark"] .btn:not(.ghost){color:#08171C}
-
-main{padding:26px 0 72px}
-.lede{color:var(--muted);font-size:14.5px;margin:0 0 22px;max-width:70ch}
-
-.tiles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));align-items:stretch}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
-  padding:20px;display:flex;flex-direction:column;min-width:0}
-.tile h2{font-size:17px;font-weight:700;margin-bottom:6px}
-.tile p{color:var(--muted);font-size:13.5px;margin:0 0 16px;flex:1}
-.tile .stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:3px;
-  overflow:hidden;margin-bottom:16px}
-.tile .stat{flex:1 1 90px;padding:10px 12px;border-right:1px solid var(--line-soft);background:var(--surface-2)}
-.tile .stat:last-child{border-right:0}
-.tile .stat .k{font:600 9.5px/1 Archivo,sans-serif;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--muted);display:block;margin-bottom:5px}
-.tile .stat .v{font:600 17px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
-.tile.locked{background:var(--surface-2)}
-.tile.locked h2{color:var(--muted)}
-.tag{font:600 10px/1 Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;
-  padding:3px 6px;display:inline-block}
-.tag.ok{background:var(--ok-soft);color:var(--ok)}
-.tag.warn{background:var(--warn-soft);color:var(--warn)}
-.tag.crit{background:var(--crit-soft);color:var(--crit)}
-.tag.neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
-.tilehead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
-.tilehead h2{margin:0}
-.tilehead .tag{margin-left:auto;flex:none}
-
-.gate{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
-  padding:34px 24px;text-align:center;max-width:440px;margin:40px auto}
-.gate h2{font-size:18px;margin-bottom:8px}
-.gate p{color:var(--muted);font-size:14px;margin:0 0 20px}
-
-.banner{border-radius:3px;padding:12px 15px;font-size:13.5px;margin-bottom:18px;
-  border:1px solid var(--crit);background:var(--crit-soft);color:var(--crit)}
-.banner b{display:block;margin-bottom:3px}
-.banner.warn{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
-
-details.diag{margin-top:34px;border-top:1px solid var(--line);padding-top:14px}
-details.diag summary{font:600 11px/1 Archivo,sans-serif;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);cursor:pointer}
-details.diag summary:hover{color:var(--ink)}
-.diagbody{margin-top:12px}
-pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:2px;padding:12px;
-  overflow-x:auto;font:400 12px/1.55 "JetBrains Mono",monospace;margin:0 0 10px;white-space:pre-wrap;word-break:break-word}
-.foot{color:var(--faint);font-size:12px;margin-top:26px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  footer{margin-top:26px;font-size:11.5px;color:#8a92a1;border-top:1px solid #e3e8f0;padding-top:12px;line-height:1.5}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.7.1/lib/msal-browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-
-<header class="top">
-  <div class="wrap">
-    <div class="masthead">
-      <h1>Bailey-Harris Desks</h1>
-      <div class="sub">Compliance, precon and subcontractor data</div>
-      <div class="acct" id="acct" hidden>
-        <span id="acctname"></span>
-        <button class="btn ghost" id="signout">Sign out</button>
-      </div>
-    </div>
-  </div>
-</header>
-
-<main class="wrap">
-  <div id="fatal" class="banner" hidden></div>
-
-  <section id="gate" class="gate" hidden>
-    <h2>Sign in to continue</h2>
-    <p>Use your Bailey-Harris Microsoft account. Which desks you see depends on your access.</p>
-    <button class="btn" id="signin">Sign in with Microsoft</button>
-  </section>
-
-  <section id="hub" hidden>
-    <p class="lede">Pick a desk. Figures are read live from SharePoint each time this page loads, so what you see here is what the desk holds right now.</p>
-    <div class="tiles" id="tiles"></div>
-    <p class="foot" id="asof"></p>
-
-    <details class="diag">
-      <summary>Diagnostics</summary>
-      <div class="diagbody">
-        <pre id="diag">…</pre>
-        <button class="btn ghost" id="copy">Copy diagnostics</button>
-        <span class="tag ok" id="copied" hidden>copied</span>
-      </div>
-    </details>
-  </section>
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<div class="bh-topbar"></div>
+<div class="wrap">
+  <header class="bh-header">
+    <img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris Construction">
+    <div class="bh-titles"><div class="bh-title">Compliance Dashboard</div><div class="bh-sub">Subcontractor &amp; Vendor Insurance / License Compliance &middot; <span id="asof">loading…</span></div></div>
+  </header>
+  <div id="banner" class="banner" style="display:none"></div>
+  <div id="content"><div class="loading">Loading compliance data from SharePoint…</div></div>
+  <footer id="foot"></footer>
+</div>
 <script>
-"use strict";
-
-/* ============ configuration ============ */
-const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
-const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
-const SCOPES    = ["User.Read", "GroupMember.Read.All", "Sites.Read.All"];
-
-const SP_HOST = "baileyharris.sharepoint.com";
-const SP_PATH = "/sites/Dashboard";
-
-const ACCESS_CONTACT = "itadmin@baileyharris.com";
-
-const DESKS = [
-  {
-    key: "compliance",
-    title: "Compliance Desk",
-    blurb: "Subcontractor and vendor insurance compliance, licences and expiries. Open to everyone.",
-    href: "https://compliance.baileyharris.com",
-    group: null,
-    external: true
-  },
-  {
-    key: "prequal",
-    title: "Prequal & Sub Rating Desk",
-    blurb: "How subcontractors actually performed — ratings, notes, prequalification and diversity classifications.",
-    href: "/prequal/",
-    group: "b32fdca5-a99d-40d8-aabd-54975d34c386",
-    groupName: "BH-Desk-Prequal",
-    library: "PrequalData",
-    file: "ratings.json",
-    stats: d => [
-      ["Ratings", d.rows.length],
-      ["Jobs", new Set(d.rows.map(r => r.jn).filter(Boolean)).size]
-    ]
-  },
-  {
-    key: "precon",
-    title: "Precon Desk",
-    blurb: "What we have built, for pricing what we are about to bid — $/SF, schedule duration and comparables.",
-    href: "/precon/",
-    group: "41c5a747-de87-4e3a-9523-3e0da1bd08ac",
-    groupName: "BH-Desk-Precon",
-    library: "PreconData",
-    file: "projects.json",
-    stats: d => [
-      ["Jobs", d.rows.length],
-      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp).length]
-    ]
-  }
-];
-
-/* ============ plumbing ============ */
-const $ = s => document.querySelector(s);
-const D = [];
-const log = (k, v) => { D.push(k + ": " + v); const el = $("#diag"); if (el) el.textContent = D.join("\n"); };
-const n0 = v => v == null ? "—" : Math.round(v).toLocaleString("en-US");
-function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
-function fatal(title, detail){
-  const el = $("#fatal");
-  el.hidden = false;
-  el.innerHTML = "<b>" + esc(title) + "</b>" + esc(detail);
-  log("ERROR", title + " — " + detail);
+// ==== Microsoft sign-in (MSAL) config ====
+const MSAL_CLIENT_ID = '4bb1f92c-c0a9-4dd6-97a3-2d8c8c9fe27a';    // Azure SPA app registration (client) ID
+const TENANT = '848aa890-7982-4028-befa-3323d82583ce';           // Bailey Harris tenant
+const SCOPES = ['Files.Read.All','User.Read'];                    // Graph read + identity (for Sync)
+const SYNC_WORKER_URL = 'https://bh-compliance-sync.soft-math-3331.workers.dev';   // Cloudflare Worker (Sync / Request / shared last-requested)
+const DRIVE_ID = 'b!UgjUeEqLf0e6Z37An3qt5NP_8dR2rQJBoZpkPrOgBP0b4x1AxB_JT5QG_didjvoe';
+const ITEM_ID  = '01DG2CN7YZK66GZHQHD5ALV5QO4M275DKG';
+const THRESHOLD = 30;
+// ==== Billy deep-links (PM uploads a file directly in Billy's Documents tab) ====
+const BILLY_TEAM = 'bailey-harris-construction-co-inc';
+const BILLY_DOCS_BASE = 'https://app.billyforinsurance.com/teams/' + BILLY_TEAM;
+function billyVendorDocs(r){ return r.vendor_id ? (BILLY_DOCS_BASE+'/directory/vendors/'+r.vendor_id+'/Documents') : ''; }
+function billyInsuranceDocs(r){
+  if(r.global_coi==='Yes') return billyVendorDocs(r);                                   // global blanket COI -> company directory
+  if(r.billy_project_id && r.billy_contract_id)                                          // project-specific (subs AND POs use /subcontract/)
+    return BILLY_DOCS_BASE+'/projects/'+r.billy_project_id+'/subcontract/'+r.billy_contract_id+'/Documents';
+  return billyVendorDocs(r);                                                             // missing ids -> safe fallback (company directory)
 }
-
-let app, token;
-
-const cfg = {
-  auth: {
-    clientId: CLIENT_ID,
-    authority: "https://login.microsoftonline.com/" + TENANT_ID,
-    redirectUri: location.origin + "/",
-    navigateToLoginRequestUrl: false
-  },
-  cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
-};
-
-async function graph(path){
-  const res = await fetch("https://graph.microsoft.com/v1.0" + path, {
-    headers: { Authorization: "Bearer " + token }
-  });
-  let body = null;
-  try { body = await res.json(); } catch(_) {}
-  return { ok: res.ok, status: res.status, body };
+function billyVendorLink(r){                                                             // vendor name -> Billy record
+  if(r.global_coi!=='Yes' && r.billy_project_id && r.billy_contract_id)
+    return BILLY_DOCS_BASE+'/projects/'+r.billy_project_id+'/subcontract/'+r.billy_contract_id+'/Coverages';   // project-specific -> project vendor Coverages
+  return r.vendor_id ? (BILLY_DOCS_BASE+'/directory/vendors/'+r.vendor_id+'/Details') : '';                     // global / fallback -> directory Details
 }
-async function graphRaw(path){
-  const res = await fetch("https://graph.microsoft.com/v1.0" + path, {
-    headers: { Authorization: "Bearer " + token }
-  });
-  if (!res.ok) return { ok: false, status: res.status };
-  return { ok: true, status: res.status, text: await res.text() };
-}
-
-/* ============ boot ============ */
-async function main(){
-  if (typeof msal === "undefined")
-    return fatal("MSAL did not load",
-      "The library script was blocked or failed to fetch. Check the Network tab for cdn.jsdelivr.net.");
-
-  app = new msal.PublicClientApplication(cfg);
-  await app.initialize();
-  log("page", location.origin + location.pathname);
-
-  try { await app.handleRedirectPromise(); }
-  catch (e) { return fatal("Sign-in was rejected",
-    ((e && (e.errorCode || e.name)) || "") + " " + ((e && e.errorMessage) || e)); }
-
-  const accounts = app.getAllAccounts();
-  if (!accounts.length){ $("#gate").hidden = false; return; }
-
-  const acct = accounts[0];
-  app.setActiveAccount(acct);
-  $("#acct").hidden = false;
-  $("#acctname").textContent = acct.name || acct.username;
-  $("#hub").hidden = false;
-  log("signed in as", acct.username);
-
-  const claims = acct.idTokenClaims || {};
-  const myGroups = new Set(Array.isArray(claims.groups) ? claims.groups : []);
-  const overage = !!(claims._claim_names || claims._claim_sources);
-  log("groups in token", overage ? "overage" : myGroups.size);
-
-  try {
-    const r = await app.acquireTokenSilent({ scopes: SCOPES, account: acct });
-    token = r.accessToken;
-  } catch (e) {
-    if (e instanceof msal.InteractionRequiredAuthError) return app.acquireTokenRedirect({ scopes: SCOPES });
-    return fatal("Could not get a token", ((e && e.errorCode) || "") + " " + ((e && e.errorMessage) || e));
-  }
-  log("token", "acquired");
-
-  /* if the token overflowed, ask Graph for the groups instead */
-  if (overage){
-    const g = await graph("/me/transitiveMemberOf/microsoft.graph.group?$select=id&$top=999");
-    if (g.ok && g.body && g.body.value){
-      g.body.value.forEach(x => myGroups.add(x.id));
-      log("groups from graph", myGroups.size);
-    } else log("groups from graph", "failed HTTP " + g.status);
-  }
-
-  /* resolve the SharePoint site once */
-  let siteId = null, drives = {};
-  const site = await graph("/sites/" + SP_HOST + ":" + SP_PATH);
-  if (site.ok && site.body && site.body.id){
-    siteId = site.body.id;
-    log("site", SP_PATH + " resolved");
-    const dr = await graph("/sites/" + siteId + "/drives?$select=id,name");
-    if (dr.ok && dr.body && dr.body.value){
-      dr.body.value.forEach(d => { drives[d.name] = d.id; });
-      log("libraries", dr.body.value.map(d => d.name).join(", ") || "none");
-    } else log("libraries", "could not list — HTTP " + dr.status);
-  } else if (site.status === 404){
-    fatal("The SharePoint site was not found",
-      "Nothing at " + SP_HOST + SP_PATH + ". Create the communication site, or correct SP_PATH in this page.");
-    log("site", "404");
-  } else if (site.status === 403){
-    fatal("You cannot read the SharePoint site",
-      "Graph returned 403 for " + SP_PATH + ". The site itself must stay readable — gate the libraries, not the site.");
-    log("site", "403");
-  } else {
-    fatal("Could not reach SharePoint", "Graph returned HTTP " + site.status + " for " + SP_PATH + ".");
-    log("site", "HTTP " + site.status);
-  }
-
-  /* build the tiles */
-  const host = $("#tiles");
-  host.innerHTML = "";
-  for (const desk of DESKS){
-    const allowed = !desk.group || myGroups.has(desk.group);
-    const el = document.createElement("article");
-    el.className = "tile" + (allowed ? "" : " locked");
-
-    if (!allowed){
-      el.innerHTML =
-        '<div class="tilehead"><h2>' + esc(desk.title) + '</h2>' +
-        '<span class="tag neutral">no access</span></div>' +
-        '<p>' + esc(desk.blurb) + '</p>' +
-        '<p style="font-size:12.5px;margin-bottom:14px">Access is granted through <span class="mono">' +
-          esc(desk.groupName) + '</span>.</p>' +
-        '<a class="btn ghost" href="mailto:' + esc(ACCESS_CONTACT) +
-          '?subject=' + encodeURIComponent("Access request: " + desk.title) +
-          '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") +
-          '">Request access</a>';
-      host.append(el);
-      log("tile " + desk.key, "locked");
-      continue;
-    }
-
-    let statsHtml = "", tag = '<span class="tag ok">open</span>';
-
-    if (desk.library && siteId){
-      const driveId = drives[desk.library];
-      if (!driveId){
-        tag = '<span class="tag crit">no library</span>';
-        statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
-          'No document library called <span class="mono">' + esc(desk.library) + '</span> on the site.</p>';
-        log("tile " + desk.key, "library missing");
-      } else {
-        const f = await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content");
-        if (f.ok){
-          try {
-            const data = JSON.parse(f.text);
-            const pairs = desk.stats(data);
-            statsHtml = '<div class="stats">' + pairs.map(p =>
-              '<div class="stat"><span class="k">' + esc(p[0]) + '</span>' +
-              '<span class="v">' + n0(p[1]) + '</span></div>').join("") + '</div>';
-            log("tile " + desk.key, desk.file + " read, " + (data.rows ? data.rows.length : "?") + " rows");
-          } catch (e) {
-            tag = '<span class="tag crit">bad file</span>';
-            statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
-              esc(desk.file) + ' is not valid JSON.</p>';
-            log("tile " + desk.key, desk.file + " parse failed");
-          }
-        } else if (f.status === 403){
-          tag = '<span class="tag crit">403</span>';
-          statsHtml = '<p style="font-size:12.5px;color:var(--crit);margin-bottom:14px">' +
-            'You are in <span class="mono">' + esc(desk.groupName) + '</span> but SharePoint denied the read. ' +
-            'The group has not been granted on the <span class="mono">' + esc(desk.library) + '</span> library.</p>';
-          log("tile " + desk.key, "403 — Entra membership without a SharePoint grant");
-        } else if (f.status === 404){
-          tag = '<span class="tag warn">no data</span>';
-          statsHtml = '<p style="font-size:12.5px;color:var(--warn);margin-bottom:14px">' +
-            esc(desk.file) + ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.</p>';
-          log("tile " + desk.key, desk.file + " 404");
-        } else {
-          tag = '<span class="tag crit">HTTP ' + f.status + '</span>';
-          log("tile " + desk.key, "HTTP " + f.status);
-        }
-      }
-    }
-
-    el.innerHTML =
-      '<div class="tilehead"><h2>' + esc(desk.title) + '</h2>' + tag + '</div>' +
-      '<p>' + esc(desk.blurb) + '</p>' + statsHtml +
-      '<a class="btn" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') + '>Open</a>';
-    host.append(el);
-  }
-
-  $("#asof").textContent = "Read " + new Date().toLocaleString("en-US") +
-    " · figures come from SharePoint, not from this page.";
-}
-
-$("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
-$("#signout").addEventListener("click", () => app.logoutRedirect());
-$("#copy").addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText($("#diag").textContent);
-    $("#copied").hidden = false;
-    setTimeout(() => { $("#copied").hidden = true; }, 1800);
-  } catch(_) {}
+// Billy stores last_requested only on CONTRACTS; company-level (global) requests
+// aren't readable from GET /vendors. So we remember the moment a request was sent
+// from this dashboard (per browser) and merge it with the pulled contract value.
+function reqKey(r){ return (r.global_coi==='Yes') ? ('v:'+(r.vendor_id||'')) : ('c:'+(r.billy_contract_id||'')); }
+function localLastReq(k){ try{ return localStorage.getItem('bh_lr_'+k)||''; }catch(e){ return ''; } }
+function setLocalLastReq(k,iso){ try{ localStorage.setItem('bh_lr_'+k, iso); }catch(e){} }
+let ACTIVE_TAB='ops';  // ops | global | cmgr | acct
+let CMGR_SUB='vendors';  // Compliance Manager sub-view: vendors | docs
+let LR_MAP={};  // shared last-requested map from the Worker (KV), keyed like reqKey()
+function effLastReq(r){ const k=reqKey(r); return [r.last_requested||'', localLastReq(k), LR_MAP[k]||''].sort().slice(-1)[0]; }  // newest wins (ISO sorts chronologically)
+let ROWS = [], GENERATED = '';
+const msalApp = new msal.PublicClientApplication({
+  auth: { clientId: MSAL_CLIENT_ID, authority: 'https://login.microsoftonline.com/' + TENANT,
+          redirectUri: window.location.origin + window.location.pathname },
+  cache: { cacheLocation: 'sessionStorage' }
 });
+async function getToken(){
+  await msalApp.initialize();
+  const redir = await msalApp.handleRedirectPromise();
+  let account = (redir && redir.account) || msalApp.getAllAccounts()[0];
+  if (!account) { await msalApp.loginRedirect({ scopes: SCOPES }); return null; }
+  msalApp.setActiveAccount(account);
+  try { const t = await msalApp.acquireTokenSilent({ scopes: SCOPES, account }); return t.accessToken; }
+  catch (e) { await msalApp.acquireTokenRedirect({ scopes: SCOPES }); return null; }
+}
 
-main().catch(e => fatal("Unexpected failure", (e && e.stack) || String(e)));
+function dcell(v){
+  if(v==='waived') return '<td><span class="muted">waived</span></td>';
+  if(v==='missing'||v==='expired') return '<td><span class="pill r">&lt;0</span></td>';  // expired / no current coverage
+  if(v===null||v===undefined||v==='') return '<td><span class="muted">&mdash;</span></td>';  // not required
+  const d=Number(v); if(isNaN(d)) return '<td><span class="muted">&mdash;</span></td>';
+  if(d<0) return '<td><span class="pill r">&lt;0</span></td>';
+  const c=d<=THRESHOLD?'y':'g';
+  return `<td><span class="pill ${c}">${d}</span></td>`;
+}
+const stPill=s=>`<span class="pill ${s==='Compliant'?'g':s==='Expiring Soon'?'y':s==='Data Gap'?'b':'r'}">${s}</span>`;
+const okPill=v=>`<span class="pill ${v==='Yes'?'g':v==='Verify'?'y':'r'}">${v}</span>`;
+
+async function load(){
+  try{
+    const token = await getToken();
+    if(!token) return; // redirecting to Microsoft sign-in
+    const res = await fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/content`, { headers: { Authorization: 'Bearer ' + token } });
+    if(!res.ok) throw new Error('Graph HTTP '+res.status+' (need SharePoint access to the file)');
+    const data = await res.json();
+    if (!data || !Array.isArray(data.rows)) throw new Error('Unexpected data shape');
+    ROWS = data.rows; GENERATED = data.generated_at || '';
+    document.getElementById('asof').textContent = GENERATED ? ('data as of ' + new Date(GENERATED).toLocaleString()) : '';
+    await loadLastReqMap(token);   // shared "last requested" (company-level not readable from Billy's API)
+    buildUI();
+  }catch(e){
+    const b=document.getElementById('banner'); b.style.display='block'; b.className='banner err';
+    b.textContent='Sign-in or data load failed: '+(e&&e.message||e);
+    document.getElementById('content').innerHTML='';
+  }
+}
+function buildUI(){
+  const projects=[...new Set(ROWS.map(r=>r.project))].sort();
+  document.getElementById('content').innerHTML=`
+    <div class="tabbar">
+      <button class="tab active" data-tab="ops">For Operations</button>
+      <button class="tab" data-tab="global">Global Vendors/Subs</button>
+      <button class="tab" data-tab="cmgr">Compliance Manager</button>
+      <button class="tab" data-tab="acct">For Accounting</button>
+    </div>
+    <div id="tab-ops">
+    <div id="cmgr-subnav" class="subnav" style="display:none">
+      <button class="subtab active" data-sub="vendors">All Vendors</button>
+      <button class="subtab" data-sub="docs">Documents to add to Billy</button>
+    </div>
+    <div class="legend">
+      <span class="grp"><b>Days to expiration:</b></span>
+      <span class="grp"><span class="pill g">30+</span> current</span>
+      <span class="grp"><span class="pill y">1&ndash;30</span> expiring soon</span>
+      <span class="grp"><span class="muted">waived</span> exempt in Billy</span>
+      <span class="grp"><span class="pill r">expired/missing</span> expired / no coverage on file</span>
+      <span class="grp"><span class="cpill muted">&mdash;</span> not required for this vendor</span>
+      <br>
+      <span class="grp">GC License required for subs with a Procore commitment &ge; $100k; <span class="pill g" style="font-size:9px">&check;AL</span> = verified on the Alabama GC website. W-9 tracked for all vendors (does not block). Non-Compliant = cannot be on site or paid.</span>
+    </div>
+    <div class="controls">
+      <span id="projwrap"><label>Projects:</label>
+      <div class="projpick">
+        <input id="projsearch" type="text" placeholder="search projects…" autocomplete="off">
+        <div class="projlist-actions"><a href="#" id="projAll">all</a> &middot; <a href="#" id="projNone">none</a></div>
+        <div id="projlist" class="projlist">${projects.map(p=>`<label class="projopt"><input type="checkbox" class="projcb" value="${p.replace(/"/g,'&quot;')}"> ${p}</label>`).join('')}</div>
+      </div></span>
+      <span id="filtwrap"><label style="margin-left:8px">Filter:</label>
+      <select id="filt"><option value="all">All vendors</option><option value="compliant">Compliant</option><option value="soon">Expiring soon</option><option value="nc">Non-compliant</option><option value="nogcl">Missing GC License</option><option value="now9">Missing W-9</option><option value="noins">Missing insurance doc</option></select></span>
+      <span id="qwrap"><label style="margin-left:8px">Search vendor:</label>
+      <input id="q" type="text" placeholder="type a vendor name…" style="padding:8px 12px;border:1px solid #c7cfdb;border-radius:8px;font-size:14px;min-width:220px"></span>
+      <button id="syncbtn" title="Re-run the pull and refresh the data" style="margin-left:auto;padding:8px 16px;border:1px solid #211E1E;background:#211E1E;color:#fff;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer">↻ Sync now</button>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="section-title" id="vendors-title">Vendors</div>
+    <div id="list"></div>
+    <div class="section-title" id="valid-title">Documents to add to Billy (from Procore / Alabama)</div><div id="valid"></div>
+    <div class="exportbar" id="exportbar"><button id="recbtn" class="recbtn" title="Download an Excel (.xlsx) of ALL records in view — every vendor with contract dates, compliance status, and tags">⬇ Export Project Records</button><button id="exportbtn" title="Download an Excel (.xlsx) of subcontractors (name, contract amount, GC license # &amp; exp, COI expirations) for the current view">⬇ Export for State Inspector GCL Audit</button></div>
+    </div>
+    <div id="tab-acct" style="display:none">
+      <div class="section-title">Batch COI Lookup &mdash; verify coverage at time of payment</div>
+      <div class="lookup-help">Paste vendor names (one per line) — e.g. straight from ComputerEase. &ldquo;CODE - Name&rdquo; lines and truncated names are OK. You&rsquo;ll get each vendor&rsquo;s COI status and expiration dates, and can export the results.</div>
+      <textarea id="lookupInput" rows="8" placeholder="ROOFASSE - Roof Asset Ma...&#10;BDWELCH - B D Welch Const...&#10;David Allen Co Inc&#10;Knight Sign Industries"></textarea>
+      <div class="lookup-actions"><button id="lookupBtn">Look up COIs</button><button id="lookupExport" style="display:none">⬇ Export results (Excel)</button></div>
+      <div id="lookupResults"></div>
+    </div>`;
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+  document.querySelectorAll('.subtab').forEach(b=>b.addEventListener('click',()=>{ CMGR_SUB=b.dataset.sub; document.querySelectorAll('.subtab').forEach(x=>x.classList.toggle('active',x.dataset.sub===CMGR_SUB)); render(); }));
+  // searchable multi-select project picker (Operations)
+  { const cbs=document.querySelectorAll('.projcb'); if(cbs.length) cbs[0].checked=true; }   // default: first project
+  document.getElementById('projsearch').addEventListener('input',function(){ const q=this.value.trim().toLowerCase();
+    document.querySelectorAll('#projlist .projopt').forEach(o=>{ o.style.display = o.textContent.toLowerCase().includes(q)?'':'none'; }); });
+  document.getElementById('projlist').addEventListener('change',e=>{ if(e.target.classList.contains('projcb')) render(); });
+  document.getElementById('projAll').addEventListener('click',e=>{ e.preventDefault(); document.querySelectorAll('#projlist .projopt').forEach(o=>{ if(o.style.display!=='none') o.querySelector('.projcb').checked=true; }); render(); });
+  document.getElementById('projNone').addEventListener('click',e=>{ e.preventDefault(); document.querySelectorAll('.projcb').forEach(c=>c.checked=false); render(); });
+  document.getElementById('filt').addEventListener('change',render);
+  document.getElementById('q').addEventListener('input',render);
+  document.getElementById('syncbtn').addEventListener('click',doSync);
+  document.getElementById('exportbtn').addEventListener('click',exportAudit);
+  document.getElementById('recbtn').addEventListener('click',exportRecords);
+  document.getElementById('lookupBtn').addEventListener('click',doLookup);
+  document.getElementById('lookupExport').addEventListener('click',exportLookup);
+  document.getElementById('foot').innerHTML="Source of truth: Billy (active projects &amp; contracts, per-coverage compliance incl. waivers). Coverages WC / UL-EL / CGL / Auto (+ Professional Liability where required). GCL &amp; W-9 tracked at the vendor/directory level; GCL required for subcontractors with a Procore commitment ≥ $100k and verified against Alabama GenConBd. W-9 tracked for all vendors (note only, does not block). On-Site and Pay are one verdict. Source file: SharePoint /sites/Resources/Compliance Dashboard/compliance_data.json.";
+  render();
+}
+function render(){
+  if(ACTIVE_TAB==='acct') return;
+  const filt=document.getElementById('filt').value;
+  const scope=currentScope();
+  const rows=scope.rows, isGlobalView=scope.isGlobalView;
+  const covKeys = r => { if((r.project_status||'').toLowerCase()!=='warranty') return ['wc_days','ulel_days','cgl_days','auto_days','prof_days']; return r.vendor_type==='Professional'?['cgl_days','prof_days']:['cgl_days']; };
+  const covBad = r => covKeys(r).some(k=>{const v=r[k]; return v==='missing'||(v!==''&&v!=='waived'&&!isNaN(Number(v))&&Number(v)<0);});
+  const docsNeeded = r => r.w9_on_file==='No' || r.gcl_missing_billy==='Yes' || covBad(r);
+  const c={ok:0,soon:0,bad:0,docs:0};
+  rows.forEach(r=>{const s=r.status; if(s==='Compliant')c.ok++;else if(s==='Expiring Soon')c.soon++;else if(s==='Non-Compliant')c.bad++; if(docsNeeded(r))c.docs++;});
+  const card=(cls,n,label,f)=>`<div class="card ${cls}" style="cursor:pointer" onclick="setFilter('${f}')" title="Click to filter"><div class="n">${n}</div><div class="l">${label}</div></div>`;
+  const billyMiss = rows.filter(r=>r.w9_on_file==='No').length + rows.filter(r=>r.gcl_missing_billy==='Yes').length;
+  document.getElementById('cards').innerHTML=
+    card('total',rows.length,'Vendors','all')+
+    card('ok',c.ok,'Compliant','compliant')+
+    card('soon',c.soon,'Expiring Soon','soon')+
+    card('bad',c.bad,'Non-Compliant','nc')+
+    (ACTIVE_TAB==='cmgr' ? `<div class="card gap" style="cursor:pointer" onclick="switchTab('cmgr','docs')" title="Documents to add to Billy from Procore / Alabama"><div class="n">${billyMiss}</div><div class="l">Billy Missing Docs</div></div>` : '');
+  let view=rows;
+  if(filt==='nc') view=rows.filter(r=>r.status==='Non-Compliant');
+  else if(filt==='compliant') view=rows.filter(r=>r.status==='Compliant');
+  else if(filt==='soon') view=rows.filter(r=>r.status==='Expiring Soon');
+  else if(filt==='nogcl') view=rows.filter(r=>r.gcl_required==='Yes' && (r.gcl_days==='missing' || (r.gcl_days!==''&&r.gcl_days!=='waived'&&!isNaN(Number(r.gcl_days))&&Number(r.gcl_days)<0)));
+  else if(filt==='now9') view=rows.filter(r=>r.w9_on_file==='No');
+  else if(filt==='noins') view=rows.filter(covBad);
+  const q=(document.getElementById('q').value||'').trim().toLowerCase();
+  if(q) view=view.filter(r=>(r.vendor||'').toLowerCase().includes(q));
+  const typeLabel = r => (r.vendor_type==='Supplier' && r.site_type) ? ('Supplier ('+(r.site_type==='Third Party'?'3rd Party':r.site_type)+')') : (r.vendor_type||'');
+  const noteHtml = n => (n||'').split('; ').map(seg=>{
+    if(/verified on Alabama/i.test(seg)) return '<span style="color:#1a7f37">'+seg+'</span>';
+    if(/upload|obtain|Missing|Expired|not on file|not in Billy|no Alabama match|not found|W-9 not/i.test(seg)) return '<span style="color:#b3261e">'+seg+'</span>';
+    return seg;
+  }).join(' &middot; ');
+  function covChip(label,v,exp,extra){
+    let cell;
+    if(v==='n/a') cell='<span class="cpill muted">n/a</span>';
+    else if(v==='waived') cell='<span class="cpill muted">waived</span>';
+    else if(v==='missing'||v==='expired') cell='<span class="cpill r">expired/missing</span>';
+    else if(v===''||v==null) cell='<span class="cpill muted">&mdash;</span>';
+    else { const d=Number(v); if(isNaN(d)) cell='<span class="cpill muted">&mdash;</span>'; else if(d<0) cell='<span class="cpill r">expired/missing</span>'; else cell='<span class="cpill '+(d<=THRESHOLD?'y':'g')+'">'+d+'</span>'; }
+    const dstr=(exp && v!=='waived' && v!=='n/a')?'<span class="mdate">'+exp+'</span>':'';
+    return '<span class="mini"><span class="mlabel">'+label+(extra?(' '+extra):'')+'</span>'+cell+dstr+'</span>';
+  }
+  const okChip = v => '<span class="cpill '+(v==='Yes'?'g':'r')+'">'+v+'</span>';
+  const reqItems = r => {
+    const out=[];
+    [['wc_days','Workers’ Compensation Insurance'],['ulel_days','Excess/Umbrella Liability Insurance'],['cgl_days','Commercial General Liability Insurance'],['auto_days','Commercial Automobile Insurance'],['prof_days','Professional Liability Insurance']].forEach(([k,label])=>{
+      const v=r[k];
+      if(v==='missing' || (v!==''&&v!=='waived'&&!isNaN(Number(v))&&Number(v)<0)) out.push(label);
+    });
+    if(r.gcl_required==='Yes'){ const g=r.gcl_days;
+      if(g==='missing'||(g!==''&&g!=='waived'&&!isNaN(Number(g))&&Number(g)<0)) out.push('General Contractor’s License / Subcontractor’s License'); }
+    if(r.w9_on_file==='No') out.push('W-9');
+    return out;
+  };
+  const mailtoFor = r => {
+    const items=reqItems(r); if(!items.length) return '';
+    const isGlobal = r.global_coi==='Yes';
+    const subject = isGlobal
+      ? 'Global compliance documents needed — '+r.vendor
+      : 'Compliance documents needed — '+r.project+' ('+(r.commitment||'')+')';
+    const intro = isGlobal
+      ? 'Our records indicate the following global compliance documents have expired or are missing. As a reminder, you carry ONE blanket/global COI that covers all Bailey Harris Construction projects:'
+      : 'Our records indicate the following compliance documents are missing or expired for '+r.project+':';
+    const uploadLine = '\n\nA secure upload link has been sent to you via our compliance system, Billy (compliance@baileyharris.com). You may upload directly there or reply to this email with the documents.';
+    const faqs=[
+      'Where to find the requirement: Attachment F of your subcontract.',
+      ...(!isGlobal ? ['Sometimes we are looking for an updated W-9 or Contractor’s License. These are company compliance documents, which is a different request than a project-specific COI + endorsement.'] : []),
+      'Even if the COI lists the correct limits, an endorsement may still be missing. Use the link sent from Billy for Insurance to see exactly what is missing and any notes from our reviewer.',
+      'You can forward the link from Billy to your insurance agent and they can upload on your behalf.',
+      'If a waiver is in place, a current waiver may not show on your account until after your documents have been reviewed.',
+      'Additional Questions? Email tiffany.blackmon@baileyharris.com'
+    ];
+    const faqBlock='\n\nFAQs:\n'+faqs.map(f=>'  • '+f).join('\n');
+    const body='Dear '+r.vendor+',\n\n'+intro+'\n\n'+items.map(i=>'  • '+i).join('\n')+'\n\nPlease note: copies of the actual policy endorsements are also required to confirm the coverage is in force. A Certificate of Insurance (COI) is informational only and does not by itself prove that coverage exists.'+uploadLine+'\n\nPlease send the updated documentation at your earliest convenience so we can keep your account current for on-site access and payment.'+faqBlock+'\n\nThank you,\nBailey-Harris Construction';
+    return 'mailto:'+encodeURIComponent(r.vendor_email||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  };
+  const vcard = (r, globalView) => {
+    const cls = r.status==='Compliant'?'g':(r.status==='Expiring Soon'?'y':'r');
+    const alTag = r.gcl_on_alabama==='Yes'?'<span class="cpill g" style="font-size:9px">✓AL</span>':'';
+    const isW=(r.project_status||'').toLowerCase()==='warranty';   // warranty: GL completed-ops (+ Prof for PSA)
+    const isProf=r.vendor_type==='Professional';
+    const profLive = r.prof_required==='Yes' && (!isW || isProf);   // Prof stays live for PSA in warranty
+    const cov = [
+      r.gcl_required==='Yes'?covChip('GCL',r.gcl_days,(r.gcl_exp_alabama||r.gcl_exp_billy||''),alTag):covChip('GCL','n/a',''),
+      covChip('WC',isW?'n/a':r.wc_days,isW?'':r.wc_exp), covChip('UL/EL',isW?'n/a':r.ulel_days,isW?'':r.ulel_exp),
+      covChip(isW?'GL (compl. ops)':'GL',r.cgl_days,r.cgl_exp), covChip('Auto',isW?'n/a':r.auto_days,isW?'':r.auto_exp),
+      profLive?covChip('Prof',r.prof_days,r.prof_exp):covChip('Prof','n/a',''),
+      '<span class="mini"><span class="mlabel">W-9</span>'+okChip(r.w9_on_file)+'</span>'
+    ].join('');
+    return '<div class="vcard '+cls+'">'
+      +'<div class="vhead">'+((()=>{ const vl=billyVendorLink(r); const nm=(r.vendor||''); return vl?'<a class="vname vlink" href="'+vl+'" target="_blank" rel="noopener" title="Open in Billy">'+nm+'</a>':'<span class="vname">'+nm+'</span>'; })())+'<span class="vtype">'+typeLabel(r)+'</span>'
+      +(r.global_coi==='Yes'?'<span class="gtag" title="Global blanket COI: one COI on the company directory; project COI waived">Global COI</span>':'')
+      +((r.project_status||'').toLowerCase()==='warranty'?'<span class="wtag" title="Warranty period: GL Additional Insured for completed operations required (~2 yrs post-completion); subs may still submit pay apps">Warranty</span>':'')
+      +(r.contract_active==='No'?'<span class="itag" title="Contract is inactive in Billy (e.g., a closed/completed PO on a warranty job)">Inactive</span>':'')
+      +'<span class="vright">On-Site/Pay '+okChip(r.on_site_ok)+' '+stPill(r.status)+'</span></div>'
+      +'<div class="vsub">'+(globalView ? 'Company directory &middot; Global blanket COI (applies to all projects)' : ((r.project||'')+' &middot; '+(r.project_number||'')+' &middot; '+(r.commitment||'')+' &middot; $'+Number(r.contract_value||0).toLocaleString()))+'</div>'
+      +'<div class="vcov">'+cov+'</div>'
+      +(r.notes?'<div class="vnotes">'+noteHtml(r.notes)+'</div>':'')
+      +((()=>{
+        const h=mailtoFor(r);
+        const gclGap = (r.gcl_required==='Yes' && (r.gcl_days==='missing' || (r.gcl_days!==''&&r.gcl_days!=='waived'&&!isNaN(Number(r.gcl_days))&&Number(r.gcl_days)<0))) || r.gcl_missing_billy==='Yes';
+        const docGap = r.w9_on_file==='No' || gclGap;   // W-9 / GC License missing
+        const insGap = covBad(r);                        // an actual insurance coverage is expired/missing
+        if(!h && !docGap && !insGap) return '';
+        let inner='';
+        if(h){ const lbl=r.global_coi==='Yes'?'Request global docs':'Request updates';
+          const lr=effLastReq(r);
+          const daysSince = lr ? Math.floor((Date.now()-new Date(lr).getTime())/86400000) : null;
+          const recent = daysSince!==null && daysSince<14;   // requested within the last 14 days -> disable
+          const when = (()=>{ if(!lr) return 'not requested yet'; const d=new Date(lr); const n=new Date(); return (d.toDateString()===n.toDateString()) ? 'Documents requested today' : ('last requested '+d.toLocaleDateString()); })();
+          const dis = recent ? ' disabled title="Requested '+daysSince+' day'+(daysSince===1?'':'s')+' ago — available again 14 days after the last request"' : '';
+          inner += '<button class="reqbtn"'+dis+' data-mailto="'+encodeURIComponent(h)+'" data-vid="'+(r.vendor_id||'')+'" data-cid="'+(r.billy_contract_id||'')+'" data-global="'+(r.global_coi==='Yes'?1:0)+'">&#9993; '+lbl+'</button><span class="reqwhen">'+when+'</span>';
+        }
+        const upV=billyVendorDocs(r), upI=billyInsuranceDocs(r);
+        if(docGap && upV) inner += '<a class="upbtn" href="'+upV+'" target="_blank" rel="noopener" title="Opens Billy at this vendor’s directory Documents tab — drag & drop the file there">&#8673; Upload W-9 / GC License</a>';
+        if(insGap && upI) inner += '<a class="upbtn" href="'+upI+'" target="_blank" rel="noopener" title="Opens Billy at the '+(r.global_coi==='Yes'?'company directory':'project contract')+' Documents tab — drag & drop the file there">&#8673; Upload insurance docs</a>';
+        return '<div class="vact">'+inner+'</div>';
+      })())
+      +'</div>';
+  };
+  let listHtml;
+  if(!view.length){ listHtml='<div class="empty">'+(ACTIVE_TAB==='ops'?'Pick one or more projects above.':'No vendors match this view.')+'</div>'; }
+  else if(scope.groupByProject){
+    // group by project (a vendor can appear under multiple jobs)
+    const groups={}; view.forEach(r=>{ const k=r.project||'(no project)'; (groups[k]=groups[k]||[]).push(r); });
+    listHtml=Object.keys(groups).sort().map(pn=>{
+      const g=groups[pn]; const num=g[0].project_number?(' &middot; '+g[0].project_number):'';
+      const wtag=(g[0].project_status||'').toLowerCase()==='warranty'?'<span class="wtag" title="Warranty period: GL Additional Insured for completed operations required (~2 yrs post-completion); subs may still submit pay apps">Warranty</span>':'';
+      return '<div class="projgrp">'+pn+' '+wtag+'<span class="cnt">'+num+' &middot; '+g.length+' vendor'+(g.length===1?'':'s')+'</span></div>'+g.map(r=>vcard(r,false)).join('');
+    }).join('');
+  } else {
+    listHtml=view.map(r=>vcard(r, isGlobalView)).join('');
+  }
+  document.getElementById('list').innerHTML = listHtml;
+  document.querySelectorAll('.reqbtn:not([disabled])').forEach(b=>b.onclick=()=>onRequestDocs(b));
+  // Data validation — items to add to Billy
+  const w9miss = rows.filter(r=>r.w9_on_file==='No');
+  const gclmiss = rows.filter(r=>r.gcl_missing_billy==='Yes');
+  const li = arr => arr.map(r=>`<li><b>${r.vendor}</b> <span class="nc-proj">— ${r.project} (${r.project_number||''})</span></li>`).join('');
+  const gclli = gclmiss.map(r=>`<li><b>${r.vendor}</b> <span class="nc-proj">— ${r.project} (${r.project_number||''})</span> · ${r.gcl_on_alabama==='Yes'?('on Alabama, exp '+(r.gcl_exp_alabama||'?')+' → <b>upload to Billy</b>'):'<b>not found on Alabama → obtain license + upload</b>'}</li>`).join('');
+  document.getElementById('valid').innerHTML=
+    `<div class="gap-card"><h4>W-9 missing in Billy <span class="nc-proj">(${w9miss.length}) — add from Procore</span></h4>`+
+    (w9miss.length?`<ul class="rsn">${li(w9miss)}</ul>`:`<div class="empty">None in view. ✅</div>`)+`</div>`+
+    `<div class="gap-card"><h4>GCL not on file in Billy <span class="nc-proj">(${gclmiss.length}) — upload from Alabama/website</span></h4>`+
+    (gclmiss.length?`<ul class="rsn">${gclli}</ul>`:`<div class="empty">None in view. ✅</div>`)+`</div>`;
+  // Section visibility by tab. Compliance Manager (cmgr) adds the Billy-Missing-Docs section below the list.
+  const sh=(id,on)=>{ const el=document.getElementById(id); if(el) el.style.display = on?'':'none'; };
+  const leg=document.querySelector('.legend'); if(leg) leg.style.display='';
+  const cm = ACTIVE_TAB==='cmgr';
+  const showList = !cm || CMGR_SUB==='vendors';   // Compliance Mgr: pick vendor list OR the docs section
+  const showDocs = cm && CMGR_SUB==='docs';
+  sh('cmgr-subnav', cm);
+  sh('projwrap', scope.showProj);           // project picker only in Operations
+  sh('filtwrap', showList); sh('qwrap', showList);
+  sh('cards', showList); sh('vendors-title', showList); sh('list', showList);
+  sh('valid-title', showDocs); sh('valid', showDocs);
+  sh('exportbar', showList);
+}
+function switchTab(name, sub){
+  ACTIVE_TAB=name;
+  if(name==='cmgr' && sub){ CMGR_SUB=sub; document.querySelectorAll('.subtab').forEach(x=>x.classList.toggle('active',x.dataset.sub===sub)); }
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  const isAcct=name==='acct';
+  const o=document.getElementById('tab-ops'), a=document.getElementById('tab-acct');
+  if(o) o.style.display = isAcct?'none':'';
+  if(a) a.style.display = isAcct?'':'none';
+  if(!isAcct) render();
+}
+// Scope + section rules per tab (shared by render and the GCL audit export)
+function currentScope(){
+  if(ACTIVE_TAB==='global'){ const seen=new Set();
+    return { rows:ROWS.filter(r=>r.global_coi==='Yes').filter(r=>{const k=r.vendor_id||r.vendor; if(seen.has(k))return false; seen.add(k); return true;}),
+             isGlobalView:true, groupByProject:false, showValid:false, showProj:false, singleProj:false, tag:'Global-COI' }; }
+  if(ACTIVE_TAB==='cmgr'){
+    return { rows:ROWS, isGlobalView:false, groupByProject:true, showValid:true, showProj:false, singleProj:false, tag:'All-Projects' }; }
+  // ops = one or more checked projects (searchable multi-select)
+  const chosen=Array.from(document.querySelectorAll('.projcb:checked')).map(c=>c.value);
+  return { rows:ROWS.filter(r=>chosen.includes(r.project)), isGlobalView:false, groupByProject:chosen.length>1, showValid:false, showProj:true,
+           singleProj:chosen.length===1, projName:chosen[0]||'', chosen, tag:chosen.length===1?chosen[0].replace(/[^A-Za-z0-9]+/g,'_'):'Selected-Projects' };
+}
+function exportRecords(){
+  // full record dump for the current tab scope: every vendor, all dates + status + tags
+  const scp=currentScope();
+  const recs=scp.rows.slice().sort((a,b)=>(a.project||'').localeCompare(b.project||'')||(a.vendor||'').localeCompare(b.vendor||''));
+  const cols=['Project','Project #','Project Status','Vendor','Type','Site','Global COI','Commitment #','Contract Amount','Compliance Status','On-Site/Pay','GC License #','GCL Exp','WC Exp','GL Exp','Auto Exp','UL/EL Exp','Prof Exp','W-9 on File','Notes'];
+  const AMT=8;
+  const data=recs.map(r=>[
+    r.project||'', r.project_number||'', r.project_status||'', r.vendor||'', r.vendor_type||'', r.site_type||'',
+    r.global_coi==='Yes'?'Yes':'', r.commitment||'',
+    (r.contract_value!==''&&r.contract_value!=null)?Number(r.contract_value):null,
+    r.status||'', r.on_site_ok||'', r.al_license||'', r.gcl_exp_alabama||r.gcl_exp_billy||'',
+    r.wc_exp||'', r.cgl_exp||'', r.auto_exp||'', r.ulel_exp||'', r.prof_exp||'', r.w9_on_file||'', r.notes||''
+  ]);
+  const aoa=[cols].concat(data);
+  const dt=new Date(),pad=n=>String(n).padStart(2,'0'),stamp=dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate());
+  const fbase='Project_Records_'+(scp.tag||'All')+'_'+stamp;
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    for(let i=1;i<aoa.length;i++){ const ref=XLSX.utils.encode_cell({r:i,c:AMT}); const cell=ws[ref]; if(cell && typeof cell.v==='number'){ cell.t='n'; cell.z='$#,##0.00'; } }
+    ws['!cols']=[{wch:24},{wch:9},{wch:12},{wch:30},{wch:14},{wch:12},{wch:10},{wch:14},{wch:16},{wch:15},{wch:11},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:11},{wch:44}];
+    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:cols.length-1}})};
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Project Records'); XLSX.writeFile(wb,fbase+'.xlsx'); return;
+  }
+  const cell=v=>{const s=(v===null||v===undefined)?'':String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csv=aoa.map(r=>r.map(cell).join(',')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fbase+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function exportAudit(){
+  // scope by the current tab (Operations = selected projects; Compliance Mgr = all; Global = global vendors)
+  const scp=currentScope();
+  const subs=scp.rows.filter(r=>r.vendor_type!=='Supplier');   // suppliers don't count
+  subs.sort((a,b)=>(a.project||'').localeCompare(b.project||'')||(a.vendor||'').localeCompare(b.vendor||''));
+  const singleProj = scp.singleProj;
+  // State GCL audit column layout (matches Alabama Licensing Board template) + GC License Exp.
+  const cols=['Company Name','Address','City','State','Zip','Business Phone','Email','Trade/Specialty','GCL No.','GCL Exp. Date','Contract Division','Original Contract Amount','Start Date','End Date'];
+  const AMT=11;  // currency column index
+  const dataRows=subs.map(r=>[
+    r.vendor||'', r.al_address||'', r.al_city||'', r.al_state||'', r.al_zip||'', r.al_phone||'', r.vendor_email||'',
+    r.al_specialty||'', r.al_license||'', r.gcl_exp_alabama||r.gcl_exp_billy||'', r.contract_division||'',
+    (r.contract_value!==''&&r.contract_value!=null)?Number(r.contract_value):null,
+    r.contract_start||'', r.contract_end||''
+  ]);
+  // optional project header block (only when a single project is in view)
+  const pre=[];
+  if(singleProj){ const f=subs[0]||{};
+    pre.push(['Project Name:', f.project||'']);
+    pre.push(['Project #:', f.project_number||'']);
+    pre.push(['Project Address:', f.project_address||'']);
+    pre.push(['Owner Name:', f.project_owner||'']);
+    pre.push(['Valuation:', (f.project_valuation!==''&&f.project_valuation!=null)?Number(f.project_valuation):'']);
+    pre.push([]);
+  }
+  const aoa=pre.concat([cols], dataRows);
+  const hdrRow=pre.length, dataStart=pre.length+1;
+  const tag=scp.tag||'Audit';
+  const d=new Date(), pad=n=>String(n).padStart(2,'0');
+  const stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    for(let i=dataStart;i<aoa.length;i++){ const ref=XLSX.utils.encode_cell({r:i,c:AMT}); const cell=ws[ref]; if(cell && typeof cell.v==='number'){ cell.t='n'; cell.z='$#,##0.00'; } }
+    ws['!cols']=[{wch:32},{wch:26},{wch:16},{wch:6},{wch:8},{wch:16},{wch:26},{wch:22},{wch:12},{wch:13},{wch:22},{wch:18},{wch:12},{wch:12}];
+    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:hdrRow,c:0},e:{r:aoa.length-1,c:cols.length-1}})};
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'GCL Audit');
+    XLSX.writeFile(wb,'State_GCL_Audit_'+tag+'_'+stamp+'.xlsx');
+    return;
+  }
+  // fallback: CSV if the xlsx library didn't load
+  const cell=v=>{ const s=(v===null||v===undefined)?'':String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const csv=aoa.map(row=>row.map(cell).join(',')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='State_GCL_Audit_'+tag+'_'+stamp+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+// ---- Batch COI lookup (accounting: verify coverage at time of payment) ----
+let LOOKUP_RESULTS=[];
+function lkEsc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function lkNorm(s){ return String(s||'').toUpperCase().replace(/&/g,' AND ').replace(/\b(LLC|L L C|INC|INCORPORATED|CO|COMPANY|CORP|CORPORATION|LP|LLP|PC|PLLC|LTD)\b/g,' ').replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function lkParseLine(line){ let s=(line||'').trim(); if(!s) return null;
+  const m=s.match(/^([A-Z0-9]{3,})\s*[-–]\s*(.+)$/); if(m) s=m[2];         // strip ComputerEase "CODE - Name"
+  s=s.replace(/[.…]{2,}$/,'').replace(/…$/,'').trim(); return s; }    // drop trailing truncation dots
+function lkMatch(nameNorm){ if(!nameNorm) return [];
+  return ROWS.filter(r=>{ if(r.contract_active==='No') return false;   // accounting: skip inactive contracts
+    const v=lkNorm(r.vendor); if(!v) return false;
+    if(v===nameNorm||v.startsWith(nameNorm)||nameNorm.startsWith(v)||v.includes(nameNorm)||nameNorm.includes(v)) return true;
+    const A=new Set(nameNorm.split(' ').filter(Boolean)), B=new Set(v.split(' ').filter(Boolean));
+    if(!A.size||!B.size) return false; let i=0; for(const t of A) if(B.has(t)) i++; return i/Math.min(A.size,B.size)>=0.75; }); }
+function doLookup(){
+  const raw=(document.getElementById('lookupInput').value||'').split('\n');
+  const results=[];
+  for(const line of raw){ const nm=lkParseLine(line); if(nm===null||nm==='') continue; const norm=lkNorm(nm);
+    const matched=lkMatch(norm);
+    if(!matched.length){ results.push({input:nm,row:null}); }
+    else { const seen=new Set(); for(const r of matched){ const k=(r.vendor_id||r.vendor)+'|'+r.project; if(seen.has(k))continue; seen.add(k); results.push({input:nm,row:r}); } }
+  }
+  LOOKUP_RESULTS=results; renderLookupResults(results);
+  document.getElementById('lookupExport').style.display = results.length?'':'none';
+}
+function renderLookupResults(results){
+  const el=document.getElementById('lookupResults');
+  if(!results.length){ el.innerHTML='<div class="empty">Paste vendor names above and click &ldquo;Look up COIs&rdquo;.</div>'; return; }
+  const st=s=>'<span class="pill '+(s==='Compliant'?'g':s==='Expiring Soon'?'y':'r')+'">'+(s||'?')+'</span>';
+  const d=v=>v?v:'&mdash;';
+  const body=results.map(x=>{ if(!x.row) return '<tr class="notfound"><td>'+lkEsc(x.input)+'</td><td colspan="10">NOT FOUND in Billy</td></tr>';
+    const r=x.row; const cls=r.status==='Non-Compliant'?'notfound':(r.status==='Expiring Soon'?'warn':'');
+    const wtag=(r.project_status||'').toLowerCase()==='warranty'?' <span class="wtag">Warranty</span>':'';
+    const gtag=r.global_coi==='Yes'?' <span class="gtag">Global COI</span>':'';
+    return '<tr class="'+cls+'"><td>'+lkEsc(x.input)+'</td><td>'+lkEsc(r.vendor)+gtag+'</td><td>'+lkEsc(r.project)+wtag+'</td><td>'+st(r.status)+'</td><td>'+d(r.cgl_exp)+'</td><td>'+d(r.wc_exp)+'</td><td>'+d(r.auto_exp)+'</td><td>'+d(r.ulel_exp)+'</td><td>'+d(r.prof_exp)+'</td><td>'+d(r.gcl_exp_alabama||r.gcl_exp_billy)+'</td></tr>'; }).join('');
+  const nf=results.filter(x=>!x.row).length;
+  el.innerHTML=(nf?'<div class="lkmini" style="margin-bottom:6px">'+nf+' of '+results.length+' line(s) not found — check spelling or that the vendor/project is active in Billy.</div>':'')
+    +'<table class="lktable"><thead><tr><th>Searched</th><th>Matched Vendor</th><th>Project</th><th>Status</th><th>GL Exp</th><th>WC Exp</th><th>Auto Exp</th><th>UL/EL Exp</th><th>Prof Exp</th><th>GCL Exp</th></tr></thead><tbody>'+body+'</tbody></table>';
+}
+function exportLookup(){
+  const cols=['Searched','Found','Matched Vendor','Global COI','Project','Warranty','Status','GL Exp','WC Exp','Auto Exp','UL/EL Exp','Prof Exp','GCL Exp'];
+  const wchk=r=>(r.project_status||'').toLowerCase()==='warranty'?'Warranty':'';
+  const data=LOOKUP_RESULTS.map(x=>{ const r=x.row; return r?[x.input,'Yes',r.vendor||'',(r.global_coi==='Yes'?'Global':''),r.project||'',wchk(r),r.status||'',r.cgl_exp||'',r.wc_exp||'',r.auto_exp||'',r.ulel_exp||'',r.prof_exp||'',r.gcl_exp_alabama||r.gcl_exp_billy||'']:[x.input,'No','','','','','NOT FOUND','','','','','','']; });
+  const aoa=[cols].concat(data);
+  const dt=new Date(),pad=n=>String(n).padStart(2,'0'),stamp=dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate());
+  if(typeof XLSX!=='undefined'){ const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:28},{wch:7},{wch:30},{wch:10},{wch:24},{wch:10},{wch:15},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}]; ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:cols.length-1}})}; const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'COI Lookup'); XLSX.writeFile(wb,'COI_Lookup_'+stamp+'.xlsx'); return; }
+  const cell=v=>{const s=v==null?'':String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}; const csv=aoa.map(r=>r.map(cell).join(',')).join('\r\n'); const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='COI_Lookup_'+stamp+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+window.setFilter = function(v){ const el=document.getElementById('filt'); if(el){ el.value=v; render(); el.scrollIntoView({behavior:'smooth',block:'nearest'}); } };
+async function loadLastReqMap(token){
+  if(!SYNC_WORKER_URL) return;
+  try{
+    const r=await fetch(SYNC_WORKER_URL,{ method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }, body:JSON.stringify({ action:'lr_get' }) });
+    const j=await r.json(); if(j&&j.map) LR_MAP=j.map;
+  }catch(e){ /* fall back to per-browser localStorage */ }
+}
+async function onRequestDocs(btn){
+  const mailto=decodeURIComponent(btn.dataset.mailto||'');
+  const vid=btn.dataset.vid, cid=btn.dataset.cid, isGlobal=btn.dataset.global==='1';
+  if(SYNC_WORKER_URL && (vid||cid)){
+    const orig=btn.textContent; btn.disabled=true; btn.textContent='Sending link…';
+    try{
+      const acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
+      const t=await msalApp.acquireTokenSilent({ scopes:SCOPES, account:acct });
+      await fetch(SYNC_WORKER_URL,{ method:'POST', headers:{ Authorization:'Bearer '+t.accessToken, 'Content-Type':'application/json' },
+        body:JSON.stringify({ action:'request', vendor_id:vid?Number(vid):undefined, contract_id:cid?Number(cid):undefined, global:isGlobal }) });
+      // remember the moment (Billy doesn't expose company-level request time on GET /vendors)
+      const nowIso=new Date().toISOString(); const lk=isGlobal ? ('v:'+vid) : ('c:'+cid);
+      setLocalLastReq(lk, nowIso); LR_MAP[lk]=nowIso;   // local + shared-map (Worker also persisted it to KV)
+      render();
+    }catch(e){ /* still open the email draft */ }
+    btn.disabled=false; btn.textContent=orig;
+  }
+  if(mailto) window.location.href=mailto;
+}
+async function doSync(){
+  const b=document.getElementById('syncbtn');
+  if(!SYNC_WORKER_URL){ alert('Sync isn’t configured yet. The data still refreshes automatically on a schedule.'); return; }
+  b.disabled=true; const orig=b.textContent; b.textContent='Syncing…';
+  try{
+    const acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
+    const t=await msalApp.acquireTokenSilent({ scopes:SCOPES, account:acct });
+    const r=await fetch(SYNC_WORKER_URL,{ method:'POST', headers:{ Authorization:'Bearer '+t.accessToken } });
+    if(!r.ok) throw new Error((await r.text())||('HTTP '+r.status));
+    b.textContent='Syncing… auto-refresh in ~90s';
+    setTimeout(()=>location.reload(), 95000);
+  }catch(e){ b.disabled=false; b.textContent=orig; alert('Sync failed: '+(e&&e.message||e)); }
+}
+load();
 </script>
 </body>
 </html>
