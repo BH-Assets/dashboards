@@ -1,0 +1,2070 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prequal &amp; Sub Rating Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#ECEFF1; --surface:#FFFFFF; --surface-2:#F5F8F9;
+  --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
+  --line:#CBD6DC; --line-soft:#E0E8EC;
+  --accent:#17505F; --accent-ink:#0C3644; --accent-soft:#D9E8EC;
+  --ok:#2A6E52; --ok-soft:#DBEDE4;
+  --warn:#8A5710; --warn-soft:#F6E9CD;
+  --crit:#983026; --crit-soft:#F7DFDB;
+  --shadow:0 1px 2px rgba(16,35,42,.06),0 8px 24px -16px rgba(16,35,42,.24);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+    --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+    --line:#27353C; --line-soft:#1F2C32;
+    --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+    --ok:#69C095; --ok-soft:#132D22;
+    --warn:#D3A153; --warn-soft:#32260F;
+    --crit:#E08279; --crit-soft:#341C1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+  --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+  --line:#27353C; --line-soft:#1F2C32;
+  --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+  --ok:#69C095; --ok-soft:#132D22;
+  --warn:#D3A153; --warn-soft:#32260F;
+  --crit:#E08279; --crit-soft:#341C1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Source Sans 3",ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:Archivo,ui-sans-serif,system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.015em}
+code,.mono,.num{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+.wrap{max-width:1300px;margin:0 auto;padding:0 22px}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.masthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;padding:18px 0 12px}
+.masthead h1{font-size:21px;font-weight:700}
+.masthead .sub{color:var(--muted);font-size:13.5px}
+.stamp{margin-left:auto;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--line);border-radius:2px;padding:3px 8px;white-space:nowrap}
+.stamp.live{color:var(--ok);border-color:var(--ok)}
+.stamp.off{color:var(--warn);border-color:var(--warn)}
+.meta{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--line-soft);font-size:12.5px}
+.meta div{padding:7px 16px 7px 0;margin-right:16px;border-right:1px solid var(--line-soft);color:var(--muted)}
+.meta div:last-child{border-right:0}
+.meta b{color:var(--ink);font-weight:600}
+nav.tabs{display:flex;gap:2px;border-top:1px solid var(--line-soft);overflow-x:auto}
+nav.tabs button{appearance:none;background:none;border:0;border-bottom:2px solid transparent;
+  font:600 13px/1 Archivo,sans-serif;letter-spacing:.02em;color:var(--muted);padding:12px 14px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,.gitem:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main{padding:24px 0 72px}
+.panel[hidden]{display:none!important}
+.lede{color:var(--muted);font-size:14.5px;margin:0 0 18px;max-width:none}
+.eyebrow{font:600 11px/1 Archivo,sans-serif;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+h2.sect{font-size:16px;font-weight:700;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2.sect:first-of-type{margin-top:0}
+
+.tag{font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;padding:3px 6px;white-space:nowrap;display:inline-block}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.crit{background:var(--crit-soft);color:var(--crit)}
+.tag.neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+.tag.accent{background:var(--accent-soft);color:var(--accent-ink)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);
+  border-radius:3px;box-shadow:var(--shadow);padding:10px;margin-bottom:14px}
+.controls label{font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+.f{display:flex;flex-direction:column;min-width:0}
+.f.fwide{flex:1 1 340px;min-width:270px}
+input,select,textarea{font:400 14px/1.35 "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:2px;padding:7px 9px;max-width:100%}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+select{cursor:pointer}
+.controls input[type=search]{min-width:230px}
+.btn{appearance:none;font:600 12.5px/1 Archivo,sans-serif;letter-spacing:.03em;background:var(--accent);color:#fff;
+  border:1px solid var(--accent);border-radius:2px;padding:9px 14px;cursor:pointer}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn:not(.ghost){color:#08171C}}
+:root[data-theme="dark"] .btn:not(.ghost){color:#08171C}
+:root[data-theme="light"] .btn:not(.ghost){color:#fff}
+.btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.browser{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.browser{grid-template-columns:minmax(0,1fr)}}
+.rail{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  position:sticky;top:186px;max-height:calc(100vh - 210px);display:flex;flex-direction:column}
+@media (max-width:920px){.rail{position:static;max-height:420px}}
+.count{font-size:11.5px;color:var(--muted);padding:9px 12px 4px;border-bottom:1px solid var(--line-soft)}
+.glist{overflow-y:auto;padding:6px}
+.gitem{display:flex;gap:8px;align-items:baseline;width:100%;text-align:left;background:none;border:0;
+  padding:7px 8px;border-radius:2px;cursor:pointer;color:var(--ink);font:400 13.5px/1.35 "Source Sans 3",sans-serif}
+.gitem:hover{background:var(--surface-2)}
+.gitem[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.gitem .nm{flex:1;min-width:0}
+.gitem .n{font:400 11px/1 "JetBrains Mono",monospace;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.gitem[aria-current="true"] .n{color:var(--accent-ink)}
+.sc{font:600 11px/1 "JetBrains Mono",monospace;border-radius:2px;padding:3px 5px;flex:none;font-variant-numeric:tabular-nums}
+.sc.hi{background:var(--ok-soft);color:var(--ok)}
+.sc.mid{background:var(--warn-soft);color:var(--warn)}
+.sc.lo{background:var(--crit-soft);color:var(--crit)}
+.sc.na{background:var(--surface-2);color:var(--faint)}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);padding:20px;min-width:0;overflow:hidden}
+.detail .gname{font-size:20px;font-weight:700;line-height:1.25;font-family:Archivo,sans-serif}
+.pillrow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.kpis{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:3px;margin:16px 0;overflow:hidden}
+.kpi{flex:1 1 130px;padding:11px 14px;border-right:1px solid var(--line-soft);background:var(--surface-2)}
+.kpi:last-child{border-right:0}
+.kpi .k{font:600 10px/1 Archivo,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.kpi .v{font:600 19px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0}
+
+.cov{border:1px solid var(--line-soft);border-radius:3px;margin-top:16px;overflow:hidden;min-width:0}
+.cov > header{display:flex;align-items:center;gap:9px;background:var(--surface-2);padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+.cov > header h4{font-size:13px;font-weight:600}
+.cov > header .st{margin-left:auto}
+.limits{width:100%;border-collapse:collapse;font-size:13.5px}
+.limits td{padding:6px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.limits tr:last-child td{border-bottom:0}
+.limits td:first-child{color:var(--muted);width:44%}
+.limits td:last-child{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
+.empty{color:var(--muted);font-style:italic;padding:12px;font-size:13px}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow)}
+table.grid{border-collapse:collapse;width:100%;font-size:12.5px}
+table.grid th{background:var(--surface-2);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);
+  font:600 11px/1.3 Archivo,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+  vertical-align:bottom;position:sticky;top:0;z-index:1;white-space:nowrap}
+table.grid th.s{cursor:pointer}
+table.grid th.s:hover{color:var(--ink)}
+table.grid td{padding:7px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+table.grid td.n{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+table.grid td.note{color:var(--muted);min-width:220px}
+table.grid tbody tr:hover{background:var(--surface-2)}
+.na{color:var(--faint)}
+
+.form{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);padding:20px;max-width:900px}
+.fg{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:16px}
+.fg .wide{grid-column:1/-1}
+.fld label{font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.fld label .req{color:var(--crit)}
+.fld input,.fld select,.fld textarea{width:100%}
+.lnk{background:none;border:0;padding:0 0 0 2px;margin:0;cursor:pointer;color:inherit;opacity:.6;font:inherit;line-height:1}
+.lnk:hover{opacity:1}
+.fld .hint{font-size:11.5px;color:var(--faint);margin-top:4px}
+.rate{display:flex;gap:6px;flex-wrap:wrap}
+.rate input{position:absolute;opacity:0;width:0;height:0}
+.rate label{display:inline-flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:2px;
+  padding:8px 12px;cursor:pointer;background:var(--surface-2);font:600 15px/1 "JetBrains Mono",monospace;
+  letter-spacing:0;text-transform:none;color:var(--ink);margin:0;min-width:66px}
+.rate label span{font:400 9.5px/1.2 Archivo,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center}
+.rate input:checked + label{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.rate input:focus-visible + label{outline:2px solid var(--accent);outline-offset:2px}
+fieldset{border:1px solid var(--line-soft);border-radius:3px;padding:14px;margin:0 0 16px}
+legend{font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line-soft);padding-top:16px}
+.status{font-size:13px}
+.status.ok{color:var(--ok)}.status.err{color:var(--crit)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface-2);
+  border-radius:2px;padding:4px 7px;font-size:12px}
+.chip button{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.chip button:hover{color:var(--crit)}
+.multi{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.multi select{min-width:210px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:var(--surface-2)}
+.seg button{appearance:none;background:none;border:0;border-right:1px solid var(--line);cursor:pointer;
+  font:600 11px/1 Archivo,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 11px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+.seg button:hover{color:var(--ink)}
+.chips:empty{display:none}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.chip.on button{color:var(--accent-ink)}
+.combohint{font-size:11.5px;color:var(--faint);margin-top:5px}
+.banner{border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:3px;padding:11px 14px;
+  font-size:13.5px;margin-bottom:16px}
+.banner.crit{border-color:var(--crit);background:var(--crit-soft);color:var(--crit)}
+.note{background:var(--surface-2);border:1px solid var(--line-soft);border-left:3px solid var(--accent);
+  border-radius:0 3px 3px 0;padding:11px 14px;font-size:13.5px;color:var(--muted);margin:14px 0}
+.note b{color:var(--ink)}
+.cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);overflow:hidden}
+.rule > h3{font-size:14px;font-weight:600;padding:11px 14px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.rule ul{margin:0;padding:12px 14px 14px 30px;display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.rule li::marker{color:var(--faint)}
+.rule .body{padding:12px 14px;font-size:13.5px}
+.scale{width:100%;border-collapse:collapse;font-size:13.5px}
+.scale td{padding:7px 14px;border-bottom:1px solid var(--line-soft)}
+.scale tr:last-child td{border-bottom:0}
+.scale td:first-child{width:60px;font:600 15px/1 "JetBrains Mono",monospace;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:10px 2px 0}
+.srow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+@media (max-width:760px){
+  .wrap{padding:0 14px}
+  .masthead{padding:12px 0 8px;gap:4px 12px}
+  .masthead h1{font-size:18px}
+  .masthead .sub{font-size:12.5px;flex:1 1 100%;order:3}
+  .stamp{margin-left:auto}
+  .meta{flex-wrap:nowrap;overflow-x:auto;font-size:12px}
+  .meta div{white-space:nowrap;padding:6px 12px 6px 0;margin-right:12px}
+  nav.tabs button{padding:11px 10px;font-size:12.5px}
+  main{padding:16px 0 56px}
+  h2.sect{margin:20px 0 10px}
+  .lede{font-size:14px}
+  .detail{padding:14px}
+  .detail .gname{font-size:17px}
+  .kpi{flex:1 1 46%;padding:9px 11px}
+  .kpi .v{font-size:17px}
+  .controls{padding:9px;gap:9px}
+  .controls input[type=search]{min-width:0}
+  .f,.f.fwide{flex:1 1 100%;min-width:0;width:100%}
+  .f input,.f select{width:100%}
+  .multi{flex-direction:column;align-items:stretch}
+  .multi select{min-width:0;width:100%}
+  .seg{align-self:flex-start}
+  .form{padding:14px}
+  .fg{grid-template-columns:1fr;gap:12px}
+  .rate{gap:5px}
+  .rate label{min-width:0;flex:1 1 60px;padding:7px 6px}
+  .rail{max-height:340px}
+  fieldset{padding:11px}
+  .actions{gap:8px}
+  .actions .btn{flex:1 1 auto}
+  table.grid th,table.grid td{padding:7px 8px}
+  .limits td:first-child{width:auto}
+}
+@media (max-width:400px){
+  .masthead h1{font-size:17px}
+  .rate label{font-size:14px}
+  .btn{padding:9px 11px;font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{header.top{position:static}nav.tabs{display:none}.panel[hidden]{display:block!important}.rail{max-height:none}}
+</style>
+
+<style>
+#bhgate{position:fixed;inset:0;z-index:999;background:var(--paper);display:grid;place-items:center;padding:24px}
+#bhgate .box{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  padding:34px 26px;text-align:center;max-width:430px}
+#bhgate h2{font-size:18px;margin:0 0 8px}
+#bhgate p{color:var(--muted);font-size:14px;margin:0 0 20px}
+#bhgate .why{font-size:12.5px;color:var(--faint);margin:16px 0 0}
+.readonly{border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:3px;
+  padding:11px 14px;font-size:13.5px;margin-bottom:16px}
+.readonly b{display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="masthead">
+      <h1>Prequal &amp; Sub Rating Desk</h1>
+      <div class="sub">Bailey-Harris &middot; subcontractor ratings, prequalification and diversity classifications</div>
+      <div class="stamp" id="conn">Connecting&hellip;</div>
+    </div>
+    <div class="meta" id="metabar">
+      <div>Ratings <b id="m-r">&mdash;</b></div>
+      <div>Subcontractors <b id="m-s">&mdash;</b></div>
+      <div>Jobs rated <b id="m-j">&mdash;</b></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-panel="subs">Subcontractors</button>
+      <button role="tab" aria-selected="false" data-panel="add">Add a rating &middot; single</button>
+      <button role="tab" aria-selected="false" data-panel="bulk">Add ratings &middot; bulk</button>
+      <button role="tab" aria-selected="false" data-panel="prequal">Prequal file</button>
+      <button role="tab" aria-selected="false" data-panel="diversity">Diversity</button>
+      <button role="tab" aria-selected="false" data-panel="fix">Fix a record</button>
+      <button role="tab" aria-selected="false" data-panel="merge">Duplicate names</button>
+      <button role="tab" aria-selected="false" data-panel="data">Scale &amp; sources</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<div id="offline" class="banner crit" hidden>This page could not reach SharePoint, so the tables below are empty.</div>
+
+<!-- SUBCONTRACTORS -->
+<section class="panel" id="p-subs">
+  <p class="lede">Every subcontractor Bailey-Harris has rated on a closed job, with the full rating history behind each average. Use it during pricing and buyout: filter to the trade you are buying, then read what the teams actually wrote.</p>
+  <div class="controls">
+    <div class="f"><label for="q">Search</label><input type="search" id="q" placeholder="Company, trade, job, sub PM, notes&hellip;"></div>
+    <div class="f fwide"><label for="fdiv">CSI divisions / scopes</label>
+      <div class="multi"><select id="fdiv"></select>
+        <div class="seg" id="fdivmode" role="group" aria-label="Combine selected divisions">
+          <button type="button" data-mode="any" aria-pressed="true">Any of</button>
+          <button type="button" data-mode="all" aria-pressed="false">All of</button>
+        </div>
+      </div>
+      <div class="chips" id="fdivchips"></div>
+      <div class="combohint" id="fdivhint"></div></div>
+    <div class="f"><label for="frat">Average rating</label><select id="frat">
+      <option value="">Any</option><option value="4">4.0 and up</option><option value="3">3.0 and up</option>
+      <option value="lt3">Below 3.0</option><option value="none">No rating on file</option></select></div>
+    <div class="f"><label for="fcert">Classification</label><select id="fcert"></select></div>
+    <div class="f"><label for="fjob">Worked on job</label><select id="fjob" title="Only jobs that already carry ratings"></select></div>
+    <div class="f"><label for="fsort">Sort</label><select id="fsort">
+      <option value="name">Company name</option><option value="rating">Rating, high to low</option>
+      <option value="ratinglow">Rating, low to high</option><option value="jobs">Most jobs with BH</option>
+      <option value="value">Most contract value</option><option value="recent">Most recent job</option></select></div>
+  </div>
+  <div class="browser">
+    <aside class="rail"><div class="count" id="scount">&mdash;</div><div class="glist" id="slist"></div></aside>
+    <div class="detail" id="sdetail"><div class="empty">Pick a subcontractor from the list.</div></div>
+  </div>
+</section>
+
+<!-- ADD RATING -->
+<section class="panel" id="p-add" hidden>
+  <p class="lede">One rating per subcontractor per job, entered at closeout or whenever the crew comes off the job. What you write in the notes is the part buyout actually reads &mdash; be specific about people and causes, not just the score.</p>
+  <form class="form" id="ratingform" autocomplete="off">
+    <fieldset>
+      <legend>Who and where</legend>
+      <div class="fg">
+        <div class="fld"><label for="i-sub">Company name <span class="req">*</span></label>
+          <input id="i-sub" list="dl-subs" required placeholder="Start typing &mdash; existing subs will suggest">
+          <datalist id="dl-subs"></datalist>
+          <div class="hint" id="subhint">&nbsp;</div></div>
+        <div class="fld"><label for="i-job">Job number &amp; name <span class="req">*</span></label>
+          <input id="i-job" list="dl-jobs" required placeholder="e.g. 25AU007 TU Younge Hall Restrooms">
+          <datalist id="dl-jobs"></datalist>
+          <div class="hint" id="jobhint">&nbsp;</div></div>
+        <div class="fld"><label for="i-commit">Commitment / subcontract no.</label><input id="i-commit" placeholder="e.g. 40325AU015"></div>
+        <div class="fld"><label for="i-csi">CSI division <span class="req">*</span></label><select id="i-csi" required></select></div>
+        <div class="fld wide"><label for="i-trade">Trade / scope description</label><input id="i-trade" placeholder="e.g. Structural steel and misc. metals"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>The rating</legend>
+      <div class="fg">
+        <div class="fld wide"><label>BH project manager rating</label>
+          <div class="rate" id="r-pm"></div></div>
+        <div class="fld wide"><label>BH superintendent rating</label>
+          <div class="rate" id="r-sup"></div></div>
+      </div>
+      <div class="note" id="avgnote">Average rating: <b>&mdash;</b> &middot; enter at least one of the two.</div>
+      <div class="fg">
+        <div class="fld"><label for="i-again">Would you use them again?</label><select id="i-again">
+          <option value="">&mdash;</option><option>Yes, first call</option><option>Yes</option>
+          <option>Yes, with conditions</option><option>Only if no alternative</option><option>No</option></select></div>
+        <div class="fld"><label for="i-amt">Final contract amount</label><input id="i-amt" inputmode="decimal" placeholder="e.g. 177059"></div>
+      </div>
+      <div class="fld wide"><label for="i-notes">Comments &amp; notes <span class="req">*</span></label>
+        <textarea id="i-notes" rows="4" required placeholder="What went well, what did not, and why. Name the people if it matters."></textarea>
+        <div class="hint">This is what shows up in the sub's history at buyout. Keep it factual and about the work.</div></div>
+    </fieldset>
+    <fieldset>
+      <legend>People</legend>
+      <div class="fg">
+        <div class="fld"><label for="i-team">BH project team</label><input id="i-team" placeholder="PM / super / PE, comma separated"></div>
+        <div class="fld"><label for="i-spm">Subcontractor's PM</label><input id="i-spm"></div>
+        <div class="fld"><label for="i-ssup">Subcontractor's field lead</label><input id="i-ssup"></div>
+        <div class="fld"><label for="i-by">Entered by <span class="req">*</span></label><input id="i-by" required placeholder="Your name"></div>
+      </div>
+    </fieldset>
+    <div class="actions">
+      <button type="submit" class="btn" id="savebtn">Save rating</button>
+      <button type="reset" class="btn ghost">Clear form</button>
+      <button type="button" class="btn ghost" id="tobulk">Rating a whole job? Go to bulk</button>
+      <span class="status" id="formstatus"></span>
+    </div>
+  </form>
+  <h2 class="sect">Entered here recently</h2>
+  <div class="tablewrap"><table class="grid" id="recent"><tbody></tbody></table></div>
+</section>
+
+<!-- BULK -->
+<section class="panel" id="p-bulk" hidden>
+  <p class="lede">Rate a whole job in one pass. Every column here asks the same question <b>Add a rating &middot; single</b> asks, one row per subcontractor &mdash; so a bulk import lands exactly the same record as typing them in one at a time. Paste from Excel or pick a file; the headings on your existing Sub Ratings workbooks are recognised too. Nothing is saved until you have read the preview.</p>
+  <div class="form" style="max-width:none">
+    <fieldset>
+      <legend>1 &middot; The job</legend>
+      <div class="fg">
+        <div class="fld"><label for="bk-job">Job number &amp; name</label>
+          <input id="bk-job" list="dl-jobs" placeholder="e.g. 25AU007 TU Younge Hall Restrooms">
+          <div class="hint">Used for any pasted row that does not carry its own job. Leave blank if the sheet already has a Job No. column.</div></div>
+        <div class="fld"><label for="bk-by">Entered by <span class="req">*</span></label><input id="bk-by" placeholder="Your name"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>2 &middot; The rows</legend>
+      <div class="srow">
+        <label class="btn ghost" for="bk-file" style="cursor:pointer">Choose a file&hellip;</label>
+        <input type="file" id="bk-file" accept=".csv,.tsv,.txt,.xlsx,.xls" style="display:none">
+        <span class="status" id="bk-fname"></span>
+        <button class="btn ghost" type="button" id="bk-tpl">Download the template</button>
+      </div>
+      <div class="fld wide" style="margin-top:12px"><label for="bk-paste">&hellip;or paste from Excel</label>
+        <textarea id="bk-paste" rows="7" placeholder="Select the rows in Excel, copy, and paste here. Include the header row if you have one."></textarea>
+        <div class="hint" id="bk-cols">&nbsp;</div></div>
+      <div class="srow" style="margin-top:12px">
+        <button class="btn" type="button" id="bk-parse">Read the rows</button>
+        <button class="btn ghost" type="button" id="bk-clear">Start over</button>
+        <button class="btn ghost" type="button" id="tosingle">Just one sub? Go to single</button>
+        <span class="status" id="bk-msg"></span>
+      </div>
+    </fieldset>
+    <div id="bk-review" hidden>
+      <fieldset>
+        <legend>3 &middot; Check it, then import</legend>
+        <div class="kpis" id="bk-kpi"></div>
+        <div class="srow">
+          <label style="font:400 13px/1 inherit;display:flex;gap:6px;align-items:center"><input type="checkbox" id="bk-dupes" style="width:auto"> Import rows that look like duplicates too</label>
+        </div>
+        <div class="tablewrap" style="margin-top:10px;max-height:460px;overflow-y:auto"><table class="grid" id="bk-table"></table></div>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn" type="button" id="bk-import">Import the good rows</button>
+          <span class="status" id="bk-status"></span>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+</section>
+
+<!-- PREQUAL -->
+<section class="panel" id="p-prequal" hidden>
+  <p class="lede">The prequalification file behind each subcontractor &mdash; safety record, bonding and financial standing. These fields mirror Bailey-Harris's Subcontractor Qualification Statement so what you enter here matches what the sub submits.</p>
+  <div class="controls">
+    <div class="f fwide"><label for="pq-sub">Subcontractor</label><input id="pq-sub" list="dl-subs2" placeholder="Type a company name to open its file"><datalist id="dl-subs2"></datalist></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" id="pq-open" type="button">Open file</button></div>
+  </div>
+  <div id="pq-editor" hidden></div>
+  <h2 class="sect">Prequal on file</h2>
+  <div class="tablewrap"><table class="grid" id="pqtable"></table></div>
+</section>
+
+<!-- DIVERSITY -->
+<section class="panel" id="p-diversity" hidden>
+  <p class="lede">Certified subcontractors available for participation goals. A classification only counts on a bid when the certificate is current, so the expiry column is the one to read first.</p>
+  <div class="controls">
+    <div class="f"><label for="dv-type">Classification</label><select id="dv-type"></select></div>
+    <div class="f fwide"><label for="dv-div">CSI divisions / scopes</label>
+      <div class="multi"><select id="dv-div"></select>
+        <div class="seg" id="dvdivmode" role="group" aria-label="Combine selected divisions">
+          <button type="button" data-mode="any" aria-pressed="true">Any of</button>
+          <button type="button" data-mode="all" aria-pressed="false">All of</button>
+        </div>
+      </div>
+      <div class="chips" id="dvdivchips"></div>
+      <div class="combohint" id="dvdivhint"></div></div>
+    <div class="f"><label for="dv-status">Certificate status</label><select id="dv-status">
+      <option value="">Any</option><option value="active">Current</option><option value="soon">Expiring within 90 days</option><option value="exp">Expired</option><option value="unk">No expiry recorded</option></select></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="dv-export">Export CSV</button></div>
+  </div>
+  <div class="tablewrap"><table class="grid" id="dvtable"></table></div>
+  <div class="note"><b>Nothing here yet?</b> Classifications are entered on the Prequal file tab, per subcontractor. The five certifying categories on Bailey-Harris's qualification statement are minority-owned, woman-owned, disadvantaged, veteran and small business; this tab also carries the federal set (8(a), HUBZone, SDVOSB, DBE, Section 3) for jobs that ask for them.</div>
+</section>
+
+<!-- DATA -->
+<section class="panel" id="p-fix" hidden>
+  <p class="lede">Corrections to ratings already on file &mdash; a CSI division coded to the wrong trade, a scope description that says nothing, a contract amount that never got filled in. The imported spreadsheets are left untouched; what you change here is stored as a correction on top of them, so it can always be undone and you can see who changed what.</p>
+  <div class="controls">
+    <div class="f" style="flex:1 1 260px"><label for="x-q">Find a record</label>
+      <input type="search" id="x-q" placeholder="Subcontractor, job, trade, notes&hellip;"></div>
+    <div class="f"><label for="x-sub">Subcontractor</label><select id="x-sub"></select></div>
+    <div class="f"><label for="x-job">Job</label><select id="x-job"></select></div>
+    <div class="f"><label for="x-csi">CSI division</label><select id="x-csi"></select></div>
+    <div class="f"><label for="x-only">Show</label><select id="x-only">
+      <option value="">Everything</option>
+      <option value="edited">Only corrected records</option>
+      <option value="nocsi">Missing a CSI division</option>
+      <option value="notrade">Missing a trade description</option>
+      <option value="noamt">Missing a contract amount</option>
+      <option value="nonotes">Missing notes</option></select></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="x-reset">Clear</button></div>
+  </div>
+  <div class="kpis" id="x-kpi"></div>
+  <div class="srow" style="margin-bottom:8px"><span class="status" id="x-msg"></span></div>
+  <div class="tablewrap"><table class="grid" id="x-table"></table></div>
+  <div id="x-editor" hidden></div>
+</section>
+
+<section class="panel" id="p-merge" hidden>
+  <h2 class="sect">One subcontractor, several spellings</h2>
+  <p class="lede">The same firm gets typed a dozen ways over ten years &mdash; <b>Jack Ellison</b>, <b>Jack Ellison Paint</b>, <b>Paint / Jack Ellison</b>. Left alone, one sub's record is split across six, and none of them shows the full picture. Merging them keeps every rating and every old spelling; it only decides which name they hang under.</p>
+  <p class="lede"><b>Nothing here is guessed at.</b> The merges already applied were misspellings, punctuation, or the <i>scope / subcontractor</i> format from bid-day sheets. Anything where two firms might genuinely share a word is below, unmerged, waiting for someone who knows the vendors.</p>
+  <div class="kpis" id="g-kpi"></div>
+
+  <h3 class="sect" style="font-size:15px;margin-top:22px">Waiting on you</h3>
+  <p class="lede" style="margin-bottom:10px">One pair at a time. If they are the same firm, set the name you want them to keep and merge; if they are not, mark them different and the pair will not come back. Pairs that share only a single word are hidden by default because most of them are coincidences &mdash; <b>Ellison Painting</b> and <b>Ellison Plumbing &amp; Piping</b> are two different companies.</p>
+  <div class="srow" style="margin-bottom:12px">
+    <input type="search" id="g-q" placeholder="Find a subcontractor…" style="max-width:280px">
+    <label class="chk"><input type="checkbox" id="g-weak"> Also show pairs that share only one word</label>
+    <span class="status" id="g-status"></span>
+    <span class="status ok" id="g-msg"></span>
+  </div>
+  <div id="g-review"></div>
+
+  <h3 class="sect" style="font-size:15px;margin-top:26px">Names ComputerEase cut off</h3>
+  <p class="lede" style="margin-bottom:10px">ComputerEase stores a vendor name in <b>30 characters</b> and drops the rest &mdash; which is why <i>Alexander Electric Company, In</i> and <i>Brockway Building Services, LL</i> read the way they do. The full name is not in the ERP to recover, so these have to be typed once. Every sub whose name is exactly 30 characters is listed; some genuinely are that long, so mark those as fine and they will drop off.</p>
+  <div class="srow" style="margin-bottom:12px">
+    <input type="search" id="t-q" placeholder="Find a name&hellip;" style="max-width:260px">
+    <span class="status" id="t-status"></span>
+    <span class="status" id="t-msg"></span>
+  </div>
+  <div class="tablewrap"><table class="grid" id="t-table"></table></div>
+
+  <h3 class="sect" style="font-size:15px;margin-top:26px">Already merged</h3>
+  <p class="lede" style="margin-bottom:10px">Rename any of these if the wrong spelling ended up as the canonical one, or split a spelling back out if it does not belong.</p>
+  <div class="tablewrap"><table class="grid" id="g-done"></table></div>
+</section>
+
+<section class="panel" id="p-data" hidden>
+  <h2 class="sect">The rating scale</h2>
+  <div class="cols">
+    <div class="rule"><h3>What each score means</h3>
+      <table class="scale"><tbody>
+        <tr><td>5</td><td><b>Best in class.</b> Beat the schedule or the scope, ran themselves, made the job easier. First call next time.</td></tr>
+        <tr><td>4</td><td><b>Above expectations.</b> In and out, no problems, minor issues handled without escalation.</td></tr>
+        <tr><td>3</td><td><b>Met expectations.</b> Did what the subcontract said. Normal amount of pushing.</td></tr>
+        <tr><td>2</td><td><b>Below expectations.</b> Manpower, coordination or quality problems that cost BH time or money.</td></tr>
+        <tr><td>1</td><td><b>Do not use.</b> Failed to perform, unsafe, or the relationship broke down.</td></tr>
+      </tbody></table>
+      <div class="body" style="border-top:1px solid var(--line-soft);color:var(--muted)">The PM and the superintendent score separately and the average of the two is the sub's score for that job. Where only one of them scored, that score stands alone.</div>
+    </div>
+    <div class="rule"><h3>How to read an average</h3>
+      <div class="body">
+        <p style="margin-top:0">An average across two jobs is a hint; an average across eight is a track record. The rail shows the job count next to every score for exactly that reason &mdash; check it before you act on a number.</p>
+        <p>A single 1 or 2 buried under good scores is worth opening. That is usually where a named person, a schedule failure or a safety problem is written down, and it will not show in the average.</p>
+        <p style="margin-bottom:0">Twenty-six company names carried a <code>***</code> prefix in the source sheet. Nobody knows what it recorded and the data ruled out every obvious reading, so it is ignored here &mdash; it affects no score, filter or sort. The prefix itself is still in the stored rows if the meaning ever surfaces.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>Looking for project history?</b> Square footage, contract values, schedule durations and $/SF comparables moved to the <b>Precon Desk</b> &mdash; a separate page for pricing a bid. This desk is subcontractor ratings, prequalification and diversity classifications.</div>
+  <h2 class="sect">Where this data came from</h2>
+  <div id="sources"></div>
+
+  <h2 class="sect">What is missing</h2>
+  <div id="gaps"></div>
+
+  <h2 class="sect">Coverage by division</h2>
+  <p class="lede">How much rating history sits behind each scope. A division with a handful of entries is not proof we have no history there &mdash; it usually means the work got coded somewhere else.</p>
+  <div class="tablewrap"><table class="grid" id="divtable"></table></div>
+
+  <h2 class="sect">Take a copy</h2>
+  <div class="srow">
+    <button class="btn ghost" type="button" data-export="ratings">Ratings CSV</button>
+    <button class="btn ghost" type="button" data-export="subs">Subcontractor summary CSV</button>
+    <span class="status" id="expstatus"></span>
+  </div>
+  <div class="note">Everything entered on this page is stored with the page, so the team sees each other's entries. These exports are for taking a snapshot into Excel &mdash; they are a copy, not the record.</div>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script>
+"use strict";
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CSI={0:'Unassigned',1:'General Requirements',2:'Existing Conditions',3:'Concrete',4:'Masonry',5:'Metals',
+6:'Wood, Plastics & Composites',7:'Thermal & Moisture Protection',8:'Openings',9:'Finishes',10:'Specialties',
+11:'Equipment',12:'Furnishings',13:'Special Construction',14:'Conveying Equipment',15:'Mechanical (legacy CSI)',
+16:'Electrical (legacy CSI)',21:'Fire Suppression',22:'Plumbing',23:'HVAC',25:'Integrated Automation',26:'Electrical',
+27:'Communications',28:'Electronic Safety & Security',31:'Earthwork',32:'Exterior Improvements',33:'Utilities',
+34:'Transportation',35:'Waterway & Marine',40:'Process Interconnections',41:'Material Processing & Handling',
+44:'Pollution & Waste Control',48:'Electrical Power Generation'};
+const CERTS=['Minority-owned (MBE)','Woman-owned (WBE)','Disadvantaged (DBE)','Veteran-owned (VBE)',
+'Service-disabled veteran-owned (SDVOSB)','Small business (SB)','8(a) certified','HUBZone','Section 3 business','Other'];
+const PQSTAT=['Approved','Approved with conditions','Not approved','Pending review'];
+
+const S={db:null,dl:null,arch:[],newR:[],subs:new Map(),projects:[],meta:null,sel:null,pqSel:null,ready:false,
+  fdivs:new Set(),fdivMode:'any',ddivs:new Set(),ddivMode:'any',divList:[],mg:null,edits:new Map(),fxSel:null};
+
+/* ---------- helpers ---------- */
+const n0=v=>v==null?'':Math.round(v).toLocaleString('en-US');
+const usd=v=>v==null?'':'$'+Math.round(v).toLocaleString('en-US');
+const r1=v=>v==null?'':(Math.round(v*10)/10).toFixed(1);
+const r2=v=>v==null?'':(Math.round(v*100)/100).toFixed(2);
+function _slugMark(){}
+function slug(s){return String(s||'').normalize('NFKD').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase().slice(0,60)||'unknown';}
+function median(a){const x=a.filter(v=>typeof v==='number'&&isFinite(v)).sort((p,q)=>p-q);if(!x.length)return null;
+  const m=x.length>>1;return x.length%2?x[m]:(x[m-1]+x[m])/2;}
+function band(v){if(v==null)return'na';if(v>=4)return'hi';if(v>=3)return'mid';return'lo';}
+function scoreTag(v,cnt){if(v==null)return'<span class="sc na">&mdash;</span>';
+  return '<span class="sc '+band(v)+'">'+r1(v)+'</span>';}
+function canonCsi(c){if(c==null||c==='')return null;const m=String(c).match(/^\s*(\d{1,2})/);return m?Number(m[1]):String(c);}
+/* returns HTML (it carries a &middot;), so callers must NOT escape it again */
+function csiName(c){const k=canonCsi(c);if(k==null)return null;return typeof k==='number'&&CSI[k]?k+' &middot; '+esc(CSI[k]):esc(String(k));}
+/* ---------- record edits ----------
+   Imported ratings are read-only bulk documents, so a correction is stored as a
+   patch against the rating's own id rather than by rewriting the import. Rows
+   added through the desk are edited in place instead, since they have a real
+   document to update. */
+function edits(){return S.edits||new Map();}
+function ridOf(r){return r&&(r.rid||r._id)||null;}
+function applyEdit(r){
+  const id=ridOf(r); if(!id)return r;
+  const e=edits().get(id); if(!e)return r;
+  const out=Object.assign({},r);
+  Object.keys(e).forEach(k=>{
+    if(k==='_id'||k==='rid'||k==='_del'||k==='_on'||k==='_by')return;
+    if(e[k]===null)delete out[k]; else out[k]=e[k];
+  });
+  out._edited=true; out._editedOn=e._on||null; out._editedBy=e._by||null;
+  return out;
+}
+function allR(){
+  const del=edits();
+  return S.arch.concat(S.newR)
+    .filter(r=>{const e=del.get(ridOf(r));return !(e&&e._del);})
+    .map(applyEdit);
+}
+function rawAllR(){return S.arch.concat(S.newR);}
+
+/* ---------- name merging ----------
+   Several spellings of one subcontractor are folded onto a single record.
+   The map lives in the desk (settings/subMerges) rather than in code, so any
+   of it can be undone, and the old spellings stay searchable as "also known as"
+   so a future import using one still lands on the right sub. */
+function MG(){return S.mg||{};}
+function mgMap(){return MG().map||{};}
+function canonId(id){
+  const m=mgMap(); let x=String(id||''), seen={};
+  while(m[x]&&!seen[x]){seen[x]=1;x=m[x];}
+  return x;
+}
+function canonName(id,fallback){
+  const n=(MG().names||{})[canonId(id)];
+  return n||fallback||'';
+}
+/* resolve a typed or imported company name onto an existing sub */
+function resolveSubName(name){
+  const raw=slug(name), id=canonId(raw);
+  return {id,name:canonName(id,null)|| (id===raw?String(name||'').trim():String(name||'').trim())};
+}
+function akaOf(id){return (MG().aka||{})[canonId(id)]||[];}
+
+/* ---------- aggregate ---------- */
+function rebuild(){
+  const m=new Map();
+  for(const r of allR()){
+    const id=canonId(r.sid||slug(r.s));
+    let o=m.get(id);
+    if(!o){o={id,name:r.s,rows:[],divs:new Set(),jobs:new Set(),total:0,watch:false};m.set(id,o);}
+    o.rows.push(r);
+    {const cc=canonCsi(r.csi); if(cc!=null)o.divs.add(String(cc));}
+    if(r.jn)o.jobs.add(r.jn);
+    if(typeof r.amt==='number')o.total+=r.amt;
+    if(r.w)o.watch=true;
+    if((r.s||'').length>(o.name||'').length)o.name=r.s;
+    o.merged=canonId(r.sid||slug(r.s))!==(r.sid||slug(r.s))||o.merged;
+  }
+  for(const o of m.values()){
+    const sc=o.rows.map(r=>r.r).filter(v=>typeof v==='number'&&isFinite(v));
+    o.n=o.rows.length; o.scored=sc.length;
+    o.avg=sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:null;
+    o.min=sc.length?Math.min.apply(null,sc):null;
+    o.max=sc.length?Math.max.apply(null,sc):null;
+    o.rows.sort((a,b)=>String(b.jn||'').localeCompare(String(a.jn||'')));
+    o.lastJob=o.rows[0]?(o.rows[0].jn||o.rows[0].j||''):'';
+    const f=S.subs.get(o.id); if(f&&f.file)o.file=f.file;
+    const cn=canonName(o.id,null); if(cn)o.name=cn;
+    o.aka=akaOf(o.id).filter(a=>a!==o.name);
+  }
+  for(const [id,v] of S.subs) if(v&&v.file&&!m.has(id))
+    m.set(id,{id,name:v.file.name||id,rows:[],divs:new Set((v.file.divs||[]).map(String)),jobs:new Set(),
+      total:0,watch:false,n:0,scored:0,avg:null,min:null,max:null,lastJob:'',file:v.file});
+  S.agg=m;
+  const ds=new Map();
+  for(const r of allR()){const c=canonCsi(r.csi);if(c==null)continue;const k=String(c);
+    let e=ds.get(k);if(!e){e={rows:0,subs:new Set()};ds.set(k,e);}e.rows++;e.subs.add(canonId(r.sid||slug(r.s)));}
+  S.divStats=ds;
+  paintMeta(); fillSelects(); renderSubs(); renderPqTable(); renderDiversity(); renderSources(); renderDivTable();
+  try{renderMerge();}catch(_){}
+  try{renderTrunc();}catch(_){}
+  try{renderFix();}catch(_){}
+}
+function paintMeta(){
+  const R=allR();
+  $('#m-r').textContent=n0(R.length)||'0';
+  $('#m-s').textContent=n0(S.agg?S.agg.size:0)||'0';
+  $('#m-j').textContent=n0(new Set(R.map(r=>r.jn).filter(Boolean)).size)||'0';
+}
+
+/* ---------- selects ---------- */
+function opts(el,list,label){
+  const cur=el.value;
+  el.innerHTML='<option value="">'+label+'</option>'+list.map(o=>'<option value="'+esc(o[0])+'">'+o[1]+'</option>').join('');
+  if(cur)el.value=cur;
+}
+function fillSelects(){
+  const divs=new Set(), jobs=new Map(), certs=new Set();
+  for(const r of allR()){
+    {const cc=canonCsi(r.csi); if(cc!=null)divs.add(String(cc));}
+    if(r.jn)jobs.set(r.jn,(r.j?r.jn+' '+r.j:r.jn));
+  }
+  for(const [,v] of S.subs) (v.file&&v.file.certs||[]).forEach(c=>c.type&&certs.add(c.type));
+  const dl=Array.from(divs).sort((a,b)=>Number(a)-Number(b)).map(d=>[d,csiName(d)||d]);
+  S.divList=dl; renderDivPicker('f'); renderDivPicker('d');
+  const jl=Array.from(jobs.entries()).sort((a,b)=>String(b[0]).localeCompare(String(a[0]))).map(([k,v])=>[k,esc(v)]);
+  opts($('#fjob'),jl,'Any job');
+  if($('#x-job')){
+    opts($('#x-job'),jl,'Any job');
+    opts($('#x-csi'),dl,'Any division');
+    const sl=Array.from(S.agg?S.agg.values():[]).map(o=>[o.id,esc(o.name)])
+      .sort((a,b)=>a[1].localeCompare(b[1]));
+    opts($('#x-sub'),sl,'Any subcontractor');
+  }
+  const cl=CERTS.filter(c=>certs.has(c)).concat(Array.from(certs).filter(c=>!CERTS.includes(c)));
+  opts($('#fcert'),cl.map(c=>[c,esc(c)]),'Any classification');
+  opts($('#dv-type'),(cl.length?cl:CERTS).map(c=>[c,esc(c)]),'All classifications');
+  const names=Array.from(S.agg?S.agg.values():[]).map(o=>o.name).sort((a,b)=>a.localeCompare(b));
+  const h=names.map(x=>'<option value="'+esc(x)+'"></option>').join('');
+  $('#dl-subs').innerHTML=h; $('#dl-subs2').innerHTML=h;
+  // Entry-form job list: EVERY known project, newest first — not just the ones already rated.
+  const pj=new Map();
+  S.projects.forEach(p=>{ if(p.num_==null||p.num_==='')return;
+    // a job that was lost or cancelled was never built, so it can never carry a sub rating
+    if(p.status==='Lost'||p.status==='Canceled')return;
+    const k=String(p.num_); pj.set(k, p.name? k+' '+p.name : k); });
+  jobs.forEach((v,k)=>{ if(!pj.has(k)) pj.set(k,v); });
+  const rc=new Map();
+  allR().forEach(r=>{ if(r.jn) rc.set(r.jn,(rc.get(r.jn)||0)+1); });
+  // awarded jobs (numeric prefix) first, newest first; precon pursuit numbers (PC...) after
+  const rank=k=>/^\d/.test(k)?0:1;
+  const ordered=Array.from(pj.entries()).sort((a,b)=>
+    rank(a[0])-rank(b[0]) || String(b[0]).localeCompare(String(a[0])));
+  $('#dl-jobs').innerHTML=ordered.map(([k,v])=>{
+    const n=rc.get(k)||0;
+    return '<option value="'+esc(v)+'">'+(n? n+' rating'+(n===1?'':'s')+' on file':'not rated yet')+'</option>';
+  }).join('');
+  const unrated=ordered.filter(([k])=>!rc.has(k)).length;
+  const jh=$('#jobhint');
+  if(jh) jh.innerHTML=n0(ordered.length)+' jobs to pick from, '+n0(unrated)+' not rated yet. Awarded jobs are listed first, newest at the top; lost and cancelled pursuits are left out. You can also type a job that is not on the list.';
+  if(!$('#i-csi').options.length){
+    $('#i-csi').innerHTML='<option value="">Select&hellip;</option>'+Object.keys(CSI).filter(k=>Number(k)>0&&Number(k)<15||Number(k)>16)
+      .sort((a,b)=>Number(a)-Number(b)).map(k=>'<option value="'+k+'">'+k+' &middot; '+CSI[k]+'</option>').join('');
+  }
+}
+
+/* ---------- division multi-picker ---------- */
+const PK={f:{sel:'#fdiv',chips:'#fdivchips',hint:'#fdivhint',mode:'#fdivmode',set:'fdivs',m:'fdivMode',after:()=>renderSubs()},
+          d:{sel:'#dv-div',chips:'#dvdivchips',hint:'#dvdivhint',mode:'#dvdivmode',set:'ddivs',m:'ddivMode',after:()=>renderDiversity()}};
+function divLabel(d){return csiName(d)||esc(String(d));}
+function renderDivPicker(k){
+  const c=PK[k], set=S[c.set], sel=$(c.sel);
+  const avail=S.divList.filter(([v])=>!set.has(v));
+  sel.innerHTML='<option value="">'+(set.size?'Add another division&hellip;':'All divisions')+'</option>'+
+    avail.map(([v,l])=>'<option value="'+esc(v)+'">'+l+'</option>').join('');
+  const order=S.divList.filter(([v])=>set.has(v));
+  $(c.chips).innerHTML=order.map(([v,l])=>'<span class="chip on">'+l+
+    '<button type="button" data-d="'+esc(v)+'" aria-label="Remove division '+esc(v)+'">&times;</button></span>').join('')+
+    (set.size>1?'<button type="button" class="chip" data-clear="1">Clear all</button>':'');
+  $$(c.chips+' [data-d]').forEach(b=>b.onclick=()=>{set.delete(b.dataset.d);renderDivPicker(k);c.after();});
+  const cl=$(c.chips+' [data-clear]'); if(cl)cl.onclick=()=>{set.clear();S[c.m]='any';renderDivPicker(k);c.after();};
+  $$(c.mode+' button').forEach(b=>{
+    b.setAttribute('aria-pressed',String(S[c.m]===b.dataset.mode));
+    b.onclick=()=>{S[c.m]=b.dataset.mode;renderDivPicker(k);c.after();};
+  });
+  $(c.mode).style.visibility = set.size>1?'visible':'hidden';
+  if(set.size===0)$(c.hint).innerHTML='';
+  else if(set.size===1){
+    const d=Array.from(set)[0], st=(S.divStats&&S.divStats.get(d))||{rows:0,subs:new Set()};
+    $(c.hint).innerHTML='<b>'+st.rows+'</b> rating'+(st.rows===1?'':'s')+' across <b>'+st.subs.size+'</b> subcontractor'+
+      (st.subs.size===1?'':'s')+' are coded to this division. Add another to combine.'+
+      (st.rows<20?' <span style="color:var(--warn)">Thin coverage &mdash; the same work may sit under a neighbouring division, so search the scope text too.</span>':'');
+  } else {
+    const tot=Array.from(set).map(d=>((S.divStats&&S.divStats.get(d))||{rows:0}).rows).reduce((a,b)=>a+b,0);
+    $(c.hint).innerHTML=(S[c.m]==='all'
+      ? 'Only subcontractors rated in <b>every</b> one of these '+set.size+' divisions &mdash; a combined-scope package.'
+      : 'Subcontractors rated in <b>any</b> of these '+set.size+' divisions.')+
+      ' <span style="color:var(--faint)">'+tot+' ratings across the selected divisions.</span>';
+  }
+}
+function divMatch(divs,set,mode){
+  if(!set.size)return true;
+  const a=Array.from(set);
+  return mode==='all'?a.every(d=>divs.has(d)):a.some(d=>divs.has(d));
+}
+
+/* ---------- subcontractor browser ---------- */
+function subFilter(){
+  const q=$('#q').value.trim().toLowerCase(), rt=$('#frat').value,
+    ct=$('#fcert').value, jb=$('#fjob').value, sort=$('#fsort').value;
+  let list=Array.from(S.agg?S.agg.values():[]);
+  list=list.filter(o=>divMatch(o.divs,S.fdivs,S.fdivMode));
+  if(jb)list=list.filter(o=>o.jobs.has(jb));
+  if(ct)list=list.filter(o=>((o.file&&o.file.certs)||[]).some(c=>c.type===ct));
+  if(rt==='none')list=list.filter(o=>o.avg==null);
+  else if(rt==='lt3')list=list.filter(o=>o.avg!=null&&o.avg<3);
+  else if(rt)list=list.filter(o=>o.avg!=null&&o.avg>=Number(rt));
+  if(q)list=list.filter(o=>{
+    if(o.name.toLowerCase().includes(q))return true;
+    if((o.aka||[]).some(a=>String(a).toLowerCase().includes(q)))return true;
+    return o.rows.some(r=>[r.t,r.j,r.jn,r.spm,r.ss,r.n,r.by,r.team].some(v=>v&&String(v).toLowerCase().includes(q)));
+  });
+  const cmp={name:(a,b)=>a.name.localeCompare(b.name),
+    rating:(a,b)=>(b.avg==null?-1:b.avg)-(a.avg==null?-1:a.avg)||a.name.localeCompare(b.name),
+    ratinglow:(a,b)=>(a.avg==null?99:a.avg)-(b.avg==null?99:b.avg)||a.name.localeCompare(b.name),
+    jobs:(a,b)=>b.jobs.size-a.jobs.size||a.name.localeCompare(b.name),
+    value:(a,b)=>b.total-a.total,
+    recent:(a,b)=>String(b.lastJob).localeCompare(String(a.lastJob))};
+  list.sort(cmp[sort]||cmp.name);
+  return list;
+}
+function renderSubs(){
+  if(!S.agg)return;
+  const list=subFilter();
+  $('#scount').textContent=list.length+' of '+S.agg.size+' subcontractors'+
+    (S.fdivs.size>1?' \u00b7 '+(S.fdivMode==='all'?'all of':'any of')+' '+S.fdivs.size+' divisions':'');
+  $('#slist').innerHTML=list.length?list.map(o=>
+    '<button class="gitem" data-id="'+esc(o.id)+'" aria-current="'+(o.id===S.sel)+'">'+
+    scoreTag(o.avg)+'<span class="nm">'+esc(o.name)+
+    ((o.aka&&o.aka.length)?' <span class="tag neutral" title="also on file as: '+esc(o.aka.join('; '))+'">+'+o.aka.length+'</span>':'')+
+    '</span><span class="n">'+(o.n||0)+'</span></button>').join(''):'<div class="empty">Nothing matches those filters.'+
+    (S.fdivs.size>1&&S.fdivMode==='all'?' No subcontractor has been rated in all '+S.fdivs.size+' of those divisions &mdash; switch to <b>Any of</b> to see who covers at least one.':'')+'</div>';
+  if(list.length&&!list.some(o=>o.id===S.sel))S.sel=list[0].id;
+  if(!list.length)S.sel=null;
+  renderDetail();
+}
+function renderDetail(){
+  const el=$('#sdetail');
+  if(!S.sel||!S.agg||!S.agg.get(S.sel)){el.innerHTML='<div class="empty">'+(S.ready?'Pick a subcontractor from the list.':'Loading&hellip;')+'</div>';return;}
+  const o=S.agg.get(S.sel), f=o.file||{};
+  let h='<div class="gname">'+esc(o.name)+'</div>';
+  h+='<div class="pillrow">';
+  if(f.status)h+='<span class="tag '+(f.status==='Approved'?'ok':f.status==='Not approved'?'crit':'warn')+'">Prequal: '+esc(f.status)+'</span>';
+  Array.from(o.divs).sort((a,b)=>Number(a)-Number(b)).forEach(d=>h+='<span class="tag accent">'+(csiName(d)||esc(d))+'</span>');
+  ((f.certs)||[]).forEach(c=>{if(c.type)h+='<span class="tag ok">'+esc(c.type)+'</span>';});
+  h+='</div>';
+  h+='<div class="kpis">'+
+    '<div class="kpi"><span class="k">Average rating</span><span class="v">'+(o.avg!=null?r1(o.avg):'&mdash;')+
+      (o.scored?' <small>of 5</small>':'')+'</span></div>'+
+    '<div class="kpi"><span class="k">Ratings on file</span><span class="v">'+o.n+(o.scored!==o.n?' <small>'+o.scored+' scored</small>':'')+'</span></div>'+
+    '<div class="kpi"><span class="k">Jobs with BH</span><span class="v">'+o.jobs.size+'</span></div>'+
+    '<div class="kpi"><span class="k">Range</span><span class="v">'+(o.min!=null?r1(o.min)+'&ndash;'+r1(o.max):'&mdash;')+'</span></div>'+
+    '<div class="kpi"><span class="k">Contract value</span><span class="v" style="font-size:15px">'+(o.total?usd(o.total):'&mdash;')+'</span></div>'+
+    '</div>';
+  const low=o.rows.filter(r=>typeof r.r==='number'&&r.r<3);
+  if(low.length)h+='<div class="banner">'+low.length+' rating'+(low.length>1?'s':'')+' below 3.0 on file &mdash; read the notes before pricing this scope.</div>';
+  h+='<div class="cov"><header><h4>Rating history</h4><span class="st tag neutral">'+o.n+' entr'+(o.n===1?'y':'ies')+'</span></header>';
+  if(o.n){
+    h+='<div style="overflow-x:auto"><table class="grid"><thead><tr><th>Job</th><th>Division</th><th>Scope</th>'+
+      '<th>PM</th><th>Super</th><th>Avg</th><th>Sub PM / field</th><th>Amount</th><th>Notes</th></tr></thead><tbody>';
+    o.rows.forEach(r=>{
+      h+='<tr><td>'+esc([r.jn,r.j].filter(Boolean).join(' '))+(r.c?'<br><span class="na mono" style="font-size:11px">'+esc(r.c)+'</span>':'')+'</td>'+
+      '<td>'+(canonCsi(r.csi)!=null?csiName(r.csi):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(r.t?esc(r.t):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(r.pm!=null?r1(r.pm):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(r.sp!=null?r1(r.sp):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+scoreTag(r.r)+'</td>'+
+      '<td>'+([r.spm,r.ss].filter(v=>v&&v!=='-').map(esc).join('<br>')||'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(typeof r.amt==='number'?usd(r.amt):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="note">'+(r.n&&r.n!=='-'?esc(r.n):'<span class="na">&mdash;</span>')+
+        (r.again?'<br><span class="tag neutral">'+esc(r.again)+'</span>':'')+
+        (r.by?'<br><span class="na" style="font-size:11px">'+esc(r.by)+(r.on?' &middot; '+esc(r.on):'')+'</span>':'')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  } else h+='<div class="empty">No ratings recorded yet.</div>';
+  h+='</div>';
+  h+=pqCard(f);
+  h+='<div class="srow" style="margin-top:16px"><button class="btn" type="button" id="addfor">Add a rating for '+esc(o.name)+'</button>'+
+     '<button class="btn ghost" type="button" id="pqfor">Open prequal file</button></div>';
+  el.innerHTML=h;
+  const a=$('#addfor'); if(a)a.onclick=()=>{go('add');$('#i-sub').value=o.name;subHint();$('#i-job').focus();};
+  const p=$('#pqfor'); if(p)p.onclick=()=>{go('prequal');$('#pq-sub').value=o.name;openPq(o.id);};
+}
+function pqCard(f){
+  if(!f||!Object.keys(f).length)return '<div class="cov"><header><h4>Prequalification</h4><span class="st tag warn">Nothing on file</span></header>'+
+    '<div class="empty">No safety, bonding or financial record entered yet. Open the prequal file to add one.</div></div>';
+  const sc=pqScore(f);
+  const row=(k,v)=>v!=null&&v!==''?'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>':'';
+  let h='<div class="cov"><header><h4>Prequalification</h4>'+
+    (sc.score!=null?'<span class="st tag '+(sc.score>=3.5?'ok':sc.score>=2.5?'warn':'crit')+'">Score '+r2(sc.score)+' / 4 &middot; '+sc.label+'</span>':'<span class="st tag neutral">Not scored</span>')+
+    '</header><table class="limits"><tbody>';
+  h+=row('AL license #',f.license)+row('License status',f.licenseStatus)+row('Company type',f.orgType)+
+     row('Years in business',f.years)+row('Years under present name',f.yearsName)+
+     row('EMR, 3-year average',f.emrAvg!=null?r2(f.emrAvg):null)+
+     row('EMR by year',[f.emr1,f.emr2,f.emr3].filter(v=>v!=null&&v!=='').join(' / '))+
+     row('OSHA citations, 3-year average',f.oshaAvg!=null?r1(f.oshaAvg):null)+
+     row('Surety',f.surety)+row('Bonding capacity, per project',f.bondProject?usd(Number(f.bondProject)):null)+
+     row('Bonding capacity, aggregate',f.bondAgg?usd(Number(f.bondAgg)):null)+
+     row('Bonding in use',f.bondUsed!=null&&f.bondUsed!==''?f.bondUsed+'%':null)+
+     row('Years with current surety',f.suretyYears)+
+     row('Work under contract',f.underContract?usd(Number(f.underContract)):null)+
+     row('Backlog',f.backlog?usd(Number(f.backlog)):null)+
+     row('Largest project, last 5 years',f.largest?usd(Number(f.largest)):null)+
+     row('Financial statement',[f.finStmtType,f.finStmtDate].filter(Boolean).join(' &middot; '))+
+     row('Ever failed to complete work',f.failed)+row('Surety stepped in',f.suretyStep)+
+     row('Pending judgments or claims',f.judgments)+row('Filed suit in last 5 years',f.lawsuits)+
+     row('Reviewed by',[f.reviewBy,f.reviewDate].filter(Boolean).join(' &middot; '));
+  h+='</tbody></table>';
+  if((f.certs||[]).length){
+    h+='<div style="padding:9px 12px;border-top:1px solid var(--line-soft);font-size:13px"><b style="font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Classifications</b>';
+    h+=f.certs.map(c=>esc(c.type)+(c.agency?' &mdash; '+esc(c.agency):'')+(c.number?' <span class="mono">#'+esc(c.number)+'</span>':'')+
+      (c.expires?' &middot; expires '+esc(c.expires)+certFlag(c.expires):'')).join('<br>');
+    h+='</div>';
+  }
+  if(f.notes)h+='<div style="padding:9px 12px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--muted)">'+esc(f.notes)+'</div>';
+  if(sc.missing&&sc.missing.length)h+='<div style="padding:9px 12px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)">Not scored, missing: '+esc(sc.missing.join(', '))+'</div>';
+  return h+'</div>';
+}
+function certStatus(d){
+  if(!d)return 'unk';
+  const t=Date.parse(d); if(isNaN(t))return 'unk';
+  const days=(t-Date.now())/86400000;
+  return days<0?'exp':days<90?'soon':'active';
+}
+function certFlag(d){const s=certStatus(d);
+  return s==='exp'?' <span class="tag crit">Expired</span>':s==='soon'?' <span class="tag warn">Expiring</span>':'';}
+
+/* ---------- prequal scoring (Bailey-Harris qualification statement) ---------- */
+function pqScore(f){
+  const items=[], missing=[];
+  const add=(name,v)=>{if(v==null)missing.push(name);else items.push(v);};
+  const nm=v=>{const x=parseFloat(v);return isFinite(x)?x:null;};
+  add('license status',{'n/a':1,'Expired':3,'Current':4}[f.licenseStatus]||null);
+  add('company type',{'Individual':1,'Joint venture':2,'Partnership':3,'Corporation':4}[f.orgType]||null);
+  const y=nm(f.years); add('years in business',y==null?null:(y<2?1:y<5?2:y<10?3:4));
+  const yn=nm(f.yearsName); add('years under present name',yn==null?null:(yn<2?1:yn<5?2:yn<10?3:4));
+  add('judgments',f.judgments==='Yes'?1:f.judgments==='No'?3:null);
+  add('lawsuits filed',f.lawsuits==='Yes'?2:f.lawsuits==='No'?3:null);
+  const sy=nm(f.suretyYears); add('years with surety',sy==null?null:(sy<1?1:sy<3?2:sy<5?3:4));
+  const bu=nm(f.bondUsed); add('bonding in use',bu==null?null:(bu>80?2:bu>=60?3:4));
+  add('failed to complete',f.failed==='Yes'?2:f.failed==='No'?3:null);
+  add('surety stepped in',f.suretyStep==='Yes'?2:f.suretyStep==='No'?3:null);
+  const e=[f.emr1,f.emr2,f.emr3].map(nm).filter(v=>v!=null);
+  const emrAvg=e.length?e.reduce((a,b)=>a+b,0)/e.length:null;
+  add('EMR',emrAvg==null?null:(emrAvg>1.25?1:emrAvg>=1.1?2:emrAvg>=0.9?3:4));
+  const os=[f.osha1,f.osha2,f.osha3].map(nm).filter(v=>v!=null);
+  const oshaAvg=os.length?os.reduce((a,b)=>a+b,0)/os.length:null;
+  add('OSHA citations',oshaAvg==null?null:(oshaAvg===0?4:oshaAvg<=1?3:oshaAvg<=2?2:1));
+  f.emrAvg=emrAvg; f.oshaAvg=oshaAvg;
+  if(items.length<4)return{score:null,label:null,missing,scored:items.length};
+  const s=items.reduce((a,b)=>a+b,0)/items.length;
+  return{score:s,label:s>=3.5?'Low risk':s>=2.5?'Moderate to low':s>=1.5?'Moderate to high':'High risk',missing,scored:items.length};
+}
+
+/* ---------- prequal editor ---------- */
+function openPq(id){
+  if(!id){
+    const nm=$('#pq-sub').value.trim(); if(!nm)return;
+    id=canonId(slug(nm));
+    if(!S.agg.has(id))S.agg.set(id,{id,name:nm,rows:[],divs:new Set(),jobs:new Set(),total:0,watch:false,n:0,scored:0,avg:null,min:null,max:null,lastJob:''});
+  }
+  S.pqSel=id;
+  const o=S.agg.get(id)||{id,name:id}, f=Object.assign({},o.file||{});
+  const sel=(k,list,v)=>'<select data-k="'+k+'"><option value="">&mdash;</option>'+list.map(x=>'<option'+(v===x?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>';
+  const txt=(k,v,ph,type)=>'<input data-k="'+k+'" '+(type?'type="'+type+'"':'')+' value="'+esc(v==null?'':v)+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>';
+  const fld=(l,inner,hint)=>'<div class="fld"><label>'+l+'</label>'+inner+(hint?'<div class="hint">'+hint+'</div>':'')+'</div>';
+  let h='<form class="form" id="pqform" autocomplete="off" style="max-width:none"><div class="gname" style="margin-bottom:4px">'+esc(o.name)+'</div>'+
+   '<p class="lede" style="margin:0 0 16px">Fields follow Bailey-Harris\'s Subcontractor Qualification Statement. Leave anything you do not have blank &mdash; the score is computed only from what is filled in, and says how many items it used.</p>';
+  h+='<fieldset><legend>Standing</legend><div class="fg">'+
+    fld('Prequal status',sel('status',PQSTAT,f.status))+
+    fld('Reviewed by',txt('reviewBy',f.reviewBy))+
+    fld('Review date',txt('reviewDate',f.reviewDate,'','date'))+
+    fld('AL GC/SC license #',txt('license',f.license))+
+    fld('License status',sel('licenseStatus',['Current','Expired','n/a'],f.licenseStatus))+
+    fld('Company type',sel('orgType',['Corporation','Partnership','Joint venture','Individual'],f.orgType))+
+    fld('Years in business',txt('years',f.years))+
+    fld('Years under present name',txt('yearsName',f.yearsName))+
+    fld('City, state',txt('city',f.city))+
+    fld('Primary contact',txt('contact',f.contact))+
+    fld('Phone',txt('phone',f.phone))+
+    fld('Email',txt('email',f.email))+
+    '</div></fieldset>';
+  h+='<fieldset><legend>Safety</legend><div class="fg">'+
+    fld('EMR, most recent year',txt('emr1',f.emr1,'e.g. 0.87'))+
+    fld('EMR, prior year',txt('emr2',f.emr2))+
+    fld('EMR, two years prior',txt('emr3',f.emr3))+
+    fld('OSHA citations, most recent year',txt('osha1',f.osha1))+
+    fld('OSHA citations, prior year',txt('osha2',f.osha2))+
+    fld('OSHA citations, two years prior',txt('osha3',f.osha3))+
+    fld('TRIR (if provided)',txt('trir',f.trir))+
+    fld('Written safety program on file',sel('safetyProgram',['Yes','No'],f.safetyProgram))+
+    fld('Safety explanation / incidents',txt('safetyNote',f.safetyNote))+
+    '</div></fieldset>';
+  h+='<fieldset><legend>Bonding &amp; financial</legend><div class="fg">'+
+    fld('Surety company',txt('surety',f.surety))+
+    fld('Surety agent',txt('suretyAgent',f.suretyAgent))+
+    fld('Years with current surety',txt('suretyYears',f.suretyYears))+
+    fld('Bonding capacity, per project',txt('bondProject',f.bondProject,'$'))+
+    fld('Bonding capacity, aggregate',txt('bondAgg',f.bondAgg,'$'))+
+    fld('Bonding in use (%)',txt('bondUsed',f.bondUsed,'e.g. 45'))+
+    fld('Total work under contract',txt('underContract',f.underContract,'$'))+
+    fld('Backlog remaining',txt('backlog',f.backlog,'$'))+
+    fld('Largest project, last 5 years',txt('largest',f.largest,'$'))+
+    fld('Financial statement type',sel('finStmtType',['Audited','Reviewed','Compiled','Internal','None provided'],f.finStmtType))+
+    fld('Financial statement date',txt('finStmtDate',f.finStmtDate,'','date'))+
+    fld('WC carrier',txt('wcCarrier',f.wcCarrier))+
+    '</div></fieldset>';
+  h+='<fieldset><legend>Legal &amp; performance history</legend><div class="fg">'+
+    fld('Pending judgments, claims or arbitration',sel('judgments',['Yes','No'],f.judgments))+
+    fld('Filed suit or claim in last 5 years',sel('lawsuits',['Yes','No'],f.lawsuits))+
+    fld('Ever failed to complete awarded work',sel('failed',['Yes','No'],f.failed))+
+    fld('Surety ever stepped in to complete',sel('suretyStep',['Yes','No'],f.suretyStep))+
+    '<div class="fld wide"><label>Explanation</label>'+txt('legalNote',f.legalNote)+'</div>'+
+    '</div></fieldset>';
+  h+='<fieldset><legend>Classifications</legend><div id="certrows"></div>'+
+    '<button class="btn ghost" type="button" id="addcert" style="margin-top:10px">Add a classification</button></fieldset>';
+  h+='<div class="fld wide" style="margin-bottom:16px"><label>Notes</label><textarea data-k="notes" rows="3">'+esc(f.notes||'')+'</textarea></div>';
+  h+='<div class="actions"><button type="submit" class="btn">Save prequal file</button>'+
+     '<button type="button" class="btn ghost" id="pqcancel">Close</button><span class="status" id="pqstatus"></span></div></form>';
+  const box=$('#pq-editor'); box.hidden=false; box.innerHTML=h;
+  S.pqCerts=(f.certs||[]).map(c=>Object.assign({},c));
+  renderCertRows();
+  $('#addcert').onclick=()=>{S.pqCerts.push({type:'',agency:'',number:'',expires:''});renderCertRows();};
+  $('#pqcancel').onclick=()=>{box.hidden=true;box.innerHTML='';};
+  $('#pqform').onsubmit=e=>{e.preventDefault();savePq();};
+  box.scrollIntoView({block:'start',behavior:'smooth'});
+}
+function renderCertRows(){
+  const el=$('#certrows'); if(!el)return;
+  if(!S.pqCerts.length){el.innerHTML='<div class="empty" style="padding:4px 0">None recorded.</div>';return;}
+  el.innerHTML=S.pqCerts.map((c,i)=>'<div class="fg" style="margin-bottom:10px" data-ci="'+i+'">'+
+    '<div class="fld"><label>Type</label><select data-ck="type"><option value="">&mdash;</option>'+
+      CERTS.map(x=>'<option'+(c.type===x?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div>'+
+    '<div class="fld"><label>Certifying agency</label><input data-ck="agency" value="'+esc(c.agency||'')+'"></div>'+
+    '<div class="fld"><label>Certificate no.</label><input data-ck="number" value="'+esc(c.number||'')+'"></div>'+
+    '<div class="fld"><label>Expires</label><input data-ck="expires" type="date" value="'+esc(c.expires||'')+'"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn ghost" type="button" data-rm="'+i+'">Remove</button></div>'+
+    '</div>').join('');
+  $$('#certrows [data-rm]').forEach(b=>b.onclick=()=>{S.pqCerts.splice(Number(b.dataset.rm),1);renderCertRows();});
+  $$('#certrows [data-ci]').forEach(row=>{
+    const i=Number(row.dataset.ci);
+    $$('[data-ck]',row).forEach(inp=>inp.onchange=()=>{S.pqCerts[i][inp.dataset.ck]=inp.value;});
+  });
+}
+async function savePq(){
+  const st=$('#pqstatus'); const id=S.pqSel;
+  const o=S.agg.get(id)||{name:id};
+  const file={name:o.name};
+  $$('#pqform [data-k]').forEach(el=>{const v=el.value.trim(); if(v)file[el.dataset.k]=v;});
+  file.certs=S.pqCerts.filter(c=>c.type);
+    file.updated=new Date().toISOString().slice(0,10);
+  if(!S.db){st.className='status err';st.textContent='No data store &mdash; not saved.';return;}
+  st.className='status';st.textContent='Saving…';
+  try{
+    await S.db.doc('subs/'+id).set({file});
+    st.className='status ok';st.textContent='Saved.';
+    S.subs.set(id,{file}); rebuild();
+  }catch(e){st.className='status err';st.textContent='Could not save: '+(e&&e.code||'error');}
+}
+function renderPqTable(){
+  const rows=Array.from(S.agg?S.agg.values():[]).filter(o=>o.file&&Object.keys(o.file).length>1);
+  const t=$('#pqtable');
+  if(!rows.length){t.innerHTML='<tbody><tr><td class="empty">No prequal files yet. Pick a subcontractor above to start one.</td></tr></tbody>';return;}
+  rows.sort((a,b)=>a.name.localeCompare(b.name));
+  t.innerHTML='<thead><tr><th>Company</th><th>Status</th><th>Score</th><th>EMR avg</th><th>OSHA avg</th>'+
+    '<th>Bond / project</th><th>Bond aggregate</th><th>Surety</th><th>Fin. stmt</th><th>Certs</th><th>Updated</th></tr></thead><tbody>'+
+    rows.map(o=>{const f=o.file,sc=pqScore(f);
+      const emrTag=f.emrAvg!=null?(f.emrAvg>1.0?'<span class="tag crit">'+r2(f.emrAvg)+'</span>':'<span class="tag ok">'+r2(f.emrAvg)+'</span>'):'<span class="na">&mdash;</span>';
+      return '<tr><td><b>'+esc(o.name)+'</b></td>'+
+      '<td>'+(f.status?'<span class="tag '+(f.status==='Approved'?'ok':f.status==='Not approved'?'crit':'warn')+'">'+esc(f.status)+'</span>':'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(sc.score!=null?r2(sc.score)+' <span class="na">/4</span>':'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+emrTag+'</td><td class="n">'+(f.oshaAvg!=null?r1(f.oshaAvg):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(f.bondProject?usd(Number(f.bondProject)):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(f.bondAgg?usd(Number(f.bondAgg)):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(f.surety?esc(f.surety):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+([f.finStmtType,f.finStmtDate].filter(Boolean).map(esc).join(' ')||'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+((f.certs||[]).length?f.certs.length:'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+esc(f.updated||'')+'</td></tr>';}).join('')+'</tbody>';
+}
+
+/* ---------- diversity ---------- */
+function diversityRows(){
+  const out=[];
+  for(const o of (S.agg?S.agg.values():[])){
+    const f=o.file; if(!f||!(f.certs||[]).length)continue;
+    f.certs.forEach(c=>out.push({o,c,st:certStatus(c.expires)}));
+  }
+  const t=$('#dv-type').value,s=$('#dv-status').value;
+  return out.filter(x=>(!t||x.c.type===t)&&divMatch(x.o.divs,S.ddivs,S.ddivMode)&&(!s||x.st===s))
+    .sort((a,b)=>a.o.name.localeCompare(b.o.name));
+}
+function renderDiversity(){
+  const rows=diversityRows(), t=$('#dvtable');
+  if(!rows.length){t.innerHTML='<tbody><tr><td class="empty">No certified subcontractors recorded yet.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Company</th><th>Classification</th><th>Certifying agency</th><th>Certificate no.</th>'+
+    '<th>Expires</th><th>Divisions</th><th>Avg rating</th><th>Jobs</th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td><b>'+esc(x.o.name)+'</b></td><td>'+esc(x.c.type)+'</td>'+
+    '<td>'+(x.c.agency?esc(x.c.agency):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="mono">'+(x.c.number?esc(x.c.number):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+(x.c.expires?esc(x.c.expires)+' '+(x.st==='exp'?'<span class="tag crit">Expired</span>':x.st==='soon'?'<span class="tag warn">Soon</span>':'<span class="tag ok">Current</span>'):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td>'+(Array.from(x.o.divs).sort((a,b)=>Number(a)-Number(b)).join(', ')||'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+scoreTag(x.o.avg)+'</td><td class="n">'+x.o.jobs.size+'</td></tr>').join('')+'</tbody>';
+}
+
+/* ---------- benchmarks ---------- */
+/* ---------- add rating ---------- */
+function rateGroup(el,name){
+  const L={5:'Best in class',4:'Above',3:'Met',2:'Below',1:'Do not use'};
+  el.innerHTML=[5,4,3,2,1].map(v=>'<input type="radio" name="'+name+'" id="'+name+v+'" value="'+v+'">'+
+    '<label for="'+name+v+'">'+v+'<span>'+L[v]+'</span></label>').join('')+
+    '<input type="radio" name="'+name+'" id="'+name+'n" value="" checked><label for="'+name+'n">&mdash;<span>Not scored</span></label>';
+  el.oninput=avgNote;
+}
+function rv(name){const el=document.querySelector('input[name="'+name+'"]:checked');
+  const v=el?el.value:''; return v===''?null:Number(v);}
+function avgNote(){
+  const a=rv('rpm'),b=rv('rsup'),v=[a,b].filter(x=>x!=null);
+  const avg=v.length?v.reduce((x,y)=>x+y,0)/v.length:null;
+  $('#avgnote').innerHTML='Average rating: <b>'+(avg!=null?r1(avg):'&mdash;')+'</b>'+
+    (avg==null?' &middot; enter at least one of the two.':v.length===1?' &middot; only one score entered, so it stands alone.':'');
+}
+function subHint(){
+  const nm=$('#i-sub').value.trim(), h=$('#subhint');
+  if(!nm){h.innerHTML='&nbsp;';return;}
+  const o=S.agg&&S.agg.get(canonId(slug(nm)));
+  h.innerHTML=o&&o.n?'Known sub &mdash; '+o.n+' rating'+(o.n>1?'s':'')+' on file, average '+(o.avg!=null?r1(o.avg):'n/a'):
+    '<span style="color:var(--warn)">New to the desk &mdash; this will create a record.</span>';
+}
+async function saveRating(e){
+  e.preventDefault();
+  const st=$('#formstatus'), btn=$('#savebtn');
+  const pm=rv('rpm'), sp=rv('rsup');
+  if(pm==null&&sp==null){st.className='status err';st.textContent='Enter a PM or superintendent rating.';return;}
+  const jobRaw=$('#i-job').value.trim();
+  const m=jobRaw.match(/^\s*([0-9]{2}[A-Za-z]{0,2}[0-9\-]*[0-9])\s*[-–]?\s*(.*)$/);
+  const amt=parseFloat($('#i-amt').value.replace(/[^0-9.\-]/g,''));
+  const v=[pm,sp].filter(x=>x!=null);
+  const name=$('#i-sub').value.trim();
+  const rec={s:name,sid:canonId(slug(name)),jn:m?m[1]:null,j:m?(m[2]||null):jobRaw,c:$('#i-commit').value.trim()||null,
+    csi:$('#i-csi').value?Number($('#i-csi').value):null,t:$('#i-trade').value.trim()||null,
+    pm,sp,r:v.reduce((a,b)=>a+b,0)/v.length,spm:$('#i-spm').value.trim()||null,ss:$('#i-ssup').value.trim()||null,
+    n:$('#i-notes').value.trim()||null,amt:isFinite(amt)?amt:null,team:$('#i-team').value.trim()||null,
+    again:$('#i-again').value||null,by:$('#i-by').value.trim()||null,on:new Date().toISOString().slice(0,10),src:'desk'};
+  Object.keys(rec).forEach(k=>{if(rec[k]==null)delete rec[k];});
+  if(!S.db){st.className='status err';st.textContent='No data store reachable &mdash; nothing was saved.';return;}
+  btn.disabled=true; st.className='status'; st.textContent='Saving…';
+  try{
+    await S.db.collection('ratings').add(rec);
+    try{localStorage.setItem('bh_by',rec.by||'');}catch(_){}
+    st.className='status ok'; st.textContent='Saved — '+rec.s+' on '+(rec.jn||rec.j||'that job')+'.';
+    $('#ratingform').reset(); rateGroup($('#r-pm'),'rpm'); rateGroup($('#r-sup'),'rsup'); avgNote();
+    try{$('#i-by').value=localStorage.getItem('bh_by')||'';}catch(_){}
+    $('#subhint').innerHTML='&nbsp;';
+  }catch(err){st.className='status err';st.textContent='Could not save: '+((err&&err.code)||'error')+'. Nothing was written.';}
+  finally{btn.disabled=false;}
+}
+function renderRecent(){
+  const l=S.newR.slice().sort((a,b)=>String(b.on||'').localeCompare(String(a.on||''))).slice(0,25);
+  const t=$('#recent');
+  if(!l.length){t.innerHTML='<tbody><tr><td class="empty">Nothing entered through this page yet. The imported backlog lives on the Subcontractors tab.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Date</th><th>Company</th><th>Job</th><th>Div</th><th>PM</th><th>Super</th><th>Avg</th><th>By</th><th>Notes</th></tr></thead><tbody>'+
+    l.map(r=>'<tr><td class="n">'+esc(r.on||'')+'</td><td><b>'+esc(r.s)+'</b></td>'+
+    '<td>'+esc([r.jn,r.j].filter(Boolean).join(' '))+'</td><td class="mono">'+esc(r.csi==null?'':r.csi)+'</td>'+
+    '<td class="n">'+(r.pm!=null?r1(r.pm):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+(r.sp!=null?r1(r.sp):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+scoreTag(r.r)+'</td><td>'+esc(r.by||'')+'</td>'+
+    '<td class="note">'+esc(r.n||'')+'</td></tr>').join('')+'</tbody>';
+}
+
+/* ---------- bulk import ---------- */
+const BK={rows:[]};
+function bkNorm(h){return String(h==null?'':h).toLowerCase().replace(/[^a-z0-9]/g,'');}
+const BKCOLS=[
+  ['company','Company name'],
+  ['job','Job number & name'],
+  ['commit','Commitment / subcontract no.'],
+  ['csi','CSI division'],
+  ['trade','Trade / scope description'],
+  ['pm','BH project manager rating'],
+  ['sup','BH superintendent rating'],
+  ['again','Would you use them again?'],
+  ['amt','Final contract amount'],
+  ['notes','Comments & notes'],
+  ['team','BH project team'],
+  ['spm',"Subcontractor's PM"],
+  ['ssup',"Subcontractor's field lead"],
+  ['by','Entered by']];
+const BKORDER=BKCOLS.map(c=>c[0]);
+const BKREQ={company:1,notes:1};
+const BKMAP={jobnoname:'job',jobnumbername:'job',jobnumber:'job',job:'job',jobno:'job',jobname:'job',
+ commitmentno:'commit',commitment:'commit',commitmentnumber:'commit',subcontractno:'commit',subno:'commit',
+ csidivision:'csi',csi:'csi',csidiv:'csi',csicode:'csi',
+ tradesub:'company',company:'company',companyname:'company',subcontractor:'company',sub:'company',vendor:'company',
+ description:'trade',trade:'trade',scope:'trade',tradedescription:'trade',subdescription:'trade',
+ bhpmrating:'pm',pmrating:'pm',pm:'pm',bhpm:'pm',projectmanagerrating:'pm',
+ bhsuperrating:'sup',superrating:'sup','super':'sup',bhsuper:'sup',superintendentrating:'sup',
+ averagerating:'avg',average:'avg',rating:'avg',avg:'avg',overallrating:'avg',
+ subpmname:'spm',subpm:'spm',subcontractorpm:'spm',
+ subsupername:'ssup',subsuper:'ssup',fieldlead:'ssup',subfieldlead:'ssup',subsuperintendent:'ssup',
+ notes:'notes',comments:'notes',comment:'notes',note:'notes',commentsnotes:'notes',
+ bhprojectteam:'team',projectteam:'team',team:'team',bhteam:'team',
+ woulduseagain:'again',wouldyouusethemagain:'again',useagain:'again',again:'again',usethemagain:'again',
+ enteredby:'by',by:'by',ratedby:'by',reviewedby:'by',
+ finalcontractamount:'amt',finalcontract:'amt',contractamount:'amt',amount:'amt',value:'amt'};
+// the canonical column labels must always parse, whatever the alias table says
+BKCOLS.forEach(c=>{BKMAP[bkNorm(c[1])]=c[0];});
+function bkSplit(text){
+  const lines=String(text).replace(/\r\n?/g,'\n').split('\n').filter(l=>l.trim()!=='');
+  if(!lines.length) return [];
+  const tabs=lines[0].split('\t').length, commas=lines[0].split(',').length;
+  const d=tabs>=commas?'\t':',';
+  return lines.map(l=>{
+    if(d==='\t') return l.split('\t');
+    const out=[];let cur='',q=false;
+    for(let i=0;i<l.length;i++){const c=l[i];
+      if(q){ if(c==='"'){ if(l[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+      else if(c==='"')q=true; else if(c===','){out.push(cur);cur='';} else cur+=c;}
+    out.push(cur); return out;
+  });
+}
+function bkNum(v){
+  if(v==null)return null;
+  let t=String(v).replace(/[$,%\s]/g,'').replace(/^\((.*)\)$/,'-$1');
+  if(t===''||t==='-'||/^#/.test(t))return null;
+  const f=parseFloat(t); return isFinite(f)?f:null;
+}
+function bkBuild(matrix){
+  if(!matrix.length)return{rows:[],hdr:false};
+  // find a header row in the first 8 lines: one where 2+ cells map to known fields
+  let hi=-1,map=null;
+  for(let i=0;i<Math.min(8,matrix.length);i++){
+    const m=matrix[i].map(c=>BKMAP[bkNorm(c)]||null);
+    if(m.filter(Boolean).length>=2){hi=i;map=m;break;}
+  }
+  if(hi<0) return {rows:[],hdr:false,mapped:0,noHeader:true};
+  const body=matrix.slice(hi+1);
+  const pick=(cells,f)=>{const j=map.indexOf(f);return j>=0?cells[j]:undefined;};
+  const fallJob=$('#bk-job').value.trim();
+  const jm=fallJob.match(/^\s*([0-9]{2}[A-Za-z]{0,2}[0-9\-]*[0-9])\s*[-–]?\s*(.*)$/);
+  const out=[];
+  body.forEach((cells,idx)=>{
+    if(!cells.some(c=>String(c==null?'':c).trim()!==''))return;
+    const raw={};BKORDER.forEach(f=>{const v=pick(cells,f);raw[f]=v==null?'':String(v).trim();});
+    let company=raw.company.replace(/^\*+/,'').trim();
+    const pm=bkNum(raw.pm),sup=bkNum(raw.sup);
+    let avg=bkNum(raw.avg);
+    if(avg==null){const v=[pm,sup].filter(x=>x!=null);avg=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;}
+    let jn=null,jname=null;
+    const rj=raw.job.trim();
+    if(rj){const m=rj.match(/^\s*([0-9]{2}[A-Za-z]{0,2}[0-9\-]*[0-9])\s*[-–]?\s*(.*)$/);
+      if(m){jn=m[1];jname=m[2]||null;} else jname=rj;}
+    else if(jm){jn=jm[1];jname=jm[2]||null;}
+    else if(fallJob){jname=fallJob;}
+    const csi=canonCsi(raw.csi);
+    const r={_i:idx+1,s:company,sid:canonId(slug(company)),jn,j:jname,c:raw.commit||null,
+      csi:(typeof csi==='number'?csi:null),t:raw.trade||null,pm,sp:sup,r:avg,
+      spm:raw.spm||null,ss:raw.ssup||null,n:raw.notes||null,amt:bkNum(raw.amt),
+      team:raw.team||null,again:raw.again||null,by:raw.by||null};
+    // verdict
+    const bad=[];
+    if(!company) bad.push('no company name');
+    if(!raw.notes) bad.push('no comments');
+    if(avg==null) bad.push('no rating');
+    else if(avg<0||avg>5) bad.push('rating '+r1(avg)+' is outside 0–5');
+    if(!r.jn&&!r.j) bad.push('no job');
+    r._bad=bad;
+    // duplicate check against what is already on file
+    r._dupe=false;
+    if(!bad.length&&S.agg){
+      const o=S.agg.get(r.sid);
+      if(o&&o.rows.some(x=>String(x.jn||'')===String(r.jn||'')&&
+          (x.r==null?null:Math.round(x.r*100))===(r.r==null?null:Math.round(r.r*100)))) r._dupe=true;
+    }
+    out.push(r);
+  });
+  return {rows:out,hdr:hi>=0,mapped:map?map.filter(Boolean).length:0};
+}
+function bkRender(){
+  const rows=BK.rows, t=$('#bk-table');
+  const ok=rows.filter(r=>!r._bad.length&&!r._dupe);
+  const dup=rows.filter(r=>!r._bad.length&&r._dupe);
+  const bad=rows.filter(r=>r._bad.length);
+  const newSubs=new Set(ok.concat(dup).filter(r=>!(S.agg&&S.agg.get(r.sid))).map(r=>r.sid));
+  $('#bk-kpi').innerHTML=
+    '<div class="kpi"><span class="k">Rows read</span><span class="v">'+rows.length+'</span></div>'+
+    '<div class="kpi"><span class="k">Ready to import</span><span class="v">'+ok.length+'</span></div>'+
+    '<div class="kpi"><span class="k">Look like duplicates</span><span class="v">'+dup.length+'</span></div>'+
+    '<div class="kpi"><span class="k">Need attention</span><span class="v">'+bad.length+'</span></div>'+
+    '<div class="kpi"><span class="k">New subcontractors</span><span class="v">'+newSubs.size+'</span></div>';
+  t.innerHTML='<thead><tr><th>#</th><th>Status</th><th>Company</th><th>Job</th><th>Div</th><th>Scope</th><th>PM</th><th>Super</th>'+
+    '<th>Avg</th><th>Again?</th><th>Sub PM / field</th><th>BH team</th><th>Amount</th><th>Comments</th><th>By</th></tr></thead><tbody>'+
+    (rows.length?rows.map(r=>{
+      const st=r._bad.length?'<span class="tag crit" title="'+esc(r._bad.join('; '))+'">'+esc(r._bad[0])+'</span>'
+        :r._dupe?'<span class="tag warn">already on file</span>':'<span class="tag ok">ready</span>';
+      const isNew=!r._bad.length&&!(S.agg&&S.agg.get(r.sid));
+      return '<tr><td class="n">'+r._i+'</td><td>'+st+'</td>'+
+      '<td><b>'+esc(r.s||'—')+'</b>'+(isNew?' <span class="tag accent">new</span>':'')+'</td>'+
+      '<td>'+esc([r.jn,r.j].filter(Boolean).join(' ')||'—')+'</td>'+
+      '<td class="mono">'+(r.csi==null?'<span class="na">—</span>':r.csi)+'</td>'+
+      '<td>'+(r.t?esc(r.t):'<span class="na">—</span>')+'</td>'+
+      '<td class="n">'+(r.pm!=null?r1(r.pm):'<span class="na">—</span>')+'</td>'+
+      '<td class="n">'+(r.sp!=null?r1(r.sp):'<span class="na">—</span>')+'</td>'+
+      '<td class="n">'+scoreTag(r.r)+'</td>'+
+      '<td>'+(r.again?esc(r.again):'<span class="na">—</span>')+'</td>'+
+      '<td>'+([r.spm,r.ss].filter(v=>v&&v!=='-').map(esc).join('<br>')||'<span class="na">—</span>')+'</td>'+
+      '<td>'+(r.team?esc(r.team):'<span class="na">—</span>')+'</td>'+
+      '<td class="n">'+(r.amt!=null?usd(r.amt):'<span class="na">—</span>')+'</td>'+
+      '<td class="note">'+(r.n&&r.n!=='-'?esc(r.n):'<span class="na">—</span>')+'</td>'+
+      '<td>'+(r.by?esc(r.by):'<span class="na">—</span>')+'</td></tr>';
+    }).join(''):'<tr><td colspan="15" class="empty">Nothing read yet.</td></tr>')+'</tbody>';
+  const n=ok.length+($('#bk-dupes').checked?dup.length:0);
+  const btn=$('#bk-import');
+  btn.disabled=!n; btn.textContent=n?('Import '+n+' rating'+(n===1?'':'s')):'Nothing to import';
+  $('#bk-review').hidden=!rows.length;
+}
+function bkFromText(text){
+  const m=bkSplit(text);
+  const res=bkBuild(m);
+  BK.rows=res.rows;
+  const msg=$('#bk-msg'); msg.className='status';
+  if(res.noHeader){msg.className='status err';
+    msg.textContent='No header row recognised, so nothing was read — guessing which column is which risks putting a rating on the wrong subcontractor. Include the heading row, or start from the template.';}
+  else if(!res.rows.length){msg.className='status err';msg.textContent='Nothing readable in that.';}
+  else msg.textContent='Read '+res.rows.length+' row'+(res.rows.length===1?'':'s')+' using the header row — '+res.mapped+' columns matched.';
+  bkRender();
+}
+$('#bk-parse').addEventListener('click',()=>{
+  const t=$('#bk-paste').value.trim();
+  if(!t){$('#bk-msg').className='status err';$('#bk-msg').textContent='Paste some rows first, or choose a file.';return;}
+  bkFromText(t);
+});
+$('#bk-clear').addEventListener('click',()=>{
+  BK.rows=[];$('#bk-paste').value='';$('#bk-file').value='';$('#bk-fname').textContent='';
+  $('#bk-msg').textContent='';$('#bk-status').textContent='';$('#bk-review').hidden=true;
+});
+$('#bk-dupes').addEventListener('change',bkRender);
+$('#bk-file').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  $('#bk-fname').textContent=f.name;
+  const msg=$('#bk-msg'); msg.className='status'; msg.textContent='Reading '+f.name+'…';
+  const xl=/\.xls[xmb]?$/i.test(f.name);
+  if(!xl){ try{ bkFromText(await f.text()); }catch(err){ msg.className='status err'; msg.textContent='Could not read that file.'; } return; }
+  try{
+    await bkXlsx();
+    const buf=await f.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    let best=null;
+    wb.SheetNames.forEach(nm=>{
+      const a=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:false,defval:''});
+      const score=a.reduce((n,row)=>n+(row.some(c=>BKMAP[bkNorm(c)])?1:0),0)*1000+a.length;
+      if(!best||score>best.score) best={score,a,nm};
+    });
+    if(!best){msg.className='status err';msg.textContent='No sheets in that workbook.';return;}
+    const res=bkBuild(best.a); BK.rows=res.rows;
+    msg.textContent='Read '+res.rows.length+' row'+(res.rows.length===1?'':'s')+' from sheet "'+best.nm+'"'+
+      (res.hdr?' ('+res.mapped+' columns matched).':' — no header row found, so the standard column order was assumed.');
+    bkRender();
+  }catch(err){
+    msg.className='status err';
+    msg.textContent='Could not read that workbook here. Open it in Excel, copy the rows and paste them instead.';
+  }
+});
+let bkXlsxP=null;
+function bkXlsx(){
+  if(window.XLSX) return Promise.resolve();
+  if(bkXlsxP) return bkXlsxP;
+  bkXlsxP=new Promise((res,rej)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload=()=>window.XLSX?res():rej(new Error('no XLSX'));
+    sc.onerror=()=>rej(new Error('blocked'));
+    document.head.appendChild(sc);
+    setTimeout(()=>rej(new Error('timeout')),12000);
+  });
+  return bkXlsxP;
+}
+$('#bk-tpl').addEventListener('click',async()=>{
+  const st=$('#bk-msg'); st.className='status';
+  if(!S.dl){st.className='status err';st.textContent='Downloads are not available in this view — copy the headings from the hint instead.';return;}
+  const body='﻿'+csv([BKCOLS.map(c=>c[1]),
+    ['Example Plumbing, Inc.','25AU007 TU Younge Hall Restrooms','40125AU007','22','Underground and interior plumbing',
+     '4','3','Yes','134500','In and out, no problems. Blake ran it himself and kept ahead of the drywall.',
+     'Clay Crews, Cleo Lopez','Jane Doe','Bob Roe',($('#bk-by').value.trim()||'Your name')]]);
+  try{await S.dl.save({filename:'bh-sub-ratings-template.csv',data:body});st.textContent='Template saved.';}
+  catch(e){const c=e&&e.code;st.className='status'+(c==='declined'?'':' err');
+    st.textContent=c==='declined'?'Download cancelled.':'Could not save the template.';}
+});
+$('#bk-import').addEventListener('click',async()=>{
+  const st=$('#bk-status'), btn=$('#bk-import');
+  if(!S.db){st.className='status err';st.textContent='No data store reachable — nothing was saved.';return;}
+  const by=$('#bk-by').value.trim();
+  if(!by){st.className='status err';st.textContent='Put your name in "Entered by" first.';return;}
+  let list=BK.rows.filter(r=>!r._bad.length&&(!r._dupe||$('#bk-dupes').checked));
+  if(!list.length)return;
+  btn.disabled=true; st.className='status';
+  const on=new Date().toISOString().slice(0,10);
+  let done=0,failed=0;
+  for(const r of list){
+    const rec={s:r.s,sid:r.sid,jn:r.jn,j:r.j,c:r.c,csi:r.csi,t:r.t,pm:r.pm,sp:r.sp,r:r.r,
+      spm:r.spm,ss:r.ss,n:r.n,amt:r.amt,team:r.team,again:r.again,by:(r.by||by),on,src:'bulk'};
+    Object.keys(rec).forEach(k=>{if(rec[k]==null)delete rec[k];});
+    try{ await S.db.collection('ratings').add(rec); done++; }
+    catch(e){ failed++; }
+    st.textContent='Saving… '+done+' of '+list.length;
+  }
+  try{localStorage.setItem('bh_by',by);}catch(_){}
+  if(failed){st.className='status err';st.textContent='Imported '+done+', but '+failed+' failed. Re-read the rows and try the rest.';}
+  else{st.className='status ok';st.textContent='Imported '+done+' rating'+(done===1?'':'s')+'.';
+    BK.rows=[];$('#bk-paste').value='';$('#bk-file').value='';$('#bk-fname').textContent='';$('#bk-review').hidden=true;}
+  btn.disabled=false;
+});
+try{$('#bk-by').value=localStorage.getItem('bh_by')||'';}catch(_){}
+(function(){ const el=$('#bk-cols'); if(!el)return;
+  el.innerHTML='Columns, in any order &mdash; <b>Company name</b> and <b>Comments &amp; notes</b> are required, plus a PM or superintendent rating: '+
+    BKCOLS.map(c=>esc(c[1])).join(' &middot; ')+
+    '. A header row is required so nothing lands on the wrong subcontractor. Your existing workbook headings (Trade / Sub, BH PM Rating, Average Rating, Sub Super Name&hellip;) are recognised as well.';
+})();
+
+
+/* ---------- sources / gaps ---------- */
+/* ---------- fix a record ---------- */
+const XF=[['s','Company name','sub'],['job','Job number & name','job'],
+ ['c','Commitment / subcontract no.','text'],['csi','CSI division','csi'],
+ ['t','Trade / scope description','text'],
+ ['pm','BH project manager rating','num'],['sp','BH superintendent rating','num'],
+ ['again','Would you use them again?','again'],['amt','Final contract amount','num'],
+ ['team','BH project team','text'],['spm',"Subcontractor's PM",'text'],
+ ['ss',"Subcontractor's field lead",'text'],['by','Entered by','text'],
+ ['n','Comments & notes','area']];
+const XHINT={
+ csi:'The division the work actually falls under. Miscoding here is what makes a sub invisible when buyout filters by trade.',
+ t:'What the package covered, in a few words. "Div 22" is not a scope description.',
+ pm:'0 to 5, or leave blank. The average of the two is recalculated when you save.',
+ sp:'0 to 5, or leave blank.',
+ s:'Changing this moves the rating to a different subcontractor. If it is the same firm spelled differently, merge them on the Duplicate names tab instead.',
+ n:'This is what buyout reads. Be specific about people and causes.'};
+function xRows(){
+  const q=$('#x-q').value.trim().toLowerCase();
+  const fs=$('#x-sub').value, fj=$('#x-job').value, fc=$('#x-csi').value, only=$('#x-only').value;
+  let l=allR().slice();
+  if(fs)l=l.filter(r=>canonId(r.sid||slug(r.s))===fs);
+  if(fj)l=l.filter(r=>String(r.jn||'')===fj);
+  if(fc)l=l.filter(r=>String(canonCsi(r.csi)||'')===fc);
+  if(only==='edited')l=l.filter(r=>r._edited);
+  else if(only==='nocsi')l=l.filter(r=>canonCsi(r.csi)==null);
+  else if(only==='notrade')l=l.filter(r=>!r.t);
+  else if(only==='noamt')l=l.filter(r=>typeof r.amt!=='number');
+  else if(only==='nonotes')l=l.filter(r=>!r.n);
+  if(q)l=l.filter(r=>[r.s,r.jn,r.j,r.c,r.t,r.n,r.spm,r.ss,r.by,r.team].some(v=>v&&String(v).toLowerCase().includes(q)));
+  l.sort((a,b)=>String(b.jn||'').localeCompare(String(a.jn||''))||String(a.s||'').localeCompare(String(b.s||'')));
+  return l;
+}
+function renderFix(){
+  if(!S.agg)return;
+  const all=allR(), l=xRows();
+  const miss=f=>all.filter(f).length;
+  $('#x-kpi').innerHTML=
+   '<div class="kpi"><span class="k">Ratings on file</span><span class="v">'+n0(all.length)+'</span></div>'+
+   '<div class="kpi"><span class="k">Corrected here</span><span class="v">'+n0(all.filter(r=>r._edited).length)+'</span></div>'+
+   '<div class="kpi"><span class="k">No CSI division</span><span class="v">'+n0(miss(r=>canonCsi(r.csi)==null))+'</span></div>'+
+   '<div class="kpi"><span class="k">No trade description</span><span class="v">'+n0(miss(r=>!r.t))+'</span></div>'+
+   '<div class="kpi"><span class="k">No contract amount</span><span class="v">'+n0(miss(r=>typeof r.amt!=='number'))+'</span></div>';
+  $('#x-table').innerHTML='<thead><tr><th>Job</th><th>Subcontractor</th><th>Div</th><th>Trade / scope</th>'+
+    '<th>PM</th><th>Super</th><th>Avg</th><th>Amount</th><th>Notes</th><th></th></tr></thead><tbody>'+
+    (l.length?l.slice(0,150).map(r=>{
+      const id=ridOf(r);
+      return '<tr'+(id===S.fxSel?' style="background:var(--tint)"':'')+'>'+
+      '<td class="mono">'+esc(r.jn||'')+'<div class="na" style="font-weight:400;font-size:11.5px">'+esc(r.j||'')+'</div></td>'+
+      '<td>'+esc(r.s||'')+(r._edited?' <span class="tag accent" title="corrected in the desk'+(r._editedBy?' by '+esc(r._editedBy):'')+(r._editedOn?' on '+esc(r._editedOn):'')+'">corrected</span>':'')+'</td>'+
+      '<td class="n"'+(canonCsi(r.csi)!=null?' title="'+String(csiName(r.csi)||'').replace(/&middot;/g,'-').replace(/&amp;/g,'&').replace(/"/g,'')+'"':'')+'>'+
+        (canonCsi(r.csi)!=null?esc(String(canonCsi(r.csi))):'<span class="tag warn">none</span>')+'</td>'+
+      '<td>'+(r.t?esc(r.t):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(typeof r.pm==='number'?r1(r.pm):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(typeof r.sp==='number'?r1(r.sp):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(typeof r.r==='number'?scoreTag(r.r):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(typeof r.amt==='number'?usd(r.amt):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(r.n?esc(String(r.n).slice(0,70))+(String(r.n).length>70?'&hellip;':''):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td><button class="btn ghost" type="button" data-fix="'+esc(id||'')+'">Fix</button></td></tr>';
+    }).join('')+(l.length>150?'<tr><td colspan="10" class="na">Showing the first 150 of '+n0(l.length)+' &mdash; narrow it with the filters above.</td></tr>':'')
+    :'<tr><td colspan="10" class="empty">Nothing matches those filters.</td></tr>')+'</tbody>';
+  $$('#x-table button[data-fix]').forEach(b=>b.onclick=()=>openFix(b.dataset.fix));
+  // rebuild() runs on every incoming change, so re-rendering the form here would
+  // throw away whatever someone is halfway through typing -- only open it when it
+  // is not already showing this record
+  if(S.fxSel){
+    const ed=$('#x-editor');
+    if(!ed||ed.hidden||ed.dataset.rid!==S.fxSel)openFix(S.fxSel,true);
+    else if(!findRec(S.fxSel)){ed.hidden=true;S.fxSel=null;}
+  }
+}
+function findRec(id){return allR().find(r=>ridOf(r)===id)||null;}
+function rawRec(id){return rawAllR().find(r=>ridOf(r)===id)||null;}
+function openFix(id,keep){
+  const r=findRec(id);
+  if(!r){S.fxSel=null;$('#x-editor').hidden=true;return;}
+  S.fxSel=id;
+  const orig=rawRec(id)||{};
+  const P=S.projects||[];
+  const subNames=Array.from(new Set(Array.from(S.agg.values()).map(o=>o.name))).sort();
+  const jobs=Array.from(new Set(allR().map(x=>x.jn&&(x.jn+' '+(x.j||'')).trim()).filter(Boolean))).sort().reverse();
+  const val=k=>{
+    if(k==='job')return (r.jn||'')+(r.j?' '+r.j:'');
+    return r[k]==null?'':r[k];
+  };
+  let h='<h2 class="sect">'+esc(r.jn||'')+' &middot; '+esc(r.s||'')+
+    (r._edited?' <span class="tag accent">corrected</span>':'')+'</h2>'+
+    '<form class="form" id="x-form" autocomplete="off" style="max-width:none"><div class="fg">';
+  XF.forEach(([k,label,t])=>{
+    const v=val(k); let inp;
+    if(t==='sub')inp='<input data-k="'+k+'" list="dl-xsub" value="'+esc(v)+'"><datalist id="dl-xsub">'+
+      subNames.map(o=>'<option value="'+esc(o)+'"></option>').join('')+'</datalist>';
+    else if(t==='job')inp='<input data-k="'+k+'" list="dl-xjob" value="'+esc(v)+'"><datalist id="dl-xjob">'+
+      jobs.map(o=>'<option value="'+esc(o)+'"></option>').join('')+'</datalist>';
+    else if(t==='csi')inp='<select data-k="'+k+'"><option value="">&mdash; none &mdash;</option>'+
+      (S.divList||[]).map(dv=>'<option value="'+esc(dv[0])+'"'+(String(canonCsi(r.csi)||'')===String(dv[0])?' selected':'')+'>'+dv[1]+'</option>').join('')+'</select>';
+    else if(t==='again')inp='<select data-k="'+k+'">'+
+      ['','Yes, first call','Yes','Yes, with conditions','Only if no alternative','No']
+        .map(o=>'<option value="'+esc(o)+'"'+(String(v)===o?' selected':'')+'>'+(o||'&mdash;')+'</option>').join('')+'</select>';
+    else if(t==='area')inp='<textarea data-k="'+k+'" rows="4">'+esc(v)+'</textarea>';
+    else inp='<input data-k="'+k+'" value="'+esc(v)+'"'+(t==='num'?' inputmode="decimal"':'')+'>';
+    const was=orig[k]==null?'':orig[k];
+    const changed=k!=='job'&&String(was)!==String(v);
+    h+='<div class="fld'+(t==='area'||k==='t'?' wide':'')+'"><label>'+label+'</label>'+inp+
+      (XHINT[k]?'<span class="hint">'+XHINT[k]+'</span>':'')+
+      (changed?'<span class="hint">Imported as: <b>'+esc(String(was)||'blank')+'</b></span>':'')+
+      '</div>';
+  });
+  h+='</div><div class="fg"><div class="fld"><label>Your name <span class="req">*</span></label>'+
+      '<input id="x-by" value="'+esc(r._editedBy||'')+'" placeholder="so the change is attributable"></div></div>'+
+    '<div class="actions">'+
+    '<button type="button" class="btn" id="x-save">Save the correction</button>'+
+    (r._edited?'<button type="button" class="btn ghost" id="x-revert">Back to the imported values</button>':'')+
+    '<button type="button" class="btn ghost" id="x-del">Remove this rating</button>'+
+    '<button type="button" class="btn ghost" id="x-close">Close</button>'+
+    '<span class="status" id="x-status"></span></div>'+
+    '<p class="lede" style="margin:10px 0 0">The average score is recalculated from the two ratings when you save. '+
+    'Removing a rating hides it from the desk and from every average; the imported row itself is never deleted, so it can be brought back.</p>'+
+    '</form>';
+  $('#x-editor').innerHTML=h;
+  $('#x-editor').dataset.rid=id;
+  $('#x-editor').hidden=false;
+  $('#x-save').onclick=saveFix;
+  $('#x-del').onclick=()=>delFix(id);
+  $('#x-close').onclick=()=>{S.fxSel=null;$('#x-editor').hidden=true;};
+  const rv=$('#x-revert'); if(rv)rv.onclick=()=>revertFix(id);
+  if(!keep)$('#x-editor').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function saveFix(){
+  const id=S.fxSel, r=findRec(id), orig=rawRec(id)||{};
+  const by=($('#x-by')||{}).value;
+  if(!String(by||'').trim()){xsay('Put your name in first \u2014 corrections are attributable.',1);return;}
+  const patch={};
+  $$('#x-form [data-k]').forEach(el=>{
+    const k=el.dataset.k; let v=el.value;
+    if(k==='job'){
+      const m=String(v||'').trim().match(/^(\S+)\s*(.*)$/);
+      patch.jn=m?m[1]:null; patch.j=m?(m[2]||null):null; return;
+    }
+    if(k==='s'){
+      const nm=String(v||'').trim();
+      patch.s=nm||null; patch.sid=nm?canonId(slug(nm)):null; return;
+    }
+    if(k==='csi'){patch.csi=v===''?null:(isNaN(Number(v))?v:Number(v));return;}
+    if(k==='pm'||k==='sp'||k==='amt'){
+      const n=Number(String(v).replace(/[^0-9.\-]/g,''));
+      patch[k]=(v===''||!isFinite(n))?null:n; return;
+    }
+    patch[k]=String(v||'').trim()||null;
+  });
+  const sc=[patch.pm,patch.sp].filter(v=>typeof v==='number'&&isFinite(v));
+  patch.r=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length*100)/100:null;
+  if(typeof patch.pm==='number'&&(patch.pm<0||patch.pm>5)){xsay('The PM rating has to be between 0 and 5.',1);return;}
+  if(typeof patch.sp==='number'&&(patch.sp<0||patch.sp>5)){xsay('The superintendent rating has to be between 0 and 5.',1);return;}
+  // store only what actually differs from the imported row, so the record stays
+  // readable as "what was corrected" rather than a second full copy
+  const diff={};
+  Object.keys(patch).forEach(k=>{
+    const was=orig[k]==null?null:orig[k];
+    if(String(was===null?'':was)!==String(patch[k]===null?'':patch[k]))diff[k]=patch[k];
+  });
+  // sid is only ever derived from the company name; carrying it on its own just
+  // records the name merge again, which is not a correction anyone made
+  if(diff.sid!==undefined&&diff.s===undefined)delete diff.sid;
+  if(!Object.keys(diff).length){xsay('Nothing changed.');return;}
+  diff._on=new Date().toISOString().slice(0,10); diff._by=String(by).trim();
+  writeEdit(id,diff,'Correction saved.');
+}
+function delFix(id){
+  const by=($('#x-by')||{}).value;
+  if(!String(by||'').trim()){xsay('Put your name in first.',1);return;}
+  writeEdit(id,{_del:true,_on:new Date().toISOString().slice(0,10),_by:String(by).trim()},
+    'Removed. It is out of every average now.');
+}
+async function revertFix(id){
+  if(!S.db){xsay('Not connected.',1);return;}
+  try{ await S.db.collection('rating_edits').doc(id).delete();
+       const m=new Map(edits()); m.delete(id); S.edits=m; rebuild();
+       xsay('Back to the imported values.'); }
+  catch(e){ xsay('Could not undo: '+(e&&e.message||e),1); }
+}
+function xsay(t,bad){
+  // #x-status lives inside the editor, which is rebuilt on every render, so
+  // anything worth reading goes in the slot above the table instead
+  [$('#x-msg'),$('#x-status')].forEach(el=>{if(!el)return;
+    el.className='status '+(bad?'err':'ok'); el.textContent=t;});
+  clearTimeout(xsay._t); xsay._t=setTimeout(()=>{const m=$('#x-msg');if(m)m.textContent='';},6000);
+}
+async function writeEdit(id,diff,msg){
+  if(!S.db){xsay('Not connected, so nothing was saved.',1);return;}
+  try{
+    const cur=edits().get(id)||{};
+    const next=Object.assign({},cur,diff);
+    await S.db.collection('rating_edits').doc(id).set(next);
+    const m=new Map(edits()); m.set(id,next); S.edits=m; rebuild(); xsay(msg||'Saved.');
+  }catch(e){ xsay('Could not save: '+(e&&e.message||e),1); }
+}
+['x-q','x-sub','x-job','x-csi','x-only'].forEach(id=>{
+  const el=$('#'+id); if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',renderFix);
+});
+$('#x-reset').addEventListener('click',()=>{
+  $('#x-q').value='';['x-sub','x-job','x-csi','x-only'].forEach(i=>$('#'+i).value='');
+  S.fxSel=null;$('#x-editor').hidden=true;renderFix();});
+
+/* ---------- names the ERP cut off at 30 characters ---------- */
+const NAMECAP=30;
+function nameOk(){return (MG().nameOk||{});}
+function truncSuspects(){
+  return Array.from(S.agg.values())
+    .filter(o=>o.name&&o.name.length===NAMECAP&&!nameOk()[o.id])
+    .sort((a,b)=>(b.n||0)-(a.n||0)||a.name.localeCompare(b.name));
+}
+function renderTrunc(){
+  if(!S.agg)return;
+  const all=truncSuspects();
+  const q=$('#t-q').value.trim().toLowerCase();
+  const l=q?all.filter(o=>o.name.toLowerCase().includes(q)):all;
+  const done=Object.keys(nameOk()).length;
+  $('#t-status').textContent=all.length+' to check'+(done?' · '+done+' marked fine':'');
+  $('#t-table').innerHTML='<thead><tr><th>Name as ComputerEase stored it</th><th>Ratings</th>'+
+    '<th>Divisions</th><th>The full name</th><th></th></tr></thead><tbody>'+
+    (l.length?l.slice(0,80).map(o=>'<tr>'+
+      '<td class="mono">'+esc(o.name)+'</td>'+
+      '<td class="n">'+(o.n||0)+'</td>'+
+      '<td>'+(Array.from(o.divs).sort((a,b)=>Number(a)-Number(b)).slice(0,6)
+        .map(d=>'<span class="tag accent">'+(csiName(d)||esc(d))+'</span>').join('')||'<span class="na">&mdash;</span>')+'</td>'+
+      '<td><input type="text" id="tn-'+esc(o.id)+'" value="'+esc(o.name)+'" style="width:250px"></td>'+
+      '<td><div class="srow" style="gap:6px;flex-wrap:nowrap">'+
+        '<button class="btn" type="button" data-tfix="'+esc(o.id)+'">Save</button>'+
+        '<button class="btn ghost" type="button" data-tok="'+esc(o.id)+'">Name is fine</button>'+
+      '</div></td></tr>').join('')+
+      (l.length>80?'<tr><td colspan="5" class="na">Showing 80 of '+l.length+'.</td></tr>':'')
+     :'<tr><td colspan="5" class="empty">'+(all.length?'Nothing matches that search.':'Every 30-character name has been checked.')+'</td></tr>')+'</tbody>';
+  $$('#t-table button[data-tfix]').forEach(b=>b.onclick=()=>{
+    const v=(document.getElementById('tn-'+b.dataset.tfix)||{}).value;
+    if(!String(v||'').trim()||String(v).trim().length===NAMECAP){
+      xsayT('Type the rest of the name first \u2014 it still stops at '+NAMECAP+' characters.',1);return;}
+    renameCanon(b.dataset.tfix,v);
+    xsayT('Saved as "'+String(v).trim()+'".');
+  });
+  $$('#t-table button[data-tok]').forEach(b=>b.onclick=()=>markNameOk(b.dataset.tok));
+}
+function xsayT(t,bad){const el=$('#t-msg');if(!el)return;
+  el.className='status '+(bad?'err':'ok');el.textContent=t;
+  clearTimeout(xsayT._t);xsayT._t=setTimeout(()=>{el.textContent='';},6000);}
+function markNameOk(id){
+  const mg=JSON.parse(JSON.stringify(MG()));
+  mg.nameOk=mg.nameOk||{}; mg.nameOk[id]=true;
+  saveMg(mg,'Marked as a complete name.');
+  xsayT('Marked as a complete name.');
+}
+$('#t-q').addEventListener('input',renderTrunc);
+
+/* ---------- duplicate names ---------- */
+function mgDismissed(){return (MG().dismissed||{});}
+function pairKey(a,b){return [slug(a),slug(b)].sort().join('__');}
+/* one row per pair, not per group: an unrelated suggestion should be one line
+   to reject, not something that clutters a group it has nothing to do with */
+function mergePairs(){
+  const mg=MG(), out=[], dis=mgDismissed(), seen={};
+  (mg.review||[]).forEach(g=>{
+    g.cands.forEach(c=>{
+      const A=canonId(slug(g.head)), B=canonId(slug(c.name));
+      if(A===B)return;                                  // already merged
+      const k=pairKey(g.head,c.name);
+      if(dis[k]||seen[k])return;
+      seen[k]=1;
+      const oa=S.agg.get(A), ob=S.agg.get(B);
+      if(!oa||!ob)return;
+      out.push({key:k,tier:c.tier,shared:c.shared||'',
+        a:{id:A,name:oa.name,n:oa.n,divs:Array.from(oa.divs).sort()},
+        b:{id:B,name:ob.name,n:ob.n,divs:Array.from(ob.divs).sort()}});
+    });
+  });
+  return out;
+}
+function renderMerge(){
+  if(!S.agg)return;
+  const mg=MG(), m=mgMap(), names=mg.names||{}, aka=mg.aka||{}, why=mg.why||{};
+  const all=mergePairs();
+  const showWeak=$('#g-weak').checked;
+  const q=$('#g-q').value.trim().toLowerCase();
+  let list=all.filter(p=>showWeak||p.tier==='abbrev');
+  if(q)list=list.filter(p=>p.a.name.toLowerCase().includes(q)||p.b.name.toLowerCase().includes(q));
+  list.sort((x,y)=>(y.tier==='abbrev')-(x.tier==='abbrev')||(y.a.n+y.b.n)-(x.a.n+x.b.n));
+
+  const nAbbrev=all.filter(p=>p.tier==='abbrev').length;
+  $('#g-kpi').innerHTML=
+   '<div class="kpi"><span class="k">Subcontractors on file</span><span class="v">'+n0(S.agg.size)+'</span></div>'+
+   '<div class="kpi"><span class="k">Spellings merged</span><span class="v">'+n0(Object.keys(m).length)+' <small>into '+n0(Object.keys(aka).length)+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Worth a look</span><span class="v">'+n0(nAbbrev)+'</span></div>'+
+   '<div class="kpi"><span class="k">Share only a word</span><span class="v">'+n0(all.length-nAbbrev)+' <small>usually different firms</small></span></div>';
+
+  $('#g-status').textContent=list.length?(list.length+' pair'+(list.length===1?'':'s')+' to decide'):'';
+  $('#g-review').innerHTML=list.length
+   ?'<div class="tablewrap"><table class="grid"><thead><tr><th>This sub</th><th>Ratings</th>'+
+    '<th>Might be the same as</th><th>Ratings</th><th>Evidence</th><th>Keep it as</th><th></th></tr></thead><tbody>'+
+    list.slice(0,60).map(p=>{
+      const dflt=p.a.n>=p.b.n?p.a.name:p.b.name;
+      return '<tr>'+
+      '<td><b>'+esc(p.a.name)+'</b><div class="na" style="font-size:11.5px">'+(p.a.divs.length?'division '+p.a.divs.join(', '):'no division')+'</div></td>'+
+      '<td class="n">'+p.a.n+'</td>'+
+      '<td><b>'+esc(p.b.name)+'</b><div class="na" style="font-size:11.5px">'+(p.b.divs.length?'division '+p.b.divs.join(', '):'no division')+'</div></td>'+
+      '<td class="n">'+p.b.n+'</td>'+
+      '<td>'+(p.tier==='abbrev'
+        ?'<span class="tag warn" title="the same identity with only trade or legal words differing">likely the same</span>'
+        :'<span class="tag neutral" title="they share this word and nothing more, which is often a coincidence">shares &ldquo;'+esc(p.shared)+'&rdquo;</span>')+
+        (p.a.divs.length&&p.b.divs.length&&!p.a.divs.some(d=>p.b.divs.indexOf(d)>=0)
+          ?' <span class="tag crit" title="they have never been rated in the same CSI division, which points to two different firms">different trades</span>':'')+'</td>'+
+      '<td><input type="text" id="gp-'+esc(p.key)+'" value="'+esc(dflt)+'" style="width:200px"></td>'+
+      '<td><div class="srow" style="gap:6px;flex-wrap:nowrap">'+
+        '<button class="btn" type="button" data-same="'+esc(p.key)+'" data-a="'+esc(p.a.name)+'" data-b="'+esc(p.b.name)+'">Same firm</button>'+
+        '<button class="btn ghost" type="button" data-diff="'+esc(p.key)+'">Different</button>'+
+      '</div></td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    (list.length>60?'<p class="lede">Showing the first 60 of '+list.length+'.</p>':'')
+   :'<div class="empty">'+(all.length&&!showWeak
+      ?'Nothing left that looks likely. Tick the box above to see the '+(all.length-nAbbrev)+' pairs that share only a word.'
+      :(q?'Nothing matches that search.':'Every pair has been decided.'))+'</div>';
+
+  $$('#g-review button[data-same]').forEach(btn=>btn.onclick=()=>{
+    const nm=(document.getElementById('gp-'+btn.dataset.same)||{}).value;
+    applyMerge(nm,[btn.dataset.a,btn.dataset.b],'confirmed in the desk');
+  });
+  $$('#g-review button[data-diff]').forEach(btn=>btn.onclick=()=>dismissPair(btn.dataset.diff));
+
+  const rows=Object.keys(aka).map(id=>({id,name:names[id]||id,aka:aka[id],
+    n:(S.agg.get(id)||{}).n||0})).sort((a,b)=>b.aka.length-a.aka.length||b.n-a.n);
+  $('#g-done').innerHTML='<thead><tr><th>Now called</th><th>Ratings</th><th>Was also entered as</th><th>Why</th><th></th></tr></thead><tbody>'+
+    (rows.length?rows.map(r=>'<tr><td><span class="na" style="display:block;font-size:11.5px">'+esc(r.name)+'</span>'+
+      '<input type="text" id="gr-'+esc(r.id)+'" value="'+esc(r.name)+'" style="width:220px"></td>'+
+      '<td class="n">'+r.n+'</td>'+
+      '<td>'+r.aka.map(a=>'<span class="tag neutral" style="margin:0 4px 3px 0">'+esc(a)+
+        ' <button class="lnk" type="button" data-split="'+esc(a)+'" title="pull this spelling back out">&times;</button></span>').join('')+'</td>'+
+      '<td class="na">'+esc(Array.from(new Set(r.aka.map(a=>why[slug(a)]).filter(Boolean))).join('; '))+'</td>'+
+      '<td><button class="btn ghost" type="button" data-rename="'+esc(r.id)+'">Rename</button></td></tr>').join('')
+     :'<tr><td colspan="5" class="empty">Nothing has been merged yet.</td></tr>')+'</tbody>';
+  $$('#g-done button[data-rename]').forEach(b=>b.onclick=()=>renameCanon(b.dataset.rename,(document.getElementById('gr-'+b.dataset.rename)||{}).value));
+  $$('#g-done button[data-split]').forEach(b=>b.onclick=()=>splitOut(b.dataset.split));
+}
+async function saveMg(next,msg){
+  // the count lives in #g-status and is rewritten on every render, so action
+  // feedback needs its own slot or it is wiped the moment the list redraws
+  const say=(t,bad)=>{const el=$('#g-msg');if(!el)return;
+    el.className='status '+(bad?'err':'ok');el.textContent=t;
+    clearTimeout(say._t);say._t=setTimeout(()=>{el.textContent='';},5000);};
+  if(!S.db){say('Not connected, so this cannot be saved.',1);return;}
+  try{ await S.db.doc('settings/subMerges').set(next); S.mg=next; rebuild(); say(msg||'Saved.'); }
+  catch(e){ say('Could not save: '+(e&&e.message||e),1); }
+}
+function applyMerge(canonNm,variants,note){
+  const mg=JSON.parse(JSON.stringify(MG()));
+  mg.map=mg.map||{}; mg.names=mg.names||{}; mg.aka=mg.aka||{}; mg.why=mg.why||{};
+  const target=String(canonNm||'').trim(); if(!target)return;
+  const tid=slug(target);
+  mg.names[tid]=target;
+  // carry across every spelling already folded into either side
+  let bring=[];
+  variants.forEach(v=>{const vid=slug(v);bring=bring.concat(mg.aka[vid]||[]);});
+  mg.aka[tid]=Array.from(new Set((mg.aka[tid]||[]).concat(variants,bring).filter(x=>x!==target)));
+  variants.forEach(v=>{
+    const vid=slug(v);
+    if(vid!==tid){mg.map[vid]=tid; mg.why[vid]=note||'confirmed in the desk';}
+    Object.keys(mg.map).forEach(k=>{if(mg.map[k]===vid)mg.map[k]=tid;});
+    if(vid!==tid){delete mg.aka[vid]; delete mg.names[vid];}
+  });
+  delete mg.map[tid];
+  saveMg(mg,'Merged into '+target);
+}
+function dismissPair(key){
+  const mg=JSON.parse(JSON.stringify(MG()));
+  mg.dismissed=mg.dismissed||{}; mg.dismissed[key]=true;
+  saveMg(mg,'Marked as two different firms');
+}
+function renameCanon(id,nm){
+  const target=String(nm||'').trim(); if(!target)return;
+  const mg=JSON.parse(JSON.stringify(MG()));
+  mg.names=mg.names||{}; mg.aka=mg.aka||{}; mg.map=mg.map||{};
+  const tid=slug(target);
+  if(tid===id){mg.names[id]=target; return saveMg(mg,'Renamed');}
+  mg.names[tid]=target;
+  mg.aka[tid]=Array.from(new Set((mg.aka[id]||[]).concat(mg.names[id]?[mg.names[id]]:[]).filter(x=>x!==target)));
+  Object.keys(mg.map).forEach(k=>{if(mg.map[k]===id)mg.map[k]=tid;});
+  mg.map[id]=tid;
+  delete mg.aka[id]; delete mg.names[id];
+  saveMg(mg,'Renamed to '+target);
+}
+function splitOut(name){
+  const mg=JSON.parse(JSON.stringify(MG()));
+  const vid=slug(name);
+  delete (mg.map||{})[vid]; delete (mg.why||{})[vid];
+  Object.keys(mg.aka||{}).forEach(k=>{mg.aka[k]=(mg.aka[k]||[]).filter(a=>slug(a)!==vid);
+    if(!mg.aka[k].length){delete mg.aka[k];delete (mg.names||{})[k];}});
+  saveMg(mg,name+' is on its own again');
+}
+$('#g-q').addEventListener('input',renderMerge);
+$('#g-weak').addEventListener('change',renderMerge);
+function renderSources(){
+  const m=S.meta;
+  if(!m){$('#sources').innerHTML='<div class="empty">Import provenance not loaded.</div>';}
+  else{
+    $('#sources').innerHTML='<div class="cols">'+(m.sources||[]).map(s=>
+      '<div class="rule"><h3>'+esc(s.what)+'</h3><div class="body">'+
+      '<p style="margin-top:0"><b>'+esc(s.file)+'</b></p>'+
+      '<p class="mono" style="font-size:11.5px;color:var(--muted);word-break:break-all">'+esc(s.where)+'</p>'+
+      '<p style="margin-bottom:0;color:var(--muted)">Last modified '+esc(s.modified)+'. '+esc(s.note)+'</p>'+
+      '</div></div>').join('')+'</div>'+
+      '<div class="note">Imported '+esc((m.generated||'').slice(0,10))+'. Nothing here writes back to those spreadsheets &mdash; '+
+      'ratings entered on this page live with the page. If a source workbook changes, the import has to be re-run.</div>';
+  }
+  const R=allR();
+  const noRate=R.filter(r=>r.r==null).length, noCsi=R.filter(r=>r.csi==null||r.csi==='').length,
+    noNote=R.filter(r=>!r.n||r.n==='-').length, noAmt=R.filter(r=>typeof r.amt!=='number').length,
+    odd=R.filter(r=>typeof r.r==='number'&&(r.r>5||r.r<1));
+  $('#gaps').innerHTML='<div class="cols">'+
+   '<div class="rule"><h3>Ratings backlog</h3><ul>'+
+   '<li><b>'+n0(R.length)+'</b> ratings across '+n0(new Set(R.map(r=>r.jn).filter(Boolean)).size)+' jobs, merged from the two cumulative masters that exist. Neither of them records anything after 24AU015.</li>'+
+   '<li><b>2025 and 2026 jobs are almost entirely unrated.</b> Only 25AU015 Straehle Hess has a filled-in sub-rating sheet, and it lives in that job\'s own closeout folder rather than in either master. Project benchmarks for 2025&ndash;26 come from Procore and are complete; the ratings for those jobs simply have not been done. Every closed job since then is a gap someone has to fill from the field.</li>'+
+   '<li><b>'+n0(noRate)+'</b> rows have no score, <b>'+n0(noCsi)+'</b> no CSI division, <b>'+n0(noNote)+'</b> no note, <b>'+n0(noAmt)+'</b> no contract amount.</li>'+
+   (odd.length?'<li><b>'+odd.length+'</b> score'+(odd.length>1?'s are':' is')+' outside the 1&ndash;5 scale ('+odd.map(r=>esc(r.s)+' '+r1(r.r)).join('; ')+') &mdash; carried over as entered, worth correcting at the source.</li>':'')+
+   '<li>Company names came across as typed, so the same sub can appear twice under two spellings. Merging those is a cleanup pass, not something to guess at.</li>'+
+   '<li>CSI divisions are uneven. Division 22 is carrying most of the mechanical work &mdash; plumbing and HVAC both &mdash; while division 23 has only a handful of entries. Filter on one division alone and you will miss history that was coded to the other. The coverage table below shows where every division stands.</li>'+
+   '</ul></div>'+
+   '<div class="rule"><h3>Prequalification</h3><ul>'+
+   '<li>Nothing is imported. Safety, bonding and financial fields are empty until someone enters a qualification statement on the Prequal file tab.</li>'+
+   '<li>Bailey-Harris already collects all of it on the Subcontractor Qualification Statement &mdash; the fields here match that form so the two line up.</li>'+
+   '<li>Certifying agency and certificate number for the diversity classifications come off that same form, section by section.</li>'+
+   '</ul></div>'+
+   '<div class="rule"><h3>Project history moved</h3><ul>'+
+   '<li>Square footage, contract values, durations and $/SF now live on the <b>Precon Desk</b>, a separate page built for pricing a bid rather than buying one out.</li>'+
+   '<li>Project records are still loaded here, but only to fill the job list on the rating forms &mdash; the benchmark tables and medians are all on the Precon Desk.</li>'+
+   '<li>The two desks keep separate data stores, so a project corrected on the Precon Desk does not change anything here, and vice versa. Ratings live here; project history lives there.</li>'+
+   '</ul></div></div>';
+}
+
+function renderDivTable(){
+  const t=$('#divtable'); if(!t)return;
+  const rows=Array.from((S.divStats||new Map()).entries())
+    .map(([k,v])=>({k,rows:v.rows,subs:v.subs.size}))
+    .sort((a,b)=>Number(a.k)-Number(b.k));
+  const maxR=Math.max.apply(null,[1].concat(rows.map(r=>r.rows)));
+  if(!rows.length){t.innerHTML='<tbody><tr><td class="empty">No ratings loaded.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Div</th><th>Division</th><th>Ratings</th><th>Subcontractors</th><th style="width:38%">Share of the backlog</th></tr></thead><tbody>'+
+    rows.map(r=>'<tr><td class="mono">'+esc(r.k)+'</td><td>'+esc(CSI[Number(r.k)]||'&mdash;')+'</td>'+
+      '<td class="n">'+r.rows+'</td><td class="n">'+r.subs+'</td>'+
+      '<td><span style="display:inline-block;height:9px;border-radius:2px;background:var(--accent);width:'+
+        Math.max(2,Math.round(r.rows/maxR*100))+'%"></span>'+
+        (r.rows<20?' <span class="tag warn">Thin</span>':'')+'</td></tr>').join('')+'</tbody>';
+}
+
+/* ---------- export ---------- */
+function csv(rows){
+  return rows.map(r=>r.map(v=>{
+    const s=v==null?'':String(v);
+    return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\r\n');
+}
+async function doExport(which){
+  const st=$('#expstatus'); st.className='status';
+  let rows,fn;
+  if(which==='ratings'){
+    fn='bh-sub-ratings.csv';
+    rows=[['Company','Job No','Job Name','Commitment','CSI Division','Division Name','Scope','BH PM','BH Super','Average','Sub PM','Sub Field Lead','Final Contract','Notes','Would use again','Entered by','Date','Source']];
+    allR().forEach(r=>rows.push([r.s,r.jn,r.j,r.c,r.csi,r.csi!=null?CSI[Number(r.csi)]:'',r.t,r.pm,r.sp,r.r,r.spm,r.ss,r.amt,r.n,r.again,r.by,r.on,r.src||'import']));
+  }else if(which==='subs'){
+    fn='bh-subcontractors.csv';
+    rows=[['Company','Average rating','Ratings','Jobs','Lowest','Highest','Contract value','Divisions','Prequal status','Prequal score','EMR avg','Classifications']];
+    Array.from(S.agg.values()).sort((a,b)=>a.name.localeCompare(b.name)).forEach(o=>{
+      const f=o.file||{},sc=pqScore(f);
+      rows.push([o.name,o.avg!=null?r1(o.avg):'',o.n,o.jobs.size,o.min,o.max,o.total||'',
+        Array.from(o.divs).sort((a,b)=>Number(a)-Number(b)).join(' '),f.status||'',
+        sc.score!=null?r2(sc.score):'',f.emrAvg!=null?r2(f.emrAvg):'',(f.certs||[]).map(c=>c.type).join('; ')]);
+    });
+  }else if(which==='diversity'){
+    fn='bh-certified-subs.csv';
+    rows=[['Company','Classification','Certifying agency','Certificate no','Expires','Status','Divisions','Average rating','Jobs']];
+    diversityRows().forEach(x=>rows.push([x.o.name,x.c.type,x.c.agency,x.c.number,x.c.expires,x.st,
+      Array.from(x.o.divs).join(' '),x.o.avg!=null?r1(x.o.avg):'',x.o.jobs.size]));
+  }else{ return; }
+  const body='﻿'+csv(rows);
+  if(!S.dl){st.className='status err';st.textContent='Downloads are not available in this view.';return;}
+  st.textContent='Preparing '+fn+'…';
+  try{await S.dl.save({filename:fn,data:body}); st.className='status ok'; st.textContent='Saved '+fn+'.';}
+  catch(e){const c=e&&e.code;
+    st.className='status'+(c==='declined'?'':' err');
+    st.textContent=c==='declined'?'Download cancelled.':'Could not save: '+(c||'error');}
+}
+
+/* ---------- tabs ---------- */
+function go(name){
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===name?'true':'false'));
+  $$('.panel').forEach(p=>p.hidden=p.id!=='p-'+name);
+  window.scrollTo({top:0,behavior:'instant'});
+}
+$$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.panel)));
+
+/* ---------- wiring ---------- */
+['q','frat','fcert','fjob','fsort'].forEach(id=>{
+  const el=$('#'+id); el.addEventListener(id==='q'?'input':'change',renderSubs);});
+$('#fdiv').addEventListener('change',e=>{const v=e.target.value;if(!v)return;
+  S.fdivs.add(v);renderDivPicker('f');renderSubs();});
+$('#dv-div').addEventListener('change',e=>{const v=e.target.value;if(!v)return;
+  S.ddivs.add(v);renderDivPicker('d');renderDiversity();});
+$('#slist').addEventListener('click',e=>{const b=e.target.closest('.gitem');if(!b)return;S.sel=b.dataset.id;renderSubs();});
+['dv-type','dv-status'].forEach(id=>$('#'+id).addEventListener('change',renderDiversity));
+$('#dv-export').addEventListener('click',()=>doExport('diversity'));
+$$('[data-export]').forEach(b=>b.addEventListener('click',()=>doExport(b.dataset.export)));
+$('#pq-open').addEventListener('click',()=>openPq(null));
+$('#pq-sub').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();openPq(null);}});
+$('#i-sub').addEventListener('input',subHint);
+$('#ratingform').addEventListener('submit',saveRating);
+$('#tobulk').addEventListener('click',()=>go('bulk'));
+$('#tosingle').addEventListener('click',()=>go('add'));
+rateGroup($('#r-pm'),'rpm'); rateGroup($('#r-sup'),'rsup'); avgNote();
+try{$('#i-by').value=localStorage.getItem('bh_by')||'';}catch(_){}
+S.agg=new Map(); rebuild();
+
+/* ---------- data store: SharePoint, read through Microsoft Graph ----------
+   The artifact build read from claude.use('db'). This build signs the viewer in
+   against Entra and reads the same records out of the PrequalData library, with
+   SharePoint enforcing access against their own token. S.db stays null, which is
+   what every write path already checks, so entry degrades safely rather than
+   half-writing. */
+(async function(){
+  const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
+  const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
+  const SCOPES    = ["User.Read","GroupMember.Read.All","Sites.Read.All"];
+  const SP_HOST   = "baileyharris.sharepoint.com";
+  const SP_PATH   = "/sites/Dashboard";
+  const LIBRARY   = "PrequalData";
+  const GROUP     = "BH-Desk-Prequal";
+  const CONTACT   = "itadmin@baileyharris.com";
+
+  const conn = $('#conn');
+  const setConn = (t,c)=>{ conn.textContent=t; conn.className='stamp'+(c?' '+c:''); };
+
+  /* this build is read-only: drop the tabs that only exist to write */
+  ['add','bulk','fix','prequal'].forEach(k=>{
+    const b=document.querySelector('nav.tabs button[data-panel="'+k+'"]');
+    if(b) b.remove();
+  });
+  const ro=document.createElement('div');
+  ro.className='readonly';
+  ro.innerHTML='<b>Read-only for now.</b>Ratings, merges and sources are live from SharePoint. '+
+    'Entering and correcting ratings comes back when the write path is switched on — '+
+    'nothing you would have typed has been lost, because nothing has been entered through the desk yet.';
+  const firstPanel=$('#p-subs');
+  firstPanel.insertBefore(ro, firstPanel.firstChild);
+
+  function gate(html){
+    let g=$('#bhgate');
+    if(!g){ g=document.createElement('div'); g.id='bhgate'; document.body.appendChild(g); }
+    g.innerHTML='<div class="box">'+html+'</div>';
+    return g;
+  }
+  function ungate(){ const g=$('#bhgate'); if(g) g.remove(); }
+  function fail(title, detail, extra){
+    gate('<h2>'+title+'</h2><p>'+detail+'</p>'+(extra||''));
+    setConn('Offline','off');
+  }
+
+  gate('<h2>Checking your access…</h2><p>One moment.</p>');
+
+  if(typeof msal==='undefined')
+    return fail('Sign-in library did not load',
+      'The Microsoft authentication script was blocked. Reload, and if it persists tell IT the CDN is unreachable.');
+
+  const app=new msal.PublicClientApplication({
+    auth:{ clientId:CLIENT_ID, authority:'https://login.microsoftonline.com/'+TENANT_ID,
+           redirectUri:location.origin+'/prequal/', navigateToLoginRequestUrl:false },
+    cache:{ cacheLocation:'localStorage', storeAuthStateInCookie:false }
+  });
+  await app.initialize();
+  try{ await app.handleRedirectPromise(); }
+  catch(e){ return fail('Sign-in was rejected', ((e&&(e.errorCode||e.name))||'')+' '+((e&&e.errorMessage)||e)); }
+
+  const accounts=app.getAllAccounts();
+  if(!accounts.length){
+    const g=gate('<h2>Sign in to continue</h2><p>Use your Bailey-Harris Microsoft account.</p>'+
+      '<button class="btn" id="bhsignin">Sign in with Microsoft</button>');
+    g.querySelector('#bhsignin').addEventListener('click',()=>app.loginRedirect({scopes:SCOPES}));
+    setConn('Signed out','off');
+    return;
+  }
+  const acct=accounts[0];
+  app.setActiveAccount(acct);
+
+  let token;
+  try{
+    const r=await app.acquireTokenSilent({scopes:SCOPES, account:acct});
+    token=r.accessToken;
+  }catch(e){
+    if(e instanceof msal.InteractionRequiredAuthError) return app.acquireTokenRedirect({scopes:SCOPES});
+    return fail('Could not get an access token', ((e&&e.errorCode)||'')+' '+((e&&e.errorMessage)||e));
+  }
+
+  const G=async p=>{
+    const res=await fetch('https://graph.microsoft.com/v1.0'+p,{headers:{Authorization:'Bearer '+token}});
+    let body=null; try{ body=await res.json(); }catch(_){}
+    return {ok:res.ok, status:res.status, body};
+  };
+  const GTEXT=async p=>{
+    const res=await fetch('https://graph.microsoft.com/v1.0'+p,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok) return {ok:false, status:res.status};
+    return {ok:true, status:res.status, text:await res.text()};
+  };
+
+  const site=await G('/sites/'+SP_HOST+':'+SP_PATH);
+  if(!site.ok||!site.body||!site.body.id)
+    return fail('Could not reach the data',
+      'SharePoint returned HTTP '+site.status+' for '+SP_PATH+'.');
+
+  const dr=await G('/sites/'+site.body.id+'/drives?$select=id,name');
+  const drive=(dr.ok&&dr.body&&dr.body.value||[]).find(d=>d.name===LIBRARY);
+  if(!drive)
+    return fail('The ratings library is missing',
+      'No document library called '+LIBRARY+' on this site.');
+
+  async function load(name, required){
+    const f=await GTEXT('/drives/'+drive.id+'/root:/'+name+':/content');
+    if(f.ok){ try{ return JSON.parse(f.text); }catch(_){ return null; } }
+    if(f.status===403 && required){
+      fail('You do not have access to the sub ratings',
+        'Your account is not permitted to read this data.',
+        '<p class="why">Access is granted through the '+GROUP+' group.</p>'+
+        '<a class="btn" href="mailto:'+CONTACT+'?subject='+
+          encodeURIComponent('Access request: Prequal &amp; Sub Rating Desk')+'">Request access</a>');
+      throw new Error('403');
+    }
+    if(required){
+      fail('The ratings data is missing',
+        name+' was not found in '+LIBRARY+'. It has not been uploaded, or it is named differently.');
+      throw new Error(String(f.status));
+    }
+    return null;
+  }
+
+  try{
+    const ratings=await load('ratings.json', true);
+    if(!ratings||!Array.isArray(ratings.rows))
+      return fail('The ratings file could not be read','ratings.json is not valid JSON, or has no rows.');
+    S.arch=ratings.rows;
+    S.mg=await load('subMerges.json', false);
+    S.meta=await load('meta.json', false);
+  }catch(_){ return; }
+
+  S.ready=true;
+  ungate();
+  setConn('Live · read-only','live');
+  rebuild(); renderRecent();
+})();
+</script>
+</body>
+</html>
