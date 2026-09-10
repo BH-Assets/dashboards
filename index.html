@@ -23,6 +23,7 @@
   --shadow:0 1px 2px rgba(33,30,30,.06),0 8px 24px -16px rgba(33,30,30,.22);
 }
 *{box-sizing:border-box}
+[hidden]:not([hidden="until-found"]){display:none!important}
 body{margin:0;background:var(--paper);color:var(--ink);
   font-family:'Montserrat',Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;
   -webkit-font-smoothing:antialiased}
@@ -198,7 +199,10 @@ const DESKS = [
     file: "projects.json",
     stats: d => [
       ["Jobs", d.rows.length],
-      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp).length]
+      // same test the Precon Desk uses: scope-flagged jobs carry the whole
+      // building's square footage against one package's contract, so their
+      // $/SF is meaningless and the desk leaves them out of this count
+      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp && !p.flag).length]
     ]
   }
 ];
