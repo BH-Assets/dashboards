@@ -1,0 +1,1673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Precon Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#ECEFF1; --surface:#FFFFFF; --surface-2:#F5F8F9;
+  --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
+  --line:#CBD6DC; --line-soft:#E0E8EC;
+  --accent:#17505F; --accent-ink:#0C3644; --accent-soft:#D9E8EC;
+  --ok:#2A6E52; --ok-soft:#DBEDE4;
+  --warn:#8A5710; --warn-soft:#F6E9CD;
+  --crit:#983026; --crit-soft:#F7DFDB;
+  --shadow:0 1px 2px rgba(16,35,42,.06),0 8px 24px -16px rgba(16,35,42,.24);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+    --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+    --line:#27353C; --line-soft:#1F2C32;
+    --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+    --ok:#69C095; --ok-soft:#132D22;
+    --warn:#D3A153; --warn-soft:#32260F;
+    --crit:#E08279; --crit-soft:#341C1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1418; --surface:#151F24; --surface-2:#1A252B;
+  --ink:#E1E9ED; --muted:#8FA1AB; --faint:#697C86;
+  --line:#27353C; --line-soft:#1F2C32;
+  --accent:#5CB3C8; --accent-ink:#8FD3E3; --accent-soft:#14313A;
+  --ok:#69C095; --ok-soft:#132D22;
+  --warn:#D3A153; --warn-soft:#32260F;
+  --crit:#E08279; --crit-soft:#341C1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:Montserrat,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:Montserrat,ui-sans-serif,system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.015em}
+code,.mono,.num{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+.wrap{max-width:1300px;margin:0 auto;padding:0 22px}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.masthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;padding:18px 0 12px}
+.masthead h1{font-size:21px;font-weight:700}
+.masthead .sub{color:var(--muted);font-size:13.5px}
+.stamp{margin-left:auto;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--line);border-radius:2px;padding:3px 8px;white-space:nowrap}
+.stamp.live{color:var(--ok);border-color:var(--ok)}
+.stamp.off{color:var(--warn);border-color:var(--warn)}
+.meta{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--line-soft);font-size:12.5px}
+.meta div{padding:7px 16px 7px 0;margin-right:16px;border-right:1px solid var(--line-soft);color:var(--muted)}
+.meta div:last-child{border-right:0}
+.meta b{color:var(--ink);font-weight:600}
+nav.tabs{display:flex;gap:2px;border-top:1px solid var(--line-soft);overflow-x:auto}
+nav.tabs button{appearance:none;background:none;border:0;border-bottom:2px solid transparent;
+  font:600 13px/1 Montserrat,sans-serif;letter-spacing:.02em;color:var(--muted);padding:12px 14px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,.gitem:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main{padding:24px 0 72px}
+.panel[hidden]{display:none!important}
+.lede{color:var(--muted);font-size:14.5px;margin:0 0 18px;max-width:none}
+.eyebrow{font:600 11px/1 Montserrat,sans-serif;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+h2.sect{font-size:16px;font-weight:700;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2.sect:first-of-type{margin-top:0}
+
+.tag{font:600 10.5px/1 Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;padding:3px 6px;white-space:nowrap;display:inline-block}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.crit{background:var(--crit-soft);color:var(--crit)}
+.tag.neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+.tag.accent{background:var(--accent-soft);color:var(--accent-ink)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);
+  border-radius:3px;box-shadow:var(--shadow);padding:10px;margin-bottom:14px}
+.controls label{font:600 10.5px/1 Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+.f{display:flex;flex-direction:column;min-width:0}
+.f.fwide{flex:1 1 340px;min-width:270px}
+input,select,textarea{font:400 14px/1.35 Montserrat,sans-serif;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:2px;padding:7px 9px;max-width:100%}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+select{cursor:pointer}
+.controls input[type=search]{min-width:230px}
+.btn{appearance:none;font:600 12.5px/1 Montserrat,sans-serif;letter-spacing:.03em;background:var(--accent);color:#fff;
+  border:1px solid var(--accent);border-radius:2px;padding:9px 14px;cursor:pointer}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn:not(.ghost){color:#08171C}}
+:root[data-theme="dark"] .btn:not(.ghost){color:#08171C}
+:root[data-theme="light"] .btn:not(.ghost){color:#fff}
+.btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.browser{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.browser{grid-template-columns:minmax(0,1fr)}}
+.rail{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  position:sticky;top:186px;max-height:calc(100vh - 210px);display:flex;flex-direction:column}
+@media (max-width:920px){.rail{position:static;max-height:420px}}
+.count{font-size:11.5px;color:var(--muted);padding:9px 12px 4px;border-bottom:1px solid var(--line-soft)}
+.glist{overflow-y:auto;padding:6px}
+.gitem{display:flex;gap:8px;align-items:baseline;width:100%;text-align:left;background:none;border:0;
+  padding:7px 8px;border-radius:2px;cursor:pointer;color:var(--ink);font:400 13.5px/1.35 Montserrat,sans-serif}
+.gitem:hover{background:var(--surface-2)}
+.gitem[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.gitem .nm{flex:1;min-width:0}
+.gitem .n{font:400 11px/1 "JetBrains Mono",monospace;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.gitem[aria-current="true"] .n{color:var(--accent-ink)}
+.sc{font:600 11px/1 "JetBrains Mono",monospace;border-radius:2px;padding:3px 5px;flex:none;font-variant-numeric:tabular-nums}
+.sc.hi{background:var(--ok-soft);color:var(--ok)}
+.sc.mid{background:var(--warn-soft);color:var(--warn)}
+.sc.lo{background:var(--crit-soft);color:var(--crit)}
+.sc.na{background:var(--surface-2);color:var(--faint)}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);padding:20px;min-width:0;overflow:hidden}
+.detail .gname{font-size:20px;font-weight:700;line-height:1.25;font-family:Montserrat,sans-serif}
+.pillrow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.kpis{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:3px;margin:16px 0;overflow:hidden}
+.kpi{flex:1 1 130px;padding:11px 14px;border-right:1px solid var(--line-soft);background:var(--surface-2)}
+.kpi:last-child{border-right:0}
+.kpi .k{font:600 10px/1 Montserrat,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.kpi .v{font:600 19px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0}
+
+.cov{border:1px solid var(--line-soft);border-radius:3px;margin-top:16px;overflow:hidden;min-width:0}
+.cov > header{display:flex;align-items:center;gap:9px;background:var(--surface-2);padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+.cov > header h4{font-size:13px;font-weight:600}
+.cov > header .st{margin-left:auto}
+.limits{width:100%;border-collapse:collapse;font-size:13.5px}
+.limits td{padding:6px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.limits tr:last-child td{border-bottom:0}
+.limits td:first-child{color:var(--muted);width:44%}
+.limits td:last-child{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
+.empty{color:var(--muted);font-style:italic;padding:12px;font-size:13px}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow)}
+table.grid{border-collapse:collapse;width:100%;font-size:12.5px}
+table.grid th{background:var(--surface-2);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);
+  font:600 11px/1.3 Montserrat,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+  vertical-align:bottom;position:sticky;top:0;z-index:1;white-space:nowrap}
+table.grid th.s{cursor:pointer}
+table.grid th.s:hover{color:var(--ink)}
+table.grid td{padding:7px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+table.grid td.n{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+table.grid td.note{color:var(--muted);min-width:220px}
+table.grid tbody tr:hover{background:var(--surface-2)}
+.na{color:var(--faint)}
+
+.form{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);padding:20px;max-width:900px}
+.fg{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:16px}
+.fg .wide{grid-column:1/-1}
+.fld label{font:600 10.5px/1 Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.fld label .req{color:var(--crit)}
+.fld input,.fld select,.fld textarea{width:100%}
+.fld .hint{font-size:11.5px;color:var(--faint);margin-top:4px}
+.rate{display:flex;gap:6px;flex-wrap:wrap}
+.rate input{position:absolute;opacity:0;width:0;height:0}
+.rate label{display:inline-flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:2px;
+  padding:8px 12px;cursor:pointer;background:var(--surface-2);font:600 15px/1 "JetBrains Mono",monospace;
+  letter-spacing:0;text-transform:none;color:var(--ink);margin:0;min-width:66px}
+.rate label span{font:400 9.5px/1.2 Montserrat,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center}
+.rate input:checked + label{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.rate input:focus-visible + label{outline:2px solid var(--accent);outline-offset:2px}
+fieldset{border:1px solid var(--line-soft);border-radius:3px;padding:14px;margin:0 0 16px}
+legend{font:600 10.5px/1 Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line-soft);padding-top:16px}
+.status{font-size:13px}
+.status.ok{color:var(--ok)}.status.err{color:var(--crit)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface-2);
+  border-radius:2px;padding:4px 7px;font-size:12px}
+.chip button{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.chip button:hover{color:var(--crit)}
+.multi{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.multi select{min-width:210px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:var(--surface-2)}
+.seg button{appearance:none;background:none;border:0;border-right:1px solid var(--line);cursor:pointer;
+  font:600 11px/1 Montserrat,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 11px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+.seg button:hover{color:var(--ink)}
+.chips:empty{display:none}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.chip.on button{color:var(--accent-ink)}
+.combohint{font-size:11.5px;color:var(--faint);margin-top:5px}
+.banner{border:1px solid var(--warn);background:var(--warn-soft);color:var(--warn);border-radius:3px;padding:11px 14px;
+  font-size:13.5px;margin-bottom:16px}
+.banner.crit{border-color:var(--crit);background:var(--crit-soft);color:var(--crit)}
+.note{background:var(--surface-2);border:1px solid var(--line-soft);border-left:3px solid var(--accent);
+  border-radius:0 3px 3px 0;padding:11px 14px;font-size:13.5px;color:var(--muted);margin:14px 0}
+.note b{color:var(--ink)}
+.cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);overflow:hidden}
+.rule > h3{font-size:14px;font-weight:600;padding:11px 14px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.rule ul{margin:0;padding:12px 14px 14px 30px;display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.rule li::marker{color:var(--faint)}
+.rule .body{padding:12px 14px;font-size:13.5px}
+.scale{width:100%;border-collapse:collapse;font-size:13.5px}
+.scale td{padding:7px 14px;border-bottom:1px solid var(--line-soft)}
+.scale tr:last-child td{border-bottom:0}
+.scale td:first-child{width:60px;font:600 15px/1 "JetBrains Mono",monospace;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:10px 2px 0}
+.srow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+@media (max-width:760px){
+  .wrap{padding:0 14px}
+  .masthead{padding:12px 0 8px;gap:4px 12px}
+  .masthead h1{font-size:18px}
+  .masthead .sub{font-size:12.5px;flex:1 1 100%;order:3}
+  .stamp{margin-left:auto}
+  .meta{flex-wrap:nowrap;overflow-x:auto;font-size:12px}
+  .meta div{white-space:nowrap;padding:6px 12px 6px 0;margin-right:12px}
+  nav.tabs button{padding:11px 10px;font-size:12.5px}
+  main{padding:16px 0 56px}
+  h2.sect{margin:20px 0 10px}
+  .lede{font-size:14px}
+  .detail{padding:14px}
+  .detail .gname{font-size:17px}
+  .kpi{flex:1 1 46%;padding:9px 11px}
+  .kpi .v{font-size:17px}
+  .controls{padding:9px;gap:9px}
+  .controls input[type=search]{min-width:0}
+  .f,.f.fwide{flex:1 1 100%;min-width:0;width:100%}
+  .f input,.f select{width:100%}
+  .multi{flex-direction:column;align-items:stretch}
+  .multi select{min-width:0;width:100%}
+  .seg{align-self:flex-start}
+  .form{padding:14px}
+  .fg{grid-template-columns:1fr;gap:12px}
+  .rate{gap:5px}
+  .rate label{min-width:0;flex:1 1 60px;padding:7px 6px}
+  .rail{max-height:340px}
+  fieldset{padding:11px}
+  .actions{gap:8px}
+  .actions .btn{flex:1 1 auto}
+  table.grid th,table.grid td{padding:7px 8px}
+  .limits td:first-child{width:auto}
+}
+@media (max-width:400px){
+  .masthead h1{font-size:17px}
+  .rate label{font-size:14px}
+  .btn{padding:9px 11px;font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{header.top{position:static}nav.tabs{display:none}.panel[hidden]{display:block!important}.rail{max-height:none}}
+</style>
+<style>
+.price{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.price{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);padding:16px;min-width:0}
+.card.sticky{position:sticky;top:150px}
+@media (max-width:960px){.card.sticky{position:static}}
+.card h3{font-size:14px;font-weight:600;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
+.crit{display:flex;flex-direction:column;gap:11px}
+.crit .row{display:flex;gap:8px;align-items:flex-end}
+.crit .row > *{flex:1;min-width:0}
+.chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);padding:3px 0}
+.chk input{width:auto;flex:none}
+.chk .n{margin-left:auto;font:400 11px/1 "JetBrains Mono",monospace;color:var(--faint)}
+.verdict{border-left:3px solid var(--accent);background:var(--surface-2);padding:12px 14px;border-radius:0 3px 3px 0;margin-bottom:14px;font-size:14px}
+.verdict b{color:var(--ink)}
+.verdict.hi{border-left-color:var(--crit)}
+.verdict.ok{border-left-color:var(--ok)}
+.verdict.warn{border-left-color:var(--warn)}
+.range{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.range > div{flex:1 1 160px;padding:12px 14px;border-right:1px solid var(--line-soft);background:var(--surface)}
+.range > div:last-child{border-right:0}
+.range .k{font:600 10px/1 Montserrat,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.range .v{font:600 20px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;display:block}
+.range .band{font:400 12px/1.3 "JetBrains Mono",monospace;color:var(--muted);margin-top:4px;display:block}
+.range .nn{font:400 10.5px/1 Montserrat,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:5px;display:block}
+.bar{position:relative;height:26px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:2px;margin:8px 0 4px}
+.bar .iq{position:absolute;top:0;bottom:0;background:var(--accent-soft)}
+.bar .md{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent)}
+.bar .you{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--crit)}
+.bar .lbl{position:absolute;top:5px;font:600 10px/1 Montserrat,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hsync{overflow-x:auto;overflow-y:hidden;height:13px}
+.hsync[hidden]{display:none!important}
+.hsync > div{height:1px}
+.scale2{display:flex;justify-content:space-between;font:400 11px/1 "JetBrains Mono",monospace;color:var(--faint);margin-bottom:14px}
+@media (max-width:760px){.card.sticky{position:static}.crit .row{flex-direction:column;align-items:stretch}.range > div{flex:1 1 46%}}
+</style>
+
+<style>
+/* ===================== Bailey-Harris brand layer =====================
+   Per BH_Dashboard_Brand_Spec. Red, cream, charcoal and black are chrome
+   and identity; green / amber / red are reserved for status in the data.
+   Declared after the desk's own tokens so it wins on source order, and
+   it repeats the dark-mode selector so a dark OS cannot pull the page
+   off-brand. ==================================================== */
+:root,
+:root[data-theme="dark"],
+:root:not([data-theme="light"]){
+  color-scheme: light;
+
+  --paper:#f5f7fa;
+  --surface:#ffffff;
+  --surface-2:#faf9f7;
+
+  --ink:#211E1E;
+  --muted:#5b6472;
+  --faint:#8a919b;
+
+  --line:#E8E6E7;
+  --line-soft:#F1EFF0;
+
+  --accent:#7F1B29;          /* interactive: links, focus, emphasis */
+  --accent-ink:#211E1E;
+  --accent-soft:#F2ECE1;     /* cream: selected / active */
+
+  --ok:#006100;   --ok-soft:#C6EFCE;
+  --warn:#9C6500; --warn-soft:#FFEB9C;
+  --crit:#9C0006; --crit-soft:#FFC7CE;
+
+  --brand-red:#ED2B30;
+  --maroon:#7F1B29;
+  --charcoal:#484B4D;
+  --cream:#F2ECE1;
+
+  --shadow:0 1px 2px rgba(33,30,30,.06),0 8px 24px -16px rgba(33,30,30,.22);
+}
+
+/* ---- masthead ---- */
+.bh-topbar{height:6px;background:var(--brand-red);width:100%}
+header.top .masthead{align-items:center;gap:18px;padding:12px 0 14px}
+.bh-logo{height:64px;width:auto;flex:none}
+.bh-titles{min-width:0}
+header.top .masthead h1{
+  color:var(--ink);font-size:22px;font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase;line-height:1.15}
+header.top .masthead .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+header.top{border-bottom:1px solid var(--line)}
+
+/* ---- tabs: cream fill, red underline, never red text ---- */
+nav.tabs button{
+  color:var(--muted);font-weight:700;padding:10px 22px;
+  border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+nav.tabs button:hover{color:var(--ink);background:transparent}
+nav.tabs button[aria-selected="true"]{
+  color:var(--ink);background:var(--cream);border-bottom-color:var(--brand-red)}
+
+/* ---- buttons: black and charcoal only, never red or green ---- */
+.btn{
+  background:var(--ink);color:#fff;border:1px solid var(--ink);
+  border-radius:8px;font-weight:700;padding:10px 20px;letter-spacing:.01em}
+.btn:hover{background:var(--charcoal);border-color:var(--charcoal);color:#fff}
+.btn.ghost{background:#fff;color:var(--charcoal);border:1px solid var(--charcoal)}
+.btn.ghost:hover{background:var(--charcoal);color:#fff;border-color:var(--charcoal)}
+.btn[disabled]{opacity:.45}
+
+/* ---- data chrome ---- */
+table.grid th{background:var(--charcoal);color:#fff;border-bottom-color:var(--charcoal)}
+table.grid th.s:hover{color:#fff;text-decoration:underline}
+.gitem[aria-current="true"]{background:var(--cream);color:var(--ink);font-weight:600}
+.gitem[aria-current="true"] .n{color:var(--charcoal)}
+.kpi,.stat{background:var(--surface-2)}
+
+a{color:var(--maroon)}
+:focus-visible{outline:2px solid var(--maroon);outline-offset:2px}
+
+/* the read-only notice is page state, not compliance status,
+   so it takes cream and charcoal rather than the amber reserved for data */
+.readonly{
+  border:1px solid var(--line);border-left:4px solid var(--charcoal);
+  background:var(--cream);color:var(--ink)}
+.readonly b{color:var(--ink)}
+
+/* The artifact shell supplied this and the desks were written against it;
+   without it any element that is both [hidden] and styled with a display
+   value renders anyway — which is how the offline banner showed on a
+   page that had loaded perfectly well. */
+[hidden]:not([hidden="until-found"]){display:none!important}
+
+</style>
+<style>
+#bhgate{position:fixed;inset:0;z-index:999;background:var(--paper);display:grid;place-items:center;padding:24px}
+#bhgate .box{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  padding:34px 26px;text-align:center;max-width:430px}
+#bhgate h2{font-size:16px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px}
+#bhgate p{color:var(--muted);font-size:14px;margin:0 0 20px}
+#bhgate .why{font-size:12.5px;color:var(--faint);margin:16px 0 0}
+.readonly{border:1px solid var(--line);border-left:4px solid var(--charcoal);
+  background:var(--cream);color:var(--ink);border-radius:6px;
+  padding:11px 14px;font-size:13.5px;margin-bottom:16px}
+.readonly b{display:block;margin-bottom:2px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="bh-topbar"></div>
+<header class="top">
+  <div class="wrap">
+    <div class="masthead">
+      <img class="bh-logo" id="bhlogo" alt="Bailey-Harris Construction" hidden>
+      <div class="bh-titles">
+        <h1>Precon Desk</h1>
+        <div class="sub">Bailey-Harris &middot; what we have built, for pricing what we are about to bid</div>
+      </div>
+      <div class="stamp" id="conn">Connecting&hellip;</div>
+    </div>
+    <div class="meta" id="metabar">
+      <div>Jobs on file <b id="m-p">&mdash;</b></div>
+      <div>With $/SF <b id="m-psf">&mdash;</b></div>
+      <div>With a duration <b id="m-d">&mdash;</b></div>
+      <div>Owners <b id="m-o">&mdash;</b></div>
+      <div>Median $/SF <b id="m-med">&mdash;</b></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-panel="price">Price a job</button>
+      <button role="tab" aria-selected="false" data-panel="ask">Ask</button>
+      <button role="tab" aria-selected="false" data-panel="hist">Project history</button>
+      <button role="tab" aria-selected="false" data-panel="edit">Add or fix a job</button>
+      <button role="tab" aria-selected="false" data-panel="cov">Coverage</button>
+      <button role="tab" aria-selected="false" data-panel="src">Sources</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<div id="offline" class="banner crit" hidden>This page could not reach SharePoint, so there is nothing to compare against.</div>
+
+<!-- PRICE -->
+<section class="panel" id="p-price">
+  <p class="lede">Describe the job you are about to price. The desk finds the closed jobs closest to it and shows what they actually came in at &mdash; cost per square foot, calendar duration, fee and general conditions &mdash; as a median with the middle half of the range around it. Put your own number in and it will tell you where that number sits against the ones we have built.</p>
+  <div class="price">
+    <aside class="card sticky">
+      <h3>The job you are pricing</h3>
+      <div class="crit">
+        <div class="fld"><label for="q-sf">Square footage</label><input id="q-sf" inputmode="numeric" placeholder="e.g. 45000"></div>
+        <div class="fld"><label for="q-sector">Sector</label><select id="q-sector"></select></div>
+        <div class="fld"><label for="q-ctype">Construction type</label><select id="q-ctype"></select></div>
+        <div class="fld"><label for="q-del">Delivery method</label><select id="q-del"></select></div>
+        <div class="fld"><label for="q-bid">Bid type</label><select id="q-bid"></select></div>
+        <div class="fld"><label for="q-office">Office</label><select id="q-office"></select></div>
+        <div class="fld"><label for="q-client">Owner</label><select id="q-client"></select></div>
+        <div class="row">
+          <div class="fld"><label for="q-budget">Target contract</label><input id="q-budget" inputmode="numeric" placeholder="$"></div>
+          <div class="fld"><label for="q-dur">Target duration</label><input id="q-dur" inputmode="numeric" placeholder="days"></div>
+        </div>
+      </div>
+      <h3 style="margin-top:18px">What counts as comparable</h3>
+      <div class="fld" style="margin-bottom:10px"><label for="q-tol">Square footage within</label><select id="q-tol">
+        <option value="0.25">&plusmn;25%</option><option value="0.5" selected>&plusmn;50%</option>
+        <option value="1">&plusmn;100%</option><option value="2">a third to triple</option><option value="">any size</option></select></div>
+      <label class="chk"><input type="checkbox" id="q-msector" checked> Same sector <span class="n" id="n-msector"></span></label>
+      <label class="chk"><input type="checkbox" id="q-mctype" checked> Same construction type <span class="n" id="n-mctype"></span></label>
+      <label class="chk"><input type="checkbox" id="q-mdel" checked> Same delivery method <span class="n" id="n-mdel"></span></label>
+      <label class="chk"><input type="checkbox" id="q-mbid"> Same bid type <span class="n" id="n-mbid"></span></label>
+      <label class="chk"><input type="checkbox" id="q-moffice"> Same office <span class="n" id="n-moffice"></span></label>
+      <label class="chk"><input type="checkbox" id="q-mclient"> Same owner <span class="n" id="n-mclient"></span></label>
+      <label class="chk" style="margin-top:6px"><input type="checkbox" id="q-sp"> Include our own self-perform packages</label>
+      <h3 style="margin-top:18px">Escalation</h3>
+      <label class="chk"><input type="checkbox" id="q-esc" checked> Escalate older jobs to today</label>
+      <div class="fld" style="margin-top:8px"><label for="q-escyr">Bring costs forward to</label><select id="q-escyr"></select></div>
+      <div class="hint" id="q-eschint" style="font-size:11.5px;color:var(--faint);margin-top:6px"></div>
+      <div class="srow" style="margin-top:14px"><button class="btn ghost" type="button" id="q-reset">Clear</button>
+        <button class="btn ghost" type="button" id="q-export">Export comparables</button></div>
+    </aside>
+    <div style="min-width:0">
+      <div id="q-summary"></div>
+      <div class="tablewrap"><table class="grid" id="q-table"></table></div>
+      <div class="note" id="q-foot"></div>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section class="panel" id="p-ask" hidden>
+  <p class="lede">Ask in plain words &mdash; <i>what is the biggest healthcare job we have built?</i>, <i>average square footage of our last five schools</i>, <i>median $/SF on negotiated work in Huntsville</i>. Claude reads only your question and the names of the fields; <b>every number is then worked out from the desk's own records</b>, and the jobs behind it are listed underneath so you can check the answer rather than take it on trust.</p>
+  <div class="srow" style="gap:8px;align-items:flex-start;margin-bottom:10px">
+    <input type="search" id="a-q" placeholder="Ask about our project history&hellip;" style="flex:1 1 420px;min-width:0">
+    <button class="btn" type="button" id="a-go">Ask</button>
+    <button class="btn ghost" type="button" id="a-stop" hidden>Stop</button>
+  </div>
+  <div class="chips" id="a-eg" style="margin-bottom:14px"></div>
+  <div id="a-out"></div>
+  <div id="a-unavail" hidden>
+    <div class="verdict warn"><b>Asking is not switched on for this view.</b> Everything else in the desk works as normal &mdash; the Price a job and Project history tabs answer the same questions with filters instead.</div>
+  </div>
+</section>
+
+<section class="panel" id="p-hist" hidden>
+  <p class="lede">Everything on file, filterable. Whole-job metrics only for now &mdash; cost by division comes from the buyout workbooks and is a separate pass. Rows tagged Procore came from Procore live; the rest from the Unanet BH project data sheet, cross-checked against Unanet CRM.</p>
+  <div class="controls">
+    <div class="f"><label for="h-q">Search</label><input type="search" id="h-q" placeholder="Job, name, owner, architect&hellip;"></div>
+    <div class="f"><label for="h-sector">Sector</label><select id="h-sector"></select></div>
+    <div class="f"><label for="h-ctype">Type</label><select id="h-ctype"></select></div>
+    <div class="f"><label for="h-del">Delivery</label><select id="h-del"></select></div>
+    <div class="f"><label for="h-bid">Bid type</label><select id="h-bid"></select></div>
+    <div class="f"><label for="h-client">Owner</label><select id="h-client"></select></div>
+    <div class="f"><label for="h-office">Office</label><select id="h-office"></select></div>
+    <div class="f"><label for="h-year">From year</label><select id="h-year"></select></div>
+    <div class="f"><label for="h-only">&nbsp;</label><label class="chk" style="padding-top:7px"><input type="checkbox" id="h-only" checked> Only jobs with metrics</label></div>
+    <div class="f"><label for="h-scope">&nbsp;</label><label class="chk" style="padding-top:7px"><input type="checkbox" id="h-scope"> Include partial-scope jobs</label></div>
+    <div class="f"><label for="h-sp">&nbsp;</label><label class="chk" style="padding-top:7px"><input type="checkbox" id="h-sp"> Include self-perform packages</label></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="h-reset">Reset</button></div>
+  </div>
+  <div class="kpis" id="h-kpi"></div>
+  <div class="tablewrap"><table class="grid" id="h-table"></table></div>
+  <div class="legend"><span><b>$/SF</b> = contract &divide; square footage</span><span><b>Schedule duration</b> = calendar days from start to completion, weekends and holidays included &mdash; actual dates where we have them, otherwise projected</span><span><b>Days per 1,000 SF</b> = that duration divided by the building size, so jobs of different sizes can be compared</span><span><span class="tag warn">est</span> = estimated duration &mdash; measured to a projected finish, because the job has not finished yet</span><span><span class="tag neutral">original</span> / <span class="tag neutral">current</span> = the job has no final contract yet, so the figure is the award amount or the contract to date</span><span><span class="tag warn">Scope</span> = square footage is the whole building but the contract is one package</span><span><span class="tag warn">Self-perform</span> = a Bailey-Harris self-perform package on another job &mdash; carries no $/SF, and its value rolls up onto the parent</span><span><span class="tag crit">&Delta;</span> = BH project data sheet and Unanet CRM disagree by more than 5%</span></div>
+</section>
+
+<!-- EDIT -->
+<section class="panel" id="p-edit" hidden>
+  <p class="lede">Square footage and real dates are the thinnest part of this data, and they are what a schedule gets priced from. Anything entered here overrides the imported record for that job and is what the comparables use from then on.</p>
+  <div class="controls">
+    <div class="f fwide"><label for="e-pick">Job</label><input id="e-pick" list="dl-jobs" placeholder="Type a job number or name"><datalist id="dl-jobs"></datalist></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="e-open">Open it</button></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="e-new">New job instead</button></div>
+  </div>
+  <div id="e-editor" hidden></div>
+  <h2 class="sect">Entered or corrected here</h2>
+  <div class="tablewrap"><table class="grid" id="e-table"></table></div>
+</section>
+
+<!-- COVERAGE -->
+<section class="panel" id="p-cov" hidden>
+  <p class="lede">The work list. A job with no square footage cannot price a bid by area, and one with no dates cannot price a duration &mdash; these are the gaps, newest first, because a recent job prices a new bid better than an old one.</p>
+  <div class="controls">
+    <div class="f"><label for="c-year">From year</label><select id="c-year"></select></div>
+    <div class="f"><label for="c-miss">Missing</label><select id="c-miss">
+      <option value="any">Anything</option><option value="sf">Square footage</option><option value="dates">Start or finish date</option>
+      <option value="contract">Contract amount</option><option value="both">Both SF and dates</option></select></div>
+    <div class="f"><label for="c-sector">Sector</label><select id="c-sector"></select></div>
+    <div class="f"><label>&nbsp;</label><button class="btn ghost" type="button" id="c-export">Export the list</button></div>
+  </div>
+  <div class="kpis" id="c-kpi"></div>
+  <div class="tablewrap"><table class="grid" id="c-table"></table></div>
+
+
+</section>
+
+<!-- SOURCES -->
+<section class="panel" id="p-src" hidden>
+  <h2 class="sect">How to read the numbers</h2>
+  <div class="cols">
+    <div class="rule"><h3>Median and the middle half</h3><div class="body">
+      <p style="margin-top:0">Every figure is a <b>median</b> with the <b>25th to 75th percentile</b> around it &mdash; the middle half of comparable jobs. Medians, not averages, because one outlier job would otherwise drag the number somewhere unhelpful.</p>
+      <p style="margin-bottom:0">Every tile prints its own <b>n</b>. Four jobs is a hint. Twelve is a range you can defend in a bid review. One is an anecdote, and the desk says so.</p>
+    </div></div>
+    <div class="rule"><h3>Our own self-perform work</h3><div class="body">
+      <p style="margin-top:0">Jobs with <b>SP</b> in the number or &ldquo;Self-Perform&rdquo; in the name are Bailey-Harris doing its own work on another job &mdash; concrete on McKee Road, demo at Central Sterilization. They are booked as separate jobs but they are a trade package, not a building.</p>
+      <p>Which matters because they inherit the parent building's square footage while carrying only their own contract, so their $/SF reads $13 to $60 and would drag any median down. The desk gives them <b>no $/SF at all</b> and leaves them out of comparables unless you ask for them.</p>
+      <p style="margin-bottom:0">Their value rolls up onto the parent job instead, in the <b>BH self-perform</b> column &mdash; so Straehle Hess shows $734,383 self-performed of a $2,549,455 job, 28.8% of it. Owner reads Bailey-Harris and office Auburn on all of them.</p>
+    </div></div>
+    <div class="rule"><h3>Bid data is not in here</h3><div class="body">
+      <p style="margin-top:0">The BH project data sheet also carried 240 <b>PC</b> rows &mdash; precon pursuits, at $2.22bn bid between 2010 and 2024. They have been taken out of this desk entirely.</p>
+      <p>They were never priceable: a PC number is what we <i>bid</i>, not what a job cost, and none was built under that number because a won pursuit gets renumbered. 161 are Lost or Canceled outright, none carries a schedule and only 7 carry square footage. Nor can they answer the question you would want them to &mdash; <b>the source has no &ldquo;Won&rdquo; status</b>, so the 79 rows marked Budget or Pending hold the wins mixed in with the abandoned, and a win rate cannot be worked out until someone reconciles them by hand.</p>
+      <p style="margin-bottom:0">All 240 were exported to a workbook first, with their amounts, sectors, statuses and 56 possible live-job matches, so nothing was thrown away. The one comparison worth having is still worth having: GL Pack was bid at $29,786,724 and the job carries $29,673,647, <b>0.4% apart</b> &mdash; which is also what settles 25AU002's $112,040 &ldquo;original&rdquo; contract as never having been loaded.</p>
+    </div></div>
+    <div class="rule"><h3>The five dates, and where each one lives</h3><div class="body">
+      <p style="margin-top:0">A projected finish and an actual finish are not the same number, so the desk keeps them apart. On Procore's project <b>Admin</b> page: <b>Start Date</b> is the contractual start, <b>Actual Start Date</b> the real one, <b>Completion Date</b> the contractual finish and <b>Projected Finish Date</b> where the schedule stands today.</p>
+      <p><b>Actual completion has no project-level field in Procore at all.</b> It lives on the <b>prime contract</b>, and it is filled in on only 8 of our jobs &mdash; which is right, because only 8 of them have actually finished.</p>
+      <p>Watch one trap. Procore pre-fills <b>Actual Start Date</b> from <b>Start Date</b>, so a job that has not broken ground still shows an actual start &mdash; 2511-01 reads 10/15/2026 in both, a month from now. The desk refuses any actual date that is in the future, or that sits on a job still in bidding or preconstruction, so those read blank here rather than wrong.</p>
+      <p style="margin-bottom:0">Schedule duration is measured <b>actual to actual</b> where both exist, and tagged <span class="tag warn">est</span> &mdash; estimated &mdash; when it had to fall back to a projected finish. 137 jobs are measured on actual dates; 39 are estimates.</p>
+    </div></div>
+    <div class="rule"><h3>How the Ask tab works</h3><div class="body">
+      <p style="margin-top:0">Claude reads your question and the <b>names of the fields</b> plus the list of values actually present in the data &mdash; the sectors, delivery methods, offices and owners on file. It hands back a query, nothing more. <b>Every figure is then computed here</b>, from the same records the rest of the desk uses.</p>
+      <p>Which is why the jobs behind each answer are listed underneath it. If the number looks wrong, the rows will show you why &mdash; usually a job that should not have been in the set, or a field that is blank on half of them. The answer always says how many of the matching jobs actually carried the figure it averaged.</p>
+      <p style="margin-bottom:0">Self-perform packages are left out unless the question asks for them. It will say plainly when a question is not answerable from these fields; subcontractor ratings live in the Prequal &amp; Sub Rating Desk, not here.</p>
+    </div></div>
+    <div class="rule"><h3>What the desk will not tell you</h3><div class="body">
+      <p style="margin-top:0">It has no cost detail below the whole job. &ldquo;Concrete ran over on our last four schools&rdquo; needs the buyout workbooks, which are a separate pass.</p>
+      <p>It cannot see scope. Two 40,000 SF healthcare jobs can be a shell and a full fit-out. Read the comparables, do not just take the median.</p>
+      <p style="margin-bottom:0">And it is only as good as what is in Procore. A few prime contracts were loaded almost entirely through change orders &mdash; 25AU002 shows a $112,040 original against a $29.7M revised &mdash; which reads as a 26,000% overrun but is really a data-entry pattern. Those carry a <span class="tag crit">check</span> tag rather than being trusted.</p>
+    </div></div>
+  </div>
+  <h2 class="sect">The escalation index</h2>
+  <p class="lede">Cost per square foot is escalated year by year, not by a single flat rate &mdash; because construction inflation has been anything but flat. 2022 alone ran <b>+19.9%</b> while 2024 was <b>+0.1%</b>. Where the index publishes a building-type figure the desk uses it, so a school escalates on the school index and a hospital on the health care one. Change any figure here and the comparables update; it is stored with the page for everyone.</p>
+  <div class="tablewrap"><table class="grid" id="esc-table"></table></div>
+  <div class="srow" style="margin-top:12px">
+    <button class="btn" type="button" id="esc-save">Save the index</button>
+    <button class="btn ghost" type="button" id="esc-reset">Back to the published figures</button>
+    <span class="status" id="esc-status"></span>
+  </div>
+  <div class="note" id="esc-note"></div>
+
+  <h2 class="sect">Where the data came from</h2>
+  <div id="sources"></div>
+  <h2 class="sect">What is known to be wrong or missing</h2>
+  <div id="gaps"></div>
+  <h2 class="sect">Take a copy</h2>
+  <div class="srow">
+    <button class="btn ghost" type="button" data-export="hist">Project history CSV</button>
+    <button class="btn ghost" type="button" data-export="cov">Coverage gaps CSV</button>
+    <span class="status" id="expstatus"></span>
+  </div>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script>
+"use strict";
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={db:null,dl:null,arch:[],user:new Map(),meta:null,sel:null,esc:null,sample:null};
+
+const n0=v=>v==null?'':Math.round(v).toLocaleString('en-US');
+const usd=v=>v==null?'':'$'+Math.round(v).toLocaleString('en-US');
+const r1=v=>v==null?'':(Math.round(v*10)/10).toFixed(1);
+const r2=v=>v==null?'':(Math.round(v*100)/100).toFixed(2);
+const num=v=>{if(v==null)return null;const t=String(v).replace(/[$,%\s]/g,'');if(t===''||/^#/.test(t))return null;const f=parseFloat(t);return isFinite(f)?f:null;};
+function slug(s){return String(s||'').normalize('NFKD').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase().slice(0,60)||'x';}
+function srt(a){return a.filter(v=>typeof v==='number'&&isFinite(v)).sort((p,q)=>p-q);}
+function quant(a,p){const x=srt(a);if(!x.length)return null;
+  const i=(x.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+  return lo===hi?x[lo]:x[lo]+(x[hi]-x[lo])*(i-lo);}
+const med=a=>quant(a,0.5);
+function pctOf(a,v){const x=srt(a);if(!x.length||v==null)return null;
+  let below=0;x.forEach(y=>{if(y<v)below++;});return below/x.length;}
+function ord(p){const n=Math.round(p*100);
+  if(n<=2)return 'lower than every one';
+  if(n>=98)return 'higher than every one';
+  return 'around the '+n+(n%10===1&&n%100!==11?'st':n%10===2&&n%100!==12?'nd':n%10===3&&n%100!==13?'rd':'th')+' percentile';}
+function nOf(n){return n===1?'the single comparable':'these '+n+' jobs';}
+const TODAY=new Date().toISOString().slice(0,10);
+function yrOf(n){const m=String(n||'').match(/^(\d{2})/);if(!m)return null;const y=+m[1];return y>=80?1900+y:2000+y;}
+function projects(){
+  const m=new Map();
+  S.arch.forEach(p=>{if(p&&p.num_!=null)m.set(String(p.num_),Object.assign({},p));});
+  S.user.forEach((v,k)=>{const cur=m.get(String(v.num_))||{};m.set(String(v.num_),Object.assign(cur,v,{edited:true}));});
+  const out=Array.from(m.values());
+  out.forEach(p=>{
+    p._yr=yrOf(p.num_);
+    // a date in the future is never an actual, whatever field it arrived in
+    if(p.startA&&p.startA>TODAY){p.startC=p.startC||p.startA;delete p.startA;}
+    if(p.endA&&p.endA>TODAY){p.endP=p.endP||p.endA;delete p.endA;}
+    // cost basis: final only once the job is actually finished
+    p.amt=p.finalContract!=null?p.finalContract:(p.curContract!=null?p.curContract:
+          (p.origContract!=null?p.origContract:(p.uContract!=null?p.uContract:null)));
+    p.costBasis=p.finalContract!=null?'final':(p.curContract!=null?'current':
+                (p.origContract!=null?'original':(p.uContract!=null?'unanet':null)));
+    // schedule duration, measured actual-to-actual where we have it
+    delete p.dur;delete p.durBasis;delete p.durK;
+    const s2=p.startA||p.startC, e2=p.endA||p.endP||p.endCon;
+    if(s2&&e2){try{const d=(Date.parse(e2)-Date.parse(s2))/86400000;
+      if(d>0&&d<4000){p.dur=Math.round(d);
+        p.durBasis=(p.startA&&p.endA)?'actual':'projected';}}catch(_){}}
+    if(p.endCon&&(p.endA||p.endP)){try{
+      p.schedVar=Math.round((Date.parse(p.endA||p.endP)-Date.parse(p.endCon))/86400000);}catch(_){}}
+    if(p.sp){delete p.psf;delete p.durK;}
+    else{
+      if(p.sf&&p.amt)p.psf=Math.round(p.amt/p.sf*100)/100;
+      if(p.dur&&p.sf&&p.sf>1000)p.durK=Math.round(p.dur/(p.sf/1000)*10)/10;
+    }
+    p.flag=p.sp?'selfperform':((p.psf!=null&&(p.psf<40||p.psf>800))?'scope':undefined);
+    if(p.spValue&&p.amt)p.spPct=Math.round(p.spValue/p.amt*1000)/10;
+  });
+  return out;
+}
+function opts(el,list,label,keep){
+  const cur=el.value;
+  el.innerHTML='<option value="">'+label+'</option>'+list.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('');
+  if(keep!==false&&cur)el.value=cur;
+}
+function fillEsc(){
+  const now=new Date().getFullYear();
+  const el=$('#q-escyr'); const cur=el.value;
+  const ys=escYears(); const maxY=Math.max(now, ys.length?ys[ys.length-1]:now);
+  let out='';
+  for(let y=maxY;y>=maxY-6;y--) out+='<option value="'+y+'">'+y+'</option>';
+  el.innerHTML=out; el.value=cur||String(Math.min(now,maxY));
+  const t=escTable();
+  const pub=escYears().filter(y=>!t.rows[y].assumed);
+  $('#q-eschint').innerHTML='Published rates on file for '+(pub.length?Math.min.apply(null,pub)+'&ndash;'+Math.max.apply(null,pub):'no years')+
+    '. Other years use an assumed rate &mdash; see Sources.';
+}
+function fillAll(){
+  const P=projects();
+  const uniq=f=>Array.from(new Set(P.map(p=>p[f]).filter(Boolean))).sort();
+  ['q-sector','h-sector','c-sector'].forEach(id=>opts($('#'+id),uniq('sector'),'Any sector'));
+  ['q-ctype','h-ctype'].forEach(id=>opts($('#'+id),uniq('ctype'),'Any type'));
+  ['q-del','h-del'].forEach(id=>opts($('#'+id),uniq('delMethod'),'Any method'));
+  opts($('#h-bid'),uniq('bidType'),'Any bid type');
+  opts($('#q-bid'),uniq('bidType'),'Any bid type');
+  ['q-office','h-office'].forEach(id=>opts($('#'+id),uniq('div'),'Any office'));
+  ['q-client','h-client'].forEach(id=>opts($('#'+id),uniq('client'),'Any owner'));
+  const yrs=Array.from(new Set(P.map(p=>p._yr).filter(Boolean))).sort((a,b)=>b-a);
+  ['h-year','c-year'].forEach(id=>{const el=$('#'+id),cur=el.value;
+    el.innerHTML='<option value="">Any year</option>'+yrs.map(y=>'<option value="'+y+'">'+y+' and later</option>').join('');
+    el.value=cur|| (id==='c-year'?'2020':'');});
+  $('#dl-jobs').innerHTML=P.slice().sort((a,b)=>String(b.num_).localeCompare(String(a.num_)))
+    .map(p=>'<option value="'+esc(p.num_+(p.name?' '+p.name:''))+'">'+esc(p.sector||'')+'</option>').join('');
+  fillEsc();
+  paintMeta(P);
+}
+function paintMeta(P){
+  $('#m-p').textContent=n0(P.length);
+  const good=P.filter(p=>p.psf!=null&&!p.flag);
+  $('#m-psf').textContent=n0(good.length);
+  $('#m-d').textContent=n0(P.filter(p=>p.dur!=null).length);
+  $('#m-o').textContent=n0(new Set(P.map(p=>p.client).filter(Boolean)).size);
+  const m=med(good.map(p=>p.psf));
+  $('#m-med').textContent=m!=null?'$'+r2(m):'—';
+}
+
+/* ---------- escalation ----------
+   Real year-over-year figures are the BLS Producer Price Index for new
+   nonresidential building construction (WPU801) and its building-type
+   sub-indexes, as tabulated by AGC (table dated 28 Feb 2026). Years before
+   2021 and after 2025 are assumptions, flagged as such, and editable. */
+const ESC_DEFAULT={
+  note:'BLS PPI, new nonresidential building construction (WPU801) and building-type sub-indexes, per the AGC table dated 28 Feb 2026. 2021-2025 are published figures. Earlier and later years are assumptions you can change.',
+  rows:{
+    2015:{all:2.5,assumed:true},2016:{all:2.5,assumed:true},2017:{all:2.5,assumed:true},
+    2018:{all:2.5,assumed:true},2019:{all:2.5,assumed:true},2020:{all:2.5,assumed:true},
+    2021:{all:5.2,school:3.6,office:6.1,industrial:5.2,health:4.8,warehouse:7.6},
+    2022:{all:19.9,school:16.4,office:20.7,industrial:22.3,health:17.2,warehouse:28.0},
+    2023:{all:7.9,school:7.4,office:10.0,industrial:7.6,health:8.2,warehouse:4.8},
+    2024:{all:0.1,school:0.5,office:0.6,industrial:-0.3,health:-0.5,warehouse:-0.2},
+    2025:{all:1.6,school:2.0,office:2.4,industrial:1.3,health:1.3,warehouse:0.5},
+    2026:{all:1.6,assumed:true}
+  }};
+const SEC2IDX={'K-12':'school','Higher Education':'school','Healthcare':'health',
+  'Industrial':'industrial','Commercial':'office','Federal':'all','Residential':'office'};
+function escTable(){return (S.esc&&S.esc.rows)?S.esc:ESC_DEFAULT;}
+function escYears(){return Object.keys(escTable().rows).map(Number).sort((a,b)=>a-b);}
+function escRate(year,idx){
+  const r=escTable().rows[year];
+  if(!r)return null;
+  const v=(idx&&r[idx]!=null)?r[idx]:r.all;
+  return typeof v==='number'?v:null;
+}
+/* factor to bring a cost from the year a job finished up to `to` */
+function escFactor(fromYear,to,sector){
+  if(!fromYear||!to||to<=fromYear)return 1;
+  const idx=SEC2IDX[sector]||'all';
+  let f=1, assumed=false, missing=false;
+  for(let y=fromYear+1;y<=to;y++){
+    const r=escRate(y,idx);
+    if(r==null){missing=true;continue;}
+    if(escTable().rows[y]&&escTable().rows[y].assumed)assumed=true;
+    f*=1+r/100;
+  }
+  return {f,assumed,missing};
+}
+function ageTag(y,to){
+  if(!y)return '<span class="na">&mdash;</span>';
+  const a=to-y;
+  if(a<=0)return '<span class="tag ok">current</span>';
+  const cls=a>=10?'crit':a>=5?'warn':'neutral';
+  return '<span class="tag '+cls+'">'+a+' yr'+(a===1?'':'s')+'</span>';
+}
+function dcell(d){return d?esc(d):'<span class="na">&mdash;</span>';}
+function basisTag(b){
+  if(b==='final')return '';
+  const t={current:['current','contract to date, job still running'],
+           original:['original','original contract, no final figure yet'],
+           unanet:['Unanet','value from Unanet CRM, not the project report']}[b];
+  return t?' <span class="tag neutral" title="'+t[1]+'">'+t[0]+'</span>':'';
+}
+function durTag(b){
+  return b==='projected'?' <span class="tag warn" title="estimated: measured to a projected finish, not an actual one">est</span>':'';
+}
+function jobYear(p){
+  const d=p.endA||p.endP||p.startA||p.startC;
+  if(d){const m=String(d).match(/^(\d{4})/);if(m)return +m[1];}
+  return p._yr||null;
+}
+function escOf(p,to){
+  const y=jobYear(p);
+  if(p.psf==null||!y)return {psf:p.psf,f:1,y,assumed:false};
+  const r=escFactor(y,to,p.sector);
+  return {psf:Math.round(p.psf*r.f*100)/100,f:r.f,y,assumed:r.assumed};
+}
+function escOn(){return $('#q-esc').checked;}
+function escYear(){return parseInt($('#q-escyr').value,10)||new Date().getFullYear();}
+
+/* ---------- top scrollbar mirrors ---------- */
+function syncBars(){
+  $$('.tablewrap').forEach(w=>{
+    let bar=w.previousElementSibling;
+    if(!bar||!bar.classList||!bar.classList.contains('hsync')){
+      bar=document.createElement('div');bar.className='hsync';
+      bar.appendChild(document.createElement('div'));
+      w.parentNode.insertBefore(bar,w);
+      bar.addEventListener('scroll',()=>{if(bar._lock)return;w._lock=1;w.scrollLeft=bar.scrollLeft;w._lock=0;});
+      w.addEventListener('scroll',()=>{if(w._lock)return;bar._lock=1;bar.scrollLeft=w.scrollLeft;bar._lock=0;});
+    }
+    const need=w.scrollWidth-w.clientWidth>2;
+    bar.hidden=!need;
+    if(need)bar.firstChild.style.width=w.scrollWidth+'px';
+  });
+}
+window.addEventListener('resize',()=>{try{syncBars();}catch(_){}}); 
+
+/* ---------- ask ----------
+   Claude's only job is turning the question into a query spec. Every figure is
+   then computed here from the desk's own records, and the jobs behind it are
+   listed, so an answer is auditable and no number can be invented. */
+const A_METRIC={
+  amt:['Contract','usd'], origContract:['Original contract','usd'],
+  finalContract:['Final contract','usd'], sf:['Square footage','n0'],
+  psf:['$/SF','psf'], dur:['Schedule duration','days'],
+  durK:['Days per 1,000 SF','r1'], finFeePct:['Fee %','pct'],
+  gcPct:['GCs %','pct'], spValue:['BH self-perform','usd'], count:['Jobs','n0']};
+const A_AGG={max:'the largest',min:'the smallest',median:'the median',
+  mean:'the average',sum:'the total',count:'the number of',p25:'the 25th percentile',
+  p75:'the 75th percentile'};
+function aFmt(kind,v){
+  if(v==null||!isFinite(v))return '&mdash;';
+  if(kind==='usd')return usd(v);
+  if(kind==='psf')return '$'+r2(v);
+  if(kind==='pct')return r2(v)+'%';
+  if(kind==='days')return n0(v)+' days';
+  if(kind==='r1')return r1(v);
+  return n0(v);
+}
+function aVocab(){
+  const P=projects();
+  const u=f=>Array.from(new Set(P.map(p=>p[f]).filter(Boolean))).sort();
+  return {sector:u('sector'),ctype:u('ctype'),delMethod:u('delMethod'),
+    bidType:u('bidType'),div:u('div'),client:u('client')};
+}
+function aJobDate(p){return p.endA||p.endP||p.endCon||p.startA||p.startC||null;}
+function aYear(p){const d=aJobDate(p);if(d)return +String(d).slice(0,4);return p._yr||null;}
+function aRun(spec){
+  const V=aVocab();
+  let l=projects();
+  const f=spec.filters||{};
+  l=l.filter(p=>spec.includeSelfPerform?true:!p.sp);
+  if(!spec.includeSelfPerform)l=l.filter(p=>p.flag!=='scope');
+  const pick=(field,want)=>{
+    if(!want)return;
+    const wl=String(want).toLowerCase();
+    // match against the vocabulary that is actually in the data, so a near miss
+    // ("Higher Ed", "K12", "CMAR") still lands on the real value
+    const opts=V[field]||[];
+    let hit=opts.find(o=>String(o).toLowerCase()===wl)
+         || opts.find(o=>String(o).toLowerCase().includes(wl))
+         || opts.find(o=>wl.includes(String(o).toLowerCase()));
+    l=l.filter(p=>hit?p[field]===hit:String(p[field]||'').toLowerCase().includes(wl));
+    return hit||want;
+  };
+  const used={};
+  ['sector','ctype','delMethod','bidType','div','client'].forEach(k=>{
+    if(f[k]){used[k]=pick(k,f[k]);}
+  });
+  if(f.sfMin!=null)l=l.filter(p=>p.sf!=null&&p.sf>=f.sfMin);
+  if(f.sfMax!=null)l=l.filter(p=>p.sf!=null&&p.sf<=f.sfMax);
+  if(f.yearFrom!=null)l=l.filter(p=>{const y=aYear(p);return y!=null&&y>=f.yearFrom;});
+  if(f.yearTo!=null)l=l.filter(p=>{const y=aYear(p);return y!=null&&y<=f.yearTo;});
+  if(f.completedOnly)l=l.filter(p=>!!p.endA);
+  if(f.text){const t=String(f.text).toLowerCase();
+    l=l.filter(p=>[p.num_,p.name,p.client,p.descr].some(v=>v&&String(v).toLowerCase().includes(t)));}
+
+  const metric=A_METRIC[spec.metric]?spec.metric:'amt';
+  const kind=(A_METRIC[metric]||[])[1]||'n0';
+  // "our last five healthcare projects" -- most recent first, by the best date
+  if(spec.recent){
+    l=l.filter(p=>aJobDate(p)).sort((a,b)=>String(aJobDate(b)).localeCompare(String(aJobDate(a))));
+    l=l.slice(0,spec.recent);
+  }
+  let vals=metric==='count'?[]:l.map(p=>p[metric]).filter(v=>typeof v==='number'&&isFinite(v));
+  const agg=spec.agg||'median';
+  let value=null;
+  if(metric==='count'||agg==='count')value=l.length;
+  else if(vals.length){
+    if(agg==='max')value=Math.max.apply(null,vals);
+    else if(agg==='min')value=Math.min.apply(null,vals);
+    else if(agg==='sum')value=vals.reduce((a,b)=>a+b,0);
+    else if(agg==='mean')value=vals.reduce((a,b)=>a+b,0)/vals.length;
+    else if(agg==='p25')value=quant(vals,0.25);
+    else if(agg==='p75')value=quant(vals,0.75);
+    else value=med(vals);
+  }
+  // rows: for max/min show the winner first; otherwise most recent first
+  let rows=l.slice();
+  if(metric!=='count'){
+    if(agg==='max')rows.sort((a,b)=>(b[metric]==null?-Infinity:b[metric])-(a[metric]==null?-Infinity:a[metric]));
+    else if(agg==='min')rows.sort((a,b)=>(a[metric]==null?Infinity:a[metric])-(b[metric]==null?Infinity:b[metric]));
+    else rows.sort((a,b)=>String(aJobDate(b)||'').localeCompare(String(aJobDate(a)||'')));
+  }
+  return {rows,vals,value,metric,kind,agg,used,n:l.length,
+    withMetric:vals.length,
+    median:vals.length?med(vals):null, mean:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
+}
+function aRender(spec,res,question){
+  const label=(A_METRIC[res.metric]||['',''])[0];
+  const crit=[];
+  Object.keys(res.used).forEach(k=>crit.push(esc(String(res.used[k]))));
+  const f=spec.filters||{};
+  if(f.sfMin!=null||f.sfMax!=null)crit.push((f.sfMin!=null?n0(f.sfMin):'0')+'–'+(f.sfMax!=null?n0(f.sfMax):'any')+' SF');
+  if(f.yearFrom!=null||f.yearTo!=null)crit.push((f.yearFrom||'')+(f.yearTo?'–'+f.yearTo:' onwards'));
+  if(f.completedOnly)crit.push('finished jobs only');
+  if(spec.recent)crit.push('the last '+spec.recent);
+  if(spec.includeSelfPerform)crit.push('including self-perform packages');
+
+  let h='';
+  if(!res.n){
+    h+='<div class="verdict hi"><b>No jobs match that.</b> '+
+      (crit.length?'Nothing on file is '+crit.join(' &middot; ')+'.':'')+
+      ' Try widening it, or use the Project history tab to see what is there.</div>';
+    return h;
+  }
+  const headline=res.metric==='count'||spec.agg==='count'
+    ? n0(res.value)+' job'+(res.value===1?'':'s')
+    : aFmt(res.kind,res.value);
+  h+='<div class="verdict ok" style="font-size:15px">'+
+    '<div class="na" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">'+
+      esc(A_AGG[spec.agg]||'the')+' '+esc(label.toLowerCase())+(crit.length?' &middot; '+crit.join(' &middot; '):'')+'</div>'+
+    '<div style="font:700 30px/1.1 Montserrat,sans-serif;margin-bottom:6px">'+headline+'</div>';
+  if(res.metric!=='count'&&spec.agg!=='count'){
+    h+='<div>From <b>'+res.withMetric+'</b> of '+res.n+' matching job'+(res.n===1?'':'s')+' that carry a '+esc(label.toLowerCase())+'.';
+    if(res.withMetric>2&&(spec.agg==='median'||spec.agg==='mean'))
+      h+=' Median '+aFmt(res.kind,res.median)+', average '+aFmt(res.kind,res.mean)+
+         ' &mdash; they differ when one job is an outlier, and the median is the safer of the two.';
+    if(res.withMetric&&res.withMetric<4)h+=' <b>That is very few</b>; treat it as a sanity check, not a benchmark.';
+    h+='</div>';
+  }
+  h+='</div>';
+
+  const show=res.rows.slice(0,25);
+  h+='<div class="tablewrap"><table class="grid"><thead><tr><th>Job</th><th>Name</th><th>Sector</th>'+
+    '<th>SF</th><th>Contract</th><th>$/SF</th><th>Schedule duration</th><th>Finished</th></tr></thead><tbody>'+
+    show.map(p=>{
+      const hot=res.metric!=='count'&&typeof p[res.metric]==='number'&&p[res.metric]===res.value;
+      return '<tr'+(hot?' style="background:var(--tint)"':'')+'>'+
+      '<td class="mono">'+esc(p.num_||'')+'</td>'+
+      '<td>'+esc(p.name||'')+
+        (p.sp?' <span class="tag warn">Self-perform</span>':'')+'</td>'+
+      '<td>'+(p.sector?esc(p.sector):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.sf!=null?n0(p.sf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.amt!=null?usd(p.amt)+basisTag(p.costBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.psf!=null?'$'+r2(p.psf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.dur!=null?n0(p.dur)+durTag(p.durBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.endA?esc(p.endA):(p.endP?'<span class="na">'+esc(p.endP)+'</span>':'<span class="na">&mdash;</span>'))+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    (res.rows.length>show.length?'<p class="lede">Showing '+show.length+' of '+res.rows.length+' matching jobs.</p>':'');
+  h+='<p class="lede" style="margin-top:10px">Read as: <b>'+esc(question)+'</b> &rarr; '+
+     esc(A_AGG[spec.agg]||'')+' '+esc(label.toLowerCase())+
+     (crit.length?' for '+crit.join(', '):' across everything on file')+
+     '. Self-perform packages are left out unless the question asks for them, because an SP package is a scope rather than a building.</p>';
+  return h;
+}
+const A_EG=['What is the biggest healthcare job we have built?',
+ 'Average square footage of our last 5 K-12 projects',
+ 'Median $/SF on higher education work',
+ 'How many jobs have we finished in Huntsville?',
+ 'Longest schedule on an industrial project',
+ 'Median days per 1,000 SF on new construction',
+ 'Total contract value of everything we finished in 2025',
+ 'Median fee percentage on negotiated work'];
+let A_CTL=null;
+function aChips(){
+  $('#a-eg').innerHTML=A_EG.map(q=>'<button class="chip" type="button" data-q="'+esc(q)+'">'+esc(q)+'</button>').join('');
+  $$('#a-eg .chip').forEach(b=>b.onclick=()=>{$('#a-q').value=b.dataset.q;aAsk();});
+}
+async function aAsk(){
+  const q=$('#a-q').value.trim();
+  const out=$('#a-out');
+  if(!q){out.innerHTML='';return;}
+  if(!S.sample){$('#a-unavail').hidden=false;return;}
+  if(A_CTL)A_CTL.abort();
+  A_CTL=new AbortController();
+  $('#a-stop').hidden=false; $('#a-go').disabled=true;
+  out.innerHTML='<div class="verdict">Working out what you are asking for&hellip;</div>';
+  const V=aVocab();
+  const prompt=
+   'You turn a question about a construction company\'s past projects into a JSON query. '+
+   'Reply with ONLY the JSON object, no prose.\n\n'+
+   'Shape:\n'+
+   '{"intent":"aggregate"|"unsupported",\n'+
+   ' "metric":"amt"|"origContract"|"finalContract"|"sf"|"psf"|"dur"|"durK"|"finFeePct"|"gcPct"|"spValue"|"count",\n'+
+   ' "agg":"max"|"min"|"median"|"mean"|"sum"|"count"|"p25"|"p75",\n'+
+   ' "filters":{"sector":str,"ctype":str,"delMethod":str,"bidType":str,"div":str,"client":str,'+
+   '"sfMin":num,"sfMax":num,"yearFrom":num,"yearTo":num,"completedOnly":bool,"text":str},\n'+
+   ' "recent":num, "includeSelfPerform":bool,\n'+
+   ' "why":"one short sentence on how you read the question"}\n\n'+
+   'Field meanings: amt = the contract figure the desk uses (final where the job is closed, '+
+   'otherwise the current or original contract). sf = square footage. psf = cost per square foot. '+
+   'dur = schedule duration in calendar days. durK = days per 1,000 SF. div = the Bailey-Harris office. '+
+   'client = the project owner. ctype = construction type. Use metric "count" with agg "count" for '+
+   '"how many". Use "recent":N for "our last N ...". Set completedOnly true when the question says '+
+   'built, completed, finished or delivered. Omit any filter you are not confident about; never invent '+
+   'a filter value that is not in the vocabulary below. Set intent "unsupported" if the question is not '+
+   'answerable from these fields (for example anything about subcontractors, safety or people).\n\n'+
+   'Vocabulary actually present in the data:\n'+
+   'sector: '+V.sector.join(' | ')+'\n'+
+   'ctype: '+V.ctype.join(' | ')+'\n'+
+   'delMethod: '+V.delMethod.join(' | ')+'\n'+
+   'bidType: '+V.bidType.join(' | ')+'\n'+
+   'div (office): '+V.div.join(' | ')+'\n'+
+   'client (owners, first 40): '+V.client.slice(0,40).join(' | ')+'\n\n'+
+   'Today is '+TODAY+'.\n\nQuestion: '+q;
+  try{
+    const spec=await S.sample.json(prompt,{modelTier:'quick',signal:A_CTL.signal});
+    if(!spec||typeof spec!=='object'){out.innerHTML='<div class="verdict warn">That came back in a shape the desk could not read. Try rewording it.</div>';return;}
+    if(spec.intent==='unsupported'){
+      out.innerHTML='<div class="verdict warn"><b>That is not something this desk holds.</b> '+
+        (spec.why?esc(spec.why)+' ':'')+
+        'It knows square footage, contract value, $/SF, schedule duration, fee and GC percentages, sector, '+
+        'construction and delivery type, bid type, office and owner. Subcontractor ratings live in the '+
+        'Prequal &amp; Sub Rating Desk instead.</div>';
+      return;
+    }
+    const res=aRun(spec);
+    let h=aRender(spec,res,q);
+    if(spec.why)h+='<p class="lede" style="margin-top:6px"><span class="na">How the question was read: '+esc(spec.why)+'</span></p>';
+    out.innerHTML=h;
+    try{syncBars();}catch(_){}
+  }catch(e){
+    const code=e&&e.code;
+    if(code==='cancelled')return;
+    out.innerHTML='<div class="verdict warn"><b>'+
+      (code==='rate_limited'?'Too many questions at once &mdash; give it a moment and ask again.'
+      :code==='not_granted'?'Asking is not switched on for this view.'
+      :code==='invalid_json'?'The question did not come back as something the desk could run. Try rewording it more plainly.'
+      :'That did not work: '+esc(String((e&&e.message)||e)))+'</b></div>';
+  }finally{
+    $('#a-stop').hidden=true; $('#a-go').disabled=false; A_CTL=null;
+  }
+}
+$('#a-go').addEventListener('click',aAsk);
+$('#a-q').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aAsk();}});
+$('#a-stop').addEventListener('click',()=>{if(A_CTL)A_CTL.abort();});
+aChips();
+
+/* ---------- price a job ---------- */
+const CRITS=[['msector','sector','q-sector'],['mctype','ctype','q-ctype'],['mdel','delMethod','q-del'],
+  ['mbid','bidType','q-bid'],['moffice','div','q-office'],['mclient','client','q-client']];
+function readQ(){
+  return {sf:num($('#q-sf').value),budget:num($('#q-budget').value),dur:num($('#q-dur').value),
+    tol:$('#q-tol').value===''?null:parseFloat($('#q-tol').value),
+    on:CRITS.reduce((o,[c,f,id])=>{o[c]=$('#q-'+c).checked&&!!$('#'+id).value;return o;},{}),
+    val:CRITS.reduce((o,[c,f,id])=>{o[c]=$('#'+id).value;return o;},{})};
+}
+function applyQ(q,skip){
+  const wantSP=$('#q-sp').checked;
+  let l=projects().filter(p=>(p.sp?wantSP:!p.flag)&&(p.psf!=null||p.dur!=null||p.amt!=null));
+  CRITS.forEach(([c,f])=>{ if(c===skip)return;
+    if(q.on[c]) l=l.filter(p=>String(p[f]||'')===q.val[c]); });
+  if(skip!=='sf'&&q.sf&&q.tol!=null){
+    const lo=q.tol>=2?q.sf/3:q.sf*(1-Math.min(q.tol,0.95)), hi=q.tol>=2?q.sf*3:q.sf*(1+q.tol);
+    l=l.filter(p=>p.sf!=null&&p.sf>=lo&&p.sf<=hi);
+  }
+  if(q.sf) l.sort((a,b)=>Math.abs(Math.log((a.sf||q.sf)/q.sf))-Math.abs(Math.log((b.sf||q.sf)/q.sf)));
+  else l.sort((a,b)=>String(b.num_).localeCompare(String(a.num_)));
+  return l;
+}
+function bar(vals,you,fmt){
+  const x=srt(vals); if(x.length<2)return '';
+  const lo=x[0],hi=x[x.length-1],q1=quant(vals,0.25),q3=quant(vals,0.75),m=med(vals);
+  const span=(hi-lo)||1, pos=v=>Math.max(0,Math.min(100,(v-lo)/span*100));
+  let h='<div class="bar"><div class="iq" style="left:'+pos(q1)+'%;width:'+(pos(q3)-pos(q1))+'%"></div>'+
+    '<div class="md" style="left:'+pos(m)+'%"></div>';
+  if(you!=null&&isFinite(you)) h+='<div class="you" style="left:'+pos(you)+'%" title="your number"></div>';
+  h+='</div><div class="scale2"><span>'+fmt(lo)+'</span><span>'+fmt(hi)+'</span></div>';
+  return h;
+}
+function renderPrice(){
+  const q=readQ(), l=applyQ(q);
+  CRITS.forEach(([c])=>{ const el=$('#n-'+c); if(!el)return;
+    if(!q.on[c]){el.textContent='';return;}
+    const without=applyQ(q,c).length, withIt=l.length;
+    el.textContent=without>withIt?('+'+(without-withIt)+' if off'):'';
+  });
+  const to=escYear(), useEsc=escOn();
+  l.forEach(p=>{const e=escOf(p,to);p._epsf=useEsc?e.psf:p.psf;p._ef=e.f;p._ey=e.y;p._eas=e.assumed;});
+  const psf=l.filter(p=>p._epsf!=null).map(p=>p._epsf);
+  const days=l.filter(p=>p.dur!=null).map(p=>p.dur);
+  const dpk=l.filter(p=>p.durK!=null).map(p=>p.durK);
+  const fee=l.filter(p=>p.finFeePct!=null).map(p=>p.finFeePct);
+  const gc=l.filter(p=>p.gcPct!=null).map(p=>p.gcPct);
+  const con=l.filter(p=>p.amt!=null).map(p=>p.amt);
+  const crit=[];
+  CRITS.forEach(([c,f,id])=>{ if(q.on[c]) crit.push(esc($('#'+id).value)); });
+  if(q.sf&&q.tol!=null)crit.push(n0(q.sf)+' SF '+(q.tol>=2?'÷×3':'±'+Math.round(q.tol*100)+'%'));
+  let h='';
+  if(!l.length){
+    h='<div class="verdict hi"><b>No comparable jobs.</b> Every job on file has been filtered out. Loosen the square-footage band or untick a constraint &mdash; the counts next to each one show how many it is costing you.</div>';
+    $('#q-summary').innerHTML=h; $('#q-table').innerHTML=''; $('#q-foot').innerHTML=''; return;
+  }
+  h+='<div class="verdict'+(l.length<4?' warn':'')+'"><b>'+l.length+' comparable job'+(l.length===1?'':'s')+'</b>'+
+    (crit.length?' &mdash; '+crit.join(' &middot; '):' &mdash; no constraints, so this is every job on file')+
+    (l.length<4?'. That is too few to lean on; treat it as a sanity check, not a benchmark.':'.')+'</div>';
+  const tile=(k,v,band,n)=>'<div><span class="k">'+k+'</span><span class="v">'+v+'</span>'+
+    (band?'<span class="band">'+band+'</span>':'')+'<span class="nn">n='+n+'</span></div>';
+  h+='<div class="range">';
+  h+=tile(useEsc?('Median $/SF in '+to):'Median $/SF as-built', psf.length?'$'+r2(med(psf)):'&mdash;',
+    psf.length>2?'$'+r2(quant(psf,0.25))+' – $'+r2(quant(psf,0.75)):'', psf.length);
+  h+=tile('Median schedule duration', days.length?n0(med(days))+'<small> days</small>':'&mdash;',
+    days.length>2?n0(quant(days,0.25))+' – '+n0(quant(days,0.75))+' days':'', days.length);
+  h+=tile('Duration per 1,000 SF', dpk.length?r1(med(dpk)):'&mdash;',
+    dpk.length>2?r1(quant(dpk,0.25))+' – '+r1(quant(dpk,0.75))+' days':'', dpk.length);
+  h+=tile('Median fee', fee.length?r2(med(fee))+'%':'&mdash;',
+    fee.length>2?r2(quant(fee,0.25))+'% – '+r2(quant(fee,0.75))+'%':'', fee.length);
+  h+=tile('Median GCs', gc.length?r2(med(gc))+'%':'&mdash;',
+    gc.length>2?r2(quant(gc,0.25))+'% – '+r2(quant(gc,0.75))+'%':'', gc.length);
+  h+='</div>';
+  if(q.sf&&psf.length){
+    const c1=q.sf*quant(psf,0.25), c2=q.sf*quant(psf,0.75), cm=q.sf*med(psf);
+    h+='<div class="verdict ok"><b>At '+n0(q.sf)+' SF, these jobs imply '+usd(cm)+(useEsc?' in '+to+' dollars':' at as-built prices')+'</b>'+
+      (psf.length>2?' &mdash; middle half '+usd(c1)+' to '+usd(c2):'')+'.';
+    if(dpk.length){const d1=q.sf/1000*quant(dpk,0.25), d2=q.sf/1000*quant(dpk,0.75), dm=q.sf/1000*med(dpk);
+      h+=' Schedule duration works out to <b>'+n0(dm)+' calendar days</b>'+(dpk.length>2?' (middle half '+n0(d1)+' to '+n0(d2)+')':'')+
+      ' &mdash; about '+r1(dm/30.44)+' months.';}
+    h+='</div>';
+  }
+  if(q.budget){
+    const yourPsf=q.sf?q.budget/q.sf:null;
+    if(yourPsf!=null&&psf.length===1){
+      h+='<div class="verdict warn"><b>Your '+usd(q.budget)+' over '+n0(q.sf)+' SF is $'+r2(yourPsf)+'/SF.</b> '+
+        'The one comparable came in at $'+r2(psf[0])+'/SF &mdash; a single job is not a range, so there is nothing here to place your number against. Loosen a constraint.</div>';
+    } else if(yourPsf!=null&&psf.length){
+      const p=pctOf(psf,yourPsf);
+      const cls=p>=0.85?'hi':p<=0.15?'warn':'ok';
+      h+='<div class="verdict '+cls+'"><b>Your '+usd(q.budget)+' over '+n0(q.sf)+' SF is $'+r2(yourPsf)+'/SF</b> &mdash; '+
+        ord(p)+' of '+nOf(psf.length)+' (median $'+r2(med(psf))+').'+
+        (p>=0.85?' On the high side of what we have built.':p<=0.15?' Lean against what we have built &mdash; worth checking scope.':'')+'</div>'+
+        bar(psf,yourPsf,v=>'$'+r2(v));
+    } else if(con.length){
+      const p=pctOf(con,q.budget);
+      h+='<div class="verdict"><b>Your '+usd(q.budget)+'</b> is '+ord(p)+' of '+nOf(con.length)+
+        ' by contract amount (median '+usd(med(con))+'). Add a square footage to compare on $/SF instead.</div>'+
+        bar(con,q.budget,v=>usd(v));
+    }
+  }
+  if(q.dur&&days.length){
+    const p=pctOf(days,q.dur);
+    const cls=p<=0.15?'hi':p>=0.85?'warn':'ok';
+    h+='<div class="verdict '+cls+'"><b>Your '+n0(q.dur)+'-day schedule is '+ord(p)+'</b> of '+nOf(days.length)+
+      ' (median '+n0(med(days))+' days).'+
+      (p<=0.15?' Tighter than nearly everything we have built at this size.':'')+'</div>'+
+      bar(days,q.dur,v=>n0(v)+'d');
+  }
+  $('#q-summary').innerHTML=h;
+  const th=(t,cls)=>'<th'+(cls?' class="'+cls+'"':'')+'>'+t+'</th>';
+  $('#q-table').innerHTML='<thead><tr>'+th('Job')+th('Name')+th('Sector')+th('Type')+th('Delivery')+th('Owner')+
+    th('SF')+th('Contract')+th('$/SF')+th('Age')+th(useEsc?('$/SF in '+to):'Escalation')+
+    th('Schedule duration')+th('Days per 1,000 SF')+th('Fee %')+th('Completed')+'</tr></thead><tbody>'+
+    l.slice(0,60).map(p=>'<tr><td class="mono">'+esc(p.num_||'')+'</td><td>'+esc(p.name||'')+
+      (p.sp?' <span class="tag warn" title="Bailey-Harris self-perform package'+(p.spOf?' on '+esc(p.spOf):'')+' — a trade scope, not a whole building, so it carries no $/SF">Self-perform</span>':'')+
+      (p.edited?' <span class="tag accent">edited</span>':'')+'</td>'+
+      '<td>'+(p.sector?esc(p.sector):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.ctype?esc(p.ctype):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.delMethod?esc(p.delMethod):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.client?esc(p.client):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.sf!=null?n0(p.sf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.amt!=null?usd(p.amt)+basisTag(p.costBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.psf!=null?'$'+r2(p.psf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+ageTag(p._ey,to)+'</td>'+
+      '<td class="n">'+(p.psf==null?'<span class="na">&mdash;</span>':
+        (p._ef>1.005?('<b>'+(useEsc?'$'+r2(p._epsf):('+'+Math.round((p._ef-1)*100)+'%'))+'</b>'+
+          (p._eas?' <span class="tag warn" title="part of this span uses an assumed escalation rate, not a published index">assumed</span>':''))
+        :'<span class="na">current</span>'))+'</td>'+
+      '<td class="n">'+(p.dur!=null?n0(p.dur)+durTag(p.durBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.durK!=null?r1(p.durK):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.finFeePct!=null?r2(p.finFeePct)+'%':'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.endA?esc(p.endA):(p.endP?'<span class="na">'+esc(p.endP)+'</span>':''))+'</td></tr>').join('')+'</tbody>';
+  const yrs=l.map(p=>p._yr).filter(Boolean);
+  const eyrs=l.map(p=>p._ey).filter(Boolean);
+  const anyAssumed=l.some(p=>p._eas&&p.psf!=null);
+  const oldest=eyrs.length?Math.min.apply(null,eyrs):null;
+  try{syncBars();}catch(_){}
+  $('#q-foot').innerHTML='<b>Before you use this.</b> '+
+    (useEsc
+      ? 'Costs are escalated to '+to+' using the BLS producer price index for new nonresidential building construction, by building type where one exists &mdash; so a K-12 job escalates on the school index and a hospital on the health care one. '+
+        (oldest&&oldest<=to-8?'The oldest comparable here finished in '+oldest+'; even escalated, a job that old is a weak guide to a bid today. ':'')+
+        (anyAssumed?'Rows tagged <span class="tag warn">assumed</span> span a year where the escalation rate is an assumption rather than a published figure &mdash; the Sources tab lists which. ':'')
+      : 'Escalation is <b>off</b>, so a '+(oldest||'2014')+' cost per square foot sits in the same median as a '+to+' one. Turn it on unless you have a reason not to. ')+
+    'Only '+l.filter(p=>p.psf!=null).length+' of the '+l.length+' carry both a square footage and a contract amount, so the $/SF figure rests on those. '+
+    'Read the rows before quoting the median &mdash; two jobs the same size and sector can be a shell and a full fit-out.'+
+    (l.length>60?' Showing the 60 closest by size.':'');
+}
+['q-sf','q-budget','q-dur'].forEach(id=>$('#'+id).addEventListener('input',renderPrice));
+['q-sector','q-ctype','q-del','q-bid','q-office','q-client','q-tol','q-esc','q-escyr','q-sp'].forEach(id=>$('#'+id).addEventListener('change',renderPrice));
+CRITS.forEach(([c])=>$('#q-'+c).addEventListener('change',renderPrice));
+$('#q-reset').addEventListener('click',()=>{
+  ['q-sf','q-budget','q-dur'].forEach(i=>$('#'+i).value='');
+  ['q-sector','q-ctype','q-del','q-bid','q-office','q-client'].forEach(i=>$('#'+i).value='');
+  $('#q-tol').value='0.5';
+  ['msector','mctype','mdel'].forEach(c=>$('#q-'+c).checked=true);
+  ['mbid','moffice','mclient'].forEach(c=>$('#q-'+c).checked=false);
+  $('#q-sp').checked=false;
+  renderPrice();});
+
+/* ---------- project history ---------- */
+let hsort={k:'num_',dir:-1};
+function histRows(){
+  const q=$('#h-q').value.trim().toLowerCase();
+  const f={sector:$('#h-sector').value,ctype:$('#h-ctype').value,delMethod:$('#h-del').value,
+    bidType:$('#h-bid').value,client:$('#h-client').value,div:$('#h-office').value};
+  const yr=$('#h-year').value?parseInt($('#h-year').value,10):null;
+  let l=projects();
+  Object.keys(f).forEach(k=>{if(f[k])l=l.filter(p=>String(p[k]||'')===f[k]);});
+  if(yr)l=l.filter(p=>p._yr&&p._yr>=yr);
+  if($('#h-only').checked)l=l.filter(p=>p.psf!=null||p.dur!=null||p.amt!=null);
+  if(!$('#h-scope').checked)l=l.filter(p=>p.flag!=='scope');
+  if(!$('#h-sp').checked)l=l.filter(p=>!p.sp);
+  if(q)l=l.filter(p=>[p.num_,p.name,p.client,p.arch,p.sector,p.sector2].some(v=>v&&String(v).toLowerCase().includes(q)));
+  const k=hsort.k,d=hsort.dir;
+  l.sort((a,b)=>{const x=a[k],y=b[k];
+    if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;
+    return (typeof x==='number'&&typeof y==='number')?(x-y)*d:String(x).localeCompare(String(y))*d;});
+  return l;
+}
+function renderHist(){
+  const l=histRows();
+  const g=f=>l.map(p=>p[f]).filter(v=>typeof v==='number');
+  const cnt=f=>l.filter(p=>p[f]!=null).length;
+  $('#h-kpi').innerHTML=
+   '<div class="kpi"><span class="k">Jobs</span><span class="v">'+l.length+'</span></div>'+
+   '<div class="kpi"><span class="k">Median SF</span><span class="v">'+(med(g('sf'))!=null?n0(med(g('sf'))):'&mdash;')+' <small>n='+cnt('sf')+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Median contract</span><span class="v" style="font-size:16px">'+(med(g('amt'))!=null?usd(med(g('amt'))):'&mdash;')+' <small>n='+cnt('amt')+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Median $/SF</span><span class="v">'+(med(g('psf'))!=null?'$'+r2(med(g('psf'))):'&mdash;')+' <small>n='+cnt('psf')+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Median schedule duration</span><span class="v">'+(med(g('dur'))!=null?n0(med(g('dur')))+' <small>calendar days</small>':'&mdash;')+' <small>n='+cnt('dur')+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Median days per 1,000 SF</span><span class="v">'+(med(g('durK'))!=null?r1(med(g('durK'))):'&mdash;')+' <small>n='+cnt('durK')+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Median fee</span><span class="v">'+(med(g('finFeePct'))!=null?r2(med(g('finFeePct')))+'%':'&mdash;')+' <small>n='+cnt('finFeePct')+'</small></span></div>';
+  const th=(k,t)=>'<th class="s" data-k="'+k+'">'+t+(hsort.k===k?(hsort.dir>0?' ↑':' ↓'):'')+'</th>';
+  const thT=(k,t,tip)=>'<th class="s" data-k="'+k+'" title="'+esc(tip)+'">'+t+(hsort.k===k?(hsort.dir>0?' ↑':' ↓'):'')+'</th>';
+  $('#h-table').innerHTML='<thead><tr>'+th('num_','Job')+th('name','Name')+th('sector','Sector')+th('ctype','Type')+
+    th('delMethod','Delivery')+th('bidType','Bid type')+th('client','Owner')+th('div','Office')+th('sf','SF')+
+    th('origContract','Original contract')+th('amt','Final / current')+th('psf','$/SF')+
+    th('dur','Schedule duration')+th('durK','Days per 1,000 SF')+th('finFeePct','Fee %')+
+    th('spValue','BH self-perform')+
+    thT('startC','Contractual start','Procore Admin: Start Date')+
+    thT('startA','Actual start','Procore Admin: Actual Start Date. Blank means work has not started yet.')+
+    thT('endCon','Contractual completion','Procore Admin: Completion Date')+
+    thT('endP','Projected completion','Procore Admin: Projected Finish Date. Where the schedule stands today.')+
+    thT('endA','Actual completion','Procore prime contract: Actual Completion Date. Blank means the job is still running.')+
+    th('schedVar','Schedule variance')+th('src','Source')+'</tr></thead><tbody>'+
+    (l.length?l.map(p=>'<tr><td class="mono">'+esc(p.num_||'')+'</td><td>'+esc(p.name||'')+
+      (p.flag==='scope'?' <span class="tag warn" title="SF is the whole building; the contract is one package">Scope</span>':'')+
+      (p.sp?' <span class="tag warn" title="Bailey-Harris self-perform package'+(p.spOf?' on '+esc(p.spOf):'')+'">Self-perform</span>':'')+
+      (p.edited?' <span class="tag accent">edited</span>':'')+'</td>'+
+      '<td>'+(p.sector?esc(p.sector):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.ctype?esc(p.ctype):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.delMethod?esc(p.delMethod):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.bidType?esc(p.bidType):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.client?esc(p.client):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.div?esc(p.div):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.sf!=null?n0(p.sf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.origContract!=null?usd(p.origContract)+
+        (p.coWarn?' <span class="tag crit" title="approved change orders exceed half the original, so the original was probably not loaded in full">check</span>':'')
+        :'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.amt!=null?usd(p.amt)+basisTag(p.costBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.psf!=null?'$'+r2(p.psf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.dur!=null?n0(p.dur)+durTag(p.durBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.durK!=null?r1(p.durK):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.finFeePct!=null?r2(p.finFeePct)+'%':'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.spValue!=null?usd(p.spValue)+(p.spPct!=null?' <span class="na">'+r1(p.spPct)+'%</span>':''):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+dcell(p.startC)+'</td><td class="n">'+dcell(p.startA)+'</td>'+
+      '<td class="n">'+dcell(p.endCon)+'</td><td class="n">'+dcell(p.endP)+'</td><td class="n">'+dcell(p.endA)+'</td>'+
+      '<td class="n">'+(p.schedVar!=null?
+        (p.schedVar===0?'<span class="tag ok">on time</span>':
+         '<span class="tag '+(Math.abs(p.schedVar)>=90?'crit':'warn')+'" title="against the contractual completion date">'+
+         (p.schedVar>0?'+':'')+n0(p.schedVar)+'d</span>')
+        :'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.src?'<span class="tag '+(p.src==='Procore'?'ok':'neutral')+'">'+esc(p.src)+'</span>':'')+'</td></tr>').join('')
+      :'<tr><td colspan="24" class="empty">No jobs match those filters.</td></tr>')+'</tbody>';
+  $$('#h-table th.s').forEach(h=>h.onclick=()=>{const k=h.dataset.k;
+    hsort=hsort.k===k?{k,dir:-hsort.dir}:{k,dir:1};renderHist();});
+  try{syncBars();}catch(_){}
+}
+$('#h-q').addEventListener('input',renderHist);
+['h-sector','h-ctype','h-del','h-bid','h-client','h-office','h-year','h-only','h-scope','h-sp'].forEach(id=>$('#'+id).addEventListener('change',renderHist));
+$('#h-reset').addEventListener('click',()=>{$('#h-q').value='';
+  ['h-sector','h-ctype','h-del','h-bid','h-client','h-office','h-year'].forEach(i=>$('#'+i).value='');
+  $('#h-only').checked=true;$('#h-scope').checked=false;$('#h-sp').checked=false;hsort={k:'num_',dir:-1};renderHist();});
+
+/* ---------- add or fix a job ---------- */
+const EF=[['num_','Job number','text',1],['name','Job name','text',1],['sector','Sector','sel'],
+ ['sector2','Secondary sector','text'],['ctype','Construction type','sel'],['delMethod','Delivery method','sel'],
+ ['bidType','Bid type','sel'],['client','Owner','sel'],['div','Office','sel'],
+ ['sf','Square footage','num'],['floors','Floors','num'],
+ ['origContract','Original contract','num'],['finalContract','Final contract','num'],
+ ['finFeePct','Final fee %','num'],['gcPct','GCs % of contract','num'],
+ ['startC','Contractual start date','date'],['startA','Actual start date','date'],
+ ['endCon','Contractual completion date','date'],['endP','Projected completion date','date'],
+ ['endA','Actual completion date','date'],
+ ['descr','Project description','text']];
+const EHINT={
+ startC:'The date the contract says work begins. In Procore this is <b>Start Date</b> on the project Admin page, or the prime contract\'s <b>Contract Start Date</b>.',
+ startA:'The day work actually began on site. Procore Admin: <b>Actual Start Date</b>. Leave it blank until work has actually started &mdash; Procore pre-fills it from Start Date, which is why a job that has not broken ground can appear to have started.',
+ endCon:'The completion date in the contract, before any time extensions. Procore Admin: <b>Completion Date</b>.',
+ endP:'Where the schedule says the job will finish as of today. This moves as the job runs. Procore Admin: <b>Projected Finish Date</b>.',
+ endA:'The day the job actually finished. There is <b>no project-level field for this in Procore</b> &mdash; it lives on the prime contract as <b>Actual Completion Date</b>. Leave it blank until the job is done; a future date here is a projection, not an actual.',
+ finalContract:'Only once the job is closed out. While it is running, leave this blank and the desk uses the original contract instead, labelled as such.',
+ origContract:'The contract sum at award, before change orders. Procore prime contract: the contract total.',
+ descr:'What the job is, in a sentence or two &mdash; the same text that shows on the Procore project page.'};
+function openEdit(numOrNull){
+  const P=projects();
+  let p=null;
+  if(numOrNull){ p=P.find(x=>String(x.num_)===String(numOrNull))||null; }
+  else {
+    const t=$('#e-pick').value.trim();
+    if(!t){$('#e-editor').hidden=true;return;}
+    const m=t.match(/^\s*(\S+)/);
+    p=P.find(x=>String(x.num_)===(m?m[1]:t))||P.find(x=>(x.num_+' '+(x.name||''))===t)||null;
+    if(!p){ p={num_:(m?m[1]:t),name:t.replace(/^\S+\s*/,'')}; }
+  }
+  S.sel=p;
+  const uniq=f=>Array.from(new Set(P.map(x=>x[f]).filter(Boolean))).sort();
+  const SEL={sector:uniq('sector'),ctype:uniq('ctype'),delMethod:uniq('delMethod'),
+    bidType:uniq('bidType'),client:uniq('client'),div:uniq('div')};
+  let h='<form class="form" id="e-form" autocomplete="off" style="max-width:none">'+
+    '<div class="gname" style="font:700 19px/1.25 Montserrat,sans-serif;margin-bottom:4px">'+
+    esc(p.num_||'New job')+(p.name?' &middot; '+esc(p.name):'')+'</div>'+
+    '<p class="lede" style="margin:0 0 16px">Leave anything you do not know blank. $/SF and schedule duration are computed from square footage, contract and the dates. Keep <b>actual</b> and <b>projected</b> apart: an actual date is one that has already happened, so if the job has not finished, leave actual completion blank and fill projected instead.</p>'+
+    '<div class="fg">';
+  EF.forEach(([k,l,t,req])=>{
+    const v=p[k]==null?'':p[k];
+    let inp;
+    if(t==='sel') inp='<input data-k="'+k+'" list="dl-'+k+'" value="'+esc(v)+'"><datalist id="dl-'+k+'">'+
+      (SEL[k]||[]).map(x=>'<option value="'+esc(x)+'"></option>').join('')+'</datalist>';
+    else if(t==='date') inp='<input data-k="'+k+'" type="date" value="'+esc(v)+'">';
+    else if(t==='num') inp='<input data-k="'+k+'" inputmode="decimal" value="'+esc(v)+'">';
+    else inp='<input data-k="'+k+'" value="'+esc(v)+'">';
+    h+='<div class="fld'+(k==='descr'?' wide':'')+'"><label>'+l+(req?' <span class="req">*</span>':'')+'</label>'+inp+
+      (EHINT[k]?'<span class="hint">'+EHINT[k]+'</span>':'')+'</div>';
+  });
+  h+='</div><div class="actions"><button type="submit" class="btn">Save this job</button>'+
+     '<button type="button" class="btn ghost" id="e-cancel">Close</button>'+
+     (S.user.has(String(p.num_))?'<button type="button" class="btn ghost" id="e-revert">Revert to the imported record</button>':'')+
+     '<span class="status" id="e-status"></span></div></form>';
+  const box=$('#e-editor'); box.hidden=false; box.innerHTML=h;
+  $('#e-cancel').onclick=()=>{box.hidden=true;box.innerHTML='';};
+  const rev=$('#e-revert'); if(rev)rev.onclick=async()=>{
+    if(!S.db)return;
+    try{await S.db.doc('projects/'+slug(p.num_)).delete();$('#e-status').className='status ok';
+      $('#e-status').textContent='Reverted.';S.user.delete(String(p.num_));redrawAll();box.hidden=true;}
+    catch(e){$('#e-status').className='status err';$('#e-status').textContent='Could not revert.';}};
+  $('#e-form').onsubmit=async e=>{
+    e.preventDefault();
+    const st=$('#e-status');
+    const rec={};
+    $$('#e-form [data-k]').forEach(el=>{const k=el.dataset.k,v=el.value.trim();
+      if(v==='')return;
+      rec[k]=['sf','floors','origContract','finalContract','finFeePct','gcPct'].includes(k)?num(v):v;});
+    if(!rec.num_){st.className='status err';st.textContent='A job number is required.';return;}
+    if(!S.db){st.className='status err';st.textContent='No data store — nothing was saved.';return;}
+    rec.src='entered by hand'; rec.edited=true; rec.updated=new Date().toISOString().slice(0,10);
+    st.className='status';st.textContent='Saving…';
+    try{ await S.db.doc('projects/'+slug(rec.num_)).set(rec);
+      st.className='status ok';st.textContent='Saved.';
+      S.user.set(String(rec.num_),rec); redrawAll();
+    }catch(err){st.className='status err';st.textContent='Could not save: '+((err&&err.code)||'error');}
+  };
+  box.scrollIntoView({block:'start',behavior:'smooth'});
+}
+$('#e-open').addEventListener('click',()=>openEdit(null));
+$('#e-pick').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();openEdit(null);}});
+$('#e-new').addEventListener('click',()=>{$('#e-pick').value='';S.sel=null;
+  const box=$('#e-editor');box.hidden=false;openEditNew();});
+function openEditNew(){ $('#e-pick').value=''; openEditBlank(); }
+function openEditBlank(){ const P=projects(); S.sel=null; openEdit('__new__'); }
+function renderEdited(){
+  const l=Array.from(S.user.values()).sort((a,b)=>String(b.num_).localeCompare(String(a.num_)));
+  const t=$('#e-table');
+  if(!l.length){t.innerHTML='<tbody><tr><td class="empty">Nothing has been entered or corrected by hand yet.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Job</th><th>Name</th><th>SF</th><th>Contract</th><th>Start</th><th>Completed</th><th>Updated</th><th></th></tr></thead><tbody>'+
+    l.map(p=>'<tr><td class="mono">'+esc(p.num_)+'</td><td>'+esc(p.name||'')+'</td>'+
+    '<td class="n">'+(p.sf!=null?n0(p.sf):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+(p.amt!=null?usd(p.amt)+basisTag(p.costBasis):'<span class="na">&mdash;</span>')+'</td>'+
+    '<td class="n">'+dcell(p.startA||p.startC)+'</td><td class="n">'+dcell(p.endA||p.endP)+'</td>'+
+    '<td class="n">'+esc(p.updated||'')+'</td>'+
+    '<td><button class="btn ghost" type="button" data-edit="'+esc(p.num_)+'">Open</button></td></tr>').join('')+'</tbody>';
+  $$('#e-table [data-edit]').forEach(b=>b.onclick=()=>{go('edit');openEdit(b.dataset.edit);});
+}
+
+/* ---------- coverage ---------- */
+function covRows(){
+  const yr=$('#c-year').value?parseInt($('#c-year').value,10):null;
+  const miss=$('#c-miss').value, sec=$('#c-sector').value;
+  let l=projects().filter(p=>p.status!=='Lost'&&p.status!=='Canceled'&&!p.sp);
+  if(yr)l=l.filter(p=>p._yr&&p._yr>=yr);
+  if(sec)l=l.filter(p=>p.sector===sec);
+  const noSf=p=>p.sf==null, noDt=p=>p.dur==null, noC=p=>p.amt==null;
+  if(miss==='sf')l=l.filter(noSf);
+  else if(miss==='dates')l=l.filter(noDt);
+  else if(miss==='contract')l=l.filter(noC);
+  else if(miss==='both')l=l.filter(p=>noSf(p)&&noDt(p));
+  else l=l.filter(p=>noSf(p)||noDt(p)||noC(p));
+  l.sort((a,b)=>String(b.num_).localeCompare(String(a.num_)));
+  return l;
+}
+function renderCov(){
+  const all=projects().filter(p=>p.status!=='Lost'&&p.status!=='Canceled'&&!p.sp);
+  const yr=$('#c-year').value?parseInt($('#c-year').value,10):null;
+  const scope=yr?all.filter(p=>p._yr&&p._yr>=yr):all;
+  const l=covRows();
+  const has=f=>scope.filter(p=>p[f]!=null).length;
+  const hasD=scope.filter(p=>p.dur!=null).length;
+  const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+  $('#c-kpi').innerHTML=
+   '<div class="kpi"><span class="k">Jobs in scope</span><span class="v">'+scope.length+'</span></div>'+
+   '<div class="kpi"><span class="k">Have square footage</span><span class="v">'+has('sf')+' <small>'+pc(has('sf'),scope.length)+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Have a measurable schedule</span><span class="v">'+hasD+' <small>'+pc(hasD,scope.length)+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Have a contract</span><span class="v">'+has('amt')+' <small>'+pc(has('amt'),scope.length)+'</small></span></div>'+
+   '<div class="kpi"><span class="k">Usable as a comparable</span><span class="v">'+scope.filter(p=>p.psf!=null&&p.dur!=null&&!p.flag).length+'</span></div>'+
+   '<div class="kpi"><span class="k">On the work list</span><span class="v">'+l.length+'</span></div>';
+  $('#c-table').innerHTML='<thead><tr><th>Job</th><th>Name</th><th>Sector</th><th>Owner</th><th>Missing</th>'+
+    '<th>SF</th><th>Contract</th><th>Start</th><th>Completed</th><th></th></tr></thead><tbody>'+
+    (l.length?l.slice(0,300).map(p=>{
+      const m=[];if(p.sf==null)m.push('SF');
+      if(!(p.startA||p.startC))m.push('start');
+      if(!(p.endA||p.endP||p.endCon))m.push('finish');
+      if(p.amt==null)m.push('contract');
+      return '<tr><td class="mono">'+esc(p.num_||'')+'</td><td>'+esc(p.name||'')+'</td>'+
+      '<td>'+(p.sector?esc(p.sector):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+(p.client?esc(p.client):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td>'+m.map(x=>'<span class="tag warn">'+x+'</span>').join(' ')+'</td>'+
+      '<td class="n">'+(p.sf!=null?n0(p.sf):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+(p.amt!=null?usd(p.amt)+basisTag(p.costBasis):'<span class="na">&mdash;</span>')+'</td>'+
+      '<td class="n">'+dcell(p.startA||p.startC)+'</td><td class="n">'+dcell(p.endA||p.endP)+'</td>'+
+      '<td><button class="btn ghost" type="button" data-fix="'+esc(p.num_)+'">Fill it in</button></td></tr>';
+    }).join('')+(l.length>300?'<tr><td colspan="10" class="empty">Showing the newest 300 of '+l.length+'.</td></tr>':'')
+    :'<tr><td colspan="10" class="empty">Nothing missing in that scope.</td></tr>')+'</tbody>';
+  $$('#c-table [data-fix]').forEach(b=>b.onclick=()=>{go('edit');$('#e-pick').value=b.dataset.fix;openEdit(b.dataset.fix);});
+}
+['c-year','c-miss','c-sector'].forEach(id=>$('#'+id).addEventListener('change',renderCov));
+
+/* ---------- sources ---------- */
+function renderSources(){
+  const m=S.meta;
+  if(!m){$('#sources').innerHTML='<div class="empty">Import provenance not loaded.</div>';}
+  else $('#sources').innerHTML='<div class="cols">'+(m.sources||[]).filter(s=>!/rating/i.test(s.what||'')).map(s=>
+    '<div class="rule"><h3>'+esc(s.what)+'</h3><div class="body"><p style="margin-top:0"><b>'+esc(s.file)+'</b></p>'+
+    '<p class="mono" style="font-size:11.5px;color:var(--muted);word-break:break-all">'+esc(s.where)+'</p>'+
+    '<p style="margin-bottom:0;color:var(--muted)">'+esc(s.modified)+'. '+esc(s.note)+'</p></div></div>').join('')+'</div>';
+  const P=projects();
+  const rec=P.filter(p=>p._yr&&p._yr>=2020);
+  $('#gaps').innerHTML='<div class="cols">'+
+   '<div class="rule"><h3>Coverage</h3><ul>'+
+   '<li><b>'+P.length+'</b> jobs on file. <b>'+P.filter(p=>p.sf!=null).length+'</b> have square footage, <b>'+
+     P.filter(p=>p.dur!=null).length+'</b> have a measurable schedule, <b>'+P.filter(p=>p.psf!=null&&p.dur!=null&&!p.flag).length+
+     '</b> can carry both a cost and a schedule comparison.</li>'+
+   '<li>Since 2020: <b>'+rec.length+'</b> jobs, <b>'+rec.filter(p=>p.sf!=null).length+'</b> with square footage and <b>'+
+     rec.filter(p=>p.dur!=null).length+'</b> with dates. The Coverage tab is the list of what is missing.</li>'+
+   '<li>Cost below the whole job &mdash; concrete, steel, mechanical against estimate &mdash; is not here. It lives in the per-project buyout workbooks and needs its own pass.</li>'+
+   '</ul></div>'+
+   '<div class="rule"><h3>Known problems</h3><ul>'+
+   '<li>The <b>owner</b> column came from Unanet CRM, not the BH project data sheet. The BH project data sheet\'s customer column was filled down &mdash; 100 consecutive jobs all reading &ldquo;City of Auburn Industrial Development Board&rdquo; &mdash; so it was dropped rather than shown.</li>'+
+   '<li>There is a scrambled duplicate of the BH project data sheet in the same SharePoint folder, <code>BS_Final Project Data Report - Unanet1.xlsx</code>, whose columns were sorted independently at v24 on 28 Feb 2025. Search returns it ahead of the real file. Nothing should be read from it.</li>'+
+   '<li>Neither the BH project data sheet nor Unanet CRM has been fed since 2024, so 2025&ndash;26 jobs come from Procore.</li>'+
+   '<li><b>No escalation adjustment.</b> A 2014 $/SF and a 2026 $/SF sit in the same median.</li>'+
+   '</ul></div></div>';
+}
+
+/* ---------- escalation editor ---------- */
+const ESC_COLS=[['all','All / other'],['school','Schools & higher ed'],['health','Health care'],
+  ['industrial','Industrial'],['office','Commercial / office'],['warehouse','Warehouse']];
+function renderEscTable(){
+  const t=$('#esc-table'); if(!t)return;
+  const tbl=escTable(), ys=escYears().slice().sort((a,b)=>b-a);
+  t.innerHTML='<thead><tr><th>Year</th>'+ESC_COLS.map(c=>'<th>'+c[1]+'</th>').join('')+'<th>Basis</th></tr></thead><tbody>'+
+    ys.map(y=>{const r=tbl.rows[y]||{};
+      return '<tr><td class="mono"><b>'+y+'</b></td>'+
+        ESC_COLS.map(c=>'<td class="n"><input data-y="'+y+'" data-c="'+c[0]+'" inputmode="decimal" style="width:74px;text-align:right" value="'+
+          (r[c[0]]==null?'':r[c[0]])+'"></td>').join('')+
+        '<td>'+(r.assumed?'<span class="tag warn">assumed</span>':'<span class="tag ok">published</span>')+'</td></tr>';
+    }).join('')+'</tbody>';
+  $('#esc-note').innerHTML='<b>Source.</b> '+esc(tbl.note||'')+
+    ' A blank cell falls back to the All / other column for that year. Rows marked <span class="tag warn">assumed</span> are not published figures &mdash; they are a placeholder rate, and any comparable whose span crosses one is tagged <span class="tag warn">assumed</span> in the results.';
+}
+$('#esc-save').addEventListener('click',async()=>{
+  const st=$('#esc-status');
+  const rows={};
+  $$('#esc-table input[data-y]').forEach(i=>{
+    const y=i.dataset.y,c=i.dataset.c,v=num(i.value);
+    rows[y]=rows[y]||{};
+    if(v!=null)rows[y][c]=v;
+  });
+  const old=escTable();
+  Object.keys(rows).forEach(y=>{ if(old.rows[y]&&old.rows[y].assumed)rows[y].assumed=true; });
+  const rec={note:old.note,rows,updated:new Date().toISOString().slice(0,10)};
+  if(!S.db){st.className='status err';st.textContent='No data store — not saved.';return;}
+  st.className='status';st.textContent='Saving…';
+  try{await S.db.doc('settings/escalation').set(rec);S.esc=rec;
+    st.className='status ok';st.textContent='Saved.';redrawAll();}
+  catch(e){st.className='status err';st.textContent='Could not save: '+((e&&e.code)||'error');}
+});
+$('#esc-reset').addEventListener('click',async()=>{
+  const st=$('#esc-status');
+  if(!S.db){S.esc=null;renderEscTable();renderPrice();return;}
+  st.className='status';st.textContent='Restoring…';
+  try{await S.db.doc('settings/escalation').delete();S.esc=null;
+    st.className='status ok';st.textContent='Back to the published figures.';redrawAll();}
+  catch(e){S.esc=null;redrawAll();st.className='status';st.textContent='Restored locally.';}
+});
+
+/* ---------- export ---------- */
+function csv(rows){return rows.map(r=>r.map(v=>{const s=v==null?'':String(v);
+  return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');}
+async function doExport(which){
+  const st=$('#expstatus')||$('#q-foot'); let rows,fn,list;
+  if(which==='comps'){ list=applyQ(readQ()); fn='bh-comparables.csv'; }
+  else if(which==='cov'){ list=covRows(); fn='bh-coverage-gaps.csv'; }
+  else { list=histRows(); fn='bh-project-history.csv'; }
+  const to=escYear();
+  rows=[['Job','Name','Sector','Secondary','Type','Delivery','Bid type','Owner','Office','Architect','SF',
+    'Original contract','Final / current contract','Cost basis','Unanet contract','Variance %','$/SF as built','Completed year',
+    'Years old','Escalation factor','$/SF escalated to '+to,'Escalation partly assumed',
+    'Schedule duration (calendar days)','Duration basis','Days per 1,000 SF','Fee %','GC %','Contractual start','Actual start','Contractual completion','Projected completion','Actual completion','Schedule variance (days)','Project description','Scope flag','Source','Edited by hand']];
+  list.forEach(p=>{const e=escOf(p,to);
+    rows.push([p.num_,p.name,p.sector,p.sector2,p.ctype,p.delMethod,p.bidType,p.client,p.div,p.arch,p.sf,
+    p.origContract,p.amt,p.costBasis||'',p.uContract,p.var,p.psf,e.y,(e.y?to-e.y:''),
+    p.psf!=null?Math.round(e.f*1000)/1000:'',p.psf!=null?e.psf:'',e.assumed?'yes':'',
+    p.dur,p.durBasis||'',p.durK,p.finFeePct,p.gcPct,p.startC||'',p.startA||'',p.endCon||'',p.endP||'',p.endA||'',p.schedVar,p.descr||'',p.flag||'',p.src,p.edited?'yes':'']);});
+  const body='﻿'+csv(rows);
+  if(!S.dl){if(st){st.className='status err';st.textContent='Downloads are not available in this view.';}return;}
+  if(st){st.className='status';st.textContent='Preparing '+fn+'…';}
+  try{await S.dl.save({filename:fn,data:body});if(st){st.className='status ok';st.textContent='Saved '+fn+'.';}}
+  catch(e){const c=e&&e.code;if(st){st.className='status'+(c==='declined'?'':' err');
+    st.textContent=c==='declined'?'Download cancelled.':'Could not save: '+(c||'error');}}
+}
+$$('[data-export]').forEach(b=>b.addEventListener('click',()=>doExport(b.dataset.export)));
+$('#q-export').addEventListener('click',()=>doExport('comps'));
+$('#c-export').addEventListener('click',()=>doExport('cov'));
+
+/* ---------- tabs + boot ---------- */
+function go(name){
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===name?'true':'false'));
+  $$('.panel').forEach(p=>p.hidden=p.id!=='p-'+name);
+  window.scrollTo({top:0,behavior:'instant'});
+}
+$$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{go(b.dataset.panel);try{syncBars();}catch(_){}}));
+function redrawAll(){fillAll();renderPrice();renderHist();renderCov();renderEdited();renderSources();renderEscTable();
+  try{syncBars();}catch(_){}}
+redrawAll();
+/* ---------- data store: SharePoint, read through Microsoft Graph ----------
+   The artifact build read from claude.use('db'). This build signs the viewer
+   in against Entra and reads the same records out of the PreconData library,
+   with SharePoint enforcing access against their own token. S.db stays null,
+   which every write path already checks, so the editing paths degrade safely
+   rather than half-writing. The escalation index falls back to its published
+   BLS/AGC seed, which is what the desk was running on anyway. */
+(async function(){
+  const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
+  const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
+  const SCOPES    = ["User.Read","GroupMember.Read.All","Sites.Read.All"];
+  const SP_HOST   = "baileyharris.sharepoint.com";
+  const SP_PATH   = "/sites/Dashboard";
+  const LIBRARY   = "PreconData";
+  const GROUP     = "BH-Desk-Precon";
+  const CONTACT   = "itadmin@baileyharris.com";
+  const BH_LOGO   = "data:image/png;base64,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";
+
+  if(BH_LOGO){
+    const l=$('#bhlogo'); if(l){ l.src=BH_LOGO; l.hidden=false; }
+    let f=document.querySelector('link[rel="icon"]');
+    if(!f){ f=document.createElement('link'); f.rel='icon'; document.head.appendChild(f); }
+    f.href=BH_LOGO;
+  }
+
+  const conn=$('#conn');
+  const setConn=(t,c)=>{ conn.textContent=t; conn.className='stamp'+(c?' '+c:''); };
+
+  /* read-only build: drop the tab that writes, and the tab that needs a
+     Claude capability with no equivalent outside an artifact */
+  ['edit','ask'].forEach(k=>{
+    const b=document.querySelector('nav.tabs button[data-panel="'+k+'"]');
+    if(b) b.remove();
+  });
+  const ro=document.createElement('div');
+  ro.className='readonly';
+  ro.innerHTML='<b>Read-only for now.</b>Pricing, project history and coverage are live from SharePoint. '+
+    'Adding or correcting a job comes back when the write path is switched on. '+
+    'The Ask tab is not here — it ran on a Claude feature that has no equivalent on this host, '+
+    'and Price a job and Project history answer the same questions with filters.';
+  const firstPanel=$('#p-price');
+  firstPanel.insertBefore(ro, firstPanel.firstChild);
+
+  function gate(html){
+    let g=$('#bhgate');
+    if(!g){ g=document.createElement('div'); g.id='bhgate'; document.body.appendChild(g); }
+    g.innerHTML='<div class="box">'+html+'</div>';
+    return g;
+  }
+  function ungate(){ const g=$('#bhgate'); if(g) g.remove(); }
+  function fail(title, detail, extra){
+    gate('<h2>'+title+'</h2><p>'+detail+'</p>'+(extra||''));
+    setConn('Offline','off');
+  }
+
+  gate('<h2>Checking your access</h2><p>One moment.</p>');
+
+  if(typeof msal==='undefined')
+    return fail('Sign-in library did not load',
+      'The Microsoft authentication script was blocked. Reload, and if it persists tell IT the CDN is unreachable.');
+
+  const app=new msal.PublicClientApplication({
+    auth:{ clientId:CLIENT_ID, authority:'https://login.microsoftonline.com/'+TENANT_ID,
+           redirectUri:location.origin+'/precon/', navigateToLoginRequestUrl:false },
+    cache:{ cacheLocation:'localStorage', storeAuthStateInCookie:false }
+  });
+  await app.initialize();
+  try{ await app.handleRedirectPromise(); }
+  catch(e){ return fail('Sign-in was rejected', ((e&&(e.errorCode||e.name))||'')+' '+((e&&e.errorMessage)||e)); }
+
+  const accounts=app.getAllAccounts();
+  if(!accounts.length){
+    const g=gate('<h2>Sign in to continue</h2><p>Use your Bailey-Harris Microsoft account.</p>'+
+      '<button class="btn" id="bhsignin">Sign in with Microsoft</button>');
+    g.querySelector('#bhsignin').addEventListener('click',()=>app.loginRedirect({scopes:SCOPES}));
+    setConn('Signed out','off');
+    return;
+  }
+  const acct=accounts[0];
+  app.setActiveAccount(acct);
+
+  let token;
+  try{
+    const r=await app.acquireTokenSilent({scopes:SCOPES, account:acct});
+    token=r.accessToken;
+  }catch(e){
+    if(e instanceof msal.InteractionRequiredAuthError) return app.acquireTokenRedirect({scopes:SCOPES});
+    return fail('Could not get an access token', ((e&&e.errorCode)||'')+' '+((e&&e.errorMessage)||e));
+  }
+
+  const G=async p=>{
+    const res=await fetch('https://graph.microsoft.com/v1.0'+p,{headers:{Authorization:'Bearer '+token}});
+    let body=null; try{ body=await res.json(); }catch(_){}
+    return {ok:res.ok, status:res.status, body};
+  };
+  const GTEXT=async p=>{
+    const res=await fetch('https://graph.microsoft.com/v1.0'+p,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok) return {ok:false, status:res.status};
+    return {ok:true, status:res.status, text:await res.text()};
+  };
+
+  const site=await G('/sites/'+SP_HOST+':'+SP_PATH);
+  if(!site.ok||!site.body||!site.body.id)
+    return fail('Could not reach the data','SharePoint returned HTTP '+site.status+' for '+SP_PATH+'.');
+
+  const dr=await G('/sites/'+site.body.id+'/drives?$select=id,name');
+  const drive=(dr.ok&&dr.body&&dr.body.value||[]).find(d=>d.name===LIBRARY);
+  if(!drive)
+    return fail('The project library is missing','No document library called '+LIBRARY+' on this site.');
+
+  async function load(name, required){
+    const f=await GTEXT('/drives/'+drive.id+'/root:/'+name+':/content');
+    if(f.ok){ try{ return JSON.parse(f.text); }catch(_){ return null; } }
+    if(f.status===403 && required){
+      fail('You do not have access to the project data',
+        'Your account is not permitted to read this data.',
+        '<p class="why">Access is granted through the '+GROUP+' group.</p>'+
+        '<a class="btn" href="mailto:'+CONTACT+'?subject='+
+          encodeURIComponent('Access request: Precon Desk')+'">Request access</a>');
+      throw new Error('403');
+    }
+    if(required){
+      fail('The project data is missing',
+        name+' was not found in '+LIBRARY+'. It has not been uploaded, or it is named differently.');
+      throw new Error(String(f.status));
+    }
+    return null;
+  }
+
+  try{
+    const projects=await load('projects.json', true);
+    if(!projects||!Array.isArray(projects.rows))
+      return fail('The project file could not be read','projects.json is not valid JSON, or has no rows.');
+    S.arch=projects.rows;
+    S.meta=await load('meta.json', false);
+  }catch(_){ return; }
+
+  ungate();
+  setConn('Live · read-only','live');
+  redrawAll();
+})();
+</script>
+</body>
+</html>
