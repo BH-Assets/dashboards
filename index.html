@@ -5,19 +5,237 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bailey-Harris Desks</title>
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;
-       font:16px/1.5 system-ui,sans-serif;background:#eceff1;color:#16232a}
-  main{text-align:center}
-  h1{font-size:22px;margin:0 0 8px}
-  p{margin:0;color:#5a6b75}
-  code{font:13px ui-monospace,monospace;background:#fff;padding:2px 6px;border-radius:2px}
+  :root{
+    --paper:#ECEFF1; --surface:#fff; --surface-2:#F5F8F9;
+    --ink:#16232A; --muted:#5A6B75; --faint:#84959E;
+    --line:#CBD6DC; --line-soft:#E0E8EC;
+    --accent:#17505F; --accent-soft:#D9E8EC;
+    --ok:#2A6E52; --ok-soft:#DBEDE4;
+    --crit:#983026; --crit-soft:#F7DFDB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:15px/1.5 "Source Sans 3",system-ui,-apple-system,Segoe UI,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 22px 80px}
+  h1{font-size:22px;margin:0 0 4px;letter-spacing:-.015em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:18px;margin-bottom:14px}
+  h2{font-size:14px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
+  .btn{font:600 13px/1 inherit;background:var(--accent);color:#fff;border:1px solid var(--accent);
+    border-radius:2px;padding:10px 16px;cursor:pointer}
+  .btn.ghost{background:none;color:var(--accent);border-color:var(--line)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin:0;font-size:13.5px}
+  dt{color:var(--muted)}
+  dd{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;word-break:break-all}
+  .pill{display:inline-block;font:600 10.5px/1 inherit;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 7px;border-radius:2px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+  .pill.bad{background:var(--crit-soft);color:var(--crit);border-color:var(--crit)}
+  pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:2px;
+    padding:12px;overflow-x:auto;font-size:12px;margin:0;white-space:pre-wrap;word-break:break-word}
+  .err{background:var(--crit-soft);border:1px solid var(--crit);color:var(--crit);
+    border-radius:2px;padding:12px;font-size:13.5px;margin-bottom:14px}
+  .err b{display:block;margin-bottom:4px}
+  ul.groups{margin:0;padding-left:18px;font-family:ui-monospace,monospace;font-size:12.5px}
+  ul.groups li{margin-bottom:4px}
+  .note{font-size:12.5px;color:var(--faint);margin-top:10px}
 </style>
 </head>
 <body>
-<main>
-  <h1>Bailey-Harris Dashboards</h1>
-  <p>Step 1 of the build — the domain is live.</p>
-  <p style="margin-top:14px"><code>dashboards.baileyharris.com</code></p>
-</main>
+<div class="wrap">
+  <h1>Bailey-Harris Desks</h1>
+  <p class="sub">Step 3 of the build — proving the sign-in chain before anything reads SharePoint.</p>
+
+  <div id="fatal" class="err" hidden></div>
+
+  <div class="card">
+    <h2>Sign-in</h2>
+    <div class="row">
+      <button class="btn" id="signin" hidden>Sign in with Microsoft</button>
+      <button class="btn ghost" id="signout" hidden>Sign out</button>
+      <span id="state" class="pill">starting…</span>
+    </div>
+  </div>
+
+  <div class="card" id="whocard" hidden>
+    <h2>Who you are</h2>
+    <dl id="who"></dl>
+  </div>
+
+  <div class="card" id="graphcard" hidden>
+    <h2>Graph call — <span class="pill" id="graphpill">…</span></h2>
+    <pre id="graph"></pre>
+  </div>
+
+  <div class="card" id="groupcard" hidden>
+    <h2>Security groups in your token</h2>
+    <ul class="groups" id="groups"></ul>
+    <p class="note">These GUIDs are what the hub will match on to show or hide each desk tile.</p>
+  </div>
+
+  <div class="card">
+    <h2>Diagnostics</h2>
+    <div class="row"><button class="btn ghost" id="copy">Copy diagnostics</button>
+      <span id="copied" class="pill" hidden>copied</span></div>
+    <pre id="diag" style="margin-top:12px">…</pre>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script>
+"use strict";
+
+/* ---- the only two values that change ---- */
+const CLIENT_ID = "1825a1c0-1ce3-4078-aeb7-a4714562c422";
+const TENANT_ID = "848aa890-7982-4028-befa-3323d82583ce";
+const SCOPES    = ["User.Read", "GroupMember.Read.All", "Sites.Read.All"];
+
+const $ = s => document.querySelector(s);
+const D = [];
+const log = (k, v) => { D.push(k + ": " + v); paintDiag(); };
+function paintDiag(){ $("#diag").textContent = D.join("\n"); }
+function fatal(title, detail){
+  const el = $("#fatal");
+  el.hidden = false;
+  el.innerHTML = "<b></b><span></span>";
+  el.querySelector("b").textContent = title;
+  el.querySelector("span").textContent = detail;
+  log("ERROR", title + " — " + detail);
+}
+function setState(text, cls){
+  const el = $("#state");
+  el.textContent = text;
+  el.className = "pill" + (cls ? " " + cls : "");
+}
+
+log("page", location.origin + location.pathname);
+log("msal loaded", typeof msal !== "undefined");
+
+const cfg = {
+  auth: {
+    clientId: CLIENT_ID,
+    authority: "https://login.microsoftonline.com/" + TENANT_ID,
+    redirectUri: location.origin + "/",
+    navigateToLoginRequestUrl: false
+  },
+  cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
+};
+
+let app;
+
+async function main(){
+  if (typeof msal === "undefined")
+    return fatal("MSAL did not load",
+      "The library script was blocked or failed to fetch. Check the browser console Network tab for cdn.jsdelivr.net.");
+
+  app = new msal.PublicClientApplication(cfg);
+  await app.initialize();
+  log("msal initialised", "yes");
+
+  let result = null;
+  try {
+    result = await app.handleRedirectPromise();
+  } catch (e) {
+    return fatal("Sign-in was rejected", (e && (e.errorCode || e.name) || "") + " " + (e && e.errorMessage || e));
+  }
+  if (result) log("returned from redirect", "yes");
+
+  const accounts = app.getAllAccounts();
+  if (!accounts.length){
+    setState("not signed in");
+    $("#signin").hidden = false;
+    return;
+  }
+
+  const acct = accounts[0];
+  app.setActiveAccount(acct);
+  setState("signed in", "ok");
+  $("#signout").hidden = false;
+
+  const c = acct.idTokenClaims || {};
+  $("#whocard").hidden = false;
+  $("#who").innerHTML = "";
+  const put = (k, v) => {
+    const dt = document.createElement("dt"); dt.textContent = k;
+    const dd = document.createElement("dd"); dd.textContent = v == null ? "—" : String(v);
+    $("#who").append(dt, dd);
+  };
+  put("Name", acct.name);
+  put("Username", acct.username);
+  put("Tenant", acct.tenantId);
+  put("Object ID", acct.localAccountId);
+  log("signed in as", acct.username);
+
+  /* groups claim */
+  $("#groupcard").hidden = false;
+  const gl = $("#groups");
+  gl.innerHTML = "";
+  const groups = c.groups;
+  if (Array.isArray(groups) && groups.length){
+    groups.forEach(g => { const li = document.createElement("li"); li.textContent = g; gl.append(li); });
+    log("groups in token", groups.length);
+  } else if (c._claim_names || c._claim_sources){
+    const li = document.createElement("li");
+    li.textContent = "Too many groups to fit in the token (overage) — the hub will call Graph instead.";
+    gl.append(li);
+    log("groups in token", "overage");
+  } else {
+    const li = document.createElement("li");
+    li.textContent = "No groups claim present. Token configuration → Add groups claim → Security groups.";
+    gl.append(li);
+    log("groups in token", "none — claim not configured");
+  }
+
+  /* Graph test */
+  $("#graphcard").hidden = false;
+  let token;
+  try {
+    const r = await app.acquireTokenSilent({ scopes: SCOPES, account: acct });
+    token = r.accessToken;
+    log("token acquired", "silently");
+  } catch (e) {
+    if (e instanceof msal.InteractionRequiredAuthError){
+      log("token", "interaction required — redirecting");
+      return app.acquireTokenRedirect({ scopes: SCOPES });
+    }
+    $("#graphpill").textContent = "token failed";
+    $("#graphpill").className = "pill bad";
+    $("#graph").textContent = (e && e.errorCode || "") + "\n" + (e && e.errorMessage || e);
+    return log("token error", (e && e.errorCode) || e);
+  }
+
+  try {
+    const res = await fetch("https://graph.microsoft.com/v1.0/me", {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const body = await res.text();
+    $("#graphpill").textContent = res.ok ? "HTTP " + res.status : "HTTP " + res.status;
+    $("#graphpill").className = "pill " + (res.ok ? "ok" : "bad");
+    try { $("#graph").textContent = JSON.stringify(JSON.parse(body), null, 1); }
+    catch { $("#graph").textContent = body.slice(0, 1200); }
+    log("graph /me", "HTTP " + res.status);
+  } catch (e) {
+    $("#graphpill").textContent = "network error";
+    $("#graphpill").className = "pill bad";
+    $("#graph").textContent = String(e);
+    log("graph /me", "network error " + e);
+  }
+}
+
+$("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
+$("#signout").addEventListener("click", () => app.logoutRedirect());
+$("#copy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText($("#diag").textContent);
+    $("#copied").hidden = false;
+    setTimeout(() => { $("#copied").hidden = true; }, 1800);
+  } catch { /* select the block manually */ }
+});
+
+main().catch(e => fatal("Unexpected failure", (e && e.stack) || String(e)));
+</script>
 </body>
 </html>
