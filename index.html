@@ -233,6 +233,12 @@ a.part:hover .go{stroke:var(--maroon)}
 .wx-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}
 .wx-head .lbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
   color:rgba(255,255,255,.5)}
+.wx-head a.more{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(255,255,255,.72);text-decoration:none;
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.wx-head a.more:hover{color:#fff}
+.wx-head a.more svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.4}
+.wx-head a.more + select{margin-left:10px}
 .wx-head select{margin-left:auto;font-family:inherit;font-size:11px;font-weight:700;color:#fff;
   background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:5px;
   padding:4px 7px;cursor:pointer;max-width:170px}
@@ -773,14 +779,22 @@ function wxSvg(cls, code, night){
 }
 const degF = v => (v == null ? "\u2014" : Math.round(v) + "\u00B0");
 
+/* The National Weather Service point forecast for a coordinate — US only, free,
+   no ads, and its page carries the hourly table and the radar. A location in
+   links.json can override it with forecastUrl if you prefer somewhere else. */
+const nwsUrl = l => "https://forecast.weather.gov/MapClick.php?lat=" +
+  encodeURIComponent(l.lat) + "&lon=" + encodeURIComponent(l.lon);
+
 /* A location list, whether links.json gives one location or several. */
 function wxLocations(w){
   if (!w) return [];
   if (Array.isArray(w.locations) && w.locations.length)
     return w.locations.filter(l => l && l.lat != null && l.lon != null)
-      .map(l => ({ label: l.label || "", lat: l.lat, lon: l.lon, tz: l.tz || w.tz }));
+      .map(l => ({ label: l.label || "", lat: l.lat, lon: l.lon, tz: l.tz || w.tz,
+                   forecastUrl: l.forecastUrl || "" }));
   if (w.lat != null && w.lon != null)
-    return [{ label: w.label || "", lat: w.lat, lon: w.lon, tz: w.tz }];
+    return [{ label: w.label || "", lat: w.lat, lon: w.lon, tz: w.tz,
+              forecastUrl: w.forecastUrl || "" }];
   return [];
 }
 /* which location this viewer last looked at - a convenience, never load-bearing */
@@ -833,8 +847,12 @@ function renderWeather(data, cfg){
   }
 
   const many = wxAll.length > 1;
+  const fc = safeUrl((cfg && cfg.forecastUrl) || nwsUrl(cfg));
   const head =
     '<div class="wx-head"><span class="lbl">Weather</span>' +
+    (fc ? '<a class="more" href="' + esc(fc) + '" target="_blank" rel="noopener noreferrer" ' +
+          'title="Hourly forecast and radar">Hourly' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '') +
     (many
       ? '<select id="wxpick" aria-label="Location">' + wxAll.map((l, i) =>
           '<option value="' + i + '"' + (l === cfg ? ' selected' : '') + '>' +
