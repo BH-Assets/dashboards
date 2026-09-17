@@ -181,16 +181,34 @@ a.act svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;fl
   color:var(--charcoal);text-decoration:none;background:var(--surface-2)}
 .panel .all:hover{color:var(--maroon)}
 
-a.news{display:block;padding:13px 16px;text-decoration:none;color:inherit;
-  border-bottom:1px solid var(--line-soft)}
-a.news:last-of-type{border-bottom:0}
-a.news:hover{background:var(--surface-2)}
-.news .when{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+/* newsletter: one issue, its sections underneath */
+.issue{display:block;padding:15px 16px 14px;text-decoration:none;color:inherit;
+  border-bottom:1px solid var(--line);background:var(--cream)}
+.issue:hover{background:#efe7d8}
+.issue .when{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
   color:var(--brand-red)}
-.news .h{font-size:13.5px;font-weight:700;line-height:1.3;margin-top:4px}
-.news .x{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  color:var(--muted);font-size:12px;line-height:1.4;margin-top:3px}
+.issue .h{font-size:16px;font-weight:800;line-height:1.25;margin-top:4px;letter-spacing:.005em}
+.issue .x{color:var(--muted);font-size:12px;line-height:1.4;margin-top:4px}
+a.part{display:flex;align-items:center;gap:10px;padding:11px 16px;text-decoration:none;
+  color:inherit;border-bottom:1px solid var(--line-soft)}
+a.part:last-of-type{border-bottom:0}
+a.part:hover{background:var(--surface-2)}
+a.part .n{font-size:13px;font-weight:700;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.part .go{flex:none;width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2}
+a.part:hover .go{stroke:var(--maroon)}
 
+.panel .sub{font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint);padding:9px 16px 7px;background:var(--surface-2);
+  border-bottom:1px solid var(--line-soft);border-top:1px solid var(--line-soft)}
+.panel .sub:first-of-type{border-top:0}
+.noneout{padding:11px 16px;font-size:12.5px;color:var(--faint);
+  border-bottom:1px solid var(--line-soft)}
+.hol{display:flex;align-items:baseline;gap:8px;padding:9px 16px;background:var(--cream);
+  border-bottom:1px solid var(--line-soft);font-size:12px}
+.hol b{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--maroon);flex:none}
+.hol .d{margin-left:auto;font-size:11px;color:var(--charcoal);flex:none}
 .person{display:flex;align-items:center;gap:11px;padding:10px 16px;
   border-bottom:1px solid var(--line-soft)}
 .person:last-of-type{border-bottom:0}
@@ -207,6 +225,8 @@ a.news:hover{background:var(--surface-2)}
 .person .kind .k{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
   color:var(--charcoal);background:var(--cream);border:1px solid var(--line);
   border-radius:3px;padding:1px 4px;display:inline-block}
+.person .kind .k.now{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
+.person.away .av{background:var(--faint)}
 .person .kind .dt{display:block;font-size:10px;color:var(--faint);margin-top:3px}
 
 /* ---- weather: location picker + site rows ---- */
@@ -487,6 +507,7 @@ const LINK_FILE = "links.json";
 /* written nightly by the pipeline; when it is there it wins over anything
    hand-typed into links.json, so the two never have to be kept in step */
 const PEOPLE_FILE = "people.json";
+const NEWS_FILE   = "newsletter.json";
 
 const ACCESS_CONTACT = "itadmin@baileyharris.com";
 
@@ -873,53 +894,99 @@ function renderSafety(s){
   log("safety", "shown");
 }
 
-/* ---------- news ---------- */
-function renderNews(items, moreUrl){
+/* ---------- newsletter ---------- */
+/* One issue at a time. The pages are named per month, so this is whatever
+   links.json currently points at — or whatever the pipeline last discovered. */
+function renderNewsletter(n){
   const el = $("#newspanel");
-  if (!el) return;
-  const ok = (items || []).map(x => Object.assign({}, x, { _u: safeUrl(x.url) })).filter(x => x._u && x.title);
-  if (!ok.length) return;
-  const more = moreUrl ? safeUrl(moreUrl) : null;
-  el.innerHTML = '<h2>Company news' + sampleTag() + '<span class="n">' + ok.length + '</span></h2>' +
-    ok.slice(0, 3).map(x =>
-      '<a class="news" href="' + esc(x._u) + '" target="_blank" rel="noopener noreferrer">' +
-        (x.date ? '<span class="when">' + esc(x.date) + '</span>' : '') +
-        '<div class="h">' + esc(x.title) + '</div>' +
-        (x.excerpt ? '<div class="x">' + esc(x.excerpt) + '</div>' : '') +
+  if (!el || !n) return;
+  const parts = (n.sections || [])
+    .map(s => Object.assign({}, s, { _u: safeUrl(s.url) }))
+    .filter(s => s._u && s.name);
+  const issueUrl = n.url ? safeUrl(n.url) : (parts[0] ? parts[0]._u : null);
+  if (!issueUrl && !parts.length) return;
+  const archive = n.archiveUrl ? safeUrl(n.archiveUrl) : null;
+
+  el.innerHTML = '<h2>Newsletter' + sampleTag(!!pipelineNewsletter) + '</h2>' +
+    (issueUrl
+      ? '<a class="issue" href="' + esc(issueUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="when">Latest issue</span>' +
+          '<div class="h">' + esc(n.title || "This month") + '</div>' +
+          (n.blurb ? '<div class="x">' + esc(n.blurb) + '</div>' : '') +
+          (n.sentLabel ? '<div class="x" style="margin-top:6px;font-size:11px;color:var(--faint)">Sent ' +
+             esc(n.sentLabel) + '</div>' : '') +
+        '</a>'
+      : '') +
+    parts.map(s =>
+      '<a class="part" href="' + esc(s._u) + '" target="_blank" rel="noopener noreferrer">' +
+        '<span class="n">' + esc(s.name) + '</span>' +
+        '<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>' +
       '</a>').join("") +
-    (more ? '<a class="all" href="' + esc(more) + '" target="_blank" rel="noopener noreferrer">All news</a>' : '');
+    (archive ? '<a class="all" href="' + esc(archive) + '" target="_blank" rel="noopener noreferrer">Past issues</a>' : '');
   el.hidden = false;
-  log("news", ok.length);
+  log("newsletter", (n.title || "?") + ", " + parts.length + " sections");
 }
 
-/* ---------- birthdays, anniversaries, new hires ---------- */
+/* ---------- team: who is out, and this week's milestones ---------- */
 let SAMPLE = false;
-const sampleTag = () => SAMPLE ? '<span class="k" style="margin-left:8px">sample</span>' : '';
+/* the placeholder marker comes off panel by panel as each pipeline goes live */
+const sampleTag = live => (SAMPLE && !live) ? '<span class="k" style="margin-left:8px">sample</span>' : '';
 const KINDLABEL = { birthday:"Birthday", anniversary:"Anniversary", newhire:"New hire" };
-function renderPeople(items, moreUrl){
+
+function personRow(x, opts){
+  const chip = opts && opts.chip;
+  return '<div class="person ' + (opts && opts.away ? 'away ' : '') + badgeClass(x.name) + '">' +
+    '<span class="av" aria-hidden="true">' + esc(initials(x.name)) + '</span>' +
+    '<span class="who"><span class="nm">' + esc(x.name) + '</span>' +
+      (x.role ? '<span class="rl">' + esc(x.role) + '</span>' : '') + '</span>' +
+    '<span class="kind">' +
+      (chip ? '<span class="k' + (chip.now ? ' now' : '') + '">' + esc(chip.text) + '</span>' : '') +
+      (x.date ? '<span class="dt">' + esc(x.date) + '</span>' : '') +
+    '</span></div>';
+}
+
+function renderTeam(people, out, holidays, moreUrl, outKnown){
   const el = $("#peoplepanel");
   if (!el) return;
-  const ok = (items || []).filter(x => x && x.name);
-  if (!ok.length) return;
+  const away = (out || []).filter(x => x && x.name);
+  const mile = (people || []).filter(x => x && x.name);
+  const hols = (holidays || []).filter(x => x && x.name);
+  if (!away.length && !mile.length && !hols.length && !outKnown) return;
+
   const more = moreUrl ? safeUrl(moreUrl) : null;
-  el.innerHTML = '<h2>This week' + sampleTag() + '<span class="n">' + ok.length + '</span></h2>' +
-    ok.slice(0, 6).map(x => {
-      const label = x.years ? x.years + " years" : (KINDLABEL[x.kind] || x.kind || "");
-      return '<div class="person ' + badgeClass(x.name) + '">' +
-        '<span class="av" aria-hidden="true">' + esc(initials(x.name)) + '</span>' +
-        '<span class="who"><span class="nm">' + esc(x.name) + '</span>' +
-          (x.role ? '<span class="rl">' + esc(x.role) + '</span>' : '') + '</span>' +
-        '<span class="kind">' + (label ? '<span class="k">' + esc(label) + '</span>' : '') +
-          (x.date ? '<span class="dt">' + esc(x.date) + '</span>' : '') + '</span>' +
-      '</div>';
-    }).join("") +
+  let body = "";
+
+  if (away.length || hols.length || outKnown){
+    body += '<div class="sub">Out</div>';
+    if (!away.length && !hols.length)
+      body += '<div class="noneout">Nobody out this week.</div>';
+    body += hols.slice(0, 2).map(x =>
+      '<div class="hol"><b>Holiday</b>' + esc(x.name) +
+      '<span class="d">' + esc(x.date) + '</span></div>').join("");
+    body += away.slice(0, 6).map(x =>
+      personRow(x, { away: true, chip: x.today ? { text: "Today", now: true } : null })).join("");
+    if (away.length > 6)
+      body += '<div class="sub" style="background:#fff;border-top:0;color:var(--muted)">and ' +
+              (away.length - 6) + ' more</div>';
+  }
+
+  if (mile.length){
+    body += '<div class="sub">This week</div>';
+    body += mile.slice(0, 6).map(x => personRow(x, {
+      chip: { text: x.years ? x.years + " years" : (KINDLABEL[x.kind] || x.kind || "") }
+    })).join("");
+  }
+
+  el.innerHTML = '<h2>Team' + sampleTag(!!pipelinePeople) +
+    '<span class="n">' + (away.length + mile.length) + '</span></h2>' + body +
     (more ? '<a class="all" href="' + esc(more) + '" target="_blank" rel="noopener noreferrer">Open BambooHR</a>' : '');
   el.hidden = false;
-  log("people", ok.length);
+  log("team", away.length + " out, " + mile.length + " milestones, " + hols.length + " holidays");
 }
 
 /* ============ boot ============ */
 let pipelinePeople = null;
+let pipelineNewsletter = null;
 let wxAll = wxLocations(FALLBACK_SITE.weather);
 let wxCfg = wxAll[0] || null;
 let wxPromise = null;
@@ -1023,18 +1090,31 @@ async function main(){
     log("site", "HTTP " + site.status);
   }
 
-  /* ---- people.json, written by the BambooHR pipeline ---- */
+  /* ---- files the pipelines write ---- */
   if (siteId && drives[LINK_LIB]){
-    const f = await graphRaw("/drives/" + drives[LINK_LIB] + "/root:/" + PEOPLE_FILE + ":/content");
-    if (f.ok){
+    const lib = drives[LINK_LIB];
+
+    const pf = await graphRaw("/drives/" + lib + "/root:/" + PEOPLE_FILE + ":/content");
+    if (pf.ok){
       try {
-        const j = JSON.parse(f.text);
+        const j = JSON.parse(pf.text);
         if (j && Array.isArray(j.people)){
           pipelinePeople = j;
           log(PEOPLE_FILE, j.people.length + " entries, generated " + (j.generated || "?"));
         }
       } catch(_) { log(PEOPLE_FILE, "parse failed"); }
-    } else log(PEOPLE_FILE, "HTTP " + f.status);
+    } else log(PEOPLE_FILE, "HTTP " + pf.status);
+
+    const nf = await graphRaw("/drives/" + lib + "/root:/" + NEWS_FILE + ":/content");
+    if (nf.ok){
+      try {
+        const j = JSON.parse(nf.text);
+        if (j && j.newsletter && j.newsletter.url){
+          pipelineNewsletter = j;
+          log(NEWS_FILE, (j.newsletter.title || "?") + ", generated " + (j.generated || "?"));
+        }
+      } catch(_) { log(NEWS_FILE, "parse failed"); }
+    } else log(NEWS_FILE, "HTTP " + nf.status);
   }
 
   /* ---- the link list ---- */
@@ -1152,12 +1232,35 @@ function applySite(site){
 
   renderActions((site && site.actions) || FALLBACK_SITE.actions);
   renderSafety(site && site.safety);
-  renderNews((site && site.news) || [], site && site.newsUrl);
+  /* Mailchimp supplies which issue is current; links.json can still supply the
+     section shortcuts and a past-issues link, which Mailchimp knows nothing about. */
+  const hand = (site && site.newsletter) || null;
+  let issue = hand;
+  if (pipelineNewsletter){
+    issue = Object.assign({}, hand || {}, pipelineNewsletter.newsletter);
+    if (hand && hand.sections && !pipelineNewsletter.newsletter.sections)
+      issue.sections = hand.sections;
+    if (hand && hand.archiveUrl && !pipelineNewsletter.newsletter.archiveUrl)
+      issue.archiveUrl = hand.archiveUrl;
+  }
+  renderNewsletter(issue);
 
   /* the pipeline's file, when present, is the source of truth for people */
   const people = pipelinePeople ? pipelinePeople.people : ((site && site.people) || []);
-  if (pipelinePeople) SAMPLE = false;
-  renderPeople(people, site && site.peopleUrl);
+  const out    = pipelinePeople ? (pipelinePeople.out || [])      : ((site && site.out) || []);
+  const hols   = pipelinePeople ? (pipelinePeople.holidays || []) : ((site && site.holidays) || []);
+  /* the pipeline having written an (even empty) out list is different from it
+     never having looked — the first deserves "nobody out", the second silence */
+  const outKnown = !!(pipelinePeople && Array.isArray(pipelinePeople.out));
+  renderTeam(people, out, hols, site && site.peopleUrl, outKnown);
+
+  /* the rail floats, so an empty one would hold open a 322px gutter */
+  const rail = $("#rail");
+  if (rail){
+    const anyPanel = Array.from(rail.children).some(el => !el.hidden);
+    rail.hidden = !anyPanel;
+    log("rail", anyPanel ? "shown" : "empty, hidden");
+  }
 
   const list = wxLocations(site && site.weather);
   if (!list.length) return;
