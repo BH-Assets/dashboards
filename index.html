@@ -18,6 +18,9 @@
   --ink:#211E1E; --muted:#5b6472; --faint:#8a919b;
   --line:#E8E6E7; --line-soft:#F1EFF0;
   --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D; --cream:#F2ECE1;
+  /* decorative only — the weather sun. Deliberately not --warn, which is a
+     status colour, and not --brand-red, which is identity. */
+  --sun:#F7A928;
   --ok:#006100;   --ok-soft:#C6EFCE;
   --warn:#9C6500; --warn-soft:#FFEB9C;
   --crit:#9C0006; --crit-soft:#FFC7CE;
@@ -104,7 +107,7 @@ main{padding:0 0 76px}
 .wx-top{display:flex;align-items:center;gap:14px}
 .wx-icon{width:48px;height:48px;flex:none;stroke:#fff;fill:none;stroke-width:1.7;
   stroke-linecap:round;stroke-linejoin:round}
-.wx-icon .sun{fill:var(--brand-red);stroke:none}
+.wx-icon .sun{fill:var(--sun);stroke:none}
 .wx-icon .drop{fill:rgba(255,255,255,.85);stroke:none}
 .wx-temp{font:700 34px/1 'Montserrat',sans-serif;letter-spacing:-.02em}
 .wx-body{min-width:0}
@@ -118,7 +121,7 @@ main{padding:0 0 76px}
   color:rgba(255,255,255,.55);display:block}
 .wx-day svg{width:25px;height:25px;margin:5px auto 3px;display:block;stroke:#fff;fill:none;
   stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.wx-day svg .sun{fill:var(--brand-red);stroke:none}
+.wx-day svg .sun{fill:var(--sun);stroke:none}
 .wx-day svg .drop{fill:rgba(255,255,255,.85);stroke:none}
 .wx-day .hi{font:600 12px/1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
 .wx-day .lo{font:400 12px/1 "JetBrains Mono",monospace;color:rgba(255,255,255,.5);
@@ -332,8 +335,14 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;p
 .endband{margin-top:46px;background:var(--ink);color:#fff;padding:26px 0 24px}
 .endband .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .endband img{height:40px;width:auto;flex:none}
-.endband .legacy{font-size:12.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
-  color:rgba(255,255,255,.85)}
+/* the three values as a loop, the way the brand mark draws them */
+.flywheel{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;
+  stroke-width:2.1;stroke-linecap:round}
+.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:rgba(255,255,255,.88);white-space:nowrap}
+.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);
+  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
 .endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
 @media (max-width:860px){
   .acts{margin-left:0;width:100%}
@@ -376,7 +385,9 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;p
   .person{padding:9px 14px}
   .endband .wrap{gap:12px}
   .endband img{height:32px}
-  .endband .legacy{font-size:11px}
+  .flywheel{gap:7px;width:100%}
+  .flywheel span{font-size:9.5px;letter-spacing:.1em}
+  .flywheel i.ch{width:7px;height:9px}
 }
 @media (max-width:640px){
   header.bh-header{position:static}
@@ -490,7 +501,15 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;p
     <div class="endband">
       <div class="wrap">
         <img src="data:image/png;base64,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" alt="">
-        <span class="legacy">Building a legacy</span>
+        <div class="flywheel"
+             aria-label="Quality construction drives corporate profitability, which drives employee fulfillment, which drives quality construction">
+          <svg class="loop" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M18.4 2.2v4.2h-4.2"/>
+          </svg>
+          <span>Quality Construction</span><i class="ch"></i>
+          <span>Corporate Profitability</span><i class="ch"></i>
+          <span>Employee Fulfillment</span><i class="ch"></i>
+        </div>
         <span class="since">Bailey-Harris Construction &middot; since 1979</span>
       </div>
     </div>
@@ -525,6 +544,14 @@ const DESKS = [
     title: "Compliance Desk",
     blurb: "Subcontractor and vendor insurance compliance, licences and expiries. Open to everyone.",
     href: "https://compliance.baileyharris.com",
+    group: null,
+    external: true
+  },
+  {
+    key: "projects",
+    title: "Project Information",
+    blurb: "Every job on a map \u2014 team, owner, contract, RFIs and change orders, refreshed hourly from Procore.",
+    href: "https://projects.baileyharris.com",
     group: null,
     external: true
   },
