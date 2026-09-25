@@ -198,6 +198,7 @@ function render(){
 
   const value = rows.reduce((s,r)=>s+(r.contract_value||0),0);
   const paid  = rows.reduce((s,r)=>s+(r.total_payments||0),0);
+  const cos   = rows.reduce((s,r)=>s+(r.approved_change_orders||0),0);
   const nc    = rows.filter(r => { const c = complianceFor(r); return c && c.billy_is_compliant !== 'Yes'; }).length;
   const noTerm= rows.filter(r => r.retainage_percent > 0 && !(r.retainage_duration||'').trim().match(/throughout|thru/i)).length;
   const noCe  = rows.filter(r => !r.ce_code).length;
@@ -205,6 +206,7 @@ function render(){
   document.getElementById('cards').innerHTML = `
     <div class="card total"><div class="n">${rows.length}</div><div class="l">Commitments</div></div>
     <div class="card"><div class="n">${money(value)}</div><div class="l">Contract value</div></div>
+    <div class="card gap"><div class="n">${money(cos)}</div><div class="l">Approved change orders</div></div>
     <div class="card ok"><div class="n">${money(paid)}</div><div class="l">Paid to date</div></div>
     <div class="card bad"><div class="n">${nc}</div><div class="l">Non-compliant</div></div>
     <div class="card soon"><div class="n">${noTerm}</div><div class="l">Retainage term not set</div></div>
@@ -213,7 +215,8 @@ function render(){
   const cols = [
     ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
     ['compliance','Compliance',''],
-    ['contract_value','Contract','num'], ['total_payments','Paid','num'], ['percentage_paid','%','num'],
+    ['contract_value','Contract','num'], ['approved_change_orders','+ COs','num'],
+    ['revised_contract','Revised','num'], ['total_payments','Paid','num'], ['percentage_paid','%','num'],
     ['retainage_percent','Retainage',''], ['project_manager','PM','l'],
     ['billing_day','Bills',''], ['ce_code','CE code','l'], ['status','Status','']
   ];
@@ -229,14 +232,18 @@ function render(){
       <td class="l">${esc(r.vendor)}</td>
       <td>${compCell(r)}</td>
       <td class="num">${money(r.contract_value)}</td>
+      <td class="num">${r.approved_change_orders ? '<b>' + money(r.approved_change_orders) + '</b>' : '<span class="muted">—</span>'}</td>
+      <td class="num">${money(r.revised_contract)}</td>
       <td class="num">${money(r.total_payments)}</td>
       <td class="num">${pct(r.percentage_paid)}</td>
       <td>${retainageCell(r)}</td>
       <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
       <td>${esc(r.billing_day)}</td>
-      <td class="l code">${r.ce_code ? esc(r.ce_code) : '<span class="pill y">none</span>'}</td>
+      <td class="l code">${r.ce_code
+        ? esc(r.ce_code) + (r.erp_linked === 'Yes' ? '' : ' <span class="pill b" title="Code is on the vendor\'s Abbreviated Name, but the vendor is not ERP-linked in Procore">no ERP link</span>')
+        : '<span class="pill y" title="No Abbreviated Name and no ERP link - Accounting has nothing to key on">none</span>'}</td>
       <td>${esc(r.status)}${r.executed==='Yes'?' <span class="pill g">executed</span>':(r.executed==='No'?' <span class="pill y">unexecuted</span>':'')}</td>
-    </tr>`).join('') : `<tr><td colspan="12" class="empty">No commitments match these filters.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="14" class="empty">No commitments match these filters.</td></tr>`;
 
   document.getElementById('table').innerHTML =
     `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -264,6 +271,11 @@ function render(){
 
     document.getElementById('content').innerHTML = `
       <div class="notice">
+        <b>Paid</b> and <b>%</b> are Procore's figures (<code>total_payments</code>,
+        <code>percentage_paid</code>). Billing is done in ComputerEase, so these can lag or
+        read zero even where CE shows payments — treat them as indicative until the source
+        is confirmed. <b>Contract / + COs / Revised</b> come straight from the commitment.
+        <br><br>
         <b>What this page shows today:</b> every active subcontract commitment in Procore, with its
         retainage term, contract value, project manager, compliance status from Billy and its
         ComputerEase vendor code. Bailey-Harris self-perform commitments are excluded.
