@@ -38,6 +38,12 @@
   th{background:#484B4D;color:#fff;font-size:11px;position:sticky;top:0;cursor:pointer;user-select:none}
   th:hover{background:#5a5e61}
   td.l,th.l{text-align:left}
+  /* A second line inside a cell keeps the figure and its qualifier together
+     without spending a column on it. */
+  .sub{font-size:10.5px;color:#7a828f;line-height:1.5;margin-top:1px;font-weight:normal}
+  .sub.co{color:#1a4fb0}
+  .warn{color:#9a6a00;font-weight:bold}
+  td.wrap{white-space:normal;max-width:210px}
   /* NOT .r - that is the red pill class. A numeric column called .r painted
      every Contract/Paid/% cell red. */
   td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
@@ -215,10 +221,8 @@ function render(){
   const cols = [
     ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
     ['compliance','Compliance',''],
-    ['contract_value','Contract','num'], ['approved_change_orders','+ COs','num'],
-    ['revised_contract','Revised','num'], ['total_payments','Paid','num'], ['percentage_paid','%','num'],
-    ['retainage_percent','Retainage',''], ['project_manager','PM','l'],
-    ['billing_day','Bills',''], ['ce_code','CE code','l'], ['status','Status','']
+    ['revised_contract','Contract','num'], ['total_payments','Paid','num'],
+    ['retainage_percent','Retainage',''], ['project_manager','PM','l'], ['status','Status','']
   ];
   const head = cols.map(([k,label,cls]) =>
     `<th class="${cls}" data-col="${k}">${label}${STATE.sort.col===k ? (STATE.sort.dir>0?' ▲':' ▼') : ''}</th>`).join('');
@@ -227,23 +231,21 @@ function render(){
       const c = complianceFor(r);
       return !c ? 'nobilly' : (c.billy_is_compliant === 'Yes' ? '' : 'noncompliant');
     })()}">
-      <td class="l">${esc(r.project)}</td>
-      <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a></td>
-      <td class="l">${esc(r.vendor)}</td>
+      <td class="l wrap">${esc(r.project)}</td>
+      <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
+        ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}</td>
+      <td class="l wrap">${esc(r.vendor)}
+        <div class="sub code">${r.ce_code ? esc(r.ce_code)
+          : '<span class="warn" title="No Abbreviated Name in Procore - Accounting has nothing to key the entry on">no CE code</span>'}</div></td>
       <td>${compCell(r)}</td>
-      <td class="num">${money(r.contract_value)}</td>
-      <td class="num">${r.approved_change_orders ? '<b>' + money(r.approved_change_orders) + '</b>' : '<span class="muted">—</span>'}</td>
-      <td class="num">${money(r.revised_contract)}</td>
-      <td class="num">${money(r.total_payments)}</td>
-      <td class="num">${pct(r.percentage_paid)}</td>
+      <td class="num">${money(r.revised_contract || r.contract_value)}
+        ${r.approved_change_orders ? `<div class="sub co" title="Approved change orders included above">+${money(r.approved_change_orders)} CO</div>` : ''}</td>
+      <td class="num">${money(r.total_payments)}
+        <div class="sub">${pct(r.percentage_paid)}</div></td>
       <td>${retainageCell(r)}</td>
       <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
-      <td>${esc(r.billing_day)}</td>
-      <td class="l code">${r.ce_code
-        ? esc(r.ce_code) + (r.erp_linked === 'Yes' ? '' : ' <span class="pill b" title="Code is on the vendor\'s Abbreviated Name, but the vendor is not ERP-linked in Procore">no ERP link</span>')
-        : '<span class="pill y" title="No Abbreviated Name and no ERP link - Accounting has nothing to key on">none</span>'}</td>
-      <td>${esc(r.status)}${r.executed==='Yes'?' <span class="pill g">executed</span>':(r.executed==='No'?' <span class="pill y">unexecuted</span>':'')}</td>
-    </tr>`).join('') : `<tr><td colspan="14" class="empty">No commitments match these filters.</td></tr>`;
+      <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y">unexecuted</span>':'')}</td>
+    </tr>`).join('') : `<tr><td colspan="9" class="empty">No commitments match these filters.</td></tr>`;
 
   document.getElementById('table').innerHTML =
     `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -271,10 +273,10 @@ function render(){
 
     document.getElementById('content').innerHTML = `
       <div class="notice">
-        <b>Paid</b> and <b>%</b> are Procore's figures (<code>total_payments</code>,
-        <code>percentage_paid</code>). Billing is done in ComputerEase, so these can lag or
-        read zero even where CE shows payments — treat them as indicative until the source
-        is confirmed. <b>Contract / + COs / Revised</b> come straight from the commitment.
+        <b>Paid</b> is Procore's figure. Billing is done in ComputerEase, so it can lag or
+        read zero even where CE shows payments — treat it as indicative until the source is
+        confirmed. <b>Contract</b> is the revised contract, approved change orders included;
+        where there are any, the amount is shown beneath it.
         <br><br>
         <b>What this page shows today:</b> every active subcontract commitment in Procore, with its
         retainage term, contract value, project manager, compliance status from Billy and its
