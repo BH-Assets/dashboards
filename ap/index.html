@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<title>AP Desk</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Montserrat',Arial,Helvetica,sans-serif; background:#f5f7fa; color:#211E1E; }
+  .wrap { max-width:1500px; margin:0 auto; padding:20px; }
+  .bh-banner{background:#fff;border-bottom:1px solid #E8E6E7;width:100%}
+  .bh-banner-inner{max-width:1500px;margin:0 auto;padding:12px 20px 14px;display:flex;align-items:center;gap:18px}
+  .bh-logo{height:54px;width:auto;flex:none}
+  .bh-titles{line-height:1.2}
+  .bh-title{color:#211E1E;font-size:22px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+  .bh-sub{color:#5b6472;font-size:12.5px;margin-top:3px}
+  .bh-badge{margin-left:auto;border:1px solid #1a7f37;color:#1a7f37;background:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:bold;letter-spacing:.05em;white-space:nowrap}
+  .banner{background:#fff7e6;border:1px solid #f0d089;color:#7a5a12;padding:9px 13px;border-radius:8px;font-size:13px;margin-bottom:14px}
+  .err{background:#FFC7CE;border-color:#e6a3a3;color:#9C0006}
+  .notice{background:#eef3fb;border:1px solid #c3d4ee;color:#1F3864;padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:16px;line-height:1.55}
+  .notice b{color:#1a4fb0}
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .controls label{font-size:13px;color:#40485a;font-weight:bold}
+  select,input[type=text]{padding:8px 12px;border:1px solid #c7cfdb;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+  .card{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:13px 15px}
+  .card .n{font-size:25px;font-weight:bold}
+  .card .l{font-size:11.5px;color:#5b6472;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+  .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
+  .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
+  .tablescroll{overflow-x:auto;border-radius:10px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:12px}
+  th,td{padding:7px 9px;text-align:center;border-bottom:1px solid #eef1f6;white-space:nowrap}
+  th{background:#484B4D;color:#fff;font-size:11px;position:sticky;top:0;cursor:pointer;user-select:none}
+  th:hover{background:#5a5e61}
+  td.l,th.l{text-align:left}
+  td.r,th.r{text-align:right}
+  tbody tr:hover{background:#f7f9fc}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:bold}
+  .g{background:#C6EFCE;color:#006100}.y{background:#FFEB9C;color:#9C6500}.r{background:#FFC7CE;color:#9C0006}
+  .b{background:#DDEBF7;color:#1F3864}.muted{color:#9aa2b1}
+  .code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;color:#40485a}
+  .empty{color:#5b6472;font-style:italic;padding:14px 0}
+  .loading{padding:40px;text-align:center;color:#5b6472}
+  a{color:#1a4fb0;text-decoration:none}a:hover{text-decoration:underline}
+  footer{margin-top:26px;padding-top:14px;border-top:1px solid #e3e8f0;color:#7a828f;font-size:11.5px;line-height:1.7}
+  .stub{background:#fff;border:1px dashed #c7cfdb;border-radius:10px;padding:18px 20px;color:#5b6472;font-size:13px;line-height:1.6}
+  .stub h3{margin:0 0 6px;font-size:14px;color:#211E1E}
+</style>
+</head>
+<body>
+<header class="bh-banner"><div class="bh-banner-inner">
+  <img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris Construction">
+  <div class="bh-titles">
+    <div class="bh-title">AP Desk</div>
+    <div class="bh-sub">Subcontractor commitments, retainage terms &amp; compliance &middot; <span id="asof">loading…</span></div>
+  </div>
+  <span class="bh-badge">&#9679; LIVE</span>
+</div></header>
+
+<div class="wrap">
+  <div id="banner" class="banner" style="display:none"></div>
+  <div id="content"><div class="loading">Signing in and loading from SharePoint…</div></div>
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script>
+/* ==== Sign-in and data source ====
+   Same app registration, scopes and site as the Precon and Prequal desks, so a
+   PM signs in once for all of them. Sites.Selected is granted per site, and the
+   grant that matters here is on /sites/Dashboard - NOT the compliance
+   dashboard's app, which reads sites/Resources with Files.Read.All.
+   The redirect URI must be registered on this app as .../ap/ (with the trailing
+   slash) exactly as /precon/ and /prequal/ are. */
+const CLIENT_ID = '1825a1c0-1ce3-4078-aeb7-a4714562c422';
+const TENANT_ID = '848aa890-7982-4028-befa-3323d82583ce';
+const SCOPES    = ['User.Read','GroupMember.Read.All','Sites.Selected'];
+const SP_HOST   = 'baileyharris.sharepoint.com';
+const SP_PATH   = '/sites/Dashboard';
+const LIBRARY   = 'APData';
+const DATA_FILE = 'ap_commitments.json';
+const CONTACT   = 'itadmin@baileyharris.com';
+
+const msalApp = new msal.PublicClientApplication({
+  auth: { clientId: CLIENT_ID, authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+          redirectUri: location.origin + '/ap/' },
+  cache: { cacheLocation: 'sessionStorage' }
+});
+
+async function token(){
+  await msalApp.initialize();
+  const redir = await msalApp.handleRedirectPromise();
+  let account = (redir && redir.account) || msalApp.getAllAccounts()[0];
+  if (!account) { await msalApp.loginRedirect({ scopes: SCOPES }); return null; }
+  msalApp.setActiveAccount(account);
+  try { const t = await msalApp.acquireTokenSilent({ scopes: SCOPES, account }); return t.accessToken; }
+  catch (e) { await msalApp.acquireTokenRedirect({ scopes: SCOPES }); return null; }
+}
+
+const GRAPH = 'https://graph.microsoft.com/v1.0';
+async function g(tok, path){
+  const r = await fetch(GRAPH + path, { headers: { Authorization: 'Bearer ' + tok } });
+  let body = null; try { body = await r.json(); } catch(_) {}
+  return { ok: r.ok, status: r.status, body };
+}
+
+/* Resolve site -> library -> file, the same way the Precon desk does. A 403 here
+   is an access problem, not a missing file, and says so. */
+async function loadData(tok){
+  const site = await g(tok, '/sites/' + SP_HOST + ':' + SP_PATH);
+  if (!site.ok || !site.body || !site.body.id)
+    throw new Error('Could not reach ' + SP_PATH + ' (HTTP ' + site.status + ').');
+  const dr = await g(tok, '/sites/' + site.body.id + '/drives?$select=id,name');
+  const drive = ((dr.body && dr.body.value) || []).find(d => d.name === LIBRARY);
+  if (!drive) throw new Error('No document library called ' + LIBRARY + ' on ' + SP_PATH + '.');
+  const r = await fetch(GRAPH + '/drives/' + drive.id + '/root:/' + encodeURI(DATA_FILE) + ':/content',
+                        { headers: { Authorization: 'Bearer ' + tok } });
+  if (r.status === 403)
+    throw new Error('Your account is not permitted to read ' + LIBRARY + '. Ask ' + CONTACT + ' for access.');
+  if (r.status === 404)
+    throw new Error(DATA_FILE + ' is not in ' + LIBRARY + ' yet - has the AP commitments pull run?');
+  if (!r.ok) throw new Error(DATA_FILE + ': HTTP ' + r.status);
+  return r.json();
+}
+
+/* ==== helpers ==== */
+// Same normalisation compliance_pull.js uses, so the join keys agree.
+const normName = n => String(n||'').toUpperCase().replace(/&/g,' AND ').replace(/[.,'"]/g,' ')
+  .replace(/\b(LLC|L L C|INC|INCORPORATED|CO|COMPANY|CORP|CORPORATION|LP|LLP|PC|PLLC)\b/g,' ')
+  .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+const money = v => (v === null || v === undefined || v === '') ? '' :
+  '$' + Math.round(Number(v)).toLocaleString();
+const pct = v => (v === null || v === undefined || v === '') ? '' : Number(v).toFixed(0) + '%';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Retainage is two fields. The percent alone cannot say whether it stops at 50%
+   completion - which is exactly how the GL Pack shortage happened. Show both,
+   and flag the commitments where the term is missing rather than assuming. */
+function retainageCell(r){
+  const p = r.retainage_percent, d = (r.retainage_duration||'').trim();
+  if (p === null && !d) return '<span class="muted">—</span>';
+  if (p === 0) return '<span class="pill b">none</span>';
+  const dur = d && d.toLowerCase() !== 'n/a' ? d : '<span class="pill y">term not set</span>';
+  return '<b>' + pct(p) + '</b> ' + dur;
+}
+
+let STATE = { commitments: [], sort: { col: 'project', dir: 1 } };
+
+/* Compliance is folded into each row by the pull, so there is no join here and
+   no second SharePoint site to reach. */
+const complianceFor = r => r.compliance || null;
+
+function compCell(r){
+  const c = complianceFor(r);
+  if (!c) return '<span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>';
+  if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>';
+  const t = c.notes ? ' title="' + esc(c.notes).replace(/"/g,'&quot;') + '"' : '';
+  return '<span class="pill r"' + t + '>non-compliant</span>';
+}
+
+function render(){
+  const proj = document.getElementById('f-proj').value;
+  const pm   = document.getElementById('f-pm').value;
+  const comp = document.getElementById('f-comp').value;
+  const q    = document.getElementById('f-q').value.trim().toUpperCase();
+
+  let rows = STATE.commitments.filter(r => {
+    if (proj !== 'all' && r.project !== proj) return false;
+    if (pm   !== 'all' && (r.project_manager||'') !== pm) return false;
+    if (q && !(String(r.vendor).toUpperCase().includes(q) || String(r.number).toUpperCase().includes(q))) return false;
+    if (comp !== 'all') {
+      const c = complianceFor(r);
+      const state = !c ? 'missing' : (c.billy_is_compliant === 'Yes' ? 'ok' : 'nc');
+      if (comp !== state) return false;
+    }
+    return true;
+  });
+
+  const { col, dir } = STATE.sort;
+  rows.sort((a,b) => {
+    let x = a[col], y = b[col];
+    if (typeof x === 'number' || typeof y === 'number') return ((x||0)-(y||0))*dir;
+    return String(x||'').localeCompare(String(y||''))*dir;
+  });
+
+  const value = rows.reduce((s,r)=>s+(r.contract_value||0),0);
+  const paid  = rows.reduce((s,r)=>s+(r.total_payments||0),0);
+  const nc    = rows.filter(r => { const c = complianceFor(r); return c && c.billy_is_compliant !== 'Yes'; }).length;
+  const noTerm= rows.filter(r => r.retainage_percent > 0 && !(r.retainage_duration||'').trim().match(/throughout|thru/i)).length;
+  const noCe  = rows.filter(r => !r.ce_code).length;
+
+  document.getElementById('cards').innerHTML = `
+    <div class="card total"><div class="n">${rows.length}</div><div class="l">Commitments</div></div>
+    <div class="card"><div class="n">${money(value)}</div><div class="l">Contract value</div></div>
+    <div class="card ok"><div class="n">${money(paid)}</div><div class="l">Paid to date</div></div>
+    <div class="card bad"><div class="n">${nc}</div><div class="l">Non-compliant</div></div>
+    <div class="card soon"><div class="n">${noTerm}</div><div class="l">Retainage term not set</div></div>
+    <div class="card gap"><div class="n">${noCe}</div><div class="l">No CE code</div></div>`;
+
+  const cols = [
+    ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
+    ['contract_value','Contract','r'], ['total_payments','Paid','r'], ['percentage_paid','%','r'],
+    ['retainage_percent','Retainage',''], ['project_manager','PM','l'],
+    ['billing_day','Bills',''], ['compliance','Compliance',''], ['ce_code','CE code','l'], ['status','Status','']
+  ];
+  const head = cols.map(([k,label,cls]) =>
+    `<th class="${cls}" data-col="${k}">${label}${STATE.sort.col===k ? (STATE.sort.dir>0?' ▲':' ▼') : ''}</th>`).join('');
+
+  const body = rows.length ? rows.map(r => `<tr>
+      <td class="l">${esc(r.project)}</td>
+      <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a></td>
+      <td class="l">${esc(r.vendor)}</td>
+      <td class="r">${money(r.contract_value)}</td>
+      <td class="r">${money(r.total_payments)}</td>
+      <td class="r">${pct(r.percentage_paid)}</td>
+      <td>${retainageCell(r)}</td>
+      <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
+      <td>${esc(r.billing_day)}</td>
+      <td>${compCell(r)}</td>
+      <td class="l code">${r.ce_code ? esc(r.ce_code) : '<span class="pill y">none</span>'}</td>
+      <td>${esc(r.status)}${r.executed==='Yes'?' <span class="pill g">executed</span>':(r.executed==='No'?' <span class="pill y">unexecuted</span>':'')}</td>
+    </tr>`).join('') : `<tr><td colspan="12" class="empty">No commitments match these filters.</td></tr>`;
+
+  document.getElementById('table').innerHTML =
+    `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+
+  document.querySelectorAll('th[data-col]').forEach(th => th.onclick = () => {
+    const c = th.dataset.col;
+    STATE.sort = { col: c, dir: STATE.sort.col === c ? -STATE.sort.dir : 1 };
+    render();
+  });
+}
+
+(async () => {
+  try {
+    const tok = await token();
+    if (!tok) return;
+
+    const ap = await loadData(tok);
+    STATE.commitments = ap.commitments || [];
+
+    const when = new Date(ap.generated_at);
+    document.getElementById('asof').textContent = 'commitments as of ' + when.toLocaleString();
+
+    const projects = [...new Set(STATE.commitments.map(r => r.project))].sort();
+    const pms = [...new Set(STATE.commitments.map(r => r.project_manager).filter(Boolean))].sort();
+
+    document.getElementById('content').innerHTML = `
+      <div class="notice">
+        <b>What this page shows today:</b> every active subcontract commitment in Procore, with its
+        retainage term, contract value, project manager, compliance status from Billy and its
+        ComputerEase vendor code. Bailey-Harris self-perform commitments are excluded.
+        <br><b>What it does not show yet:</b> the pay application queue. Matching pay apps from
+        payables@ to these commitments is the next build — nothing on this page is an approval.
+      </div>
+      <div class="controls">
+        <label>Project:</label>
+        <select id="f-proj"><option value="all">All projects (${projects.length})</option>
+          ${projects.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
+        <label>PM:</label>
+        <select id="f-pm"><option value="all">All PMs</option>
+          ${pms.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
+        <label>Compliance:</label>
+        <select id="f-comp">
+          <option value="all">Any</option><option value="ok">Compliant</option>
+          <option value="nc">Non-compliant</option><option value="missing">Not in Billy</option></select>
+        <label>Search:</label>
+        <input id="f-q" type="text" placeholder="subcontractor or commitment #" style="min-width:230px">
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="section-title">Commitments</div>
+      <div id="table"></div>
+      <div class="section-title">Pay application queue</div>
+      <div class="stub">
+        <h3>Not connected yet</h3>
+        The mail probe reads payables@ and identifies roughly <b>20 subcontractor draws a week</b>.
+        Wiring those to the commitments above — so a PM can check a pay app against the contract's
+        retainage term, code it, and approve it — is the next piece of work.
+        Until then this page is reference, not a workflow.
+      </div>`;
+
+    document.getElementById('foot').innerHTML =
+      `Commitments: Procore work-order contracts, ${STATE.commitments.length} rows across
+       ${ap.projects_in_scope} projects (${ap.self_perform_skipped} self-perform excluded).
+       Compliance: Billy, joined by the pull (${ap.compliance_matched} matched,
+       ${ap.compliance_unmatched} with no Billy row).
+       Retainage shown as percent plus duration — both are needed; the percent alone cannot
+       distinguish "5% throughout" from "5% thru 50%".`;
+
+    ['f-proj','f-pm','f-comp'].forEach(id => document.getElementById(id).onchange = render);
+    document.getElementById('f-q').oninput = render;
+    render();
+
+  } catch (e) {
+    document.getElementById('content').innerHTML = '';
+    const b = document.getElementById('banner');
+    b.className = 'banner err'; b.style.display = '';
+    b.textContent = 'Could not load: ' + e.message;
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
