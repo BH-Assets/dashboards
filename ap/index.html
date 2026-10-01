@@ -351,8 +351,15 @@ function payappPanel(r){
   if (e.pctR && !e.dur) warn.push('No retainage term on the commitment &mdash; assuming it is withheld on every dollar.');
 
   return '<div class="pawrap">'
-   + '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
-   +   '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>'
+   /* A negative ceiling is not "they may ask for minus two thousand" - it means
+      the commitment is already billed past its contract. Seven live rows are in
+      that state, so it is a real case, not a theoretical one. */
+   + (e.maxDue != null && e.maxDue < -0.005
+      ? '<div class="pamax"><span class="l" style="color:#b3261e">Already over-billed by</span>'
+        + '<span class="n" style="color:#b3261e">' + money2(-e.maxDue) + '</span>'
+        + '<span class="paref" style="margin-left:2px">nothing further is due</span></div>'
+      : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
+        + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
    + '<table class="patab" data-pa="x"><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
