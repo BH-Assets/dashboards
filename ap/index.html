@@ -26,10 +26,24 @@
   .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
   .controls label{font-size:13px;color:#40485a;font-weight:bold}
   select,input[type=text]{padding:8px 12px;border:1px solid #c7cfdb;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+  /* Nine equal tiles gave "0 no CE code" the same weight as $15.3M billed, and
+     spent two of them on zeros. Three money tiles carry the position; the
+     exceptions are a strip beneath and only appear when the count is non-zero. */
+  .cards{margin-bottom:18px}
+  .cardcap{font-size:12px;color:#6b7482;margin:0 0 8px}
+  .cardrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
   .card{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:13px 15px}
-  .card .n{font-size:25px;font-weight:bold}
+  .card .n{font-size:25px;font-weight:bold;font-variant-numeric:tabular-nums}
   .card .l{font-size:11.5px;color:#5b6472;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+  .card .s{font-size:11.5px;color:#8a94a3;margin-top:3px;font-variant-numeric:tabular-nums}
+  .exrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .exchip{display:inline-flex;align-items:baseline;gap:6px;background:#fff;border:1px solid #e3e8f0;
+          border-radius:7px;padding:7px 11px;font-size:12px;color:#54607a}
+  .exchip b{font-size:15px;font-variant-numeric:tabular-nums}
+  .exchip.r{border-color:#f0bcbc;background:#fdf4f4}.exchip.r b{color:#b3261e}
+  .exchip.y{border-color:#f0cf8e;background:#fffaf1}.exchip.y b{color:#9a6a00}
+  .exchip.b{border-color:#c9d8ef;background:#f6f9fd}.exchip.b b{color:#1a4fb0}
+  .exclear{font-size:12px;color:#1a7f37;padding:7px 0}
   .pacell{white-space:nowrap;margin-top:3px}
   .pabtn{font:inherit;font-size:10.5px;padding:2px 7px;border:1px solid #cfd8e4;background:#fff;color:#2b4a7e;border-radius:3px;cursor:pointer;line-height:1.5}
   .pabtn:hover{background:#eef3fa;border-color:#9fb4d0}
@@ -540,16 +554,27 @@ function render(){
   const noTerm= rows.filter(r => r.retainage_percent > 0 && !(r.retainage_duration||'').trim().match(/throughout|thru/i)).length;
   const noCe  = rows.filter(r => !r.ce_code).length;
 
+  /* Contract, billed and left deliberately do NOT sum: billed and balance come
+     from CE's SOV, contract value from Procore's revised, and the two disagree on
+     20 commitments. Showing them as a progression would imply arithmetic that is
+     not true, so they stay three separate figures. */
+  const pctBilled = value ? Math.round(100 * billed / value) : null;
+  const chip = (n, label, cls) => n
+    ? `<span class="exchip ${cls}"><b>${n}</b> ${label}</span>` : '';
+  const chips = chip(exc, 'billing exceptions', 'r') + chip(nc, 'non-compliant', 'r')
+              + chip(noTerm, 'retainage term not set', 'y') + chip(noCe, 'no CE code', 'b');
+
   document.getElementById('cards').innerHTML = `
-    <div class="card total"><div class="n">${rows.length}</div><div class="l">Commitments</div></div>
-    <div class="card"><div class="n">${money(value)}</div><div class="l">Contract value</div></div>
-    <div class="card gap"><div class="n">${money(cos)}</div><div class="l">Approved change orders</div></div>
-    <div class="card ok"><div class="n">${money(billed)}</div><div class="l">Billed to date (CE)</div></div>
-    <div class="card gap"><div class="n">${money(left)}</div><div class="l">Left to bill</div></div>
-    <div class="card bad"><div class="n">${exc}</div><div class="l">Billing exceptions</div></div>
-    <div class="card bad"><div class="n">${nc}</div><div class="l">Non-compliant</div></div>
-    <div class="card soon"><div class="n">${noTerm}</div><div class="l">Retainage term not set</div></div>
-    <div class="card gap"><div class="n">${noCe}</div><div class="l">No CE code</div></div>`;
+    <div class="cardcap">${rows.length} commitment${rows.length===1?'':'s'}</div>
+    <div class="cardrow">
+      <div class="card"><div class="n">${money(value)}</div><div class="l">Contract value</div>
+        ${cos ? `<div class="s">includes ${money(cos)} in change orders</div>` : ''}</div>
+      <div class="card ok"><div class="n">${money(billed)}</div><div class="l">Billed to date (CE)</div>
+        ${pctBilled != null ? `<div class="s">${pctBilled}% of contract value</div>` : ''}</div>
+      <div class="card gap"><div class="n">${money(left)}</div><div class="l">Left to bill</div>
+        <div class="s">per ComputerEase schedules of values</div></div>
+    </div>
+    <div class="exrow">${chips || '<span class="exclear">&#10003; No exceptions on these commitments</span>'}</div>`;
 
   const cols = [
     ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
