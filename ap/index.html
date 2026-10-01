@@ -53,6 +53,7 @@
   .patab tr:last-child td{border-bottom:0}
   .patab th.n,.patab td.n{text-align:right;padding-left:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .paq{color:#243040}
+  .pawrap .patab td.paloose{color:#7a869a;font-size:11.5px}
   .paref{font-size:10.5px;color:#9aa4b2;margin-top:1px}
   .pain{width:104px;font:inherit;font-size:12px;padding:3px 6px;border:1px solid #cfd8e4;border-radius:3px;text-align:right;background:#fff}
   .pain:focus{outline:2px solid #bcd0ea;outline-offset:-1px;border-color:#9fb4d0}
@@ -281,7 +282,8 @@ function payappExpected(r){
   const prevPaid = (billed != null && retNow != null) ? billed - retNow : null;
   const maxDue = (retFull != null && prevPaid != null) ? (contract - retFull) - prevPaid : null;
   return { contract, original:num0(r.contract_value), cos:num0(r.approved_change_orders),
-           pctR, dur, thru50, billed, retNow, retFull, prevPaid, maxDue,
+           pctR, dur, thru50, billed, retNow, retFull, prevPaid, maxDue, retAt,
+           minBilled:billed, maxBilled:contract,
            past50: b ? !!b.past_50_pct : null,
            ceSov: b && b.ce_sov != null ? Number(b.ce_sov) : null,
            gap: b && b.pc_vs_ce_contract_gap != null ? Number(b.pc_vs_ce_contract_gap) : null,
@@ -294,15 +296,22 @@ const money2 = v => (v === null || v === undefined || isNaN(v)) ? '—'
 /* Line names on both forms BH actually receives. The quantities are identical;
    only the labels move, so one panel serves an AIA G702/G703 and BH's own
    Attachment G without the reviewer translating. */
-/* One row per quantity, expected and theirs side by side. An earlier version put
-   the expected figures in one table and the inputs in another, which repeated
-   every label and read as twice the page it needed to be. Form line names sit in
-   the title attribute rather than on screen - they are reference, not reading. */
+/* Not every line has a single expected value, and pretending otherwise produced
+   false mismatches. Billed-to-date from CE is the position as at the LAST posted
+   application; a new pay app is expected to exceed it. Retainage likewise moves
+   with whatever they have completed this period. So three kinds of row:
+
+     fixed   - one right answer (adjusted contract, previous payments)
+     range   - a floor and a ceiling (completed to date)
+     derived - computed from what they entered above (retainage held)
+
+   Only the ceiling on the payment is knowable in advance, which is why the
+   headline is "most they can ask for" and not an expected amount. */
 const PA_LINES = [
-  ['contract','Adjusted contract','Amount of Original Contract + Approved Change Order(s) — AIA G702 line 3'],
-  ['billed','Completed to date','Total Completed Work & Stored Materials to Date — AIA G702 line 4, G703 column G'],
-  ['retNow','Retainage held','Less Retainage — AIA G702 line 5'],
-  ['prevPaid','Less previous payments','Less Previous Payments — AIA G702 line 7'],
+  ['contract','fixed','Adjusted contract','Amount of Original Contract + Approved Change Order(s) — AIA G702 line 3'],
+  ['billed','range','Completed to date','Total Completed Work & Stored Materials to Date — AIA G702 line 4, G703 column G'],
+  ['retNow','derived','Retainage held','Less Retainage — AIA G702 line 5'],
+  ['prevPaid','fixed','Less previous payments','Less Previous Payments — AIA G702 line 7'],
 ];
 
 function payappPanel(r){
@@ -313,11 +322,23 @@ function payappPanel(r){
       + '<div class="pawarn"><div>&#9888;&nbsp; No billed-to-date figure for this commitment, '
       + 'so the rest of the application cannot be built.</div></div></div>';
   }
-  const sub = k => k === 'contract'
-    ? '<div class="paref">' + money2(e.original) + ' + ' + money2(e.cos) + ' CO</div>' : '';
-  const rows = PA_LINES.map(([k,what,tip]) =>
-    '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>' + sub(k) + '</td>'
-    + '<td class="n">' + money2(e[k]) + '</td>'
+  const ours = {
+    contract: money2(e.contract),
+    billed: money2(e.minBilled) + ' &ndash; ' + money2(e.maxBilled),
+    retNow: (e.pctR == null ? '&mdash;'
+             : (e.thru50 ? e.pctR + '% capped at ' + money2(e.retFull) : e.pctR + '% of completed')),
+    prevPaid: money2(e.prevPaid),
+  };
+  const sub = {
+    contract: money2(e.original) + ' + ' + money2(e.cos) + ' CO',
+    billed: 'billed so far &rarr; contract',
+    retNow: 'from their completed figure',
+    prevPaid: 'billed less retainage held',
+  };
+  const rows = PA_LINES.map(([k,kind,what,tip]) =>
+    '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>'
+    + '<div class="paref">' + sub[k] + '</div></td>'
+    + '<td class="n' + (kind==='fixed'?'':' paloose') + '">' + ours[k] + '</td>'
     + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '" placeholder="&mdash;"></td>'
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
@@ -330,8 +351,9 @@ function payappPanel(r){
   if (e.pctR && !e.dur) warn.push('No retainage term on the commitment &mdash; assuming it is withheld on every dollar.');
 
   return '<div class="pawrap">'
-   + '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span></div>'
-   + '<table class="patab" data-pa="x"><thead><tr><th></th><th class="n">Expected</th>'
+   + '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
+   +   '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>'
+   + '<table class="patab" data-pa="x"><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
    + '</div>';
@@ -341,19 +363,42 @@ function payappPanel(r){
 function payappBind(tr, r){
   const e = payappExpected(r);
   const tab = tr.querySelector('table[data-pa]'); if (!tab) return;
-  const upd = () => tab.querySelectorAll('input[data-k]').forEach(inp => {
-    const k = inp.dataset.k;
-    const cell = tab.querySelector('[data-d="' + k + '"]');
-    const raw = inp.value.replace(/[$,\s]/g,'');
-    if (!raw) { cell.textContent = ''; cell.className = 'padelta'; return; }
-    const v = Number(raw);
-    if (isNaN(v) || e[k] == null) { cell.textContent = ''; return; }
-    const d = v - e[k];
-    const ok = Math.abs(d) < 0.005;
-    cell.className = 'padelta ' + (ok ? 'paok' : 'pabad');
-    cell.textContent = ok ? 'matches' : ((d>0?'+':'') + money2(d));
-  });
-  tab.querySelectorAll('input[data-k]').forEach(inp => inp.addEventListener('input', upd));
+  const val = k => { const i = tab.querySelector('input[data-k="'+k+'"]'); if(!i) return null;
+    const raw = i.value.replace(/[$,\s]/g,''); if(!raw) return null;
+    const v = Number(raw); return isNaN(v) ? null : v; };
+  const put = (k,cls,txt) => { const c = tab.querySelector('[data-d="'+k+'"]');
+    c.className = 'padelta ' + cls; c.innerHTML = txt; };
+  const near = (a,b) => Math.abs(a-b) < 0.005;
+
+  const upd = () => {
+    PA_LINES.forEach(([k,kind]) => {
+      const v = val(k);
+      if (v === null) { put(k,'',''); return; }
+
+      if (kind === 'fixed') {
+        if (e[k] == null) { put(k,'',''); return; }
+        const d = v - e[k];
+        put(k, near(d,0)?'paok':'pabad', near(d,0) ? 'matches' : (d>0?'+':'') + money2(d));
+
+      } else if (kind === 'range') {
+        /* A new application SHOULD exceed what CE has posted - that is the work
+           done this period. Only below the floor or above the contract is wrong. */
+        if (v < e.minBilled - 0.005) put(k,'pabad','below billed ' + money2(e.minBilled));
+        else if (v > e.maxBilled + 0.005) put(k,'pabad','over contract by ' + money2(v - e.maxBilled));
+        else put(k,'paok','in range');
+
+      } else { // derived: retainage follows whatever they say is completed
+        const base = val('billed');
+        if (base === null || !e.retAt) { put(k,'','needs completed'); return; }
+        const want = e.retAt(base);
+        if (want == null) { put(k,'',''); return; }
+        const d = v - want;
+        put(k, near(d,0)?'paok':'pabad',
+            near(d,0) ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
+      }
+    });
+  };
+  tab.querySelectorAll('input[data-k]').forEach(i => i.addEventListener('input', upd));
 }
 
 /* Compliance is folded into each row by the pull, so there is no join here and
@@ -368,14 +413,30 @@ function compCell(r){
   return '<span class="pill r"' + t + '>non-compliant</span>';
 }
 
+/* The desk opens on one project, not all of them. A sub pay app is reviewed
+   against one job, and 150-odd commitments across every job is a wall to scroll
+   past before the work starts. "All projects" is still in the list for anyone
+   who wants the portfolio view. */
 function render(){
   const proj = document.getElementById('f-proj').value;
   const pm   = document.getElementById('f-pm').value;
+  /* Either entry point opens the desk: one project, or one PM across every job
+     they run. Only the two together being unset is the blank state. */
+  if (!proj && pm === 'all') {
+    document.getElementById('cards').innerHTML = '';
+    document.getElementById('table').innerHTML =
+      '<div class="empty" style="padding:38px 20px;line-height:1.7">'
+      + '<b>Select a project</b> to see its AP status and pay app comparison'
+      + '<div class="sub" style="margin-top:6px">&mdash; or pick a <b>PM</b> to see every job they run. '
+      + 'Either gives you commitments, compliance, billed to date and the expected pay app '
+      + 'for each subcontractor.</div></div>';
+    return;
+  }
   const comp = document.getElementById('f-comp').value;
   const q    = document.getElementById('f-q').value.trim().toUpperCase();
 
   let rows = STATE.commitments.filter(r => {
-    if (proj !== 'all' && r.project !== proj) return false;
+    if (proj && proj !== 'all' && r.project !== proj) return false;
     if (pm   !== 'all' && (r.project_manager||'') !== pm) return false;
     if (q && !(String(r.vendor).toUpperCase().includes(q) || String(r.number).toUpperCase().includes(q))) return false;
     if (comp !== 'all') {
@@ -516,8 +577,9 @@ function render(){
       </div>
       <div class="controls">
         <label>Project:</label>
-        <select id="f-proj"><option value="all">All projects (${projects.length})</option>
-          ${projects.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
+        <select id="f-proj"><option value="">Select a project&hellip;</option>
+          ${projects.map(p=>`<option>${esc(p)}</option>`).join('')}
+          <option value="all">All projects (${projects.length})</option></select>
         <label>PM:</label>
         <select id="f-pm"><option value="all">All PMs</option>
           ${pms.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
