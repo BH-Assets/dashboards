@@ -30,6 +30,21 @@
   .card{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:13px 15px}
   .card .n{font-size:25px;font-weight:bold}
   .card .l{font-size:11.5px;color:#5b6472;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+  .pacell{white-space:nowrap}
+  .pabtn{font:inherit;font-size:11px;padding:2px 7px;border:1px solid #c9d3e0;background:#f4f7fb;color:#1F3864;border-radius:4px;cursor:pointer}
+  .pabtn:hover{background:#e8eef7}
+  tr.parow>td{background:#fbfcfe;border-top:0}
+  .pawrap{padding:10px 4px 14px;display:grid;grid-template-columns:minmax(420px,1.2fr) minmax(300px,1fr);gap:18px;align-items:start}
+  @media(max-width:1100px){.pawrap{grid-template-columns:1fr}}
+  .patab{width:100%;border-collapse:collapse;font-size:12px}
+  .patab th,.patab td{border-bottom:1px solid #e7ecf3;padding:4px 6px;text-align:left;vertical-align:top}
+  .patab th{font-weight:600;color:#54607a;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+  .patab td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pahd{font-weight:700;color:#1F3864;margin:0 0 6px}
+  .pain{width:120px;font:inherit;font-size:12px;padding:3px 5px;border:1px solid #c9d3e0;border-radius:4px;text-align:right}
+  .padelta{font-size:11px;white-space:nowrap}
+  .paok{color:#1a7f37}.pabad{color:#b3261e;font-weight:600}
+  .panote{font-size:11px;color:#6b7482;line-height:1.6;margin-top:8px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
   .tablescroll{overflow-x:auto;border-radius:10px}
@@ -217,6 +232,137 @@ function billedCell(r){
     + (pills ? '<div class="sub">' + pills + '</div>' : '');
 }
 
+/* ---- Expected pay app -------------------------------------------------------
+   Every quantity on a sub's cover sheet is derivable from the commitment and
+   CE's billed-to-date, whatever form the sub uses. The reviewer types the four
+   figures off their cover sheet and the deltas fall out. This exists because
+   two reviews in one morning each took an hour and each turned on a single
+   number: a $6,776 change order missing from one app, $2,160 missing from
+   another. Both were visible from the contract alone.
+
+   committed_billed is GROSS of retainage. Confirmed 1 Oct 2026 against H.C.
+   Blake's G702 on 2506-00400: the desk read $310,186 and the application showed
+   $310,186.31 billed with $300,646.75 paid. Previously inferred, now measured. */
+function payappExpected(r){
+  const b = billingFor(r);
+  const contract = num0(r.revised_contract) || num0(r.contract_value);
+  const pctR = (r.retainage_percent === null || r.retainage_percent === undefined)
+    ? null : Number(r.retainage_percent);
+  const dur  = String(r.retainage_duration || '');
+  /* "thru 50%" caps total retainage at half the contract's worth of withholding.
+     Anything else (throughout, or unset) withholds on every dollar. A missing
+     term is NOT assumed to be thru-50 - that assumption is what let the GL Pack
+     shortage through. */
+  const thru50 = /50/.test(dur) && /thru|through/i.test(dur);
+  const billed = b && b.ce_billed != null ? Number(b.ce_billed) : null;
+  const rate = pctR == null ? null : pctR/100;
+  const retAt = v => {            // retainage held once v has been billed
+    if (rate == null || v == null) return null;
+    if (!thru50) return v * rate;
+    return Math.min(v, contract/2) * rate;
+  };
+  const retNow  = retAt(billed);
+  const retFull = retAt(contract);
+  const prevPaid = (billed != null && retNow != null) ? billed - retNow : null;
+  const maxDue = (retFull != null && prevPaid != null) ? (contract - retFull) - prevPaid : null;
+  return { contract, original:num0(r.contract_value), cos:num0(r.approved_change_orders),
+           pctR, dur, thru50, billed, retNow, retFull, prevPaid, maxDue,
+           past50: b ? !!b.past_50_pct : null,
+           ceSov: b && b.ce_sov != null ? Number(b.ce_sov) : null,
+           gap: b && b.pc_vs_ce_contract_gap != null ? Number(b.pc_vs_ce_contract_gap) : null,
+           flags: (b && b.flags) || [], hasBilling: !!b && b.ce_billed != null };
+}
+const num0 = v => (v === null || v === undefined || v === '') ? 0 : Number(v);
+const money2 = v => (v === null || v === undefined || isNaN(v)) ? '—'
+  : '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* Line names on both forms BH actually receives. The quantities are identical;
+   only the labels move, so one panel serves an AIA G702/G703 and BH's own
+   Attachment G without the reviewer translating. */
+const PA_LINES = [
+  ['original','Original contract','Amount of Original Contract','Line 1'],
+  ['cos','Approved change orders','Approved Change Order(s)','Line 2'],
+  ['contract','Adjusted contract','Adjusted Contract Amount','Line 3'],
+  ['billed','Completed &amp; stored to date','Total Completed Work &amp; Stored Materials','Line 4 / G703 col G'],
+  ['retNow','Retainage held','Less Retainage','Line 5'],
+  ['prevPaid','Less previous payments','Less Previous Payments','Line 7'],
+  ['maxDue','Most they can ask for','Balance Due This Payment Estimate','Line 8'],
+];
+
+function payappPanel(r){
+  const e = payappExpected(r);
+  if (!e.hasBilling) {
+    return '<div class="pawrap"><div><div class="pahd">Expected pay app</div>'
+      + '<div class="panote">No billed-to-date figure for this commitment, so the expected '
+      + 'application cannot be built. The contract side still applies: adjusted contract '
+      + '<b>' + money2(e.contract) + '</b>.</div></div></div>';
+  }
+  const rows = PA_LINES.map(([k,what,ag,aia]) =>
+    '<tr><td>' + what + '</td><td class="muted">' + ag + '</td><td class="muted">' + aia
+    + '</td><td class="n">' + money2(e[k]) + '</td></tr>').join('');
+
+  const retBasis = e.pctR == null ? 'no retainage percent on the commitment'
+    : (e.thru50
+        ? (e.pctR + '% thru 50% &rarr; caps at ' + money2(e.retFull) + (e.past50 ? ' (already past 50%, withholding should have stopped)' : ''))
+        : (e.pctR + '% ' + (e.dur ? esc(e.dur) : '<span class="warn">term not set &mdash; treated as withheld on every dollar</span>')));
+
+  /* The cheapest catch of all. Past 50% on a thru-50 term, the retainage a sub
+     shows IS 2.5% of whatever contract they are billing against, so dividing it
+     back out recovers their contract without reading their schedule of values. */
+  const reverse = (e.thru50 && e.pctR)
+    ? '<div class="panote"><b>Shortcut:</b> their retainage &divide; ' + (e.pctR/2) + '% = the contract they are billing against. '
+      + 'Compare to ' + money2(e.contract) + '.</div>' : '';
+
+  const warn = [];
+  if (e.gap) warn.push('Procore and CE disagree on the contract by <b>' + money2(Math.abs(e.gap))
+    + '</b> (Procore ' + money2(e.contract) + ', CE ' + money2(e.ceSov) + '). A change order is in one system and not the other &mdash; '
+    + 'settle which before deciding whether the sub has over-billed.');
+  if (e.flags.includes('sov_gap')) warn.push('Billed plus remaining does not reconcile to the schedule of values.');
+  if (e.pctR && !e.dur) warn.push('No retainage duration on the commitment, so the expected retainage above assumes withholding on every dollar.');
+
+  const id = 'pa-' + String(r.number||'').replace(/[^A-Za-z0-9]/g,'');
+  return '<div class="pawrap">'
+   + '<div><div class="pahd">Expected pay app</div>'
+   +   '<table class="patab"><thead><tr><th>Quantity</th><th>BH Attachment G</th><th>AIA G702</th><th class="n">Expected</th></tr></thead>'
+   +   '<tbody>' + rows + '</tbody></table>'
+   +   '<div class="panote">Retainage basis: ' + retBasis + '.</div>'
+   +   reverse
+   +   (warn.length ? '<div class="panote">' + warn.map(w=>'&#9888; '+w).join('<br>') + '</div>' : '')
+   + '</div>'
+   + '<div><div class="pahd">Check their cover sheet</div>'
+   +   '<table class="patab" data-pa="' + id + '"><tbody>'
+   +   ['contract','billed','retNow','prevPaid'].map(k => {
+         const label = PA_LINES.find(x=>x[0]===k)[1];
+         return '<tr><td>' + label + '</td>'
+          + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '" placeholder="from their app"></td>'
+          + '<td class="padelta" data-d="' + k + '"></td></tr>';
+       }).join('')
+   +   '</tbody></table>'
+   +   '<div class="panote">Enter what their cover sheet says. Anything that does not match is '
+   +   'either a change order they have missed, one they have added that we have not approved, '
+   +   'or a change order still awaiting our own signature &mdash; those three need different answers.</div>'
+   + '</div></div>';
+}
+
+/* Deltas recompute as the reviewer types; nothing is stored or sent anywhere. */
+function payappBind(tr, r){
+  const e = payappExpected(r);
+  const tab = tr.querySelector('table[data-pa]'); if (!tab) return;
+  const upd = () => tab.querySelectorAll('input[data-k]').forEach(inp => {
+    const k = inp.dataset.k;
+    const cell = tab.querySelector('[data-d="' + k + '"]');
+    const raw = inp.value.replace(/[$,\s]/g,'');
+    if (!raw) { cell.textContent = ''; cell.className = 'padelta'; return; }
+    const v = Number(raw);
+    if (isNaN(v) || e[k] == null) { cell.textContent = ''; return; }
+    const d = v - e[k];
+    const ok = Math.abs(d) < 0.005;
+    cell.className = 'padelta ' + (ok ? 'paok' : 'pabad');
+    cell.textContent = ok ? 'matches' : ((d>0?'+':'') + money2(d));
+  });
+  tab.querySelectorAll('input[data-k]').forEach(inp => inp.addEventListener('input', upd));
+}
+
 /* Compliance is folded into each row by the pull, so there is no join here and
    no second SharePoint site to reach. */
 const complianceFor = r => r.compliance || null;
@@ -292,7 +438,9 @@ function render(){
     })()}">
       <td class="l wrap">${esc(r.project)}</td>
       <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
-        ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}</td>
+        ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
+        <div class="sub pacell"><button type="button" class="pabtn" data-pa-for="${esc(r.number||'')}"
+          title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
       <td class="l wrap">${esc(r.vendor)}
         <div class="sub code">${r.ce_code ? esc(r.ce_code)
           : '<span class="warn" title="No Abbreviated Name in Procore - Accounting has nothing to key the entry on">no CE code</span>'}</div></td>
@@ -307,6 +455,23 @@ function render(){
 
   document.getElementById('table').innerHTML =
     `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+
+  /* One expandable panel per commitment rather than more columns - the table is
+     already nine wide and the check is something you open for one sub at a time. */
+  document.querySelectorAll('button[data-pa-for]').forEach(btn => btn.onclick = () => {
+    const tr = btn.closest('tr');
+    if (tr.nextElementSibling && tr.nextElementSibling.classList.contains('parow')) {
+      tr.nextElementSibling.remove(); return;
+    }
+    const num = btn.dataset.paFor;
+    const r = STATE.commitments.find(x => String(x.number||'').trim() === num);
+    if (!r) return;
+    const det = document.createElement('tr');
+    det.className = 'parow';
+    det.innerHTML = '<td colspan="9">' + payappPanel(r) + '</td>';
+    tr.insertAdjacentElement('afterend', det);
+    payappBind(det, r);
+  });
 
   document.querySelectorAll('th[data-col]').forEach(th => th.onclick = () => {
     const c = th.dataset.col;
