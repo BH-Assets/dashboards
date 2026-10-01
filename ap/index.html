@@ -68,7 +68,13 @@
   .patab th.n,.patab td.n{text-align:right;padding-left:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .paq{color:#243040}
   .pawrap .patab td.paloose{color:#7a869a;font-size:11.5px}
-  .qwrap{margin-bottom:14px}
+  /* The queue sat flush against the section title with no container while the
+     stub beneath it had a card, so it read as unfinished. */
+  .qwrap{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:16px 18px 18px;margin-bottom:16px}
+  .qbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 4px}
+  .qbar select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid #cfd8e4;border-radius:4px;background:#fff}
+  .qbar label{font-size:11.5px;color:#6b7482}
+  .qempty{font-size:12.5px;color:#6b7482;padding:6px 0}
   .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 8px}
   .qhead .n{font-size:19px;font-weight:700;color:#1F3864;font-variant-numeric:tabular-nums}
   .qhead .l{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7a869a}
@@ -453,23 +459,49 @@ function compCell(r){
    ap_commitments.json nor ap_payapp_expected.json carries a billing date, so that
    half has to wait for the payables@ join. What this can say is who still has
    contract left, how much they can claim, and who cannot be paid when it arrives. */
+/* Which slice of the cycle to look at. "Submitted to payables / not submitted"
+   is the one people ask for first and the one that cannot be built yet - it
+   needs the payables@ join, because nothing we hold records that a draw arrived. */
+let QVIEW = 'open';
+const QVIEWS = [
+  ['open',     'Still to bill'],
+  ['blocked',  'Cannot be paid'],
+  ['over',     'Over-billed'],
+  ['done',     'Billed out'],
+  ['nodata',   'No ComputerEase figure'],
+  ['all',      'Everything'],
+];
+
 function renderQueue(rows){
   const el = document.getElementById('queue'); if (!el) return;
   if (!rows || !rows.length) { el.innerHTML = ''; return; }
 
-  const live = rows.map(r => {
+  const all = rows.map(r => {
     const e = payappExpected(r);
     const c = complianceFor(r);
     return { r, e, blocked: !!(c && c.billy_is_compliant !== 'Yes'), noBilly: !c };
-  }).filter(x => x.e.hasBilling && x.e.maxDue != null && x.e.maxDue > 0.5);
+  });
+  const open   = all.filter(x => x.e.hasBilling && x.e.maxDue != null && x.e.maxDue > 0.5);
+  const over   = all.filter(x => x.e.hasBilling && x.e.maxDue != null && x.e.maxDue < -0.5);
+  const done   = all.filter(x => x.e.hasBilling && x.e.maxDue != null && Math.abs(x.e.maxDue) <= 0.5);
+  const nodata = all.filter(x => !x.e.hasBilling);
+  const pick = { open, blocked: open.filter(x => x.blocked), over, done, nodata, all };
+  const live = pick[QVIEW] || open;
+
+  const counts = { open: open.length, blocked: open.filter(x=>x.blocked).length,
+                   over: over.length, done: done.length, nodata: nodata.length, all: all.length };
+  const sel = '<label>Show</label><select id="q-view">'
+    + QVIEWS.map(([k,label]) => `<option value="${k}"${k===QVIEW?' selected':''}>`
+        + `${label} (${counts[k]})</option>`).join('') + '</select>';
 
   if (!live.length) {
-    el.innerHTML = '<div class="stub" style="margin-bottom:14px">Nothing left to bill on these '
-      + 'commitments &mdash; every one is billed out, over-billed, or has no ComputerEase figure.</div>';
+    el.innerHTML = '<div class="qwrap"><div class="qbar">' + sel + '</div>'
+      + '<div class="qempty">Nothing in this view.</div></div>';
+    bindQView();
     return;
   }
 
-  const total = live.reduce((t,x) => t + x.e.maxDue, 0);
+  const total = live.reduce((t,x) => t + (x.e.maxDue || 0), 0);
   const blocked = live.filter(x => x.blocked);
 
   /* Grouped by the day they bill, because that is how the cycle actually runs and
@@ -489,7 +521,7 @@ function renderQueue(rows){
       + '<table class="qtab"><tbody>' + g.map(x =>
         '<tr><td>' + esc(x.r.vendor)
           + '<div class="qsub">' + esc(x.r.number||'') + (x.r.project ? ' &middot; ' + esc(x.r.project) : '') + '</div></td>'
-        + '<td class="n">' + money(x.e.maxDue)
+        + '<td class="n">' + money(QVIEW === 'over' ? -(x.e.maxDue||0) : (x.e.maxDue||0))
           + '<div class="qsub">of ' + money(x.e.contract) + '</div></td>'
         + '<td class="n">' + (x.blocked
             ? '<span class="qblock">cannot be paid</span><div class="qsub">non-compliant in Billy</div>'
@@ -497,11 +529,25 @@ function renderQueue(rows){
           + '</td></tr>').join('') + '</tbody></table>';
   }).join('');
 
+  const headLabel = QVIEW === 'over' ? 'Over-billed by'
+                  : QVIEW === 'done' ? 'Billed out'
+                  : QVIEW === 'nodata' ? 'No ComputerEase figure'
+                  : 'Still to bill';
+  const headNum = (QVIEW === 'done' || QVIEW === 'nodata') ? '' :
+    '<span class="n">' + money(QVIEW === 'over' ? -total : total) + '</span>';
+
   el.innerHTML = '<div class="qwrap">'
-    + '<div class="qhead"><span class="l">Still to bill</span><span class="n">' + money(total) + '</span>'
+    + '<div class="qbar">' + sel + '</div>'
+    + '<div class="qhead"><span class="l">' + headLabel + '</span>' + headNum
     +   '<span class="qsub">across ' + live.length + ' commitment' + (live.length===1?'':'s')
-    +   (blocked.length ? ' &middot; <span class="qblock">' + blocked.length + ' cannot be paid until compliance clears</span>' : '')
+    +   (blocked.length && QVIEW !== 'blocked' ? ' &middot; <span class="qblock">' + blocked.length + ' cannot be paid until compliance clears</span>' : '')
     +   '</span></div>' + body + '</div>';
+  bindQView();
+}
+
+function bindQView(){
+  const s = document.getElementById('q-view');
+  if (s) s.onchange = () => { QVIEW = s.value; render(); };
 }
 
 function render(){
@@ -720,14 +766,15 @@ function render(){
       <div id="queue"></div>
       <div class="stub">
         <h3>What is still missing</h3>
-        The mail probe reads payables@ and identifies roughly <b>20 subcontractor draws a week</b>.
-        The contract position each of those should be checked against is now on this page —
-        contract including changes, billed to date, and what is left. What is missing is the
-        incoming pay app itself: matching a draw from payables@ to its commitment, so a PM can
-        compare the claimed amount against the figures above, code it and approve it.
-        Until that join exists the queue below is the <b>expected</b> side only &mdash; who can
-        still bill and how much. It cannot say who has already billed this cycle, because
-        nothing we hold carries a billing date. Nothing on this page is an approval.
+        The queue is the <b>expected</b> side only &mdash; who can still bill, and how much.
+        It cannot say who has <b>already</b> billed this cycle, because nothing we hold carries a
+        billing date: ComputerEase gives a billed-to-date amount with no date attached, and
+        Procore's own payment fields read zero on every commitment because the billing happens
+        in ComputerEase.<br><br>
+        The missing piece is the incoming pay app itself. The mail probe reads payables@ and
+        identifies roughly <b>20 subcontractor draws a week</b>; matching each one to its
+        commitment is what would let a PM compare the claimed amount against the contract
+        position here, code it and approve it. Nothing on this page is an approval.
       </div>`;
 
     document.getElementById('foot').innerHTML =
