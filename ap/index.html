@@ -30,21 +30,36 @@
   .card{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:13px 15px}
   .card .n{font-size:25px;font-weight:bold}
   .card .l{font-size:11.5px;color:#5b6472;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
-  .pacell{white-space:nowrap}
-  .pabtn{font:inherit;font-size:11px;padding:2px 7px;border:1px solid #c9d3e0;background:#f4f7fb;color:#1F3864;border-radius:4px;cursor:pointer}
-  .pabtn:hover{background:#e8eef7}
-  tr.parow>td{background:#fbfcfe;border-top:0}
-  .pawrap{padding:10px 4px 14px;display:grid;grid-template-columns:minmax(420px,1.2fr) minmax(300px,1fr);gap:18px;align-items:start}
-  @media(max-width:1100px){.pawrap{grid-template-columns:1fr}}
-  .patab{width:100%;border-collapse:collapse;font-size:12px}
-  .patab th,.patab td{border-bottom:1px solid #e7ecf3;padding:4px 6px;text-align:left;vertical-align:top}
-  .patab th{font-weight:600;color:#54607a;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
-  .patab td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .pahd{font-weight:700;color:#1F3864;margin:0 0 6px}
-  .pain{width:120px;font:inherit;font-size:12px;padding:3px 5px;border:1px solid #c9d3e0;border-radius:4px;text-align:right}
-  .padelta{font-size:11px;white-space:nowrap}
+  .pacell{white-space:nowrap;margin-top:3px}
+  .pabtn{font:inherit;font-size:10.5px;padding:2px 7px;border:1px solid #cfd8e4;background:#fff;color:#2b4a7e;border-radius:3px;cursor:pointer;line-height:1.5}
+  .pabtn:hover{background:#eef3fa;border-color:#9fb4d0}
+  .pabtn[aria-expanded="true"]{background:#1F3864;border-color:#1F3864;color:#fff}
+  tr.parow>td{background:#f7f9fc;border-top:0;padding:0}
+  /* Pinned left and width-capped: the panel lives in a colspan cell inside a
+     horizontally scrolling table and would otherwise stretch off screen. */
+  .pawrap{position:sticky;left:0;box-sizing:border-box;width:min(680px,calc(100vw - 80px));
+          padding:14px 16px 16px;text-align:left;overflow-wrap:anywhere}
+  .pawrap td,.pawrap div,.pawrap th{text-align:left}
+  .pamax{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+  .pamax .l{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7a869a}
+  .pamax .n{font-size:22px;font-weight:700;color:#1F3864;font-variant-numeric:tabular-nums}
+  .patab{width:100%;border-collapse:collapse;font-size:12.5px}
+  /* The page styles thead th as a dark bar; inside the panel that reads as a
+     second table header, so it is overridden here rather than globally. */
+  .pawrap .patab thead th{background:none;background-color:transparent;color:#9aa4b2;
+    font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    padding:0 0 6px;border-bottom:1px solid #e3eaf3;white-space:nowrap}
+  .pawrap .patab td{border-bottom:1px solid #eef2f8;padding:6px 0;vertical-align:middle}
+  .patab tr:last-child td{border-bottom:0}
+  .patab th.n,.patab td.n{text-align:right;padding-left:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .paq{color:#243040}
+  .paref{font-size:10.5px;color:#9aa4b2;margin-top:1px}
+  .pain{width:104px;font:inherit;font-size:12px;padding:3px 6px;border:1px solid #cfd8e4;border-radius:3px;text-align:right;background:#fff}
+  .pain:focus{outline:2px solid #bcd0ea;outline-offset:-1px;border-color:#9fb4d0}
+  .padelta{font-size:11px;white-space:nowrap;text-align:right;padding-left:8px;font-variant-numeric:tabular-nums}
   .paok{color:#1a7f37}.pabad{color:#b3261e;font-weight:600}
-  .panote{font-size:11px;color:#6b7482;line-height:1.6;margin-top:8px}
+  .pawarn{margin-top:11px;font-size:11.5px;line-height:1.55;color:#54607a}
+  .pawarn div{padding:2px 0 2px 15px;text-indent:-15px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
   .tablescroll{overflow-x:auto;border-radius:10px}
@@ -279,69 +294,47 @@ const money2 = v => (v === null || v === undefined || isNaN(v)) ? '—'
 /* Line names on both forms BH actually receives. The quantities are identical;
    only the labels move, so one panel serves an AIA G702/G703 and BH's own
    Attachment G without the reviewer translating. */
+/* One row per quantity, expected and theirs side by side. An earlier version put
+   the expected figures in one table and the inputs in another, which repeated
+   every label and read as twice the page it needed to be. Form line names sit in
+   the title attribute rather than on screen - they are reference, not reading. */
 const PA_LINES = [
-  ['original','Original contract','Amount of Original Contract','Line 1'],
-  ['cos','Approved change orders','Approved Change Order(s)','Line 2'],
-  ['contract','Adjusted contract','Adjusted Contract Amount','Line 3'],
-  ['billed','Completed &amp; stored to date','Total Completed Work &amp; Stored Materials','Line 4 / G703 col G'],
-  ['retNow','Retainage held','Less Retainage','Line 5'],
-  ['prevPaid','Less previous payments','Less Previous Payments','Line 7'],
-  ['maxDue','Most they can ask for','Balance Due This Payment Estimate','Line 8'],
+  ['contract','Adjusted contract','Amount of Original Contract + Approved Change Order(s) — AIA G702 line 3'],
+  ['billed','Completed to date','Total Completed Work & Stored Materials to Date — AIA G702 line 4, G703 column G'],
+  ['retNow','Retainage held','Less Retainage — AIA G702 line 5'],
+  ['prevPaid','Less previous payments','Less Previous Payments — AIA G702 line 7'],
 ];
 
 function payappPanel(r){
   const e = payappExpected(r);
   if (!e.hasBilling) {
-    return '<div class="pawrap"><div><div class="pahd">Expected pay app</div>'
-      + '<div class="panote">No billed-to-date figure for this commitment, so the expected '
-      + 'application cannot be built. The contract side still applies: adjusted contract '
-      + '<b>' + money2(e.contract) + '</b>.</div></div></div>';
+    return '<div class="pawrap"><div class="pamax"><span class="l">Adjusted contract</span>'
+      + '<span class="n">' + money2(e.contract) + '</span></div>'
+      + '<div class="pawarn"><div>&#9888;&nbsp; No billed-to-date figure for this commitment, '
+      + 'so the rest of the application cannot be built.</div></div></div>';
   }
-  const rows = PA_LINES.map(([k,what,ag,aia]) =>
-    '<tr><td>' + what + '</td><td class="muted">' + ag + '</td><td class="muted">' + aia
-    + '</td><td class="n">' + money2(e[k]) + '</td></tr>').join('');
-
-  const retBasis = e.pctR == null ? 'no retainage percent on the commitment'
-    : (e.thru50
-        ? (e.pctR + '% thru 50% &rarr; caps at ' + money2(e.retFull) + (e.past50 ? ' (already past 50%, withholding should have stopped)' : ''))
-        : (e.pctR + '% ' + (e.dur ? esc(e.dur) : '<span class="warn">term not set &mdash; treated as withheld on every dollar</span>')));
-
-  /* The cheapest catch of all. Past 50% on a thru-50 term, the retainage a sub
-     shows IS 2.5% of whatever contract they are billing against, so dividing it
-     back out recovers their contract without reading their schedule of values. */
-  const reverse = (e.thru50 && e.pctR)
-    ? '<div class="panote"><b>Shortcut:</b> their retainage &divide; ' + (e.pctR/2) + '% = the contract they are billing against. '
-      + 'Compare to ' + money2(e.contract) + '.</div>' : '';
+  const sub = k => k === 'contract'
+    ? '<div class="paref">' + money2(e.original) + ' + ' + money2(e.cos) + ' CO</div>' : '';
+  const rows = PA_LINES.map(([k,what,tip]) =>
+    '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>' + sub(k) + '</td>'
+    + '<td class="n">' + money2(e[k]) + '</td>'
+    + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '" placeholder="&mdash;"></td>'
+    + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
-  if (e.gap) warn.push('Procore and CE disagree on the contract by <b>' + money2(Math.abs(e.gap))
-    + '</b> (Procore ' + money2(e.contract) + ', CE ' + money2(e.ceSov) + '). A change order is in one system and not the other &mdash; '
-    + 'settle which before deciding whether the sub has over-billed.');
+  if (e.gap) warn.push('Procore and CE differ by <b>' + money2(Math.abs(e.gap))
+    + '</b> &mdash; a change order is in one system only.');
+  if (e.thru50 && e.past50) warn.push('Past 50% &mdash; no further retainage should be withheld. '
+    + 'Their retainage &divide; ' + (e.pctR/2) + '% recovers the contract they are billing against.');
   if (e.flags.includes('sov_gap')) warn.push('Billed plus remaining does not reconcile to the schedule of values.');
-  if (e.pctR && !e.dur) warn.push('No retainage duration on the commitment, so the expected retainage above assumes withholding on every dollar.');
+  if (e.pctR && !e.dur) warn.push('No retainage term on the commitment &mdash; assuming it is withheld on every dollar.');
 
-  const id = 'pa-' + String(r.number||'').replace(/[^A-Za-z0-9]/g,'');
   return '<div class="pawrap">'
-   + '<div><div class="pahd">Expected pay app</div>'
-   +   '<table class="patab"><thead><tr><th>Quantity</th><th>BH Attachment G</th><th>AIA G702</th><th class="n">Expected</th></tr></thead>'
-   +   '<tbody>' + rows + '</tbody></table>'
-   +   '<div class="panote">Retainage basis: ' + retBasis + '.</div>'
-   +   reverse
-   +   (warn.length ? '<div class="panote">' + warn.map(w=>'&#9888; '+w).join('<br>') + '</div>' : '')
-   + '</div>'
-   + '<div><div class="pahd">Check their cover sheet</div>'
-   +   '<table class="patab" data-pa="' + id + '"><tbody>'
-   +   ['contract','billed','retNow','prevPaid'].map(k => {
-         const label = PA_LINES.find(x=>x[0]===k)[1];
-         return '<tr><td>' + label + '</td>'
-          + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '" placeholder="from their app"></td>'
-          + '<td class="padelta" data-d="' + k + '"></td></tr>';
-       }).join('')
-   +   '</tbody></table>'
-   +   '<div class="panote">Enter what their cover sheet says. Anything that does not match is '
-   +   'either a change order they have missed, one they have added that we have not approved, '
-   +   'or a change order still awaiting our own signature &mdash; those three need different answers.</div>'
-   + '</div></div>';
+   + '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span></div>'
+   + '<table class="patab" data-pa="x"><thead><tr><th></th><th class="n">Expected</th>'
+   +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
+   + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
+   + '</div>';
 }
 
 /* Deltas recompute as the reviewer types; nothing is stored or sent anywhere. */
@@ -439,7 +432,7 @@ function render(){
       <td class="l wrap">${esc(r.project)}</td>
       <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
-        <div class="sub pacell"><button type="button" class="pabtn" data-pa-for="${esc(r.number||'')}"
+        <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
           title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
       <td class="l wrap">${esc(r.vendor)}
         <div class="sub code">${r.ce_code ? esc(r.ce_code)
@@ -461,7 +454,7 @@ function render(){
   document.querySelectorAll('button[data-pa-for]').forEach(btn => btn.onclick = () => {
     const tr = btn.closest('tr');
     if (tr.nextElementSibling && tr.nextElementSibling.classList.contains('parow')) {
-      tr.nextElementSibling.remove(); return;
+      tr.nextElementSibling.remove(); btn.setAttribute('aria-expanded','false'); return;
     }
     const num = btn.dataset.paFor;
     const r = STATE.commitments.find(x => String(x.number||'').trim() === num);
@@ -470,6 +463,7 @@ function render(){
     det.className = 'parow';
     det.innerHTML = '<td colspan="9">' + payappPanel(r) + '</td>';
     tr.insertAdjacentElement('afterend', det);
+    btn.setAttribute('aria-expanded','true');
     payappBind(det, r);
   });
 
