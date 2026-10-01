@@ -54,6 +54,17 @@
   .patab th.n,.patab td.n{text-align:right;padding-left:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .paq{color:#243040}
   .pawrap .patab td.paloose{color:#7a869a;font-size:11.5px}
+  .qwrap{margin-bottom:14px}
+  .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 8px}
+  .qhead .n{font-size:19px;font-weight:700;color:#1F3864;font-variant-numeric:tabular-nums}
+  .qhead .l{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7a869a}
+  .qday{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7a869a;
+        margin:12px 0 4px;padding-top:9px;border-top:1px solid #e3eaf3}
+  .qtab{width:100%;border-collapse:collapse;font-size:12.5px}
+  .qtab td{border-bottom:1px solid #eef2f8;padding:5px 0;text-align:left;vertical-align:baseline}
+  .qtab td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;padding-left:12px}
+  .qsub{font-size:10.5px;color:#9aa4b2}
+  .qblock{color:#b3261e;font-weight:600}
   .paref{font-size:10.5px;color:#9aa4b2;margin-top:1px}
   .pain{width:104px;font:inherit;font-size:12px;padding:3px 6px;border:1px solid #cfd8e4;border-radius:3px;text-align:right;background:#fff}
   .pain:focus{outline:2px solid #bcd0ea;outline-offset:-1px;border-color:#9fb4d0}
@@ -424,6 +435,61 @@ function compCell(r){
    against one job, and 150-odd commitments across every job is a wall to scroll
    past before the work starts. "All projects" is still in the list for anyone
    who wants the portfolio view. */
+/* Expected to bill this cycle. Deliberately NOT "who has billed" - neither
+   ap_commitments.json nor ap_payapp_expected.json carries a billing date, so that
+   half has to wait for the payables@ join. What this can say is who still has
+   contract left, how much they can claim, and who cannot be paid when it arrives. */
+function renderQueue(rows){
+  const el = document.getElementById('queue'); if (!el) return;
+  if (!rows || !rows.length) { el.innerHTML = ''; return; }
+
+  const live = rows.map(r => {
+    const e = payappExpected(r);
+    const c = complianceFor(r);
+    return { r, e, blocked: !!(c && c.billy_is_compliant !== 'Yes'), noBilly: !c };
+  }).filter(x => x.e.hasBilling && x.e.maxDue != null && x.e.maxDue > 0.5);
+
+  if (!live.length) {
+    el.innerHTML = '<div class="stub" style="margin-bottom:14px">Nothing left to bill on these '
+      + 'commitments &mdash; every one is billed out, over-billed, or has no ComputerEase figure.</div>';
+    return;
+  }
+
+  const total = live.reduce((t,x) => t + x.e.maxDue, 0);
+  const blocked = live.filter(x => x.blocked);
+
+  /* Grouped by the day they bill, because that is how the cycle actually runs and
+     it is the one scheduling fact the commitment carries. */
+  const byDay = {};
+  live.forEach(x => { const d = String(x.r.billing_day||'').trim() || 'no billing day set';
+    (byDay[d] = byDay[d] || []).push(x); });
+  const dayNum = d => { const m = String(d).match(/\d+/); return m ? Number(m[0]) : 999; };
+  const days = Object.keys(byDay).sort((a,b) => dayNum(a) - dayNum(b));
+
+  const body = days.map(d => {
+    const g = byDay[d].sort((a,b) => b.e.maxDue - a.e.maxDue);
+    const sum = g.reduce((t,x) => t + x.e.maxDue, 0);
+    const label = /^no billing day/.test(d) ? 'No billing day set' : 'Bills ' + esc(d);
+    return '<div class="qday">' + label + ' &middot; ' + g.length + ' subcontractor'
+      + (g.length===1?'':'s') + ' &middot; ' + money(sum) + '</div>'
+      + '<table class="qtab"><tbody>' + g.map(x =>
+        '<tr><td>' + esc(x.r.vendor)
+          + '<div class="qsub">' + esc(x.r.number||'') + (x.r.project ? ' &middot; ' + esc(x.r.project) : '') + '</div></td>'
+        + '<td class="n">' + money(x.e.maxDue)
+          + '<div class="qsub">of ' + money(x.e.contract) + '</div></td>'
+        + '<td class="n">' + (x.blocked
+            ? '<span class="qblock">cannot be paid</span><div class="qsub">non-compliant in Billy</div>'
+            : (x.noBilly ? '<span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>' : ''))
+          + '</td></tr>').join('') + '</tbody></table>';
+  }).join('');
+
+  el.innerHTML = '<div class="qwrap">'
+    + '<div class="qhead"><span class="l">Still to bill</span><span class="n">' + money(total) + '</span>'
+    +   '<span class="qsub">across ' + live.length + ' commitment' + (live.length===1?'':'s')
+    +   (blocked.length ? ' &middot; <span class="qblock">' + blocked.length + ' cannot be paid until compliance clears</span>' : '')
+    +   '</span></div>' + body + '</div>';
+}
+
 function render(){
   const proj = document.getElementById('f-proj').value;
   const pm   = document.getElementById('f-pm').value;
@@ -431,6 +497,7 @@ function render(){
      they run. Only the two together being unset is the blank state. */
   if (!proj && pm === 'all') {
     document.getElementById('cards').innerHTML = '';
+    { const q = document.getElementById('queue'); if (q) q.innerHTML = ''; }
     document.getElementById('table').innerHTML =
       '<div class="empty" style="padding:38px 20px;line-height:1.7">'
       + '<b>Select a project</b> to see its AP status and pay app comparison'
@@ -516,6 +583,8 @@ function render(){
 
   document.getElementById('table').innerHTML =
     `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+
+  renderQueue(rows);
 
   /* One expandable panel per commitment rather than more columns - the table is
      already nine wide and the check is something you open for one sub at a time. */
@@ -623,14 +692,17 @@ function render(){
       <div class="section-title">Commitments</div>
       <div id="table"></div>
       <div class="section-title">Pay application queue</div>
+      <div id="queue"></div>
       <div class="stub">
-        <h3>Not connected yet</h3>
+        <h3>What is still missing</h3>
         The mail probe reads payables@ and identifies roughly <b>20 subcontractor draws a week</b>.
         The contract position each of those should be checked against is now on this page —
         contract including changes, billed to date, and what is left. What is missing is the
         incoming pay app itself: matching a draw from payables@ to its commitment, so a PM can
         compare the claimed amount against the figures above, code it and approve it.
-        Nothing on this page is an approval.
+        Until that join exists the queue below is the <b>expected</b> side only &mdash; who can
+        still bill and how much. It cannot say who has already billed this cycle, because
+        nothing we hold carries a billing date. Nothing on this page is an approval.
       </div>`;
 
     document.getElementById('foot').innerHTML =
