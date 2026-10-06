@@ -21,7 +21,9 @@
   .bh-badge{margin-left:auto;border:1px solid #1a7f37;color:#1a7f37;background:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:bold;letter-spacing:.05em;white-space:nowrap}
   .banner{background:#fff7e6;border:1px solid #f0d089;color:#7a5a12;padding:9px 13px;border-radius:8px;font-size:13px;margin-bottom:14px}
   .err{background:#FFC7CE;border-color:#e6a3a3;color:#9C0006}
-  .notice{background:#eef3fb;border:1px solid #c3d4ee;color:#1F3864;padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:16px;line-height:1.55}
+  .notice{background:#eef3fb;border:1px solid #c3d4ee;color:#1F3864;padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:16px;line-height:1.5}
+  .notice p{margin:5px 0 0}
+  .notice p:first-child{margin-top:0}
   .notice b{color:#1a4fb0}
   .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
   .controls label{font-size:13px;color:#40485a;font-weight:bold}
@@ -117,9 +119,10 @@
   .g{background:#C6EFCE;color:#006100}.y{background:#FFEB9C;color:#9C6500}.r{background:#FFC7CE;color:#9C0006}
   .b{background:#DDEBF7;color:#1F3864}.muted{color:#9aa2b1}
   .code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;color:#40485a}
-  .legend{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:12.5px;line-height:2;color:#40485a}
+  .legend{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:10px 14px;margin:18px 0 0;font-size:12.5px;line-height:1.5;color:#40485a}
   .legend b{color:#7F1B29}
-  .legend .grp{display:inline-block;margin-right:18px}
+  .legend .grp{display:block;margin:0 0 6px}
+  .legend .grp:last-child{margin-bottom:0}
   .empty{color:#5b6472;font-style:italic;padding:14px 0}
   .loading{padding:40px;text-align:center;color:#5b6472}
   a{color:#1a4fb0;text-decoration:none}a:hover{text-decoration:underline}
@@ -704,23 +707,21 @@ function render(){
 
     document.getElementById('content').innerHTML = `
       <div class="notice">
-        <b>Contract</b> is the revised contract from Procore, approved change orders included;
+        <p><b>Contract</b> is the revised contract from Procore, approved change orders included;
         where there are any, the amount is shown beneath it. <b>Billed to date</b> is
         ComputerEase's <span class="code">committed_billed</span> — what the subcontractor has
         actually billed against the commitment, with what is left to bill beneath it. Procore's
         own payment figure is not shown: it reads $0 on every commitment because billing happens
-        in CE, not Procore.
-        <br><br>
-        <b>Billed is gross of retainage</b> — the amount earned, before withholding. That is
+        in CE, not Procore.</p>
+        <p><b>Billed is gross of retainage</b> — the amount earned, before withholding. That is
         inferred from subcontracts on a 5% term reaching exactly 100% of their schedule of
         values, which is impossible if the figure were net. It has not yet been checked against
-        a signed G702, so treat the last few percent of any commitment with care.
-        <br><br>
-        <b>What this page shows today:</b> every active subcontract commitment in Procore, with its
+        a signed G702, so treat the last few percent of any commitment with care.</p>
+        <p><b>What this page shows today:</b> every active subcontract commitment in Procore, with its
         retainage term, contract value, project manager, compliance status from Billy and its
         ComputerEase vendor code. Bailey-Harris self-perform commitments are excluded.
         <br><b>What it does not show yet:</b> the pay application queue. Matching incoming draws
-        from payables@ to these commitments is the next build — nothing on this page is an approval.
+        from payables@ to these commitments is the next build — nothing on this page is an approval.</p>
       </div>
       <div class="controls">
         <label>Project:</label>
@@ -736,28 +737,6 @@ function render(){
           <option value="nc">Non-compliant</option><option value="missing">Not in Billy</option></select>
         <label>Search:</label>
         <input id="f-q" type="text" placeholder="subcontractor or commitment #" style="min-width:230px">
-      </div>
-      <div class="legend">
-        <span class="grp"><b>Retainage</b> is two things: the percentage withheld, and
-          whether it runs <b>Throughout</b> or only <b>Thru 50%</b> completion. Both come from
-          the commitment. <span class="pill b">0% &middot; no retainage</span> means none is
-          withheld at all; <span class="pill y">term not set</span> means a percentage is
-          withheld but nobody recorded when it stops.</span>
-        <br>
-        <span class="grp"><b>Billing exceptions</b> appear under the billed figure.
-          <span class="pill r">over-billed</span> means more has been billed than the commitment
-          allows. <span class="pill y">contract differs</span> means Procore and ComputerEase
-          disagree on the contract value — usually a change order that reached one system and not
-          the other. <span class="pill y">SOV gap</span> means billed plus remaining does not
-          reconcile to the schedule of values. <span class="pill b">no CE data</span> means that
-          job does not publish to the ComputerEase API at all, so there is no figure to show —
-          not that nothing has been billed. Hover any of them for the detail.</span>
-        <br>
-        <span class="grp"><b>Compliance</b> is from Billy.
-          <span class="pill r">non-compliant</span> means the subcontractor
-          <b>cannot be paid</b> until their insurance or licence is current — hover it for the
-          reason. <span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>
-          means they hold a commitment with no compliance record at all.</span>
       </div>
       <div class="cards" id="cards"></div>
       <div class="section-title">Commitments</div>
@@ -775,6 +754,26 @@ function render(){
         identifies roughly <b>20 subcontractor draws a week</b>; matching each one to its
         commitment is what would let a PM compare the claimed amount against the contract
         position here, code it and approve it. Nothing on this page is an approval.
+      </div>
+      <div class="legend">
+        <span class="grp"><b>Retainage</b> is two things: the percentage withheld, and
+          whether it runs <b>Throughout</b> or only <b>Thru 50%</b> completion. Both come from
+          the commitment. <span class="pill b">0% &middot; no retainage</span> means none is
+          withheld at all; <span class="pill y">term not set</span> means a percentage is
+          withheld but nobody recorded when it stops.</span>
+        <span class="grp"><b>Billing exceptions</b> appear under the billed figure.
+          <span class="pill r">over-billed</span> means more has been billed than the commitment
+          allows. <span class="pill y">contract differs</span> means Procore and ComputerEase
+          disagree on the contract value — usually a change order that reached one system and not
+          the other. <span class="pill y">SOV gap</span> means billed plus remaining does not
+          reconcile to the schedule of values. <span class="pill b">no CE data</span> means that
+          job does not publish to the ComputerEase API at all, so there is no figure to show —
+          not that nothing has been billed. Hover any of them for the detail.</span>
+        <span class="grp"><b>Compliance</b> is from Billy.
+          <span class="pill r">non-compliant</span> means the subcontractor
+          <b>cannot be paid</b> until their insurance or licence is current — hover it for the
+          reason. <span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>
+          means they hold a commitment with no compliance record at all.</span>
       </div>`;
 
     document.getElementById('foot').innerHTML =
