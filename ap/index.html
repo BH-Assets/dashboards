@@ -119,10 +119,6 @@
   .g{background:#C6EFCE;color:#006100}.y{background:#FFEB9C;color:#9C6500}.r{background:#FFC7CE;color:#9C0006}
   .b{background:#DDEBF7;color:#1F3864}.muted{color:#9aa2b1}
   .code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;color:#40485a}
-  .legend{background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:10px 14px;margin:18px 0 0;font-size:12.5px;line-height:1.5;color:#40485a}
-  .legend b{color:#7F1B29}
-  .legend .grp{display:block;margin:0 0 6px}
-  .legend .grp:last-child{margin-bottom:0}
   .empty{color:#5b6472;font-style:italic;padding:14px 0}
   .loading{padding:40px;text-align:center;color:#5b6472}
   a{color:#1a4fb0;text-decoration:none}a:hover{text-decoration:underline}
@@ -238,7 +234,7 @@ function retainageCell(r){
   const p = r.retainage_percent, d = (r.retainage_duration||'').trim();
   if (p === null && !d) return '<span class="muted">—</span>';
   if (p === 0) return '<span class="pill b" title="This contract withholds no retainage">0% &middot; no retainage</span>';
-  const dur = d && d.toLowerCase() !== 'n/a' ? d : '<span class="pill y">term not set</span>';
+  const dur = d && d.toLowerCase() !== 'n/a' ? d : '<span class="pill y" title="A percentage is withheld but the commitment does not record when it stops, so it is unknown whether retainage runs throughout or ends at 50% completion.">term not set</span>';
   return '<b>' + pct(p) + '</b> ' + dur;
 }
 
@@ -251,8 +247,8 @@ const billingFor = r => STATE.billing[String(r.number || '').trim()] || null;
 
 const FLAG_TEXT = {
   over_billed:            ['r','over-billed','Billed more than the commitment. Either a change order went into billings but not onto the subcontract, or the sub over-billed.'],
-  contract_mismatch:      ['y','contract differs','Procore and ComputerEase disagree on the contract value - a change order is likely in one system and not the other.'],
-  sov_gap:                ['y','SOV gap','Billed plus remaining does not reconcile to the schedule of values.'],
+  contract_mismatch:      ['y','contract differs','Procore and ComputerEase disagree on the contract value. Procore higher: an approved change order never reached CE - a CO title over the character limit fails to sync silently. CE higher: the change order was entered straight into CE and Procore is understating the contract.'],
+  sov_gap:                ['y','SOV gap','ComputerEase does not agree with itself on this subcontract - billed plus remaining should equal its schedule of values and does not. Usually billings posted to a cost code the subcontract does not carry, or an item on the subcontract that posts nowhere. The gap is normally one line.'],
   shared_cost_code:       ['y','shared cost code','Another subcontract posts to the same phase/category/cost type, so some dollars cannot be attributed to this one.'],
   no_job_totals:          ['b','no CE data','This job does not publish to the ComputerEase API, so no billing figure is available.'],
   no_ce_subcontract:      ['b','no CE match','No ComputerEase subcontract carries this commitment number.'],
@@ -448,7 +444,7 @@ const complianceFor = r => r.compliance || null;
 
 function compCell(r){
   const c = complianceFor(r);
-  if (!c) return '<span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>';
+  if (!c) return '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>';
   if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>';
   const t = c.notes ? ' title="' + esc(c.notes).replace(/"/g,'&quot;') + '"' : '';
   return '<span class="pill r"' + t + '>non-compliant</span>';
@@ -528,7 +524,7 @@ function renderQueue(rows){
           + '<div class="qsub">of ' + money(x.e.contract) + '</div></td>'
         + '<td class="n">' + (x.blocked
             ? '<span class="qblock">cannot be paid</span><div class="qsub">non-compliant in Billy</div>'
-            : (x.noBilly ? '<span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>' : ''))
+            : (x.noBilly ? '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>' : ''))
           + '</td></tr>').join('') + '</tbody></table>';
   }).join('');
 
@@ -652,7 +648,7 @@ function render(){
       <td class="num">${billedCell(r)}</td>
       <td>${retainageCell(r)}</td>
       <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
-      <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y">unexecuted</span>':'')}</td>
+      <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>':'')}</td>
     </tr>`).join('') : `<tr><td colspan="9" class="empty">No commitments match these filters.</td></tr>`;
 
   document.getElementById('table').innerHTML =
@@ -754,26 +750,6 @@ function render(){
         identifies roughly <b>20 subcontractor draws a week</b>; matching each one to its
         commitment is what would let a PM compare the claimed amount against the contract
         position here, code it and approve it. Nothing on this page is an approval.
-      </div>
-      <div class="legend">
-        <span class="grp"><b>Retainage</b> is two things: the percentage withheld, and
-          whether it runs <b>Throughout</b> or only <b>Thru 50%</b> completion. Both come from
-          the commitment. <span class="pill b">0% &middot; no retainage</span> means none is
-          withheld at all; <span class="pill y">term not set</span> means a percentage is
-          withheld but nobody recorded when it stops.</span>
-        <span class="grp"><b>Billing exceptions</b> appear under the billed figure.
-          <span class="pill r">over-billed</span> means more has been billed than the commitment
-          allows. <span class="pill y">contract differs</span> means Procore and ComputerEase
-          disagree on the contract value — usually a change order that reached one system and not
-          the other. <span class="pill y">SOV gap</span> means billed plus remaining does not
-          reconcile to the schedule of values. <span class="pill b">no CE data</span> means that
-          job does not publish to the ComputerEase API at all, so there is no figure to show —
-          not that nothing has been billed. Hover any of them for the detail.</span>
-        <span class="grp"><b>Compliance</b> is from Billy.
-          <span class="pill r">non-compliant</span> means the subcontractor
-          <b>cannot be paid</b> until their insurance or licence is current — hover it for the
-          reason. <span class="pill" style="background:#eef1f6;color:#7a828f">not in Billy</span>
-          means they hold a commitment with no compliance record at all.</span>
       </div>`;
 
     document.getElementById('foot').innerHTML =
