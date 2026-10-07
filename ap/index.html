@@ -381,6 +381,16 @@ function pendingLine(v, other){
     + money(v) + ' pending</div>';
 }
 
+/* The PM column is the project's Project Management Team from Procore project_roles,
+   NOT the commitment's own custom_field_300705. That field names whoever wrote the
+   subcontract and goes stale - Comer Hall was still reading a name of someone who
+   has left. The team is the right answer for a queue and is maintained per project. */
+function pmCell(r){
+  const team = (r.pm_team_names || []).filter(Boolean);
+  return team.length ? esc(team.join(', '))
+    : '<span class="muted" title="No Project Management Team on this project in Procore.">\u2014</span>';
+}
+
 function billedCell(r){
   const b = billingFor(r);
   if (!b) return '<span class="muted" title="No row in ' + EXPECTED_FILE + ' for this commitment">—</span>';
@@ -698,7 +708,7 @@ function render(){
 
   let rows = STATE.commitments.filter(r => {
     if (proj && proj !== 'all' && r.project !== proj) return false;
-    if (pm   !== 'all' && (r.project_manager||'') !== pm) return false;
+    if (pm   !== 'all' && !((r.pm_team_names||[]).includes(pm))) return false;
     if (q && !(String(r.vendor).toUpperCase().includes(q) || String(r.number).toUpperCase().includes(q))) return false;
     if (comp !== 'all') {
       const c = complianceFor(r);
@@ -713,6 +723,7 @@ function render(){
     let x, y;
     if (col === 'ce_billed') { const ba=billingFor(a), bb=billingFor(b); x=(ba&&ba.ce_billed)||0; y=(bb&&bb.ce_billed)||0; }
     else if (col === 'ce_sov') { const ba=billingFor(a), bb=billingFor(b); x=(ba&&ba.ce_sov)||0; y=(bb&&bb.ce_sov)||0; }
+    else if (col === 'pm_team') { x=(a.pm_team_names||[]).join(', '); y=(b.pm_team_names||[]).join(', '); }
     else { x = a[col]; y = b[col]; }
     if (typeof x === 'number' || typeof y === 'number') return ((x||0)-(y||0))*dir;
     return String(x||'').localeCompare(String(y||''))*dir;
@@ -764,7 +775,7 @@ function render(){
     ['compliance','Compliance',''],
     ['revised_contract','Contract &middot; Procore','num'], ['ce_sov','Contract &middot; CE','num'],
     ['ce_billed','Billed to date','num'],
-    ['retainage_percent','Retainage',''], ['project_manager','PM','l'], ['status','Status','']
+    ['retainage_percent','Retainage',''], ['pm_team','PM','l'], ['status','Status','']
   ];
   const head = cols.map(([k,label,cls]) =>
     `<th class="${cls}" data-col="${k}">${label}${STATE.sort.col===k ? (STATE.sort.dir>0?' ▲':' ▼') : ''}</th>`).join('');
@@ -786,7 +797,7 @@ function render(){
       <td class="num">${ceContractCell(r)}</td>
       <td class="num">${billedCell(r)}</td>
       <td>${retainageCell(r)}</td>
-      <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
+      <td class="l">${pmCell(r)}</td>
       <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>':'')}</td>
     </tr>`).join('') : `<tr><td colspan="10" class="empty">No commitments match these filters.</td></tr>`;
 
@@ -846,7 +857,7 @@ function render(){
     const projects = [...new Set(STATE.commitments.map(r => r.project))]
       .map(p => ({ name: p, label: (projNum[p] ? projNum[p] + ' \u00b7 ' : '') + p }))
       .sort((a,b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
-    const pms = [...new Set(STATE.commitments.map(r => r.project_manager).filter(Boolean))].sort();
+    const pms = [...new Set(STATE.commitments.flatMap(r => r.pm_team_names || []))].sort();
 
     document.getElementById('content').innerHTML = `
       <div class="notice">
