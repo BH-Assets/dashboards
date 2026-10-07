@@ -106,7 +106,8 @@
      without spending a column on it. */
   .sub{font-size:10.5px;color:#7a828f;line-height:1.5;margin-top:1px;font-weight:normal}
   .sub.co{color:#1a4fb0}
-  .sub.same{color:#1a7f37}
+  .sub.bad{color:#b3261e;font-weight:bold}
+  .figbad{color:#b3261e;font-weight:bold}
   .warn{color:#9a6a00;font-weight:bold}
   td.wrap{white-space:normal;max-width:210px}
   /* NOT .r - that is the red pill class. A numeric column called .r painted
@@ -248,7 +249,7 @@ const billingFor = r => STATE.billing[String(r.number || '').trim()] || null;
 
 const FLAG_TEXT = {
   over_billed:            ['r','over-billed','Billed more than the commitment. Either a change order went into billings but not onto the subcontract, or the sub over-billed.'],
-  contract_mismatch:      ['y','contract differs','Procore and ComputerEase disagree on the contract value. Procore higher: an approved change order never reached CE - a CO title over the character limit fails to sync silently. CE higher: the change order was entered straight into CE and Procore is understating the contract.'],
+  contract_mismatch:      ['r','contract differs','Procore and ComputerEase disagree on the contract value. Procore higher: an approved change order never reached CE - a CO title over the character limit fails to sync silently. CE higher: the change order was entered straight into CE and Procore is understating the contract.'],
   sov_gap:                ['y','SOV gap','ComputerEase does not agree with itself on this subcontract - billed plus remaining should equal its schedule of values and does not. Usually billings posted to a cost code the subcontract does not carry, or an item on the subcontract that posts nowhere. The gap is normally one line.'],
   shared_cost_code:       ['y','shared cost code','Another subcontract posts to the same phase/category/cost type, so some dollars cannot be attributed to this one.'],
   no_job_totals:          ['b','no CE data','This job does not publish to the ComputerEase API, so no billing figure is available.'],
@@ -277,6 +278,22 @@ function pendingPill(b){
    never reached CE (a CO title over the character limit fails to sync silently);
    CE higher means it was entered straight into CE and Procore understates the
    contract. Both figures now sit side by side with the gap signed from CE. */
+/* The two contract columns are rendered by a pair of cells that share the same
+   two sub-line helpers, so "includes X CO" and "pending" land on the SAME LINE in
+   both columns and can be read straight across. Procore's revised contract and
+   CE's schedule of values both count approved change orders only, so the pending
+   line sits outside both figures on both sides. */
+function pcContractCell(r){
+  const b = billingFor(r);
+  return money(r.revised_contract || r.contract_value)
+    + coLine(r.approved_change_orders, b && b.ce_approved_cos)
+    + pendingLine(r.pending_change_orders, b && b.ce_pending_sov);
+}
+
+/* Procore higher means an approved change order never reached CE (a CO title
+   over the character limit fails to sync silently); CE higher means it was
+   entered straight into CE and Procore understates the contract. Agreement is
+   the normal case and says nothing; a disagreement is red. */
 function ceContractCell(r){
   const b = billingFor(r);
   if (!b) return '<span class="muted" title="No row in ' + EXPECTED_FILE + ' for this commitment">&mdash;</span>';
@@ -287,21 +304,40 @@ function ceContractCell(r){
     return '<span class="pill b" title="' + esc(tip) + '">' + label + '</span>';
   }
   const gap = b.pc_vs_ce_contract_gap;          // Procore revised - CE SOV
-  /* An agreeing row has to LOOK agreeing. Saying nothing when the two matched
-     left a pending-CO note as the only sub-line, which read as a discrepancy on
-     a row that has none. */
-  const sub = !gap
-    ? '<div class="sub same" title="The Procore revised contract and the CE schedule of values agree on this commitment.">= Procore</div>'
+  /* The gap goes LAST so the two shared lines above it stay level across the
+     two columns. Red carries it; position does not need to. */
+  const gapLine = !gap ? ''
     : gap > 0
-      ? '<div class="sub co" title="Procore is higher by this much. An approved change order has not reached CE.">'
+      ? '<div class="sub bad" title="Procore is higher by this much. An approved change order has not reached CE.">'
           + money(gap) + ' under Procore</div>'
-      : '<div class="sub co" title="CE is higher by this much. The change order was entered straight into CE and Procore is understating the contract.">'
+      : '<div class="sub bad" title="CE is higher by this much. The change order was entered straight into CE and Procore is understating the contract.">'
           + money(Math.abs(gap)) + ' over Procore</div>';
-  return money(b.ce_sov) + sub
-    + (b.ce_pending_sov
-        ? '<div class="sub" title="A change order on this CE subcontract is still pending approval. The Procore revised contract counts approved change orders only, so a pending CO sits in NEITHER figure above. It is not a disagreement between the systems - on 40625AU010 both systems hold the same six change orders and both treat the sixth as unapproved.">'
-            + money(b.ce_pending_sov) + ' pending CO, in neither figure</div>'
-        : '');
+  return (gap ? '<span class="figbad">' + money(b.ce_sov) + '</span>' : money(b.ce_sov))
+    + coLine(b.ce_approved_cos, r.approved_change_orders)
+    + pendingLine(b.ce_pending_sov, r.pending_change_orders)
+    + gapLine;
+}
+
+/* `other` is the opposite column's figure. A zero prints only when the other
+   side is non-zero - otherwise every commitment without a change order would
+   carry two blank lines in both columns. */
+function coLine(v, other){
+  if (v === null || v === undefined)
+    return '<div class="sub muted" title="Approved change orders have not been pulled on this side yet. The CE figure was added to ap_payapp_expected.js on 7 Oct 2026; re-run it.">CO not pulled</div>';
+  if (!v && !other) return '';
+  return '<div class="sub co" title="The figure above is the REVISED contract. This says how much of it is approved change orders - it is not an amount to add on. Read it against the same line in the other column.">'
+    + 'includes ' + money(v) + ' CO</div>';
+}
+
+/* Pending change orders sit in NEITHER contract figure - Procore counts approved
+   COs only, and ce_sov excludes unapproved RFCs. Showing both sides is what makes
+   it visible whether the two systems hold the same unapproved work. */
+function pendingLine(v, other){
+  if (v === null || v === undefined)
+    return '<div class="sub muted" title="Procore pending change orders have not been pulled yet. The field was added to ap_commitments_pull.js on 7 Oct 2026; re-run it. The run logs how many commitments carry it.">pending not pulled</div>';
+  if (!v && !other) return '';
+  return '<div class="sub" title="A change order is raised but not approved, so it is in neither contract figure. Read it against the same line in the other column: different pending amounts mean one system is missing a change order.">'
+    + money(v) + ' pending</div>';
 }
 
 function billedCell(r){
@@ -696,8 +732,7 @@ function render(){
         <div class="sub code">${r.ce_code ? esc(r.ce_code)
           : '<span class="warn" title="No Abbreviated Name in Procore - Accounting has nothing to key the entry on">no CE code</span>'}</div></td>
       <td>${compCell(r)}</td>
-      <td class="num">${money(r.revised_contract || r.contract_value)}
-        ${r.approved_change_orders ? `<div class="sub co" title="Approved change orders included above">+${money(r.approved_change_orders)} CO</div>` : ''}</td>
+      <td class="num">${pcContractCell(r)}</td>
       <td class="num">${ceContractCell(r)}</td>
       <td class="num">${billedCell(r)}</td>
       <td>${retainageCell(r)}</td>
