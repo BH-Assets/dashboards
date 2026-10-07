@@ -106,6 +106,7 @@
      without spending a column on it. */
   .sub{font-size:10.5px;color:#7a828f;line-height:1.5;margin-top:1px;font-weight:normal}
   .sub.co{color:#1a4fb0}
+  .sub.same{color:#1a7f37}
   .warn{color:#9a6a00;font-weight:bold}
   td.wrap{white-space:normal;max-width:210px}
   /* NOT .r - that is the red pill class. A numeric column called .r painted
@@ -253,7 +254,7 @@ const FLAG_TEXT = {
   no_job_totals:          ['b','no CE data','This job does not publish to the ComputerEase API, so no billing figure is available.'],
   no_ce_subcontract:      ['b','no CE match','No ComputerEase subcontract carries this commitment number.'],
   retainage_stop_reached: ['b','past 50%','Billings have passed half the revised contract - on a "thru 50%" term, withholding should have stopped.'],
-  pending_rfc:            ['y','pending CO','A change order sits on this ComputerEase subcontract at pending approval. It is not contract value yet, so it is excluded from the schedule of values here - which is right, but it also means the sub may bill against it before anyone approves it.'],
+  pending_rfc:            ['b','pending CO','A change order sits on this ComputerEase subcontract at pending approval. It is not contract value yet, so it is excluded from the schedule of values here - which is right, but it also means the sub may bill against it before anyone approves it.'],
   no_committed_cells:     ['b','nothing in job cost','The subcontract exists in ComputerEase but none of its cost codes carries a committed cell in job cost, so nothing has been posted against it yet. Expected on a subcontract entered recently. Worth asking about on an old one.'],
 };
 
@@ -286,7 +287,11 @@ function ceContractCell(r){
     return '<span class="pill b" title="' + esc(tip) + '">' + label + '</span>';
   }
   const gap = b.pc_vs_ce_contract_gap;          // Procore revised - CE SOV
-  const sub = !gap ? ''
+  /* An agreeing row has to LOOK agreeing. Saying nothing when the two matched
+     left a pending-CO note as the only sub-line, which read as a discrepancy on
+     a row that has none. */
+  const sub = !gap
+    ? '<div class="sub same" title="The Procore revised contract and the CE schedule of values agree on this commitment.">= Procore</div>'
     : gap > 0
       ? '<div class="sub co" title="Procore is higher by this much. An approved change order has not reached CE.">'
           + money(gap) + ' under Procore</div>'
@@ -294,8 +299,8 @@ function ceContractCell(r){
           + money(Math.abs(gap)) + ' over Procore</div>';
   return money(b.ce_sov) + sub
     + (b.ce_pending_sov
-        ? '<div class="sub" title="A change order on this CE subcontract is still pending approval, so it is not in the figure above.">'
-            + money(b.ce_pending_sov) + ' pending</div>'
+        ? '<div class="sub" title="A change order on this CE subcontract is still pending approval. The Procore revised contract counts approved change orders only, so a pending CO sits in NEITHER figure above. It is not a disagreement between the systems - on 40625AU010 both systems hold the same six change orders and both treat the sixth as unapproved.">'
+            + money(b.ce_pending_sov) + ' pending CO, in neither figure</div>'
         : '');
 }
 
