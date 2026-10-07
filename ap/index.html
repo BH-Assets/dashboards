@@ -184,6 +184,46 @@ async function token(){
 }
 
 const GRAPH = 'https://graph.microsoft.com/v1.0';
+
+/* ---- who may see the whole queue -------------------------------------------
+   Everyone is kept current in AD and synced to Entra, so department is the
+   authority and nothing here has to be maintained by hand. The page asks Graph
+   for the SIGNED-IN USER'S OWN department (/me, User.Read - already in SCOPES),
+   never for anyone else's, so this needs no new grant and reads no other
+   person's record.
+
+   NOT A SECURITY BOUNDARY. ap_commitments.json is one file and anyone who can
+   read APData can fetch all of it with their own token. This decides what the
+   page SHOWS, not what a determined person could reach. If the restriction has
+   to be enforced rather than respected, the filtering has to move server-side -
+   a per-viewer file - or APData needs item-level permissions. */
+const ALL_QUEUE_DEPARTMENTS = [
+  'Accounting - Executives',
+  'Accounting - Personnel',
+  'Executive',
+  'Directors',
+];
+const ALL_QUEUE_PEOPLE = [
+  'tiffany.blackmon@baileyharris.com',
+  'hdatb@baileyharris.com',
+];
+const norm = v => String(v || '').trim().toLowerCase();
+
+async function whoAmI(tok){
+  try {
+    const r = await g(tok, '/me?$select=displayName,mail,userPrincipalName,department');
+    const me = (r.ok && r.body) || {};
+    const email = norm(me.mail || me.userPrincipalName);
+    const dept  = String(me.department || '');
+    const seesAll = ALL_QUEUE_PEOPLE.map(norm).includes(email)
+                 || ALL_QUEUE_DEPARTMENTS.map(norm).includes(norm(dept));
+    return { name: me.displayName || '', email, dept, seesAll, resolved: !!email };
+  } catch (_) {
+    /* Fail CLOSED on the identity call, not open: an unresolved viewer sees
+       only what their email matches, which is nothing, and the page says why. */
+    return { name:'', email:'', dept:'', seesAll:false, resolved:false };
+  }
+}
 async function g(tok, path){
   const r = await fetch(GRAPH + path, { headers: { Authorization: 'Bearer ' + tok } });
   let body = null; try { body = await r.json(); } catch(_) {}
@@ -216,7 +256,8 @@ async function loadData(tok){
                           { headers: { Authorization: 'Bearer ' + tok } });
     if (e.ok) expected = await e.json();
   } catch (_) { /* leave expected null */ }
-  return { commitments, expected };
+  const me = await whoAmI(tok);
+  return { commitments, expected, me };
 }
 
 /* ==== helpers ==== */
