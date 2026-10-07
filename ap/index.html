@@ -314,7 +314,7 @@ function ceContractCell(r){
           + money(Math.abs(gap)) + ' over Procore</div>';
   return (gap ? '<span class="figbad">' + money(b.ce_sov) + '</span>' : money(b.ce_sov))
     + coLine(b.ce_approved_cos, r.approved_change_orders)
-    + pendingLine(b.ce_pending_sov, r.pending_change_orders)
+    + pendingLine(b.ce_sov == null ? null : (b.ce_pending_sov || 0), r.pending_change_orders)
     + gapLine;
 }
 
@@ -683,6 +683,10 @@ function render(){
   const exc   = rows.filter(r=>{ const b=billingFor(r);
                   return b && (b.flags||[]).some(f=>['over_billed','contract_mismatch','sov_gap'].includes(f)); }).length;
   const cos   = rows.reduce((s,r)=>s+(r.approved_change_orders||0),0);
+  /* Pending is summed from BOTH systems and shown as the larger, because a
+     CO sitting in one and not the other is the thing worth noticing. */
+  const pendPc= rows.reduce((s,r)=>s+(r.pending_change_orders||0),0);
+  const pendCe= rows.reduce((s,r)=>{ const b=billingFor(r); return s+((b&&b.ce_pending_sov)||0); },0);
   const nc    = rows.filter(r => { const c = complianceFor(r); return c && c.billy_is_compliant !== 'Yes'; }).length;
   const noTerm= rows.filter(r => r.retainage_percent > 0 && !(r.retainage_duration||'').trim().match(/throughout|thru/i)).length;
   const noCe  = rows.filter(r => !r.ce_code).length;
@@ -706,6 +710,11 @@ function render(){
         ${pctBilled != null ? `<div class="s">${pctBilled}% of contract value</div>` : ''}</div>
       <div class="card gap"><div class="n">${money(left)}</div><div class="l">Left to bill</div>
         <div class="s">per ComputerEase schedules of values</div></div>
+      <div class="card${pendPc || pendCe ? ' soon' : ''}"><div class="n">${money(Math.max(pendPc, pendCe))}</div>
+        <div class="l">Pending change orders</div>
+        <div class="s">${pendPc === pendCe
+            ? 'raised but not approved &mdash; in none of the figures left of this'
+            : 'Procore ' + money(pendPc) + ' &middot; CE ' + money(pendCe) + ' &mdash; the two disagree'}</div></div>
     </div>
     <div class="exrow">${chips || '<span class="exclear">&#10003; No exceptions on these commitments</span>'}</div>`;
 
@@ -832,8 +841,8 @@ function render(){
         <input id="f-q" type="text" placeholder="subcontractor or commitment #" style="min-width:230px">
       </div>
       <div class="cards" id="cards"></div>
-      <div class="section-title">Commitments</div>
-      <div id="table"></div>
+      <!-- Queue first: it is what a PM opens the desk for. Commitments is the
+           reference table underneath it, not the headline. -->
       <div class="section-title">Pay application queue</div>
       <div id="queue"></div>
       <div class="stub">
@@ -847,7 +856,9 @@ function render(){
         identifies roughly <b>20 subcontractor draws a week</b>; matching each one to its
         commitment is what would let a PM compare the claimed amount against the contract
         position here, code it and approve it. Nothing on this page is an approval.
-      </div>`;
+      </div>
+      <div class="section-title">Commitments</div>
+      <div id="table"></div>`;
 
     document.getElementById('foot').innerHTML =
       `Commitments: Procore work-order contracts, ${STATE.commitments.length} rows across
