@@ -96,6 +96,49 @@
   .pawarn div{padding:2px 0 2px 15px;text-indent:-15px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
+  /* ---- tabs ----
+     Three, not two. The first two are different objects (see SP_PATH_QUEUE). */
+  .tabs{display:flex;gap:2px;margin:18px 0 0;border-bottom:2px solid #e3e8f0}
+  .tab{appearance:none;border:0;background:none;font:inherit;font-size:13px;font-weight:600;
+       color:#7a869a;padding:9px 16px 8px;cursor:pointer;border-bottom:2px solid transparent;
+       margin-bottom:-2px;white-space:nowrap}
+  .tab:hover{color:#1F3864}
+  .tab.on{color:#1F3864;border-bottom-color:#1F3864}
+  .tabn{display:inline-block;margin-left:7px;background:#1F3864;color:#fff;border-radius:9px;
+        padding:1px 7px;font-size:11px;font-variant-numeric:tabular-nums}
+  .tab:not(.on) .tabn{background:#c3cbd8}
+  .tabn.zero{display:none}
+  .tabpane{display:none}
+  .tabpane.on{display:block}
+
+  /* ---- received queue ---- */
+  .rqwrap{background:#fff;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);
+          padding:0;overflow:hidden;margin-top:16px}
+  .rqbar{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #eef2f8;
+         font-size:12px;color:#7a869a;flex-wrap:wrap}
+  .rqbar .rqcount{font-weight:700;color:#1F3864;font-size:13px}
+  .rqtab{width:100%;border-collapse:collapse;font-size:12.5px}
+  .rqtab thead th{background:#f7f9fc;color:#7a869a;font-size:11px;text-transform:uppercase;
+                  letter-spacing:.04em;font-weight:700;text-align:left;padding:8px 10px;
+                  border-bottom:1px solid #e3e8f0;white-space:nowrap}
+  .rqtab thead th.n{text-align:right}
+  .rqtab td{border-bottom:1px solid #f1f4f9;padding:9px 10px;vertical-align:top}
+  .rqtab td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .rqtab tr.rqrow{cursor:pointer}
+  .rqtab tr.rqrow:hover td{background:#fafbfe}
+  .rqtab tr.rqopen td{background:#f4f7fc}
+  .rqsub{color:#8a94a3;font-size:11px;margin-top:2px}
+  .rqage{font-variant-numeric:tabular-nums;font-weight:700}
+  .rqage.a0{color:#5a6473}
+  .rqage.a1{color:#b07d00}
+  .rqage.a2{color:#b3261e}
+  .rqdetail td{background:#fbfcfe;padding:0 10px 14px}
+  .rqnote{font-size:11.5px;color:#b07d00;margin-top:3px}
+  .rqlink{font-size:11.5px;text-decoration:none;color:#1F3864;font-weight:600}
+  .rqlink:hover{text-decoration:underline}
+  .rqmsg{padding:30px 22px;color:#5a6473;line-height:1.75;font-size:13px}
+  .rqmsg b{color:#1F3864}
+  .rqmsg code{background:#eef2f8;border-radius:4px;padding:1px 5px;font-size:12px}
   .tablescroll{overflow-x:auto;border-radius:10px}
   table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:12px}
   th,td{padding:7px 9px;text-align:center;border-bottom:1px solid #eef1f6;white-space:nowrap}
@@ -166,6 +209,28 @@ const DATA_FILE = 'ap_commitments.json';
    is tolerated and every billing cell falls back to "no data" rather than 0. */
 const EXPECTED_FILE = 'ap_payapp_expected.json';
 const CONTACT   = 'itadmin@baileyharris.com';
+
+/* ---- the RECEIVED queue -----------------------------------------------------
+   Phase B, and a DIFFERENT OBJECT from "expected to bill". Expected = who may
+   still bill, derived from commitments and CE's billed-to-date. Received = the
+   pay applications that have actually arrived in payables@. ap-payapp-handoff.md
+   section 0 is explicit that conflating the two is how this goes in circles, so
+   they are separate tabs and are never merged.
+
+   State lives on its OWN site, not /sites/Dashboard. Sites.Selected cannot scope
+   below site level, and /sites/Dashboard also holds LauncherData, which
+   LAUNCHER-DEPLOY.md requires be writable by nobody but IT. Same test that moved
+   the IT tracker off /sites/IT.
+
+   None of this exists yet. Every failure below degrades to a message rather than
+   an exception, so the rest of the desk works before the site is created. */
+const SP_PATH_QUEUE = '/sites/APDesk';
+const QUEUE_LIST    = 'AP Pay Applications';
+/* Where the pull writes the PDF it captured. MUST match the pull - it currently
+   writes to APData on /sites/Dashboard, which is the grant section 6 refuses, so
+   it has to move here with the list. */
+const QUEUE_DOCS    = 'https://' + SP_HOST + SP_PATH_QUEUE + '/Shared Documents/';
+
 
 const msalApp = new msal.PublicClientApplication({
   auth: { clientId: CLIENT_ID, authority: 'https://login.microsoftonline.com/' + TENANT_ID,
@@ -257,8 +322,69 @@ async function loadData(tok){
     if (e.ok) expected = await e.json();
   } catch (_) { /* leave expected null */ }
   const me = await whoAmI(tok);
-  return { commitments, expected, me };
+  /* The queue site may not exist yet; loadQueue reports that rather than throwing. */
+  const queue = await loadQueue(tok);
+  return { commitments, expected, me, queue };
 }
+
+/* Read the received queue. Every branch returns a REASON rather than throwing:
+   the site, the list and the items are each absent until IT creates them, and
+   the rest of the desk has to keep working meanwhile. */
+async function loadQueue(tok){
+  const site = await g(tok, '/sites/' + SP_HOST + ':' + SP_PATH_QUEUE);
+  if (site.status === 404) return { items: null, reason: 'nosite' };
+  if (site.status === 403) return { items: null, reason: 'nosite403' };
+  if (!site.ok || !site.body || !site.body.id) return { items: null, reason: 'site', status: site.status };
+
+  const lr = await g(tok, '/sites/' + site.body.id + '/lists/' + encodeURIComponent(QUEUE_LIST) + '?$select=id');
+  if (lr.status === 404) return { items: null, reason: 'nolist' };
+  if (!lr.ok || !lr.body || !lr.body.id) return { items: null, reason: 'list', status: lr.status };
+
+  const out = [];
+  let url = '/sites/' + site.body.id + '/lists/' + lr.body.id + '/items?$expand=fields&$top=200';
+  for (let page = 0; url && page < 40; page++) {
+    const r = await g(tok, url);
+    if (!r.ok) return { items: null, reason: 'items', status: r.status };
+    for (const it of (r.body.value || [])) if (it.fields) out.push(it.fields);
+    const next = r.body['@odata.nextLink'];
+    /* Graph hands back an absolute URL and g() prepends GRAPH, so strip it. */
+    url = next ? String(next).replace(GRAPH, '') : null;
+  }
+  return { items: out, reason: null };
+}
+
+/* ---- who sees which rows ----------------------------------------------------
+   pm_team carries the Project Management Team's EMAIL addresses, published by
+   ap_commitments_pull.js off projects_pull.js. Allowlisted departments and
+   people see every row; everyone else sees the projects they are on.
+
+   NOT A SECURITY BOUNDARY, same as the commitments file: anyone who can read the
+   list can read all of it with their own token. This decides what the page
+   SHOWS. Enforcing it needs item-level permissions on the list, or a per-viewer
+   file written server-side. */
+function myProjectNumbers(){
+  const me = STATE.me || {};
+  const mine = new Set();
+  if (!me.email) return mine;
+  for (const r of STATE.commitments) {
+    const n = String(r.project_number || '').trim();
+    if (n && (r.pm_team || []).some(e => norm(e) === me.email)) mine.add(n);
+  }
+  return mine;
+}
+/* Distinguishes "no project is yours" from "Procore holds no PM Team email at
+   all" - the second is a data problem and must not read as an empty inbox. */
+const anyPmTeamEmail = () => STATE.commitments.some(r => (r.pm_team || []).length > 0);
+
+const daysSince = iso => {
+  const t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86400000);
+};
+const shortDate = iso => {
+  const t = Date.parse(iso);
+  return isNaN(t) ? '' : new Date(t).toLocaleDateString(undefined, { month:'short', day:'numeric' });
+};
 
 /* ==== helpers ==== */
 // Same normalisation compliance_pull.js uses, so the join keys agree.
@@ -281,7 +407,9 @@ function retainageCell(r){
   return '<b>' + pct(p) + '</b> ' + dur;
 }
 
-let STATE = { commitments: [], sort: { col: 'project', dir: 1 }, billing: {}, billingMeta: null };
+let STATE = { commitments: [], sort: { col: 'project', dir: 1 }, billing: {}, billingMeta: null,
+              me: null, queue: null };
+let TAB = 'received';
 
 /* Joined on commitment number, which the probe work established equals the CE
    subcontract code exactly (40325AU002 in both systems). Vendor name is NOT a
@@ -481,7 +609,7 @@ const PA_LINES = [
   ['prevPaid','fixed','Less previous payments','Less Previous Payments — AIA G702 line 7'],
 ];
 
-function payappPanel(r){
+function payappPanel(r, pre){
   const e = payappExpected(r);
   if (!e.hasBilling) {
     return '<div class="pawrap"><div class="pamax"><span class="l">Adjusted contract</span>'
@@ -506,7 +634,10 @@ function payappPanel(r){
     '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>'
     + '<div class="paref">' + sub[k] + '</div></td>'
     + '<td class="n' + (kind==='fixed'?'':' paloose') + '">' + ours[k] + '</td>'
-    + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '" placeholder="&mdash;"></td>'
+    + '<td class="n"><input class="pain" type="text" inputmode="decimal" data-k="' + k + '"'
+    + ((pre && pre[k] !== null && pre[k] !== undefined && pre[k] !== '')
+        ? ' value="' + esc(Number(pre[k]).toFixed(2)) + '"' : '')
+    + ' placeholder="&mdash;"></td>'
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
@@ -543,7 +674,13 @@ function payappBind(tr, r){
     const v = Number(raw); return isNaN(v) ? null : v; };
   const put = (k,cls,txt) => { const c = tab.querySelector('[data-d="'+k+'"]');
     c.className = 'padelta ' + cls; c.innerHTML = txt; };
-  const near = (a,b) => Math.abs(a-b) < 0.005;
+  /* Compare at CENT precision, not with an epsilon. 'Ours' is computed at full
+     precision (5% of 412,211.50 is 20,610.575) while 'theirs' comes off a PDF at
+     two decimals, so a half-cent lands exactly on a 0.005 epsilon and reported a
+     1c difference on a correct application. Rounding both to cents first keeps
+     real differences - H.C. Blake's CO 002 was 11c short and still flags. */
+  const cents = v => Math.round(Number(v) * 100);
+  const near = (a,b) => cents(a) === cents(b);
 
   const upd = () => {
     PA_LINES.forEach(([k,kind]) => {
@@ -553,7 +690,8 @@ function payappBind(tr, r){
       if (kind === 'fixed') {
         if (e[k] == null) { put(k,'',''); return; }
         const d = v - e[k];
-        put(k, near(d,0)?'paok':'pabad', near(d,0) ? 'matches' : (d>0?'+':'') + money2(d));
+        const same = near(v, e[k]);
+        put(k, same?'paok':'pabad', same ? 'matches' : (d>0?'+':'') + money2(d));
 
       } else if (kind === 'range') {
         /* A new application SHOULD exceed what CE has posted - that is the work
@@ -568,12 +706,15 @@ function payappBind(tr, r){
         const want = e.retAt(base);
         if (want == null) { put(k,'',''); return; }
         const d = v - want;
-        put(k, near(d,0)?'paok':'pabad',
-            near(d,0) ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
+        const same = near(v, want);
+        put(k, same?'paok':'pabad',
+            same ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
       }
     });
   };
   tab.querySelectorAll('input[data-k]').forEach(i => i.addEventListener('input', upd));
+  /* Pre-filled 'theirs' values must reconcile on open, not on first keypress. */
+  upd();
 }
 
 /* Compliance is folded into each row by the pull, so there is no join here and
@@ -687,11 +828,251 @@ function bindQView(){
   if (s) s.onchange = () => { QVIEW = s.value; render(); };
 }
 
+/* ==== the received queue =====================================================
+   What a PM opens the desk for: the pay applications that have actually arrived,
+   with "theirs" already filled in off the PDF so the check is one glance rather
+   than twenty minutes of keying. Laid out after CE's Invoice Approval queue,
+   which is what everyone already knows - but aged, scoped and reconciled, which
+   CE's is not. */
+
+const RQ_STATUS = {
+  'received':             ['#eef1f6','#5a6473','Arrived in payables@. AP has not yet checked the mail against the PDF.'],
+  'AP verified':          ['#e7f0fb','#1F3864','AP confirmed the mail carries a real pay application PDF. Waiting on the PM.'],
+  'with PM':              ['#fff4d6','#8a6400','With the Project Management Team for review.'],
+  'PM approved':          ['#e4f4ea','#1b7a43','The PM has checked it against the contract position. Back to AP for entry.'],
+  'PM returned':          ['#fde8e6','#b3261e','The PM sent it back. See their note before it goes to the sub.'],
+  'approved and entered': ['#e4f4ea','#1b7a43','Entered in ComputerEase. Done.'],
+  'revise and resubmit':  ['#fde8e6','#b3261e','Returned to the subcontractor for a corrected application.'],
+};
+function rqStatusPill(s){
+  const k = String(s || 'received');
+  const d = RQ_STATUS[k] || ['#eef1f6','#5a6473',''];
+  return '<span class="pill" style="background:' + d[0] + ';color:' + d[1] + '"'
+       + (d[2] ? ' title="' + esc(d[2]) + '"' : '') + '>' + esc(k) + '</span>';
+}
+
+const RQ_OPEN = new Set();
+
+function receivedRows(){
+  const q = STATE.queue;
+  if (!q || !q.items) return null;
+  const byNum = {};
+  for (const r of STATE.commitments) {
+    const n = String(r.number || '').trim().toUpperCase();
+    if (n) byNum[n] = r;
+  }
+  return q.items.map(f => {
+    const num = String(f.Subcontract || '').trim().toUpperCase();
+    const c = byNum[num] || null;
+    return {
+      f, c,
+      id:       String(f.Title || f.MessageId || num || Math.random()),
+      vendor:   (c && c.vendor) || f.Vendor || '',
+      job:      String(f.JobNumber || (c && c.project_number) || '').trim(),
+      project:  (c && c.project) || '',
+      number:   num,
+      age:      daysSince(f.ReceivedAt),
+      due:      f.BalanceDue == null ? null : Number(f.BalanceDue),
+      status:   String(f.Status || 'received'),
+    };
+  });
+}
+
+/* The one-glance triage column. Only the adjusted contract is a FIXED check -
+   completed-to-date is a range and retainage is derived, so neither can be
+   called wrong from the list alone. Anything else here would be a false alarm. */
+function rqCheck(x){
+  if (!x.c) return ['<span class="pill" style="background:#eef1f6;color:#7a828f" title="No commitment in Procore carries this subcontract number, so there is nothing to check it against. Usually a number mis-keyed on the form, or a commitment that was never created.">no commitment</span>', 3];
+  if (String(x.f.MatchBasis || '') === 'unmatched')
+    return ['<span class="pill y" title="No subcontract number was found on the form, in the subject or in the filename. Someone has to identify this one by hand.">unidentified</span>', 2];
+  if (x.f.AdjustedContract == null)
+    return ['<span class="pill y" title="No adjusted contract figure came off the PDF - usually a scan. The figures need keying by hand before this can be checked.">needs keying</span>', 2];
+  const e = payappExpected(x.c);
+  if (!e || e.contract == null) return ['<span class="muted">&mdash;</span>', 1];
+  const d = Number(x.f.AdjustedContract) - e.contract;
+  if (Math.abs(d) < 0.005) return ['<span class="pill g" title="Their adjusted contract agrees with Procore to the cent.">contract ties</span>', 0];
+  return ['<span class="pill r" title="Their adjusted contract is ' + money2(Math.abs(d))
+        + (d > 0 ? ' higher' : ' lower') + ' than Procore. Either a change order has not reached one of the systems, or they are billing against something we have not approved.">'
+        + (d > 0 ? '+' : '&minus;') + money(Math.abs(d)) + '</span>', 4];
+}
+
+function renderReceived(){
+  const el = document.getElementById('received');
+  if (!el) return;
+  const q = STATE.queue || {};
+  const me = STATE.me || {};
+
+  /* --- not built yet, or not reachable --- */
+  const msg = t => { el.innerHTML = '<div class="rqwrap"><div class="rqmsg">' + t + '</div></div>';
+                     setTabCount('received', 0); };
+  if (!q.items) {
+    if (q.reason === 'nosite' || q.reason === 'nosite403') return msg(
+      '<b>The queue is not set up yet.</b><br>'
+      + 'Nothing has been built on <code>' + esc(SP_PATH_QUEUE) + '</code>. It needs a purpose-built '
+      + 'SharePoint site holding this list and nothing else, <code>Sites.Selected</code> Write granted '
+      + 'on it to the pull and to this page, and the <code>' + esc(QUEUE_LIST) + '</code> list created on it. '
+      + 'Everything else on this desk works without it.');
+    if (q.reason === 'nolist') return msg(
+      '<b>The site exists; the list does not.</b><br>'
+      + 'Create a list called <code>' + esc(QUEUE_LIST) + '</code> on <code>' + esc(SP_PATH_QUEUE)
+      + '</code>. Column names must carry no spaces &mdash; Graph writes by internal name, so '
+      + '"Job Number" becomes <code>Job_x0020_Number</code> and the write fails.');
+    return msg('<b>Could not read the queue.</b><br>'
+      + esc(QUEUE_LIST) + ' on ' + esc(SP_PATH_QUEUE) + ' returned HTTP ' + esc(String(q.status || '?'))
+      + '. If that is 403, this page&rsquo;s app has no <code>Sites.Selected</code> grant on that site yet. '
+      + 'Ask ' + esc(CONTACT) + '.');
+  }
+
+  let rows = receivedRows() || [];
+  const total = rows.length;
+
+  /* --- scope to the viewer --- */
+  let scopeNote = '';
+  if (!me.seesAll) {
+    if (!me.resolved) {
+      return msg('<b>Could not confirm who you are.</b><br>Graph did not return your account, so '
+        + 'nothing is shown rather than everything. Sign out and back in; if it persists, ask '
+        + esc(CONTACT) + '.');
+    }
+    if (!anyPmTeamEmail()) {
+      return msg('<b>No project in Procore carries a Project Management Team email address.</b><br>'
+        + 'Scoping the queue to the right PMs depends on that, so nothing is shown rather than '
+        + 'everything &mdash; this is a data gap, not an empty inbox. Procore team members need an '
+        + 'email on the Project Management Team role before this tab can work for anyone outside '
+        + 'Accounting. Ask ' + esc(CONTACT) + '.');
+    }
+    const mine = myProjectNumbers();
+    if (!mine.size) {
+      return msg('<b>No project lists you on its Project Management Team.</b><br>'
+        + 'The queue is scoped by that role in Procore, so there is nothing here for '
+        + esc(me.email) + '. If you run a job and this is wrong, you are missing from its '
+        + 'Project Management Team in Procore &mdash; ask ' + esc(CONTACT) + ' to add you.');
+    }
+    rows = rows.filter(x => mine.has(x.job));
+    scopeNote = 'your projects only';
+  } else {
+    scopeNote = 'all projects &middot; ' + esc(me.dept || 'allowlisted');
+  }
+
+  /* --- the desk's own filters still apply --- */
+  const projSel = document.getElementById('f-proj');
+  const pmSel   = document.getElementById('f-pm');
+  const qBox    = document.getElementById('f-q');
+  const proj = projSel ? projSel.value : '';
+  const pm   = pmSel ? pmSel.value : 'all';
+  const term = qBox ? qBox.value.trim().toUpperCase() : '';
+  if (proj && proj !== 'all') rows = rows.filter(x => x.project === proj);
+  if (pm && pm !== 'all') rows = rows.filter(x => x.c && (x.c.pm_team_names || []).includes(pm));
+  if (term) rows = rows.filter(x => (x.vendor + ' ' + x.number + ' ' + x.job).toUpperCase().includes(term));
+
+  setTabCount('received', rows.length);
+
+  if (!rows.length) {
+    return msg(total
+      ? '<b>Nothing here matches the current filters.</b><br>' + total
+        + ' pay application' + (total === 1 ? '' : 's') + ' in the queue overall.'
+      : '<b>Nothing in the queue.</b><br>No pay application has been imported from payables@ yet.');
+  }
+
+  /* Oldest first - this is a work queue, not a report. */
+  rows.sort((a,b) => (b.age == null ? -1 : b.age) - (a.age == null ? -1 : a.age));
+  const sum = rows.reduce((t,x) => t + (x.due || 0), 0);
+  /* A scan carries no figures. Totalling those as zero reads as 'they are asking
+     for nothing', which is the opposite of the truth - they are asking for an
+     amount nobody has keyed yet. */
+  const withFig = rows.filter(x => x.due != null).length;
+
+  const body = rows.map(x => {
+    const [chk] = rqCheck(x);
+    const a = x.age;
+    const acls = a == null ? 'a0' : a > 7 ? 'a2' : a > 3 ? 'a1' : 'a0';
+    const open = RQ_OPEN.has(x.id);
+    const head =
+      '<tr class="rqrow' + (open ? ' rqopen' : '') + '" data-rq="' + esc(x.id) + '">'
+      + '<td>' + esc(x.vendor || '(no vendor)')
+        + '<div class="rqsub">' + esc(x.number || 'no subcontract number')
+        + (x.project ? ' &middot; ' + esc(x.project) : '') + '</div></td>'
+      + '<td>' + (x.job ? esc(x.job) : '<span class="muted">&mdash;</span>') + '</td>'
+      + '<td>' + (x.f.PayRequest ? esc(String(x.f.PayRequest)) : '<span class="muted">&mdash;</span>')
+        + '<div class="rqsub">' + (x.f.PeriodEnding ? 'to ' + esc(shortDate(x.f.PeriodEnding)) : 'no period') + '</div></td>'
+      + '<td class="n">' + (x.due == null ? '<span class="muted">&mdash;</span>' : money(x.due))
+        + '<div class="rqsub">' + (x.f.CompletedToDate == null ? '' : 'of ' + money(x.f.CompletedToDate) + ' done') + '</div></td>'
+      + '<td class="n"><span class="rqage ' + acls + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
+        + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div></td>'
+      + '<td>' + chk + '</td>'
+      + '<td>' + rqStatusPill(x.status) + '</td></tr>';
+    if (!open) return head;
+
+    const pre = {
+      contract: x.f.AdjustedContract, billed: x.f.CompletedToDate,
+      retNow:   x.f.RetainageHeld,    prevPaid: x.f.PreviousPayments,
+    };
+    const note = x.f.ParseNote ? '<div class="rqnote">&#9888;&nbsp;' + esc(x.f.ParseNote) + '</div>' : '';
+    const links = []
+      .concat(x.f.PdfPath ? ['<a class="rqlink" href="' + esc(QUEUE_DOCS + x.f.PdfPath) + '" target="_blank" rel="noopener">Open the pay app PDF &rarr;</a>'] : [])
+      .concat(x.f.MessageLink ? ['<a class="rqlink" href="' + esc(x.f.MessageLink) + '" target="_blank" rel="noopener">Open the original mail &rarr;</a>'] : [])
+      .join(' &nbsp;&middot;&nbsp; ');
+    const panel = x.c ? payappPanel(x.c, pre)
+      : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
+        + esc(x.number || 'this number') + '</b>, so there is nothing to check these figures against.</div>';
+    return head
+      + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="7">'
+      + note + panel
+      + (links ? '<div style="margin-top:10px">' + links + '</div>' : '')
+      + '</td></tr>';
+  }).join('');
+
+  el.innerHTML = '<div class="rqwrap">'
+    + '<div class="rqbar"><span class="rqcount">' + rows.length + ' pay application'
+    +   (rows.length === 1 ? '' : 's') + '</span>'
+    +   '<span>' + (withFig
+          ? money(sum) + ' requested' + (withFig < rows.length
+              ? ' &middot; ' + (rows.length - withFig) + ' not yet keyed' : '')
+          : 'no figures keyed yet') + '</span>'
+    +   '<span>&middot;</span><span>' + scopeNote + '</span>'
+    +   '<span style="margin-left:auto">oldest first</span></div>'
+    + '<table class="rqtab"><thead><tr>'
+    +   '<th>Subcontractor</th><th>Job</th><th>Pay req</th>'
+    +   '<th class="n">Requested</th><th class="n">Age</th><th>Check</th><th>Status</th>'
+    + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+
+  el.querySelectorAll('tr.rqrow').forEach(tr => {
+    tr.onclick = () => {
+      const id = tr.dataset.rq;
+      if (RQ_OPEN.has(id)) RQ_OPEN.delete(id); else RQ_OPEN.add(id);
+      renderReceived();
+    };
+  });
+  /* Bind the deltas on whichever rows are expanded, so the pre-filled "theirs"
+     figures are reconciled the moment the row opens rather than on first keypress. */
+  rows.forEach(x => {
+    if (!RQ_OPEN.has(x.id) || !x.c) return;
+    const d = el.querySelector('tr[data-rqd="' + CSS.escape(x.id) + '"]');
+    if (d) payappBind(d, x.c);
+  });
+}
+
+function setTabCount(name, n){
+  const b = document.getElementById('tabn-' + name);
+  if (!b) return;
+  b.textContent = n;
+  b.className = 'tabn' + (n ? '' : ' zero');
+}
+
+function setTab(name){
+  TAB = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('on', p.dataset.pane === name));
+}
+
 function render(){
   const proj = document.getElementById('f-proj').value;
   const pm   = document.getElementById('f-pm').value;
   /* Either entry point opens the desk: one project, or one PM across every job
      they run. Only the two together being unset is the blank state. */
+  /* The received queue is an INBOX: it is not gated on picking a project, because a
+     PM opening the desk wants to see what has arrived for them across every job. */
+  renderReceived();
   if (!proj && pm === 'all') {
     document.getElementById('cards').innerHTML = '';
     { const q = document.getElementById('queue'); if (q) q.innerHTML = ''; }
@@ -839,6 +1220,7 @@ function render(){
     const loaded = await loadData(tok);
     const ap = loaded.commitments;
     STATE.commitments = ap.commitments || [];
+    STATE.me = loaded.me; STATE.queue = loaded.queue;
     if (loaded.expected) {
       STATE.billingMeta = loaded.expected;
       for (const row of (loaded.expected.rows || [])) STATE.billing[String(row.commitment||'').trim()] = row;
@@ -874,8 +1256,9 @@ function render(){
         <p><b>What this page shows today:</b> every active subcontract commitment in Procore, with its
         retainage term, contract value, project manager, compliance status from Billy and its
         ComputerEase vendor code. Bailey-Harris self-perform commitments are excluded.
-        <br><b>What it does not show yet:</b> the pay application queue. Matching incoming draws
-        from payables@ to these commitments is the next build — nothing on this page is an approval.</p>
+        <br><b>Pay applications received</b> are read from payables@ and matched to these
+        commitments, with the subcontractor's own figures filled in off the PDF. Nothing on this
+        page is an approval.</p>
       </div>
       <div class="controls">
         <label>Project:</label>
@@ -893,24 +1276,30 @@ function render(){
         <input id="f-q" type="text" placeholder="subcontractor or commitment #" style="min-width:230px">
       </div>
       <div class="cards" id="cards"></div>
-      <!-- Queue first: it is what a PM opens the desk for. Commitments is the
-           reference table underneath it, not the headline. -->
-      <div class="section-title">Pay application queue</div>
-      <div id="queue"></div>
-      <div class="stub">
-        <h3>What is still missing</h3>
-        The queue is the <b>expected</b> side only &mdash; who can still bill, and how much.
-        It cannot say who has <b>already</b> billed this cycle, because nothing we hold carries a
-        billing date: ComputerEase gives a billed-to-date amount with no date attached, and
-        Procore's own payment fields read zero on every commitment because the billing happens
-        in ComputerEase.<br><br>
-        The missing piece is the incoming pay app itself. The mail probe reads payables@ and
-        identifies roughly <b>20 subcontractor draws a week</b>; matching each one to its
-        commitment is what would let a PM compare the claimed amount against the contract
-        position here, code it and approve it. Nothing on this page is an approval.
+      <!-- Three tabs, not two. "Received" and "Expected to bill" are different
+           objects and handoff section 0 warns that merging them is how this goes
+           in circles: expected is derived from commitments, received is what
+           actually arrived in payables@. -->
+      <div class="tabs" id="tabs">
+        <button class="tab" data-tab="received">Pay applications received<span class="tabn zero" id="tabn-received"></span></button>
+        <button class="tab" data-tab="expected">Expected to bill</button>
+        <button class="tab" data-tab="commitments">Commitments</button>
       </div>
-      <div class="section-title">Commitments</div>
-      <div id="table"></div>`;
+      <div class="tabpane" data-pane="received"><div id="received"></div></div>
+      <div class="tabpane" data-pane="expected">
+        <div id="queue"></div>
+        <div class="stub">
+          <h3>What this tab is, and is not</h3>
+          This is the <b>expected</b> side only &mdash; who can still bill, and how much. It
+          cannot say who has <b>already</b> billed this cycle, because nothing we hold carries a
+          billing date: ComputerEase gives a billed-to-date amount with no date attached, and
+          Procore's own payment fields read zero on every commitment because the billing happens
+          in ComputerEase.<br><br>
+          What has actually arrived is the <b>Pay applications received</b> tab, read from
+          payables@. Nothing on either tab is an approval.
+        </div>
+      </div>
+      <div class="tabpane" data-pane="commitments"><div id="table"></div></div>`;
 
     document.getElementById('foot').innerHTML =
       `Commitments: Procore work-order contracts, ${STATE.commitments.length} rows across
@@ -925,6 +1314,9 @@ function render(){
             ? `; no CE billing data for ${STATE.billingMeta.jobs_without_job_totals.length} job(s) (${esc(STATE.billingMeta.jobs_without_job_totals.join(', '))}) — those rows show "no CE data", not zero.`
             : '.')
         : ` Billings not loaded — ${EXPECTED_FILE} is not in ${LIBRARY} yet, so the Billed column is empty.`);
+
+    document.querySelectorAll('.tab').forEach(t => t.onclick = () => setTab(t.dataset.tab));
+    setTab(TAB);
 
     ['f-proj','f-pm','f-comp'].forEach(id => document.getElementById(id).onchange = render);
     document.getElementById('f-q').oninput = render;
