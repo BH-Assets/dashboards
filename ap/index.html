@@ -253,17 +253,62 @@ const FLAG_TEXT = {
   no_job_totals:          ['b','no CE data','This job does not publish to the ComputerEase API, so no billing figure is available.'],
   no_ce_subcontract:      ['b','no CE match','No ComputerEase subcontract carries this commitment number.'],
   retainage_stop_reached: ['b','past 50%','Billings have passed half the revised contract - on a "thru 50%" term, withholding should have stopped.'],
+  pending_rfc:            ['y','pending CO','A change order sits on this ComputerEase subcontract at pending approval. It is not contract value yet, so it is excluded from the schedule of values here - which is right, but it also means the sub may bill against it before anyone approves it.'],
+  no_committed_cells:     ['b','nothing in job cost','The subcontract exists in ComputerEase but none of its cost codes carries a committed cell in job cost, so nothing has been posted against it yet. Expected on a subcontract entered recently. Worth asking about on an old one.'],
 };
 
 /* Billed to date, with what is left and any exception beneath it. Keeping the
    qualifier in the same cell avoids spending two more columns on a table that
    is already wide. */
+/* A pending RFC is worth seeing whether or not there is a billed figure, so it
+   renders on both paths rather than only in the pills row below. */
+function pendingPill(b){
+  if (!b || !b.ce_pending_sov) return '';
+  const [cls,label,tip] = FLAG_TEXT.pending_rfc;
+  return ' <span class="pill ' + cls + '" title="' + esc(tip
+    + ' RFC ' + (b.ce_pending_rfcs||'?') + ', ' + money(b.ce_pending_sov) + '.') + '">' + label + '</span>';
+}
+
+/* Procore's revised contract and CE's schedule of values are two different
+   figures from two different systems, and the desk used to show only Procore's.
+   The "contract differs" flag said they disagreed but not which way, and the
+   direction IS the diagnosis: Procore higher means an approved change order
+   never reached CE (a CO title over the character limit fails to sync silently);
+   CE higher means it was entered straight into CE and Procore understates the
+   contract. Both figures now sit side by side with the gap signed from CE. */
+function ceContractCell(r){
+  const b = billingFor(r);
+  if (!b) return '<span class="muted" title="No row in ' + EXPECTED_FILE + ' for this commitment">&mdash;</span>';
+  if (b.ce_sov === null || b.ce_sov === undefined) {
+    const f = (b.flags||[]).find(x => ['no_ce_subcontract','no_job_totals','no_committed_cells'].includes(x));
+    const label = f ? FLAG_TEXT[f][1] : 'not matched';
+    const tip = ((f ? FLAG_TEXT[f][2] : '') + ' ' + (b.billed_source||'')).trim();
+    return '<span class="pill b" title="' + esc(tip) + '">' + label + '</span>';
+  }
+  const gap = b.pc_vs_ce_contract_gap;          // Procore revised - CE SOV
+  const sub = !gap ? ''
+    : gap > 0
+      ? '<div class="sub co" title="Procore is higher by this much. An approved change order has not reached CE.">'
+          + money(gap) + ' under Procore</div>'
+      : '<div class="sub co" title="CE is higher by this much. The change order was entered straight into CE and Procore is understating the contract.">'
+          + money(Math.abs(gap)) + ' over Procore</div>';
+  return money(b.ce_sov) + sub
+    + (b.ce_pending_sov
+        ? '<div class="sub" title="A change order on this CE subcontract is still pending approval, so it is not in the figure above.">'
+            + money(b.ce_pending_sov) + ' pending</div>'
+        : '');
+}
+
 function billedCell(r){
   const b = billingFor(r);
   if (!b) return '<span class="muted" title="No row in ' + EXPECTED_FILE + ' for this commitment">—</span>';
   if (b.ce_billed === null || b.ce_billed === undefined) {
-    const why = (b.flags||[]).includes('no_job_totals') ? 'no CE data' : 'not matched';
-    return '<span class="pill b" title="' + esc(b.billed_source||'') + '">' + why + '</span>';
+    /* Three different reasons there is no figure, and they are not the same
+       thing. "not matched" was being shown for all of them. */
+    const f = (b.flags||[]).find(x => ['no_committed_cells','no_job_totals','no_ce_subcontract'].includes(x));
+    const label = f ? FLAG_TEXT[f][1] : 'not matched';
+    const tip = ((f ? FLAG_TEXT[f][2] : '') + ' ' + (b.billed_source||'')).trim();
+    return '<span class="pill b" title="' + esc(tip) + '">' + label + '</span>' + pendingPill(b);
   }
   const flags = (b.flags||[]).filter(f => FLAG_TEXT[f]);
   const pills = flags.map(f => {
@@ -373,8 +418,9 @@ function payappPanel(r){
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
-  if (e.gap) warn.push('Procore and CE differ by <b>' + money2(Math.abs(e.gap))
-    + '</b> &mdash; a change order is in one system only.');
+  if (e.gap) warn.push(e.gap > 0
+    ? 'Procore is <b>' + money2(e.gap) + '</b> higher than CE &mdash; an approved change order has not reached CE.'
+    : 'CE is <b>' + money2(-e.gap) + '</b> higher than Procore &mdash; the change order was entered straight into CE.');
   if (e.thru50 && e.past50) warn.push('Past 50% &mdash; no further retainage should be withheld. '
     + 'Their retainage &divide; ' + (e.pctR/2) + '% recovers the contract they are billing against.');
   if (e.flags.includes('sov_gap')) warn.push('Billed plus remaining does not reconcile to the schedule of values.');
@@ -584,6 +630,7 @@ function render(){
   rows.sort((a,b) => {
     let x, y;
     if (col === 'ce_billed') { const ba=billingFor(a), bb=billingFor(b); x=(ba&&ba.ce_billed)||0; y=(bb&&bb.ce_billed)||0; }
+    else if (col === 'ce_sov') { const ba=billingFor(a), bb=billingFor(b); x=(ba&&ba.ce_sov)||0; y=(bb&&bb.ce_sov)||0; }
     else { x = a[col]; y = b[col]; }
     if (typeof x === 'number' || typeof y === 'number') return ((x||0)-(y||0))*dir;
     return String(x||'').localeCompare(String(y||''))*dir;
@@ -624,7 +671,8 @@ function render(){
   const cols = [
     ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
     ['compliance','Compliance',''],
-    ['revised_contract','Contract','num'], ['ce_billed','Billed to date','num'],
+    ['revised_contract','Contract &middot; Procore','num'], ['ce_sov','Contract &middot; CE','num'],
+    ['ce_billed','Billed to date','num'],
     ['retainage_percent','Retainage',''], ['project_manager','PM','l'], ['status','Status','']
   ];
   const head = cols.map(([k,label,cls]) =>
@@ -634,7 +682,7 @@ function render(){
       const c = complianceFor(r);
       return !c ? 'nobilly' : (c.billy_is_compliant === 'Yes' ? '' : 'noncompliant');
     })()}">
-      <td class="l wrap">${esc(r.project)}</td>
+      <td class="l wrap">${esc(r.project)}${r.project_number ? `<div class="sub">${esc(r.project_number)}</div>` : ''}</td>
       <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
         <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
@@ -645,11 +693,12 @@ function render(){
       <td>${compCell(r)}</td>
       <td class="num">${money(r.revised_contract || r.contract_value)}
         ${r.approved_change_orders ? `<div class="sub co" title="Approved change orders included above">+${money(r.approved_change_orders)} CO</div>` : ''}</td>
+      <td class="num">${ceContractCell(r)}</td>
       <td class="num">${billedCell(r)}</td>
       <td>${retainageCell(r)}</td>
       <td class="l">${esc(r.project_manager)||'<span class="muted">—</span>'}</td>
       <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>':'')}</td>
-    </tr>`).join('') : `<tr><td colspan="9" class="empty">No commitments match these filters.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="10" class="empty">No commitments match these filters.</td></tr>`;
 
   document.getElementById('table').innerHTML =
     `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -668,7 +717,7 @@ function render(){
     if (!r) return;
     const det = document.createElement('tr');
     det.className = 'parow';
-    det.innerHTML = '<td colspan="9">' + payappPanel(r) + '</td>';
+    det.innerHTML = '<td colspan="10">' + payappPanel(r) + '</td>';
     tr.insertAdjacentElement('afterend', det);
     btn.setAttribute('aria-expanded','true');
     payappBind(det, r);
@@ -698,7 +747,15 @@ function render(){
     document.getElementById('asof').textContent = 'commitments as of ' + when.toLocaleString()
       + (STATE.billingMeta ? ' · billings ' + new Date(STATE.billingMeta.generated_at).toLocaleDateString() : ' · billings not loaded');
 
-    const projects = [...new Set(STATE.commitments.map(r => r.project))].sort();
+    /* The picker listed names only, and BH names repeat across years. The job
+       number is already on every commitment row; the option VALUE stays the
+       project name because that is what the filter compares. */
+    const projNum = {};
+    for (const r of STATE.commitments)
+      if (r.project && r.project_number && !projNum[r.project]) projNum[r.project] = String(r.project_number);
+    const projects = [...new Set(STATE.commitments.map(r => r.project))]
+      .map(p => ({ name: p, label: (projNum[p] ? projNum[p] + ' \u00b7 ' : '') + p }))
+      .sort((a,b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
     const pms = [...new Set(STATE.commitments.map(r => r.project_manager).filter(Boolean))].sort();
 
     document.getElementById('content').innerHTML = `
@@ -722,7 +779,7 @@ function render(){
       <div class="controls">
         <label>Project:</label>
         <select id="f-proj"><option value="">Select a project&hellip;</option>
-          ${projects.map(p=>`<option>${esc(p)}</option>`).join('')}
+          ${projects.map(p=>`<option value="${esc(p.name)}">${esc(p.label)}</option>`).join('')}
           <option value="all">All projects (${projects.length})</option></select>
         <label>PM:</label>
         <select id="f-pm"><option value="all">All PMs</option>
