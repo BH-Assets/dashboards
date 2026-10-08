@@ -337,10 +337,17 @@ async function loadData(tok){
    the site, the list and the items are each absent until IT creates them, and
    the rest of the desk has to keep working meanwhile. */
 async function loadQueue(tok){
-  const site = await g(tok, '/sites/' + SP_HOST + ':' + SP_PATH_QUEUE);
-  if (site.status === 404) return { items: null, reason: 'nosite' };
-  if (site.status === 403) return { items: null, reason: 'nosite403' };
-  if (!site.ok || !site.body || !site.body.id) return { items: null, reason: 'site', status: site.status };
+  /* 404 and 403 mean opposite things and were being reported with the same
+     message ("nothing has been built"), which is a confident wrong answer when
+     the site exists and the caller simply cannot see it. Carry the status and
+     the error Graph returned. */
+  const sitePath = '/sites/' + SP_HOST + ':' + SP_PATH_QUEUE;
+  const site = await g(tok, sitePath);
+  const gErr = (site.body && site.body.error && (site.body.error.message || site.body.error.code)) || '';
+  if (site.status === 404) return { items: null, reason: 'nosite', status: 404, path: sitePath, err: gErr };
+  if (site.status === 403) return { items: null, reason: 'nosite403', status: 403, path: sitePath, err: gErr };
+  if (!site.ok || !site.body || !site.body.id)
+    return { items: null, reason: 'site', status: site.status, path: sitePath, err: gErr };
 
   const lr = await g(tok, '/sites/' + site.body.id + '/lists/' + encodeURIComponent(QUEUE_LIST) + '?$select=id');
   if (lr.status === 404) return { items: null, reason: 'nolist' };
@@ -1044,12 +1051,19 @@ function renderReceived(){
   const msg = t => { el.innerHTML = '<div class="rqwrap"><div class="rqmsg">' + t + '</div></div>';
                      setTabCount('received', 0); };
   if (!q.items) {
-    if (q.reason === 'nosite' || q.reason === 'nosite403') return msg(
-      '<b>The queue is not set up yet.</b><br>'
-      + 'Nothing has been built on <code>' + esc(SP_PATH_QUEUE) + '</code>. It needs a purpose-built '
-      + 'SharePoint site holding this list and nothing else, <code>Sites.Selected</code> Write granted '
-      + 'on it to the pull and to this page, and the <code>' + esc(QUEUE_LIST) + '</code> list created on it. '
-      + 'Everything else on this desk works without it.');
+    const detail = '<div class="sub" style="margin-top:8px">Graph: <code>GET ' + esc(q.path || '')
+      + '</code> &rarr; <b>HTTP ' + esc(String(q.status || '?')) + '</b>'
+      + (q.err ? ' &mdash; ' + esc(String(q.err)) : '') + '</div>';
+    if (q.reason === 'nosite') return msg(
+      '<b>Graph cannot find <code>' + esc(SP_PATH_QUEUE) + '</code>.</b><br>'
+      + 'A 404 means no site resolves at that path for this sign-in. Either the site is at a '
+      + 'different URL than <code>' + esc(SP_PATH_QUEUE) + '</code>, or it was created so recently '
+      + 'that Graph has not caught up. Everything else on this desk works without it.' + detail);
+    if (q.reason === 'nosite403') return msg(
+      '<b>The site exists, but this sign-in cannot read it.</b><br>'
+      + 'A 403 is a permission answer, not a missing site. Either this page&rsquo;s app has no '
+      + '<code>Sites.Selected</code> grant on <code>' + esc(SP_PATH_QUEUE) + '</code>, or the signed-in '
+      + 'account has no access to the site itself &mdash; delegated access needs both.' + detail);
     if (q.reason === 'nolist') return msg(
       '<b>The site exists; the list does not.</b><br>'
       + 'Create a list called <code>' + esc(QUEUE_LIST) + '</code> on <code>' + esc(SP_PATH_QUEUE)
@@ -1058,7 +1072,7 @@ function renderReceived(){
     return msg('<b>Could not read the queue.</b><br>'
       + esc(QUEUE_LIST) + ' on ' + esc(SP_PATH_QUEUE) + ' returned HTTP ' + esc(String(q.status || '?'))
       + '. If that is 403, this page&rsquo;s app has no <code>Sites.Selected</code> grant on that site yet. '
-      + 'Ask ' + esc(CONTACT) + '.');
+      + 'Ask ' + esc(CONTACT) + '.' + detail);
   }
 
   let rows = receivedRows() || [];
