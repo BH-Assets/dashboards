@@ -121,10 +121,10 @@
   .rqtab thead th{background:#f7f9fc;color:#7a869a;font-size:11px;text-transform:uppercase;
                   letter-spacing:.04em;font-weight:700;text-align:left;padding:8px 10px;
                   border-bottom:1px solid #e3e8f0;white-space:nowrap}
-  .rqtab thead th.n{text-align:right}
-  .rqtab td{border-bottom:1px solid #f1f4f9;padding:9px 10px;vertical-align:top}
+  .rqtab td{border-bottom:1px solid #f1f4f9;padding:9px 10px;vertical-align:top;text-align:left}
   /* Everything left-aligned: this is a work queue that gets scanned down the
      left edge, not a financial statement being totalled. */
+  .rqtab thead th,.rqtab thead th.n{text-align:left}
   .rqtab td.n,.rqtab th.n{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
   .rqtab th:first-child,.rqtab td:first-child{padding-left:18px}
   .rqtab th:last-child,.rqtab td:last-child{padding-right:18px}
@@ -1012,6 +1012,8 @@ function rqStatusPill(s){
 }
 
 const RQ_OPEN = new Set();
+/* row id -> {cls,text}. Survives the re-render that follows a save. */
+const RQ_MSG  = new Map();
 
 function receivedRows(){
   const q = STATE.queue;
@@ -1026,7 +1028,10 @@ function receivedRows(){
     const c = byNum[num] || null;
     return {
       f, c,
-      id:       String(f.Title || f.MessageId || num || Math.random()),
+      /* The list item id, not a field - a field can be edited, and an id that
+         changes when you key a number in drops the row out of RQ_OPEN and
+         collapses it on re-render. */
+      id:       String(f._itemId || f.Title || f.MessageId || num || Math.random()),
       itemId:   f._itemId,
       vendor:   (c && c.vendor) || f.Vendor || '',
       job:      String(f.JobNumber || (c && c.project_number) || '').trim(),
@@ -1248,7 +1253,7 @@ function renderReceived(){
   el.querySelectorAll('tr.rqrow').forEach(tr => {
     tr.onclick = () => {
       const id = tr.dataset.rq;
-      if (RQ_OPEN.has(id)) RQ_OPEN.delete(id); else RQ_OPEN.add(id);
+      if (RQ_OPEN.has(id)) { RQ_OPEN.delete(id); RQ_MSG.delete(id); } else RQ_OPEN.add(id);
       renderReceived();
     };
   });
@@ -1256,6 +1261,8 @@ function renderReceived(){
   /* The detail row sits inside the table; without this a click on an input
      bubbles to the row handler and collapses the thing being typed into. */
   el.querySelectorAll('tr.rqdetail').forEach(tr => tr.onclick = e => e.stopPropagation());
+
+  paintSaveNotes(el);
 
   el.querySelectorAll('.rqedit button[data-save]').forEach(btn => {
     btn.onclick = async () => {
@@ -1275,15 +1282,17 @@ function renderReceived(){
       });
       if (!Object.keys(patch).length) { msgEl.className = 'msg'; msgEl.textContent = 'Nothing changed.'; return; }
       btn.disabled = true; msgEl.className = 'msg'; msgEl.textContent = 'Saving\u2026';
-      const ok = await saveQueueItem(row.itemId, patch);
+      const res = await saveQueueItem(row.itemId, patch);
       btn.disabled = false;
-      if (ok === true) {
-        Object.assign(row.f, patch);          // keep the page in step with the list
-        msgEl.className = 'msg ok'; msgEl.textContent = 'Saved.';
+      if (res && typeof res === 'object') {
+        /* Take what SharePoint actually holds, not what we hoped it took. */
+        Object.assign(row.f, res.stored || patch);
+        RQ_MSG.set(row.id, { cls: 'ok', text: res.warn || 'Saved.' });
         setTimeout(renderReceived, 400);
       } else {
-        msgEl.className = 'msg bad'; msgEl.textContent = 'Not saved \u2014 ' + ok;
+        RQ_MSG.set(row.id, { cls: 'bad', text: 'Not saved \u2014 ' + res });
       }
+      paintSaveNotes(el);
     };
   });
   /* Bind the deltas on whichever rows are expanded, so the pre-filled "theirs"
@@ -1298,23 +1307,57 @@ function renderReceived(){
 /* PATCH one list item as the SIGNED-IN USER, not as an app. SharePoint then
    records the name against the change in the item's version history, which is
    the whole reason queue state lives in a list rather than in a JSON file. */
+/* The editor is rebuilt by renderReceived, so anything written straight into
+   the .msg span is lost on the next pass. Repaint from RQ_MSG instead. */
+function paintSaveNotes(el){
+  RQ_MSG.forEach((m, id) => {
+    const box = el.querySelector('.rqedit[data-edit="' + CSS.escape(id) + '"] .msg');
+    if (box) { box.className = 'msg ' + m.cls; box.textContent = m.text; }
+  });
+}
+
+/* A field survived the round trip. Dates come back as full ISO whatever was
+   sent, so they are compared on the day only. */
+function sameFieldValue(got, sent){
+  const s = x => String(x == null ? '' : x).trim();
+  if (sent == null) return s(got) === '';
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s(sent)) || /^\d{4}-\d{2}-\d{2}T/.test(s(got)))
+    return s(got).slice(0,10) === s(sent).slice(0,10);
+  return s(got) === s(sent);
+}
+
 async function saveQueueItem(itemId, fields){
   const q = STATE.queue;
   if (!q || !q.siteId || !q.listId) return 'the queue list is not loaded';
   if (!itemId) return 'this row has no list item behind it';
+  const url = GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId
+            + '/items/' + encodeURIComponent(itemId) + '/fields';
   try {
     const tok = await token();
     if (!tok) return 'not signed in';
-    const r = await fetch(GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId
-                          + '/items/' + encodeURIComponent(itemId) + '/fields',
+    const r = await fetch(url,
       { method: 'PATCH',
         headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
         body: JSON.stringify(fields) });
-    if (r.ok) return true;
-    let why = 'HTTP ' + r.status;
-    try { const b = await r.json(); if (b && b.error && b.error.message) why += ' - ' + b.error.message; } catch (_) {}
-    if (r.status === 403) why += ' (you need Contribute on the site, not just read)';
-    return why;
+    if (!r.ok) {
+      let why = 'HTTP ' + r.status;
+      try { const b = await r.json(); if (b && b.error && b.error.message) why += ' - ' + b.error.message; } catch (_) {}
+      if (r.status === 403) why += ' (you need Contribute on the site, not just read)';
+      return why;
+    }
+    /* A 200 is NOT proof the value landed. Graph writes columns by their
+       INTERNAL name; a name that does not match one is accepted and dropped
+       without complaint. Read the item back and say which fields did not
+       stick, rather than printing "Saved." over a write that did nothing. */
+    const v = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+    if (!v.ok)
+      return { warn: 'Saved, but it could not be read back to confirm (HTTP ' + v.status + ').' };
+    const got = await v.json();
+    const dropped = Object.keys(fields).filter(k => !sameFieldValue(got[k], fields[k]));
+    if (dropped.length)
+      return 'SharePoint accepted the request but stored nothing for '
+           + dropped.join(', ') + ' \u2014 those column names do not match the list';
+    return { stored: got };
   } catch (e) { return e.message || 'request failed'; }
 }
 
