@@ -404,12 +404,20 @@ const pct = v => (v === null || v === undefined || v === '') ? '' : Number(v).to
    the full name stays in the title attribute, the job number sits on the line
    beneath, and every filter still compares the full name - nothing downstream
    ever sees the short form. */
+/* The rule below gets 57 of 58 right, but it cannot know that Wallace State is
+   WSCC to everyone here - the probe's own mail sample is full of "FW: WSCC PR5"
+   and "WSCC STEM & Auto". House names win over any rule. Match on a distinctive
+   fragment of the Procore name, case-insensitive; add a line when you spot one. */
+const PROJ_HOUSE = [
+  [/wallace\s+state/i, 'WSCC STEM & Auto'],
+];
 const PROJ_INST = /\b(community college|technical college|university|college|high school|middle school|elementary school|medical center|hospital|city of|county of)\b/i;
 const PROJ_DROP = /\b(renovations?|additions?|improvements?|construction|upgrades?|replacements?|expansions?|project|building|phase\s+[ivx\d]+)\b/gi;
 
 function shortProject(name){
   const full = String(name || '').replace(/\s+/g, ' ').trim();
   if (!full) return '';
+  for (const [re, label] of PROJ_HOUSE) if (re.test(full)) return label;
   let s = full.replace(/\s*\([^)]*\)\s*$/, '');
 
   /* An institution named before a separator is the campus, not the job.
@@ -1247,8 +1255,22 @@ function render(){
         ${(r.status || r.executed === 'No') ? `<div class="sub">${esc(r.status||'')}${
             r.executed === 'No' ? ' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>' : ''
           }</div>` : ''}
-        ${(r.contract_value !== null && r.contract_value !== undefined && r.contract_value !== '')
-            ? `<div class="sub" title="The subcontract as originally executed, before any change order. The Contract &middot; Procore column is the revised figure; the difference between them is what has been added since.">orig ${money(r.contract_value)}</div>` : ''}
+${(() => {
+          /* Both figures on one line: the subcontract as executed, and where it
+             stands now. Reading them side by side is the point - the gap is what
+             has been added since signing. Shown here as well as in the contract
+             columns so the whole picture is in one cell without scrolling. */
+          const o = r.contract_value, v = r.revised_contract;
+          const has = x => x !== null && x !== undefined && x !== '';
+          if (!has(o) && !has(v)) return '';
+          const same = has(o) && has(v) && Math.round(Number(o)) === Math.round(Number(v));
+          const txt = same
+            ? 'contract ' + money(o) + ' <span class="muted">&middot; no COs</span>'
+            : (has(o) ? 'orig ' + money(o) : '')
+              + (has(o) && has(v) ? ' <span class="muted">&middot;</span> ' : '')
+              + (has(v) ? 'rev ' + money(v) : '');
+          return `<div class="sub" title="Left: the subcontract as originally executed. Right: the revised contract including approved change orders. The difference is what has been added since signing.">${txt}</div>`;
+        })()}
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
         <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
           title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
