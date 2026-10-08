@@ -780,18 +780,19 @@ const complianceFor = r => r.compliance || null;
 
 function compCell(r){
   const c = complianceFor(r);
-  if (!c) return '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>';
-  /* Billy tracks compliance PER CONTRACT. When the join could only match on
-     project and vendor, this status belongs to the subcontractor on this job and
-     not necessarily to THIS commitment - and a vendor can hold one compliant and
-     one non-compliant contract on the same project. Mark it rather than let a
-     weaker match read like an exact one. */
-  const weak = c.matched_on === 'project+vendor'
-    ? '<span class="sub" style="color:#b07d00" title="Billy had no contract number on this record, so this status was matched on the subcontractor and project rather than on this commitment. A vendor can hold two contracts on one job with different compliance - check Billy before relying on it.">vendor-level match</span>'
-    : '';
-  if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>' + weak;
+  if (!c) {
+    /* Billy tracks compliance PER CONTRACT. Where Billy holds other contracts
+       for this vendor on this job but none for THIS commitment, that is a
+       record someone needs to create - not a subcontractor nobody ever asked
+       for a certificate. Naming the contracts Billy does have makes it
+       actionable instead of a shrug. */
+    const others = (r.billy_other_contracts || []).filter(Boolean);
+    if (others.length) return '<span class="pill y" title="Billy has no contract for this commitment, so nothing about it has been verified. It does track ' + esc(others.join(', ')) + ' for this subcontractor on this job - a different contract, with different coverage requirements. A Billy contract needs creating for this one.">no Billy contract</span>';
+    return '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>';
+  }
+  if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>';
   const t = c.notes ? ' title="' + esc(c.notes).replace(/"/g,'&quot;') + '"' : '';
-  return '<span class="pill r"' + t + '>non-compliant</span>' + weak;
+  return '<span class="pill r"' + t + '>non-compliant</span>';
 }
 
 /* The desk opens on one project, not all of them. A sub pay app is reviewed
