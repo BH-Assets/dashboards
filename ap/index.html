@@ -719,10 +719,17 @@ function payappPanel(r, pre){
      the contract - they cannot earn more than exists - and retainage is
      recomputed on that capped figure. */
   const theirPrev = nz(pre && pre.prevPaid);
+  const theirDue  = nz(pre && pre.due);
+  /* CE's cumulative payable less the request on the table = what was paid before.
+     Sound only because CE posted this application at the amount asked for - which
+     is exactly what ce_billed matching their completed-to-date tells us. */
+  const derivedPrev = (absorbed && theirDue != null && e.prevPaid != null)
+                        ? e.prevPaid - theirDue : null;
+  const usePrev   = derivedPrev != null ? derivedPrev : theirPrev;
   const earned    = absorbed ? Math.min(nz(pre.billed), e.contract) : null;
   const retDue    = earned == null ? null : e.retAt(earned);
-  const payNow    = (earned != null && retDue != null && theirPrev != null)
-                      ? earned - retDue - theirPrev : null;
+  const payNow    = (earned != null && retDue != null && usePrev != null)
+                      ? earned - retDue - usePrev : null;
   const theirAsk  = (nz(pre && pre.billed) != null && nz(pre && pre.retNow) != null && theirPrev != null)
                       ? nz(pre.billed) - nz(pre.retNow) - theirPrev : null;
 
@@ -731,13 +738,16 @@ function payappPanel(r, pre){
     billed: money2(e.minBilled) + ' &ndash; ' + money2(e.maxBilled),
     retNow: (e.pctR == null ? '&mdash;'
              : (e.thru50 ? e.pctR + '% capped at ' + money2(e.retFull) : e.pctR + '% of completed')),
-    prevPaid: absorbed ? '&mdash;' : money2(e.prevPaid),
+    prevPaid: absorbed ? (derivedPrev == null ? '&mdash;' : money2(derivedPrev)) : money2(e.prevPaid),
   };
   const sub = {
     contract: money2(e.original) + ' + ' + money2(e.cos) + ' CO',
     billed: 'billed so far &rarr; contract',
     retNow: 'from their completed figure',
-    prevPaid: absorbed ? 'cannot be checked &mdash; see below' : 'billed less retainage held',
+    prevPaid: absorbed
+      ? (derivedPrev == null ? 'needs their balance due &mdash; see below'
+                             : 'CE payable to date less this request')
+      : 'billed less retainage held',
   };
   const rows = PA_LINES.map(([k,kind,what,tip]) =>
     '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>'
@@ -752,10 +762,16 @@ function payappPanel(r, pre){
   const warn = [];
   if (absorbed) {
     warn.push('ComputerEase already holds this application &mdash; its billed-to-date ('
-      + money2(e.billed) + ') equals their completed-to-date to the cent. '
-      + '<b>Less previous payments is taken from their own form and has not been checked against anything.</b>');
-    warn.push('What was actually paid is in CE &mdash; <b>Subcontractor Detail Report by Vendor</b>, '
-      + 'the Payment / Amount column. If it differs from their figure, the ceiling above moves by that difference.');
+      + money2(e.billed) + ') equals their completed-to-date to the cent, '
+      + 'so the usual previous-payments figure would be this application counted twice.');
+    warn.push(derivedPrev == null
+      ? 'Previous payments cannot be derived until their balance due is keyed. Until then the '
+        + 'ceiling rests on their own figure. <b>Subcontractor Detail Report by Vendor</b>, '
+        + 'Payment / Amount column, settles it.'
+      : 'Previous payments above is <b>derived</b>: CE payable to date (' + money2(e.prevPaid)
+        + ') less the ' + money2(theirDue) + ' being requested. That holds because CE posted this '
+        + 'application at the amount asked for. Confirm against <b>Subcontractor Detail Report by '
+        + 'Vendor</b>, Payment / Amount column, before paying.');
     if (e.billed > e.contract + 0.005)
       warn.push('CE carries <b>' + money2(e.billed) + '</b> against a contract of '
         + money2(e.contract) + ' &mdash; <b>' + money2(e.billed - e.contract)
@@ -801,7 +817,8 @@ function payappPanel(r, pre){
           + '<span class="paref" style="margin-left:2px">nothing further is due</span></div>'
         : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
           + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
-   + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
+   + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '')
+   + (derivedPrev != null ? ' data-prevderived="' + derivedPrev.toFixed(2) + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
    + '</div>';
@@ -831,7 +848,12 @@ function payappBind(tr, r){
 
       if (kind === 'fixed') {
         if (k === 'prevPaid' && tab.dataset.absorbed === '1') {
-          put(k,'','from their form \u2014 CE already holds this application'); return;
+          const dp = tab.dataset.prevderived;
+          if (dp === undefined) { put(k,'','needs their balance due'); return; }
+          const want = Number(dp), d = v - want, same = near(v, want);
+          put(k, same ? 'paok' : 'pabad',
+              same ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
+          return;
         }
         if (e[k] == null) { put(k,'',''); return; }
         const d = v - e[k];
@@ -1255,6 +1277,7 @@ function renderReceived(){
     const pre = {
       contract: x.f.AdjustedContract, billed: x.f.CompletedToDate,
       retNow:   x.f.RetainageHeld,    prevPaid: x.f.PreviousPayments,
+      due:      x.f.BalanceDue,       // needed to back the current request out of CE
     };
     const note = x.f.ParseNote ? '<div class="rqnote">&#9888;&nbsp;' + esc(x.f.ParseNote) + '</div>' : '';
     const links = []
