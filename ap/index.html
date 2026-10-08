@@ -136,7 +136,7 @@
   .rqage.a0{color:#5a6473}
   .rqage.a1{color:#b07d00}
   .rqage.a2{color:#b3261e}
-  .rqdetail td{background:#fbfcfe;padding:0 10px 14px}
+  .rqdetail td{background:#fbfcfe;padding:0 10px 14px;white-space:normal}
   .rqnote{font-size:11.5px;color:#b07d00;margin-top:3px}
   .rqlink{font-size:11.5px;text-decoration:none;color:#1F3864;font-weight:600}
   .rqlink:hover{text-decoration:underline}
@@ -154,6 +154,15 @@
   .rqedit .msg{font-size:11.5px;margin-left:10px}
   .rqedit .msg.ok{color:#1b7a43}
   .rqedit .msg.bad{color:#b3261e}
+  .rqrev{margin-top:14px;padding-top:12px;border-top:1px solid #eef2f8;display:flex;
+         align-items:center;gap:4px;flex-wrap:wrap}
+  .rqrev button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 15px;border:0;border-radius:6px;
+                background:#1F3864;color:#fff;cursor:pointer}
+  .rqrev button[disabled]{opacity:.55;cursor:default}
+  .rqrev button.ghost{background:#fff;color:#1F3864;border:1px solid #cdd6e3}
+  .rqrev .msg{font-size:11.5px;margin-left:10px;color:#5a6473}
+  .rqrev .msg.ok{color:#1b7a43}
+  .rqrev .msg.bad{color:#b3261e}
   .rqmsg{padding:30px 22px;color:#5a6473;line-height:1.75;font-size:13px}
   .rqmsg b{color:#1F3864}
   .rqmsg code{background:#eef2f8;border-radius:4px;padding:1px 5px;font-size:12px}
@@ -425,7 +434,7 @@ const normName = n => String(n||'').toUpperCase().replace(/&/g,' AND ').replace(
   .replace(/\b(LLC|L L C|INC|INCORPORATED|CO|COMPANY|CORP|CORPORATION|LP|LLP|PC|PLLC)\b/g,' ')
   .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 const money = v => (v === null || v === undefined || v === '') ? '' :
-  '$' + Math.round(Number(v)).toLocaleString();
+  (Number(v) < 0 ? '-' : '') + '$' + Math.abs(Math.round(Number(v))).toLocaleString();
 const pct = v => (v === null || v === undefined || v === '') ? '' : Number(v).toFixed(0) + '%';
 /* Procore project names are institutional and long. Shorten for DISPLAY ONLY:
    the full name stays in the title attribute, the job number sits on the line
@@ -666,11 +675,17 @@ function payappExpected(r){
            past50: b ? !!b.past_50_pct : null,
            ceSov: b && b.ce_sov != null ? Number(b.ce_sov) : null,
            gap: b && b.pc_vs_ce_contract_gap != null ? Number(b.pc_vs_ce_contract_gap) : null,
-           flags: (b && b.flags) || [], hasBilling: !!b && b.ce_billed != null };
+           flags: (b && b.flags) || [], hasBilling: !!b && b.ce_billed != null,
+           billedSource: (b && b.billed_source) || '',
+           /* CE holds the subcontract but nothing is posted to its cost codes.
+              Billed is zero, not unknown - the usual shape of a first billing. */
+           assumedZero: !!b && b.ce_billed == null
+                        && ((b.flags || []).indexOf('no_committed_cells') !== -1) };
 }
 const num0 = v => (v === null || v === undefined || v === '') ? 0 : Number(v);
 const money2 = v => (v === null || v === undefined || isNaN(v)) ? '—'
-  : '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  : (Number(v) < 0 ? '-' : '') + '$'
+    + Math.abs(Number(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
 /* Line names on both forms BH actually receives. The quantities are identical;
    only the labels move, so one panel serves an AIA G702/G703 and BH's own
@@ -691,6 +706,7 @@ const PA_LINES = [
   ['billed','range','Completed to date','Total Completed Work & Stored Materials to Date — AIA G702 line 4, G703 column G'],
   ['retNow','derived','Retainage held','Less Retainage — AIA G702 line 5'],
   ['prevPaid','fixed','Less previous payments','Less Previous Payments — AIA G702 line 7'],
+  ['due','derived','Balance due this payment','Current Payment Due — AIA G702 line 8. What we would pay on these figures: completed (capped at the contract) less retainage less previous payments.'],
 ];
 
 /* CE's billed-to-date equals, to the cent, what the subcontractor says is
@@ -704,20 +720,12 @@ function ceHoldsThisApp(e, pre){
   return Math.round(Number(t) * 100) === Math.round(Number(e.billed) * 100);
 }
 
-function payappPanel(r, pre){
-  const e = payappExpected(r);
-  if (!e.hasBilling) {
-    return '<div class="pawrap"><div class="pamax"><span class="l">Adjusted contract</span>'
-      + '<span class="n">' + money2(e.contract) + '</span></div>'
-      + '<div class="pawarn"><div>&#9888;&nbsp; No billed-to-date figure for this commitment, '
-      + 'so the rest of the application cannot be built.</div></div></div>';
-  }
-  const absorbed = ceHoldsThisApp(e, pre);
+/* One source of truth for what is payable. payappPanel renders it and the
+   correction notice quotes it; if these ever came from two places the email to
+   the subcontractor would eventually disagree with the screen. */
+function payappPosition(e, pre){
   const nz = v => (v === null || v === undefined || v === '') ? null : Number(v);
-  /* What is actually payable, built from THEIR form rather than from CE, since
-     CE can no longer be used for the previous position. Completed is capped at
-     the contract - they cannot earn more than exists - and retainage is
-     recomputed on that capped figure. */
+  const absorbed = ceHoldsThisApp(e, pre);
   const theirPrev = nz(pre && pre.prevPaid);
   const theirDue  = nz(pre && pre.due);
   /* CE's cumulative payable less the request on the table = what was paid before.
@@ -725,13 +733,53 @@ function payappPanel(r, pre){
      is exactly what ce_billed matching their completed-to-date tells us. */
   const derivedPrev = (absorbed && theirDue != null && e.prevPaid != null)
                         ? e.prevPaid - theirDue : null;
-  const usePrev   = derivedPrev != null ? derivedPrev : theirPrev;
-  const earned    = absorbed ? Math.min(nz(pre.billed), e.contract) : null;
-  const retDue    = earned == null ? null : e.retAt(earned);
-  const payNow    = (earned != null && retDue != null && usePrev != null)
-                      ? earned - retDue - usePrev : null;
-  const theirAsk  = (nz(pre && pre.billed) != null && nz(pre && pre.retNow) != null && theirPrev != null)
-                      ? nz(pre.billed) - nz(pre.retNow) - theirPrev : null;
+  const usePrev = derivedPrev != null ? derivedPrev : theirPrev;
+  /* Completed is capped at the contract - they cannot earn more than exists -
+     and retainage is recomputed on that capped figure. */
+  const earned  = absorbed ? Math.min(nz(pre.billed), e.contract) : null;
+  const retDue  = earned == null ? null : e.retAt(earned);
+  const payNow  = (earned != null && retDue != null && usePrev != null)
+                    ? earned - retDue - usePrev : null;
+  const theirAsk = (nz(pre && pre.billed) != null && nz(pre && pre.retNow) != null && theirPrev != null)
+                    ? nz(pre.billed) - nz(pre.retNow) - theirPrev : null;
+  /* What we would pay on THEIR completed figure - capped at the contract, with
+     our retainage and our previous payments. ourDue - theirDue is exactly the
+     amount the commitment is over-billed, which is the number the sub disputes. */
+  const tb = nz(pre && pre.billed);
+  const cap = tb == null ? null : Math.min(tb, e.contract);
+  const ourDue = (cap != null && usePrev != null && e.retAt(cap) != null)
+                   ? cap - e.retAt(cap) - usePrev : null;
+  return { nz, absorbed, theirPrev, theirDue, derivedPrev, usePrev, earned, retDue,
+           payNow, theirAsk, ourDue };
+}
+
+function payappPanel(r, pre, rowId){
+  let e = payappExpected(r);
+  if (!e.hasBilling && e.assumedZero) {
+    e = Object.assign({}, e, {
+      billed: 0, minBilled: 0, retNow: e.retAt(0), prevPaid: 0,
+      maxDue: e.contract - (e.retFull == null ? 0 : e.retFull),
+      hasBilling: true,
+    });
+  }
+  if (!e.hasBilling) {
+    /* Say WHICH of the three it is. The feed has always known; the panel used to
+       throw it away and leave everyone guessing at a Deltek outage. */
+    const why = e.flags.indexOf('no_ce_subcontract') !== -1
+      ? 'No ComputerEase subcontract carries this commitment number, so there is no billing position '
+        + 'to check against. A Procore commitment with no CE subcontract cannot be billed or paid - '
+        + 'that is worth chasing before the application is.'
+      : e.flags.indexOf('no_job_totals') !== -1
+        ? 'This job does not publish to the ComputerEase API, so no billing figure is available for '
+          + 'any subcontract on it. Known gap, with Deltek - not a problem with this application.'
+        : 'No billed-to-date figure for this commitment'
+          + (e.billedSource ? ' (' + esc(e.billedSource) + ')' : '') + '.';
+    return '<div class="pawrap"><div class="pamax"><span class="l">Adjusted contract</span>'
+      + '<span class="n">' + money2(e.contract) + '</span></div>'
+      + '<div class="pawarn"><div>&#9888;&nbsp; ' + why + '</div></div></div>';
+  }
+  const P = payappPosition(e, pre);
+  const { nz, absorbed, theirPrev, theirDue, derivedPrev, earned, retDue, payNow, theirAsk } = P;
 
   const ours = {
     contract: money2(e.contract),
@@ -739,6 +787,7 @@ function payappPanel(r, pre){
     retNow: (e.pctR == null ? '&mdash;'
              : (e.thru50 ? e.pctR + '% capped at ' + money2(e.retFull) : e.pctR + '% of completed')),
     prevPaid: absorbed ? (derivedPrev == null ? '&mdash;' : money2(derivedPrev)) : money2(e.prevPaid),
+    due: P.ourDue == null ? '&mdash;' : money2(P.ourDue),
   };
   const sub = {
     contract: money2(e.original) + ' + ' + money2(e.cos) + ' CO',
@@ -748,6 +797,7 @@ function payappPanel(r, pre){
       ? (derivedPrev == null ? 'needs their balance due &mdash; see below'
                              : 'CE payable to date less this request')
       : 'billed less retainage held',
+    due: 'what we would pay on these figures',
   };
   const rows = PA_LINES.map(([k,kind,what,tip]) =>
     '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>'
@@ -760,6 +810,15 @@ function payappPanel(r, pre){
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
+  if (e.assumedZero) {
+    warn.push('ComputerEase holds this subcontract but nothing is posted against its cost codes, so '
+      + 'billed to date is taken as <b>zero</b> &mdash; the shape of a first or only billing. '
+      + 'Previous payments should therefore be 0.00.');
+    if (P.theirPrev != null && Math.abs(P.theirPrev) > 0.005)
+      warn.push('They are claiming <b>' + money2(P.theirPrev) + '</b> in previous payments against a '
+        + 'subcontract with nothing posted in CE. Either a billing never reached job cost, or it was '
+        + 'posted to cost codes this subcontract does not carry. Settle that before paying.');
+  }
   if (absorbed) {
     warn.push('ComputerEase already holds this application &mdash; its billed-to-date ('
       + money2(e.billed) + ') equals their completed-to-date to the cent, '
@@ -818,10 +877,205 @@ function payappPanel(r, pre){
         : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
           + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
    + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '')
-   + (derivedPrev != null ? ' data-prevderived="' + derivedPrev.toFixed(2) + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
+   + (derivedPrev != null ? ' data-prevderived="' + derivedPrev.toFixed(2) + '"' : '')
+   + (P.usePrev   != null ? ' data-ourprev="'     + P.usePrev.toFixed(2)   + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
+   + (rowId ? '<div class="rqrev">'
+              + '<button data-savefigs="' + esc(rowId) + '" class="ghost">Save these figures</button>'
+              + '<button data-revise="' + esc(rowId) + '">Request revision&hellip;</button>'
+              + '<span class="msg"></span></div>' : '')
    + '</div>';
+}
+
+/* ---- Request revision -------------------------------------------------------
+   Builds the correction notice from the SAME figures the panel shows - that is
+   why payappPosition() was extracted - and leaves it as a DRAFT in the signed-in
+   user's mailbox. Never Mail.Send: nothing reaches a subcontractor without a
+   person reading it and pressing send. */
+
+/* Mail.ReadWrite is asked for only when the button is used, so everyone else
+   keeps working on the original consent. Popup, not redirect - a redirect here
+   would throw away the open row and everything keyed into it. */
+async function tokenFor(extra){
+  try {
+    await msalApp.initialize();
+    const account = msalApp.getAllAccounts()[0];
+    if (!account) return { tok: null, err: 'not signed in' };
+    const scopes = SCOPES.concat(extra || []);
+    try { const t = await msalApp.acquireTokenSilent({ scopes, account }); return { tok: t.accessToken }; }
+    catch (_) {
+      const t = await msalApp.acquireTokenPopup({ scopes, account });
+      return { tok: t.accessToken };
+    }
+  } catch (e) {
+    const c = (e && (e.errorCode || e.message)) || '';
+    if (/popup_window_error|popup_blocked/i.test(c))
+      return { tok: null, err: 'the consent popup was blocked - allow popups for this site and try again' };
+    if (/consent_required|interaction_required|user_cancelled/i.test(c))
+      return { tok: null, err: 'Mail.ReadWrite has not been granted to this app yet' };
+    return { tok: null, err: c || 'could not get a token' };
+  }
+}
+
+/* The four lines, with the difference stated the way it goes to the sub. Mirrors
+   payappBind exactly; cent precision, never an epsilon. */
+function correctionFigures(e, pre){
+  const P = payappPosition(e, pre);
+  const cents = v => Math.round(Number(v) * 100);
+  const out = [];
+  const add = (label, theirs, ours, note) => {
+    if (theirs == null || ours == null) return;
+    if (cents(theirs) === cents(ours)) return;
+    out.push({ label, theirs, ours, diff: ours - theirs, note: note || '' });
+  };
+  add('Adjusted contract', P.nz(pre.contract), e.contract,
+      'Original contract plus approved change orders.');
+  const tb = P.nz(pre.billed);
+  if (tb != null && tb > e.contract + 0.005)
+    out.push({ label: 'Completed to date', theirs: tb, ours: e.contract,
+               diff: e.contract - tb,
+               note: 'Completed work cannot exceed the adjusted contract.' });
+  if (tb != null && P.nz(pre.retNow) != null && e.retAt(tb) != null)
+    add('Retainage held', P.nz(pre.retNow), e.retAt(tb),
+        e.thru50 ? ('Retainage is ' + e.pctR + '% through 50% completion, capped at '
+                    + money2(e.retFull) + '.') : '');
+  const wantPrev = P.derivedPrev != null ? P.derivedPrev : e.prevPaid;
+  add('Less previous payments', P.nz(pre.prevPaid), wantPrev,
+      'Per our records of payments issued against this subcontract.');
+  return { lines: out, pos: P };
+}
+
+/* Email HTML: tables and inline styles only. Outlook ignores most of the rest. */
+function correctionHTML(x, e, fig, me){
+  const P = fig.pos, pre = x.f;
+  const title = (x.c && x.c.project) || '';
+  const row = l =>
+      '<tr>'
+    + '<td style="padding:7px 10px;border-bottom:1px solid #e3e8f0">' + esc(l.label)
+    + (l.note ? '<div style="color:#7a869a;font-size:12px;margin-top:2px">' + esc(l.note) + '</div>' : '')
+    + '</td>'
+    + '<td style="padding:7px 10px;border-bottom:1px solid #e3e8f0;text-align:right;white-space:nowrap">'
+    + money2(l.theirs) + '</td>'
+    + '<td style="padding:7px 10px;border-bottom:1px solid #e3e8f0;text-align:right;white-space:nowrap;font-weight:bold">'
+    + money2(l.ours) + '</td>'
+    + '<td style="padding:7px 10px;border-bottom:1px solid #e3e8f0;text-align:right;white-space:nowrap;color:#b3261e">'
+    + (l.diff > 0 ? '+' : '') + money2(l.diff) + '</td></tr>';
+
+  /* Stated only when it is actually true of these numbers: their contract is the
+     ORIGINAL and approved change orders exist. Otherwise the table speaks. */
+  const coLine = (P.nz(pre.AdjustedContract) != null && e.cos
+                  && Math.round(P.nz(pre.AdjustedContract) * 100) === Math.round(e.original * 100))
+    ? '<p style="margin:0 0 14px">The contract amount on your application is the <b>original</b> '
+      + 'subcontract value. ' + (e.cos < 0
+          ? 'An approved change order reducing the subcontract by <b>' + money2(-e.cos) + '</b> has'
+          : 'Approved change orders totalling <b>' + money2(e.cos) + '</b> have')
+      + ' not been applied, which accounts for the differences below.</p>'
+    : '';
+
+  return ''
+  + '<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#2a3140;line-height:1.55">'
+  + '<p style="margin:0 0 14px">Hello,</p>'
+  + '<p style="margin:0 0 14px">We are unable to process <b>Pay Application '
+  + esc(pre.PayRequest || '') + '</b> on subcontract <b>' + esc(x.number) + '</b>'
+  + (title ? ' (' + esc(title) + ')' : '') + ' as submitted.</p>'
+  + coLine
+  + '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:640px;font-size:13px">'
+  + '<tr style="background:#f7f9fc">'
+  + '<th style="padding:7px 10px;text-align:left;border-bottom:2px solid #1F3864">&nbsp;</th>'
+  + '<th style="padding:7px 10px;text-align:right;border-bottom:2px solid #1F3864">Your application</th>'
+  + '<th style="padding:7px 10px;text-align:right;border-bottom:2px solid #1F3864">Per subcontract</th>'
+  + '<th style="padding:7px 10px;text-align:right;border-bottom:2px solid #1F3864">Difference</th></tr>'
+  + fig.lines.map(row).join('')
+  + '</table>'
+  + (P.payNow != null && P.payNow > 0.005
+      ? '<p style="margin:16px 0 14px;font-size:15px">Amount approved for payment on this application: '
+        + '<b style="color:#1F3864">' + money2(P.payNow) + '</b>'
+        + (P.theirAsk != null ? ' <span style="color:#7a869a">(requested ' + money2(P.theirAsk) + ')</span>' : '')
+        + '</p>'
+      : P.payNow != null
+        ? '<p style="margin:16px 0 14px;font-size:15px"><b style="color:#b3261e">No further amount is due '
+          + 'on this application.</b></p>'
+        : '')
+  + '<p style="margin:0 0 14px">Please revise and resubmit with a corrected schedule of values. '
+  + 'Your original submission is attached for reference.</p>'
+  + '<p style="margin:0 0 4px">Thank you,</p>'
+  + '<p style="margin:0;color:#1F3864"><b>' + esc((me && me.name) || '') + '</b><br>'
+  + 'Bailey-Harris Construction Co., Inc.</p></div>';
+}
+
+/* Fetch the submitted PDF out of the queue library so it rides along with the
+   notice. A failure here must not block the draft - the notice is the point. */
+async function fetchPayappPdf(tok, path){
+  const q = STATE.queue;
+  if (!q || !q.siteId || !path) return { bytes: null, why: 'no PDF is filed against this row' };
+  const url = GRAPH + '/sites/' + q.siteId + '/drive/root:/'
+            + String(path).split('/').map(encodeURIComponent).join('/') + ':/content';
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+  if (!r.ok) return { bytes: null, why: 'the PDF could not be read (HTTP ' + r.status + ')' };
+  const buf = await r.arrayBuffer();
+  if (buf.byteLength > 3 * 1024 * 1024)
+    return { bytes: null, why: 'the PDF is over 3 MB, too large to attach from here' };
+  const b = new Uint8Array(buf); let bin = '', CH = 0x8000;
+  for (let i = 0; i < b.length; i += CH) bin += String.fromCharCode.apply(null, b.subarray(i, i + CH));
+  return { bytes: btoa(bin) };
+}
+
+async function requestRevision(x, msgEl){
+  const say = (cls, t) => { msgEl.className = 'msg ' + cls; msgEl.innerHTML = t; };
+  if (!x.c) return say('bad', 'There is no commitment behind this row to compare against.');
+  const e = payappExpected(x.c);
+  const pre = { contract: x.f.AdjustedContract, billed: x.f.CompletedToDate,
+                retNow: x.f.RetainageHeld, prevPaid: x.f.PreviousPayments, due: x.f.BalanceDue };
+  const fig = correctionFigures(e, pre);
+  if (!fig.lines.length)
+    return say('', 'Nothing on this application differs from the subcontract, so there is nothing to correct.');
+
+  say('', 'Asking for permission to create a draft…');
+  const { tok, err } = await tokenFor(['Mail.ReadWrite']);
+  if (!tok) return say('bad', 'No draft created — ' + esc(err));
+
+  say('', 'Fetching the submitted PDF…');
+  const pdf = await fetchPayappPdf(tok, x.f.PdfPath);
+
+  const subject = x.number + ' · Pay Application ' + (x.f.PayRequest || '')
+                + ' — revision requested';
+  const msg = {
+    subject,
+    body: { contentType: 'HTML', content: correctionHTML(x, e, fig, STATE.me) },
+    toRecipients: (x.c.vendor_email ? [{ emailAddress: { address: x.c.vendor_email } }] : []),
+  };
+  if (pdf.bytes) msg.attachments = [{
+    '@odata.type': '#microsoft.graph.fileAttachment',
+    name: (String(x.f.PdfPath || 'pay application.pdf').split('/').pop()),
+    contentType: 'application/pdf', contentBytes: pdf.bytes,
+  }];
+
+  say('', 'Creating the draft…');
+  const r = await fetch(GRAPH + '/me/messages', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+    body: JSON.stringify(msg),
+  });
+  if (!r.ok) {
+    let why = 'HTTP ' + r.status;
+    try { const b = await r.json(); if (b && b.error && b.error.message) why += ' – ' + b.error.message; } catch (_) {}
+    return say('bad', 'No draft created — ' + esc(why));
+  }
+  const draft = await r.json();
+  if (draft.webLink) window.open(draft.webLink, '_blank', 'noopener');
+
+  /* The queue only stays true if returning an application is recorded. */
+  let tail = '';
+  if (x.itemId) {
+    const ok = await saveQueueItem(x.itemId, { Status: 'revise and resubmit' });
+    if (ok && typeof ok === 'object') { x.f.Status = 'revise and resubmit'; tail = ' Status set to revise and resubmit.'; }
+    else tail = ' <b>Status not updated</b> — ' + esc(String(ok)) + '.';
+  }
+  say('ok', 'Draft created in your mailbox — review it before sending.'
+     + (pdf.bytes ? '' : ' <b>No attachment</b>: ' + esc(pdf.why) + '.')
+     + (x.c.vendor_email ? '' : ' <b>No recipient</b>: Procore carries no email for this vendor.')
+     + tail);
 }
 
 /* Deltas recompute as the reviewer types; nothing is stored or sent anywhere. */
@@ -851,8 +1105,7 @@ function payappBind(tr, r){
           const dp = tab.dataset.prevderived;
           if (dp === undefined) { put(k,'','needs their balance due'); return; }
           const want = Number(dp), d = v - want, same = near(v, want);
-          put(k, same ? 'paok' : 'pabad',
-              same ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
+          put(k, same ? 'paok' : 'pabad', same ? 'matches' : (d>0?'+':'') + money2(d));
           return;
         }
         if (e[k] == null) { put(k,'',''); return; }
@@ -867,6 +1120,19 @@ function payappBind(tr, r){
         else if (v > e.maxBilled + 0.005) put(k,'pabad','over contract by ' + money2(v - e.maxBilled));
         else put(k,'paok','in range');
 
+      } else if (k === 'due') {
+        /* Our estimate of this payment, from THEIR completed figure but OUR
+           contract, retainage and previous payments. */
+        const base = val('billed');
+        const op = tab.dataset.ourprev;
+        if (base === null || op === undefined || !e.retAt) { put(k,'','needs completed'); return; }
+        const cap = Math.min(base, e.contract);
+        const r = e.retAt(cap);
+        if (r == null) { put(k,'',''); return; }
+        const want = cap - r - Number(op);
+        const d = v - want, same = near(v, want);
+        put(k, same ? 'paok' : 'pabad', same ? 'matches' : (d>0?'+':'') + money2(d));
+
       } else { // derived: retainage follows whatever they say is completed
         const base = val('billed');
         if (base === null || !e.retAt) { put(k,'','needs completed'); return; }
@@ -874,8 +1140,7 @@ function payappBind(tr, r){
         if (want == null) { put(k,'',''); return; }
         const d = v - want;
         const same = near(v, want);
-        put(k, same?'paok':'pabad',
-            same ? 'matches' : (d>0?'+':'') + money2(d) + ' vs ' + money2(want));
+        put(k, same?'paok':'pabad', same ? 'matches' : (d>0?'+':'') + money2(d));
       }
     });
   };
@@ -1284,7 +1549,7 @@ function renderReceived(){
       .concat(x.f.PdfPath ? ['<a class="rqlink" href="' + esc(QUEUE_DOCS + x.f.PdfPath) + '" target="_blank" rel="noopener">Open the pay app PDF &rarr;</a>'] : [])
       .concat(x.f.MessageLink ? ['<a class="rqlink" href="' + esc(x.f.MessageLink) + '" target="_blank" rel="noopener">Open the original mail &rarr;</a>'] : [])
       .join(' &nbsp;&middot;&nbsp; ');
-    const panel = x.c ? payappPanel(x.c, pre)
+    const panel = x.c ? payappPanel(x.c, pre, x.id)
       : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
         + esc(x.number || 'this number') + '</b>, so there is nothing to check these figures against.</div>';
     /* Correcting a row by hand. The pull cannot read a scan, and roughly 142 of
@@ -1379,6 +1644,58 @@ function renderReceived(){
       paintSaveNotes(el);
     };
   });
+  /* The figures keyed into the "theirs" column are a reading of the PDF, so they
+     belong in the list next to the ones the parser managed - not thrown away on
+     the next render. */
+  const PA_FIELD = { contract:'AdjustedContract', billed:'CompletedToDate',
+                     retNow:'RetainageHeld', prevPaid:'PreviousPayments', due:'BalanceDue' };
+  el.querySelectorAll('.rqrev button[data-savefigs]').forEach(btn => {
+    btn.onclick = async () => {
+      const row = rows.find(r => r.id === btn.dataset.savefigs);
+      const msgEl = btn.parentNode.querySelector('.msg');
+      if (!row) return;
+      const tab = btn.closest('.pawrap').querySelector('table[data-pa]');
+      const patch = {};
+      Object.keys(PA_FIELD).forEach(k => {
+        const i = tab.querySelector('input[data-k="' + k + '"]'); if (!i) return;
+        const raw = i.value.replace(/[$,\s]/g,'');
+        const v = raw === '' ? null : Number(raw);
+        if (raw !== '' && isNaN(v)) return;
+        const was = row.f[PA_FIELD[k]];
+        const same = (v == null && (was == null || was === ''))
+                  || (v != null && was != null && was !== '' && Math.round(Number(was)*100) === Math.round(v*100));
+        if (!same) patch[PA_FIELD[k]] = v;
+      });
+      if (!Object.keys(patch).length) {
+        RQ_MSG.set(row.id, { cls:'', text:'Nothing changed.' }); paintSaveNotes(el); return;
+      }
+      btn.disabled = true;
+      RQ_MSG.set(row.id, { cls:'', text:'Saving\u2026' }); paintSaveNotes(el);
+      const res = await saveQueueItem(row.itemId, patch);
+      btn.disabled = false;
+      if (res && typeof res === 'object') {
+        Object.assign(row.f, res.stored || patch);
+        RQ_MSG.set(row.id, { cls:'ok', text: res.warn || 'Figures saved.' });
+        setTimeout(renderReceived, 400);   // headline recomputes from what was stored
+      } else {
+        RQ_MSG.set(row.id, { cls:'bad', text:'Not saved \u2014 ' + res });
+      }
+      paintSaveNotes(el);
+    };
+  });
+
+  el.querySelectorAll('.rqrev button[data-revise]').forEach(btn => {
+    btn.onclick = async () => {
+      const row = rows.find(r => r.id === btn.dataset.revise);
+      if (!row) return;
+      btn.disabled = true;
+      try { await requestRevision(row, btn.parentNode.querySelector('.msg')); }
+      catch (err) { const m = btn.parentNode.querySelector('.msg');
+                    m.className = 'msg bad'; m.textContent = 'No draft created \u2014 ' + (err.message || err); }
+      finally { btn.disabled = false; }
+    };
+  });
+
   /* Bind the deltas on whichever rows are expanded, so the pre-filled "theirs"
      figures are reconciled the moment the row opens rather than on first keypress. */
   rows.forEach(x => {
@@ -1395,8 +1712,9 @@ function renderReceived(){
    the .msg span is lost on the next pass. Repaint from RQ_MSG instead. */
 function paintSaveNotes(el){
   RQ_MSG.forEach((m, id) => {
-    const box = el.querySelector('.rqedit[data-edit="' + CSS.escape(id) + '"] .msg');
-    if (box) { box.className = 'msg ' + m.cls; box.textContent = m.text; }
+    const sel = '.rqedit[data-edit="' + CSS.escape(id) + '"] .msg,'
+              + ' .rqrev button[data-savefigs="' + CSS.escape(id) + '"] ~ .msg';
+    el.querySelectorAll(sel).forEach(box => { box.className = 'msg ' + m.cls; box.textContent = m.text; });
   });
 }
 
