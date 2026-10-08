@@ -693,6 +693,17 @@ const PA_LINES = [
   ['prevPaid','fixed','Less previous payments','Less Previous Payments — AIA G702 line 7'],
 ];
 
+/* CE's billed-to-date equals, to the cent, what the subcontractor says is
+   complete. There is no innocent reading of that: CE has already posted this
+   application, so nothing derived from ce_billed describes the position BEFORE
+   it. */
+function ceHoldsThisApp(e, pre){
+  if (!pre || e.billed == null) return false;
+  const t = pre.billed;
+  if (t === null || t === undefined || t === '') return false;
+  return Math.round(Number(t) * 100) === Math.round(Number(e.billed) * 100);
+}
+
 function payappPanel(r, pre){
   const e = payappExpected(r);
   if (!e.hasBilling) {
@@ -701,18 +712,32 @@ function payappPanel(r, pre){
       + '<div class="pawarn"><div>&#9888;&nbsp; No billed-to-date figure for this commitment, '
       + 'so the rest of the application cannot be built.</div></div></div>';
   }
+  const absorbed = ceHoldsThisApp(e, pre);
+  const nz = v => (v === null || v === undefined || v === '') ? null : Number(v);
+  /* What is actually payable, built from THEIR form rather than from CE, since
+     CE can no longer be used for the previous position. Completed is capped at
+     the contract - they cannot earn more than exists - and retainage is
+     recomputed on that capped figure. */
+  const theirPrev = nz(pre && pre.prevPaid);
+  const earned    = absorbed ? Math.min(nz(pre.billed), e.contract) : null;
+  const retDue    = earned == null ? null : e.retAt(earned);
+  const payNow    = (earned != null && retDue != null && theirPrev != null)
+                      ? earned - retDue - theirPrev : null;
+  const theirAsk  = (nz(pre && pre.billed) != null && nz(pre && pre.retNow) != null && theirPrev != null)
+                      ? nz(pre.billed) - nz(pre.retNow) - theirPrev : null;
+
   const ours = {
     contract: money2(e.contract),
     billed: money2(e.minBilled) + ' &ndash; ' + money2(e.maxBilled),
     retNow: (e.pctR == null ? '&mdash;'
              : (e.thru50 ? e.pctR + '% capped at ' + money2(e.retFull) : e.pctR + '% of completed')),
-    prevPaid: money2(e.prevPaid),
+    prevPaid: absorbed ? '&mdash;' : money2(e.prevPaid),
   };
   const sub = {
     contract: money2(e.original) + ' + ' + money2(e.cos) + ' CO',
     billed: 'billed so far &rarr; contract',
     retNow: 'from their completed figure',
-    prevPaid: 'billed less retainage held',
+    prevPaid: absorbed ? 'cannot be checked &mdash; see below' : 'billed less retainage held',
   };
   const rows = PA_LINES.map(([k,kind,what,tip]) =>
     '<tr><td><div class="paq" title="' + esc(tip) + '">' + what + '</div>'
@@ -725,6 +750,19 @@ function payappPanel(r, pre){
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
+  if (absorbed) {
+    warn.push('ComputerEase already holds this application &mdash; its billed-to-date ('
+      + money2(e.billed) + ') equals their completed-to-date to the cent. '
+      + '<b>Less previous payments is taken from their own form and has not been checked against anything.</b>');
+    if (e.billed > e.contract + 0.005)
+      warn.push('CE carries <b>' + money2(e.billed) + '</b> against a contract of '
+        + money2(e.contract) + ' &mdash; <b>' + money2(e.billed - e.contract)
+        + '</b> more than the commitment. That needs correcting in CE whatever is paid.');
+    if (earned != null && nz(pre.billed) > e.contract + 0.005)
+      warn.push('Completed is capped at the contract above. If their schedule of values still '
+        + 'bills scope that an approved change order removed, less than this is due &mdash; '
+        + 'check column G against the deducted line before paying.');
+  }
   if (e.gap) warn.push(e.gap > 0
     ? 'Procore is <b>' + money2(e.gap) + '</b> higher than CE &mdash; an approved change order has not reached CE.'
     : 'CE is <b>' + money2(-e.gap) + '</b> higher than Procore &mdash; the change order was entered straight into CE.');
@@ -737,13 +775,31 @@ function payappPanel(r, pre){
    /* A negative ceiling is not "they may ask for minus two thousand" - it means
       the commitment is already billed past its contract. Seven live rows are in
       that state, so it is a real case, not a theoretical one. */
-   + (e.maxDue != null && e.maxDue < -0.005
-      ? '<div class="pamax"><span class="l" style="color:#b3261e">Already over-billed by</span>'
-        + '<span class="n" style="color:#b3261e">' + money2(-e.maxDue) + '</span>'
-        + '<span class="paref" style="margin-left:2px">nothing further is due</span></div>'
-      : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
-        + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
-   + '<table class="patab" data-pa="x"><thead><tr><th></th><th class="n">Ours</th>'
+   + (absorbed
+      /* The ceiling cannot come from CE here, so it comes from their own form
+         or it is not shown at all. Never "nothing further is due". */
+      ? (payNow == null
+          ? '<div class="pamax"><span class="l">Ceiling not available</span>'
+            + '<span class="paref" style="margin-left:2px">CE already holds this application, and their previous-payments figure is not keyed</span></div>'
+          : payNow <= 0.005
+            ? '<div class="pamax"><span class="l" style="color:#b3261e">Nothing is due</span>'
+              + '<span class="paref" style="margin-left:2px">they have already been paid '
+              + money2(theirPrev) + ' of the ' + money2(earned - retDue) + ' earned net of retainage</span></div>'
+            : '<div class="pamax"><span class="l">Pay no more than</span>'
+              + '<span class="n">' + money2(payNow) + '</span>'
+              + '<span class="paref" style="margin-left:2px">'
+              + (theirAsk == null ? 'recomputed on the adjusted contract of ' + money2(e.contract)
+                 : 'they asked for ' + money2(theirAsk)
+                   + (theirAsk - payNow > 0.005 ? ' &mdash; ' + money2(theirAsk - payNow) + ' less'
+                      : theirAsk - payNow < -0.005 ? ' &mdash; ' + money2(payNow - theirAsk) + ' more' : ''))
+              + '</span></div>')
+      : e.maxDue != null && e.maxDue < -0.005
+        ? '<div class="pamax"><span class="l" style="color:#b3261e">Already over-billed by</span>'
+          + '<span class="n" style="color:#b3261e">' + money2(-e.maxDue) + '</span>'
+          + '<span class="paref" style="margin-left:2px">nothing further is due</span></div>'
+        : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
+          + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
+   + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
    + '</div>';
@@ -772,6 +828,9 @@ function payappBind(tr, r){
       if (v === null) { put(k,'',''); return; }
 
       if (kind === 'fixed') {
+        if (k === 'prevPaid' && tab.dataset.absorbed === '1') {
+          put(k,'','from their form \u2014 CE already holds this application'); return;
+        }
         if (e[k] == null) { put(k,'',''); return; }
         const d = v - e[k];
         const same = near(v, e[k]);
