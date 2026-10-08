@@ -132,6 +132,42 @@
   .rqtab tr.rqrow:hover td{background:#fafbfe}
   .rqtab tr.rqopen td{background:#f4f7fc}
   .rqsub{color:#8a94a3;font-size:11px;margin-top:2px}
+  /* Two-line headings: CE's name on top, ours underneath. */
+  .rqth2{font-weight:400;text-transform:none;letter-spacing:0;color:#9aa4b2;font-size:10px;margin-top:1px}
+  .rqtab th.qsort{cursor:pointer;user-select:none}
+  .rqtab th.qsort:hover{background:#eef2f8}
+  .rqtab th.qsort.on{color:#1F3864}
+  .rqtab th.qsort{position:relative;padding-right:22px}
+  .qfh{vertical-align:middle}
+  .qffun{position:absolute;right:5px;top:6px;width:16px;height:16px;line-height:14px;padding:0;
+         border:1px solid transparent;border-radius:3px;background:transparent;color:#9aa4b2;
+         font-size:10px;cursor:pointer}
+  .rqtab th.qsort:hover .qffun{border-color:#cdd6e3;background:#fff;color:#1F3864}
+  .rqtab th.qfon{background:#eaf1fb}
+  .rqtab th.qfon .qffun{color:#1F3864;border-color:#9fb6da;background:#fff}
+  .qfpanel{position:fixed;z-index:60;width:248px;background:#fff;border:1px solid #cdd6e3;
+           border-radius:8px;box-shadow:0 8px 28px rgba(20,35,60,.18);padding:8px;font-size:12px;
+           color:#2a3140;text-transform:none;letter-spacing:0;font-weight:400}
+  .qfsort{display:flex;gap:6px;margin-bottom:7px}
+  .qfsort button{flex:1;font:inherit;font-size:11px;padding:4px 6px;border:1px solid #dfe5ee;
+                 border-radius:5px;background:#fbfcfe;cursor:pointer;color:#1F3864}
+  .qfsort button:hover{background:#eef2f8}
+  .qfsearch{width:100%;box-sizing:border-box;font:inherit;font-size:12px;padding:5px 7px;
+            border:1px solid #dfe5ee;border-radius:5px;margin-bottom:6px}
+  .qfsearch:focus{outline:0;border-color:#1F3864}
+  .qflist{max-height:232px;overflow-y:auto;border:1px solid #eef2f8;border-radius:5px;padding:3px}
+  .qfrow{display:flex;align-items:center;gap:7px;padding:3px 5px;border-radius:4px;cursor:pointer;
+         white-space:nowrap}
+  .qfrow:hover{background:#f4f7fc}
+  .qfrow span:nth-of-type(1){overflow:hidden;text-overflow:ellipsis;flex:1}
+  .qfall{border-bottom:1px solid #eef2f8;margin-bottom:4px;padding-bottom:5px;font-weight:600}
+  .qfn{color:#9aa4b2;font-size:11px}
+  .qffoot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:11px}
+  .qffoot a{color:#1a4fb0}
+  .qfnote{color:#9aa4b2}
+  #qfiltn{color:#1F3864;font-weight:600}
+  .rqtab td{font-size:12px}
+  .rqtab th,.rqtab td{padding-left:8px;padding-right:8px}
   .rqage{font-variant-numeric:tabular-nums;font-weight:700}
   .rqage.a0{color:#5a6473}
   .rqage.a1{color:#b07d00}
@@ -177,6 +213,29 @@
   .celnotes{margin-top:10px;font-size:11.5px;color:#5a6473;line-height:1.7}
   .celnotes div{margin-top:5px}
   .celwrong{color:#b3261e}
+  .trwrap{padding:14px 2px 4px}
+  .trcols{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start}
+  .trdoc{flex:1 1 420px;min-width:0}
+  .trfig{flex:0 1 300px;min-width:0}
+  .trwrap h4{margin:0 0 7px;font-size:12px;color:#1F3864;letter-spacing:.02em}
+  .trsubj{font-size:12px;color:#5a6473;margin-top:8px;white-space:normal}
+  .trtab{width:100%;border-collapse:collapse;font-size:12px;background:transparent;box-shadow:none}
+  .trtab td{padding:4px 0;border-bottom:1px solid #f1f4f9;text-align:left;white-space:nowrap}
+  .trtab td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .tract{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:16px;
+         padding-top:13px;border-top:1px solid #eef2f8}
+  .tract button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:6px;
+                border:1px solid #cdd6e3;background:#fff;color:#1F3864;cursor:pointer}
+  .tract button:hover{background:#f4f7fc}
+  .tract button.bad{border-color:#f0c6c2;color:#b3261e}
+  .tract button.bad:hover{background:#fdf4f3}
+  .tract button.go{background:#1F3864;border-color:#1F3864;color:#fff}
+  .tract button.go:hover{background:#2b4c86}
+  .tract button[disabled]{opacity:.55;cursor:default}
+  .tract .msg{font-size:11.5px;margin-left:4px;color:#5a6473}
+  .tract .msg.ok{color:#1b7a43}
+  .tract .msg.bad{color:#b3261e}
+  .qmode a{color:#1a4fb0}
   .rqrev{margin-top:14px;padding-top:12px;border-top:1px solid #eef2f8;display:flex;
          align-items:center;gap:4px;flex-wrap:wrap}
   .rqrev button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 15px;border:0;border-radius:6px;
@@ -778,18 +837,13 @@ function ceLedgerFacts(led, payReq){
   const inv = (led && led.invoices) || [];
   const n2 = v => Number(v || 0);
   const sum = f => inv.reduce((t,i) => t + n2(i[f]), 0);
-  const byNumber = {};
-  inv.forEach(i => { const k = String(i.number || '').trim().toUpperCase();
-                     (byNumber[k] = byNumber[k] || []).push(i); });
-  /* One invoice number on several lines. Kone's PR5 is 7,950.00 on the base and
-     14,410.00 on CO 002 - legitimate, but indistinguishable from a double entry
-     without looking, which is the point of showing it. */
-  const split = Object.keys(byNumber).filter(k => byNumber[k].length > 1)
-    .map(k => ({ number: k, lines: byNumber[k],
-                 total: byNumber[k].reduce((t,i) => t + n2(i.total), 0) }));
+  /* An invoice whose lines were posted on DIFFERENT days was entered more than
+     once. Kone's PR5: base on 10/01, CO 002 on 10/05 - four days and two
+     decisions apart. Lines posted the same day are one invoice split across cost
+     codes and are nobody's problem. */
+  const split = inv.filter(i => (i.entered_separately || []).length > 1);
   const unpaid = inv.filter(i => !i.check);
-  const want = String(payReq == null ? '' : payReq).trim().toUpperCase();
-  /* "PR5", "5", "PA 5" all name the same application on different forms. */
+  const want = String(payReq == null ? '' : payReq).trim();
   const norm = v => String(v||'').toUpperCase().replace(/[^0-9]/g,'');
   const thisApp = want ? inv.filter(i => norm(i.number) && norm(i.number) === norm(want)) : [];
   return {
@@ -801,57 +855,71 @@ function ceLedgerFacts(led, payReq){
 }
 
 function ceLedgerPanel(number, payReq, e, theirDue, ourDue, ceState){
+  const d = STATE.ceInv;
   const led = ceLedger(number);
   if (!led) {
-    const d = STATE.ceInv;
     return '<div class="celed"><h4>ComputerEase invoices</h4><div class="celnone">'
       + (d
          ? 'No ledger rows for <b>' + esc(String(number || '')) + '</b> in the last ComputerEase export'
            + (d.as_of ? ' (' + esc(d.as_of) + ')' : '') + '. Either nothing has been invoiced against it, '
              + 'or the subcontract was not in scope of the export.'
-         : 'Not available yet. This needs the <b>Subcontractor Detail Report by Vendor</b> scheduled out '
-           + 'of ComputerEase Q-Tool and parsed into <code>' + CEINV_FILE + '</code>. Until then this page '
-           + 'sees only <code>committed_billed</code> &mdash; one cumulative, gross number per subcontract, '
-           + 'with no invoices, no dates and no payments.')
+         : 'Not available yet. This needs a ComputerEase export parsed into <code>' + CEINV_FILE
+           + '</code>. Until then this page sees only <code>committed_billed</code> &mdash; one '
+           + 'cumulative, gross number per subcontract, with no invoices, no dates and no payments.')
       + '</div></div>';
   }
+  /* Job Cost Detail carries billings and nothing else. Without this the panel
+     would mark every invoice unpaid, including Kone's four cleared by cheque. */
+  const hasPay = !(d && d.has_payment_data === false);
   const f = ceLedgerFacts(led, payReq);
-  const row = i => '<tr' + (i.check ? '' : ' class="celunpaid"') + '>'
-    + '<td>' + esc(i.number || '') + (i.line && i.line !== 'base'
-        ? '<div class="celsub">' + esc(i.line) + '</div>' : '') + '</td>'
+
+  const lineNote = i => (i.lines || []).length > 1
+    ? '<div class="celsub">' + i.lines.map(l => esc(l.description || 'line') + ' ' + money2(l.amount)
+        + (l.posted ? ' &middot; ' + esc(l.posted) : '')).join('<br>') + '</div>'
+    : '';
+  const row = i => '<tr' + (hasPay && !i.check ? ' class="celunpaid"' : '') + '>'
+    + '<td>' + esc(i.number || '') + lineNote(i) + '</td>'
     + '<td>' + esc(i.date || '') + '</td>'
     + '<td class="n">' + money2(i.total) + '</td>'
-    + '<td class="n">' + money2(i.retention) + '</td>'
-    + '<td class="n">' + money2(i.payable) + '</td>'
-    + '<td class="n">' + (i.check
-        ? money2(i.paid) + '<div class="celsub">#' + esc(i.check)
-          + (i.check_date ? ' &middot; ' + esc(i.check_date) : '') + '</div>'
-        : '<span class="pill y">unpaid</span>') + '</td></tr>';
+    + (hasPay
+        ? '<td class="n">' + money2(i.retention) + '</td>'
+          + '<td class="n">' + money2(i.payable) + '</td>'
+          + '<td class="n">' + (i.check
+              ? money2(i.paid) + '<div class="celsub">#' + esc(i.check)
+                + (i.check_date ? ' &middot; ' + esc(i.check_date) : '') + '</div>'
+              : '<span class="pill y">unpaid</span>') + '</td>'
+        : '<td>' + esc(i.posted || '') + '</td>')
+    + '</tr>';
 
   const notes = [];
   if (f.thisApp.length)
     notes.push('<b>This application is in ComputerEase</b> as '
-      + f.thisApp.map(i => esc(i.number) + (i.line && i.line !== 'base' ? ' (' + esc(i.line) + ')' : '')
-                           + ' ' + money2(i.total)).join(' + ')
-      + (f.thisApp.every(i => !i.check)
-          ? ' &mdash; <b>entered, not paid</b>, ' + money2(f.thisApp.reduce((t,i)=>t+Number(i.payable||0),0)) + ' payable.'
-          : ' &mdash; paid.'));
-  f.split.forEach(sp => notes.push('Invoice <b>' + esc(sp.number) + '</b> is entered on '
-    + sp.lines.length + ' lines totalling ' + money2(sp.total)
-    + ' (' + sp.lines.map(l => esc(l.line || 'base') + ' ' + money2(l.total)).join(', ')
-    + '). Separate scope billed under one number, or the same work entered twice &mdash; the lines say which.'));
-  if (f.thisApp.length && theirDue != null) {
-    const appPayable = f.thisApp.reduce((t,i) => t + Number(i.payable || 0), 0);
-    if (Math.abs(appPayable - theirDue) >= 1)      // cents are rounding, not scope
-      notes.push('<b>ComputerEase holds ' + money2(appPayable) + ' payable under this invoice number, '
-        + 'but the application only asks for ' + money2(theirDue) + '.</b> The difference, '
-        + money2(appPayable - theirDue) + ', is entered in CE and supported by no application. '
-        + 'Pay what the application asks for, and either reverse the unsupported line in CE or get '
-        + 'an application that covers it.');
+      + f.thisApp.map(i => esc(i.number) + ' ' + money2(i.total)).join(' + ')
+      + (hasPay
+          ? (f.thisApp.every(i => !i.check)
+              ? ' &mdash; <b>entered, not paid</b>, '
+                + money2(f.thisApp.reduce((t,i)=>t+Number(i.payable||0),0)) + ' payable.'
+              : ' &mdash; paid.')
+          : ' &mdash; <b>entered</b>. Whether it has been paid is not in this feed.'));
+
+  f.split.forEach(sp => notes.push('Invoice <b>' + esc(sp.number) + '</b> was entered on '
+    + sp.entered_separately.length + ' different days (' + sp.entered_separately.map(esc).join(', ')
+    + ') totalling ' + money2(sp.total) + '. Separate entries under one reference &mdash; check the '
+    + 'lines beside it, and whether an application covers each.'));
+
+  /* payable is net of retention and comparable to their balance due; total is
+     gross and is not. With no payable in the feed there is nothing to compare. */
+  if (hasPay && f.thisApp.length && theirDue != null) {
+    const appTotal = f.thisApp.reduce((t,i) => t + Number(i.payable || 0), 0);
+    if (Math.abs(appTotal - theirDue) >= 1)      // cents are rounding, not scope
+      notes.push('<span class="celwrong">ComputerEase holds ' + money2(appTotal) + ' under this invoice '
+        + 'number, but the application only asks for ' + money2(theirDue) + '.</span> The difference, '
+        + money2(appTotal - theirDue) + ', is entered in CE and supported by no application. Pay what '
+        + 'the application asks for, and either reverse the unsupported entry in CE or get an '
+        + 'application that covers it.');
   }
-  if (f.unpaid.length) {
-    /* Only when the position is sound. With CE ahead of the application, ourDue
-       is not a figure to hold an invoice against - the note above covers it. */
+
+  if (hasPay && f.unpaid.length) {
     const comparable = ceState === 'exact' && ourDue != null
                        && Math.round(f.outstanding * 100) !== Math.round(ourDue * 100);
     notes.push(f.unpaid.length + ' invoice' + (f.unpaid.length===1?'':'s') + ' unpaid, <b>'
@@ -864,20 +932,30 @@ function ceLedgerPanel(number, payReq, e, theirDue, ourDue, ceState){
             + 'has to be corrected too, before the cheque run.</span>'
           : '.'));
   }
-  /* Two feeds, one number: if they disagree, one of them is stale. */
+  if (!hasPay)
+    notes.push('<b>Billings only.</b> This feed is the Job Cost Detail export, which carries no '
+      + 'retention, payable or payment. An invoice with no cheque shown here has <b>not</b> been '
+      + 'shown to be unpaid. The Subcontractor Detail Report by Vendor adds that half.');
+
   if (e && e.billed != null && Math.round(f.invoiced*100) !== Math.round(e.billed*100))
     notes.push('<b>This ledger and <code>committed_billed</code> disagree</b> &mdash; ' + money2(f.invoiced)
       + ' here against ' + money2(e.billed) + ' on the billing feed. One of the two exports is stale.');
 
   return '<div class="celed"><h4>ComputerEase invoices'
-    + (led.vendor_code ? ' <span class="celcode">' + esc(led.vendor_code) + '</span>' : '') + '</h4>'
+    + (led.vendor_code ? ' <span class="celcode">' + esc(led.vendor_code) + '</span>' : '')
+    + (hasPay ? '' : ' <span class="celcode">billings only</span>') + '</h4>'
     + '<table class="celtab"><thead><tr><th>Invoice</th><th>Date</th><th class="n">Total</th>'
-    + '<th class="n">Retention</th><th class="n">Payable</th><th class="n">Paid</th></tr></thead>'
+    + (hasPay ? '<th class="n">Retention</th><th class="n">Payable</th><th class="n">Paid</th>'
+              : '<th>Posted</th>')
+    + '</tr></thead>'
     + '<tbody>' + f.inv.map(row).join('') + '</tbody>'
     + '<tfoot><tr><td colspan="2">Invoiced to date</td>'
-    + '<td class="n">' + money2(f.invoiced) + '</td><td class="n">' + money2(f.retention) + '</td>'
-    + '<td class="n">' + money2(f.payable) + '</td><td class="n">' + money2(f.paid) + '</td></tr></tfoot>'
-    + '</table>'
+    + '<td class="n">' + money2(f.invoiced) + '</td>'
+    + (hasPay ? '<td class="n">' + money2(f.retention) + '</td>'
+                + '<td class="n">' + money2(f.payable) + '</td>'
+                + '<td class="n">' + money2(f.paid) + '</td>'
+              : '<td></td>')
+    + '</tr></tfoot></table>'
     + (notes.length ? '<div class="celnotes">' + notes.map(n=>'<div>'+n+'</div>').join('') + '</div>' : '')
     + '</div>';
 }
@@ -1103,6 +1181,10 @@ function payappPanel(r, pre, rowId){
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
    + (rowId ? '<div class="rqrev">'
               + '<button data-savefigs="' + esc(rowId) + '" class="ghost">Save these figures</button>'
+              + '<button data-noted="' + esc(rowId) + '" class="ghost"'
+                + ' title="Approve for payment with the exception recorded - pay the corrected amount '
+                + 'rather than holding the cheque. Procore calls this Approved as Noted.">'
+                + 'Approve as noted</button>'
               + '<button data-revise="' + esc(rowId) + '">Request revision&hellip;</button>'
               + '<span class="msg"></span></div>' : '')
    + '</div></div>';
@@ -1573,12 +1655,381 @@ const RQ_STATUS = {
   'PM returned':          ['#fde8e6','#b3261e','The PM sent it back. See their note before it goes to the sub.'],
   'approved and entered': ['#e4f4ea','#1b7a43','Entered in ComputerEase. Done.'],
   'revise and resubmit':  ['#fde8e6','#b3261e','Returned to the subcontractor for a corrected application.'],
+  'approved as noted':    ['#e4f4ea','#1b7a43','Approved for payment with a recorded exception - pay the corrected amount, do not hold the cheque. Procore calls this Approved as Noted.'],
+  'not a pay app':        ['#eef1f6','#5a6473','An invoice, not a subcontractor pay application. Out of this queue.'],
 };
 function rqStatusPill(s){
   const k = String(s || 'received');
   const d = RQ_STATUS[k] || ['#eef1f6','#5a6473',''];
   return '<span class="pill" style="background:' + d[0] + ';color:' + d[1] + '"'
        + (d[2] ? ' title="' + esc(d[2]) + '"' : '') + '>' + esc(k) + '</span>';
+}
+
+/* ---- triage vs review ------------------------------------------------------
+   One queue, two defaults. Drew in AP opens the condensed view: is this a pay
+   app, and what happens to it. A PM opens the figures. Either can switch, and
+   the switch is remembered for the session only - it is a lens, not a setting.
+
+   Role decides the DEFAULT, never what anyone may see. The desk is already
+   explicit that department scoping is not a security boundary. */
+const AP_TRIAGE_DEPARTMENTS = ['Accounting - Personnel', 'Accounting - Executives'];
+let QMODE = null;                         // 'triage' | 'review', null until /me resolves
+function queueMode(){
+  if (QMODE) return QMODE;
+  const d = norm((STATE.me || {}).dept || '');
+  return AP_TRIAGE_DEPARTMENTS.map(norm).includes(d) ? 'triage' : 'review';
+}
+
+/* The three decisions Drew makes, in his words. Each is a status write and
+   nothing else - no side effects, so a mis-click is undone by the next one. */
+const TRIAGE_ACTIONS = [
+  { k:'resubmit', label:'Resubmit', status:'revise and resubmit', cls:'bad',
+    tip:'Not on our Attachment G, or the figures cannot stand. Goes back to the subcontractor for a corrected application.' },
+  { k:'notpayapp', label:'Move to invoice queue', status:'not a pay app', cls:'',
+    tip:'This is an invoice, not a subcontractor pay application. It leaves this queue.' },
+  { k:'topm', label:'Confirm pay app → PM queue', status:'with PM', cls:'go',
+    tip:'A real pay application on our form. Goes to the job’s Project Management Team to be checked against the contract.' },
+];
+
+/* What Drew needs in the row he opens: the document, the mail it came in, and
+   whatever the parser managed to read - stated plainly, not reconciled. */
+function triagePanel(x){
+  const f = x.f;
+  const fig = [
+    ['Adjusted contract',      f.AdjustedContract],
+    ['Completed to date',      f.CompletedToDate],
+    ['Retainage held',         f.RetainageHeld],
+    ['Less previous payments', f.PreviousPayments],
+    ['Balance due',            f.BalanceDue],
+  ];
+  const any = fig.some(([,v]) => v != null && v !== '');
+  const links = []
+    .concat(f.PdfPath ? ['<a class="rqlink" href="' + esc(QUEUE_DOCS + f.PdfPath)
+      + '" target="_blank" rel="noopener">View the PDF &rarr;</a>'] : [])
+    .concat(f.MessageLink ? ['<a class="rqlink" href="' + esc(f.MessageLink)
+      + '" target="_blank" rel="noopener">View the email &rarr;</a>'] : [])
+    .join(' &nbsp;&middot;&nbsp; ');
+
+  return '<div class="trwrap">'
+    + '<div class="trcols">'
+    +   '<div class="trdoc"><h4>The document</h4>'
+    +     (links || '<span class="muted">No PDF was filed and the mail carries no link.</span>')
+    +     (f.Subject ? '<div class="trsubj">' + esc(f.Subject) + '</div>' : '')
+    +     (f.ParseNote ? '<div class="rqnote">&#9888;&nbsp;' + esc(f.ParseNote) + '</div>' : '')
+    +   '</div>'
+    +   '<div class="trfig"><h4>What was read off it</h4>'
+    +     (any
+        ? '<table class="trtab"><tbody>' + fig.map(([l,v]) =>
+            '<tr><td>' + l + '</td><td class="n">'
+            + (v == null || v === '' ? '<span class="muted">&mdash;</span>' : money2(Number(v)))
+            + '</td></tr>').join('') + '</tbody></table>'
+        : '<div class="muted">Nothing came off the PDF &mdash; usually a scan. '
+          + 'It can still be routed; the figures get keyed downstream.</div>')
+    +   '</div>'
+    + '</div>'
+    + '<div class="tract">'
+    +   TRIAGE_ACTIONS.map(a => '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
+          + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join('')
+    +   '<span class="msg"></span>'
+    + '</div></div>';
+}
+
+/* ---- the queue's columns, defined once --------------------------------------
+   Header, filter row, sort and cell all read this list, so "every column is
+   sortable and filterable" is true by construction rather than ten times over
+   by hand. Titles are ComputerEase's, named by Tiffany, so the queue reads the
+   way the office talks.
+
+   sort: a comparable value - a number, or a string that sorts correctly (dates
+         as ISO, so lexical order is chronological).
+   find: what the per-column filter matches against, lowercased. It includes the
+         words a person would actually type, so "no period" and "needs keying"
+         are searchable even though neither is data. */
+const QCOLS = [
+  { k:'invdate',
+    facet: x => x.f.PeriodEnding ? shortDate(x.f.PeriodEnding) : 'no period',
+    h:'Inv Date', h2:'Period Ending',
+    tip:'Period ending on the application - the month of work it covers, not when it arrived.',
+    sort: x => x.f.PeriodEnding ? String(x.f.PeriodEnding).slice(0,10) : '',
+    find: x => (x.f.PeriodEnding ? shortDate(x.f.PeriodEnding) + ' ' + String(x.f.PeriodEnding).slice(0,10) : 'no period'),
+    cell: x => x.f.PeriodEnding ? esc(shortDate(x.f.PeriodEnding))
+                                : '<span class="muted">no period</span>' },
+
+  { k:'invno',
+    facet: x => x.f.PayRequest ? String(x.f.PayRequest) : '',
+    h:'Inv #', h2:'Pay App #',
+    tip:'The subcontractor&rsquo;s own reference for this application.',
+    sort: x => { const n = Number(x.f.PayRequest); return isNaN(n) ? String(x.f.PayRequest||'') : n; },
+    find: x => String(x.f.PayRequest || ''),
+    cell: x => x.f.PayRequest ? esc(String(x.f.PayRequest)) : '<span class="muted">&mdash;</span>' },
+
+  { k:'vendor',
+    facet: x => x.vendor || '(no vendor)',
+    h:'Vendor', tip:'Subcontractor or supplier on the commitment.',
+    sort: x => (x.vendor || '').toLowerCase(),
+    find: x => x.vendor || 'no vendor',
+    cell: x => esc(x.vendor || '(no vendor)') },
+
+  /* Job number collapsed under the name: two columns of the same fact, and the
+     number is the one people search rather than read. */
+  { k:'job',
+    facet: x => x.project ? shortProject(x.project) : '',
+    h:'Job Name', h2:'Job #', tip:'Project, with its job number beneath.',
+    sort: x => (x.project ? shortProject(x.project) : '').toLowerCase(),
+    find: x => (x.project || '') + ' ' + (x.project ? shortProject(x.project) : '') + ' ' + (x.job || ''),
+    cell: x => (x.project ? esc(shortProject(x.project)) : '<span class="muted">&mdash;</span>')
+             + (x.job ? '<div class="rqsub">' + esc(x.job) + '</div>' : '') },
+
+  { k:'group',
+    triage: false,
+    facet: x => groupAssigned(x) === '\u2014' ? 'unassigned' : groupAssigned(x),
+    h:'Group Assigned',
+    tip:'Project Management Team on the job in Procore. The queue is scoped by this.',
+    sort: x => groupAssigned(x).toLowerCase(),
+    find: x => ((x.c && x.c.pm_team_names) || []).join(' ') || 'unassigned',
+    cell: x => esc(groupAssigned(x)) },
+
+  { k:'age',
+    facet: x => x.age == null ? '' : x.age + 'd',
+    h:'Age', cls:'n', tip:'Days since the application arrived in payables@.',
+    sort: x => x.age == null ? -1 : x.age,
+    find: x => (x.age == null ? '' : x.age + 'd ') + shortDate(x.f.ReceivedAt),
+    cell: x => { const a = x.age, c = a == null ? 'a0' : a > 7 ? 'a2' : a > 3 ? 'a1' : 'a0';
+      return '<span class="rqage ' + c + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
+           + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div>'; } },
+
+  { k:'sub',
+    triage: false,
+    facet: x => x.number || 'no subcontract number',
+    h:'PO / Sub #', tip:'The commitment in Procore and ComputerEase.',
+    sort: x => x.number || '',
+    find: x => x.number || 'no subcontract number',
+    cell: x => x.number ? esc(x.number) : '<span class="muted">no subcontract number</span>' },
+
+  /* A blank here is not "they asked for nothing" - it is "nobody has keyed this
+     yet", which is the opposite instruction to the person reading it. */
+  { k:'amount',
+    facet: x => x.due == null ? 'needs keying' : money(x.due),
+    h:'Amount', h2:'Balance Due', cls:'n',
+    tip:'Balance due this application - what the subcontractor is asking to be paid now. Blank means the figure was not read off the PDF, usually because it is a scan.',
+    sort: x => x.due == null ? -Infinity : x.due,
+    find: x => (x.due == null ? 'needs keying' : String(x.due) + ' ' + money(x.due))
+             + ' ' + String(rqCheck(x)[0]).replace(/<[^>]+>/g, ' '),
+    cell: x => (x.due == null ? '<span style="color:#b07d00">needs keying</span>' : money(x.due))
+             + '<div class="rqsub">' + rqCheck(x)[0] + '</div>' },
+
+  { k:'status',
+    facet: x => (x.status || 'received') + (x.ceState ? ' \u00b7 in CE' : ''),
+    h:'Status', tip:'Where the application is in the desk, and whether CE already has it.',
+    sort: x => (x.status || '') + (x.ceState ? ' 1' : ' 0'),
+    find: x => (x.status || '') + (x.ceState ? ' in ce entered' : ''),
+    cell: x => rqStatusPill(x.status)
+      + (x.ceState
+          ? ' <span class="pill b" title="' + esc(x.ceState === 'exact'
+              ? 'ComputerEase already carries this application at the amount asked for. It is entered; '
+                + 'whether it has been PAID depends on the invoice ledger beside the figures.'
+              : 'ComputerEase carries more against this subcontract than this application claims, so it '
+                + 'is already entered and something else is on it too. Check the subcontract\'s invoices.')
+            + '">in CE</span>'
+          : '') },
+
+  { k:'period',
+    triage: false,
+    facet: x => x.f.PeriodEnding ? billingPeriod(x.f.PeriodEnding) : '',
+    h:'Period', tip:'Billing period the application covers, from its period ending.',
+    sort: x => x.f.PeriodEnding ? String(x.f.PeriodEnding).slice(0,7) : '',
+    find: x => x.f.PeriodEnding ? billingPeriod(x.f.PeriodEnding) : '',
+    cell: x => x.f.PeriodEnding ? esc(billingPeriod(x.f.PeriodEnding))
+                                : '<span class="muted">&mdash;</span>' },
+];
+
+/* A column hidden in triage is still filterable from review, and its filter
+   keeps applying - hiding a column does not silently widen the view. */
+const qcolShown = c => !(queueMode() === 'triage' && c.triage === false);
+
+/* Oldest first is the queue's job, so age descending is the default. */
+let QSORT = { k:'age', dir:-1 };
+const QFILT = {};      // column key -> Set of ticked facet values, or null
+
+function qcolSort(rows){
+  const c = QCOLS.find(c => c.k === QSORT.k) || QCOLS[5];
+  return rows.slice().sort((a,b) => {
+    const va = c.sort(a), vb = c.sort(b);
+    let r;
+    if (typeof va === 'number' && typeof vb === 'number') r = va - vb;
+    else r = String(va).localeCompare(String(vb), undefined, { numeric:true });
+    return r * QSORT.dir;
+  });
+}
+
+/* ---- Excel-style column filters --------------------------------------------
+   QFILT[k] is null when a column is unfiltered, or a Set of the facet values
+   that are ticked. Facets for a column are computed from the rows that pass
+   every OTHER column's filter, which is what Excel does - narrow by vendor and
+   the Job Name list shrinks to that vendor's jobs rather than still offering
+   you jobs that would return nothing. */
+function qFacet(c, x){
+  const v = c.facet ? c.facet(x) : String(c.find(x) || '').trim();
+  return v === '' ? '(blank)' : String(v);
+}
+function qRowPasses(x, exceptKey){
+  return QCOLS.every(c => {
+    if (c.k === exceptKey) return true;
+    const sel = QFILT[c.k];
+    if (!sel) return true;
+    return sel.has(qFacet(c, x));
+  });
+}
+function qFacetCounts(c, rows){
+  const m = new Map();
+  rows.filter(x => qRowPasses(x, c.k)).forEach(x => {
+    const v = qFacet(c, x); m.set(v, (m.get(v) || 0) + 1);
+  });
+  /* Order by the column's own sort value, so Age reads 1d, 2d, 19d rather than
+     1d, 19d, 2d. Falls back to a numeric-aware text compare. */
+  const rank = new Map();
+  rows.forEach(x => { const v = qFacet(c, x); if (!rank.has(v)) rank.set(v, c.sort(x)); });
+  return [...m.entries()].sort((a,b) => {
+    if (a[0] === '(blank)') return 1;
+    if (b[0] === '(blank)') return -1;
+    const ra = rank.get(a[0]), rb = rank.get(b[0]);
+    if (typeof ra === 'number' && typeof rb === 'number') return ra - rb;
+    return String(ra == null ? a[0] : ra).localeCompare(String(rb == null ? b[0] : rb),
+                                                        undefined, { numeric:true });
+  });
+}
+
+let QF_OPEN = null;                       // the column whose panel is showing
+function closeFilterPanel(){
+  const p = document.getElementById('qfpanel');
+  if (p) p.remove();
+  QF_OPEN = null;
+}
+function openFilterPanel(el, colKey, th){
+  const wasOpen = QF_OPEN === colKey;
+  closeFilterPanel();
+  if (wasOpen) return;                    // clicking the funnel again closes it
+  QF_OPEN = colKey;
+  const c = QCOLS.find(c => c.k === colKey);
+  const rows = Object.values(QROWS);
+  const facets = qFacetCounts(c, rows);
+  const sel = QFILT[colKey];
+
+  const p = document.createElement('div');
+  p.id = 'qfpanel'; p.className = 'qfpanel';
+  p.innerHTML =
+      '<div class="qfsort"><button data-dir="1">Sort A &rarr; Z</button>'
+    + '<button data-dir="-1">Sort Z &rarr; A</button></div>'
+    + '<input class="qfsearch" placeholder="Search" autocomplete="off">'
+    + '<label class="qfrow qfall"><input type="checkbox" data-all><span>(Select All)</span></label>'
+    + '<div class="qflist">'
+    + facets.map(([v,n]) =>
+        '<label class="qfrow" data-fv="' + esc(v) + '"><input type="checkbox" data-v="' + esc(v) + '"'
+        + (!sel || sel.has(v) ? ' checked' : '') + '><span>' + esc(v) + '</span>'
+        + '<span class="qfn">' + n + '</span></label>').join('')
+    + '</div>'
+    + '<div class="qffoot"><a href="#" data-clear>Clear filter</a>'
+    + '<span class="qfnote">' + facets.length + ' value' + (facets.length===1?'':'s') + '</span></div>';
+  document.body.appendChild(p);
+
+  const r = th.getBoundingClientRect();
+  p.style.top = Math.round(r.bottom + 2) + 'px';
+  /* Keep it on screen when the column is near the right edge. */
+  p.style.left = Math.round(Math.min(r.left, window.innerWidth - p.offsetWidth - 12)) + 'px';
+
+  const boxes = () => [...p.querySelectorAll('.qflist input[data-v]')];
+  const visible = () => boxes().filter(b => b.closest('.qfrow').style.display !== 'none');
+  const syncAll = () => {
+    const v = visible(), on = v.filter(b => b.checked).length;
+    const all = p.querySelector('input[data-all]');
+    all.checked = on > 0 && on === v.length;
+    all.indeterminate = on > 0 && on < v.length;
+  };
+  const commit = () => {
+    const on = boxes().filter(b => b.checked).map(b => b.dataset.v);
+    /* Everything ticked is the same as no filter, and showing a funnel on a
+       column that excludes nothing is a lie. */
+    QFILT[colKey] = on.length === boxes().length ? null : new Set(on);
+    applyQueueFilter(el);
+    markFilterHeaders(el);
+  };
+
+  p.querySelector('.qfsearch').oninput = ev => {
+    const t = ev.target.value.trim().toLowerCase();
+    p.querySelectorAll('.qflist .qfrow').forEach(row => {
+      row.style.display = !t || row.dataset.fv.toLowerCase().includes(t) ? '' : 'none';
+    });
+    syncAll();
+  };
+  p.querySelector('input[data-all]').onchange = ev => {
+    visible().forEach(b => { b.checked = ev.target.checked; });
+    syncAll(); commit();
+  };
+  boxes().forEach(b => { b.onchange = () => { syncAll(); commit(); }; });
+  p.querySelector('[data-clear]').onclick = ev => {
+    ev.preventDefault(); QFILT[colKey] = null;
+    boxes().forEach(b => { b.checked = true; });
+    syncAll(); applyQueueFilter(el); markFilterHeaders(el);
+  };
+  p.querySelectorAll('.qfsort button').forEach(btn => {
+    btn.onclick = () => { QSORT = { k: colKey, dir: Number(btn.dataset.dir) }; closeFilterPanel(); renderReceived(); };
+  });
+  syncAll();
+  p.querySelector('.qfsearch').focus();
+
+  setTimeout(() => {
+    document.addEventListener('mousedown', function off(e){
+      if (p.contains(e.target) || (th && th.contains(e.target))) return;
+      document.removeEventListener('mousedown', off); closeFilterPanel();
+    });
+  }, 0);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterPanel(); });
+
+function markFilterHeaders(el){
+  el.querySelectorAll('th.qsort').forEach(th => {
+    th.classList.toggle('qfon', !!QFILT[th.dataset.qs]);
+  });
+}
+
+/* Hides rows in place rather than re-rendering, so an open panel and the page
+   position both survive a filter change. */
+function applyQueueFilter(el){
+  const active = QCOLS.filter(c => QFILT[c.k]).length;
+  let shown = 0, total = 0;
+  el.querySelectorAll('tr.rqrow').forEach(tr => {
+    total++;
+    const x = QROWS[tr.dataset.rq];
+    const ok = !x || qRowPasses(x, null);
+    tr.style.display = ok ? '' : 'none';
+    const d = tr.nextElementSibling;
+    if (d && d.classList.contains('rqdetail')) d.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  });
+  const n = el.querySelector('#qfiltn');
+  if (n) n.innerHTML = active
+    ? shown + ' of ' + total + ' shown &middot; <a href="#" id="qfclearall">clear filters</a>' : '';
+  const ca = el.querySelector('#qfclearall');
+  if (ca) ca.onclick = ev => { ev.preventDefault();
+    QCOLS.forEach(c => { QFILT[c.k] = null; }); closeFilterPanel();
+    applyQueueFilter(el); markFilterHeaders(el); };
+}
+
+/* row id -> row, so the filter can read a row's values without re-deriving them */
+let QROWS = {};
+
+/* "Aug 2020" - the month of work the application covers, which is how CE and
+   everyone in the office names a billing period. */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function billingPeriod(v){
+  const d = new Date(v); if (isNaN(d)) return '';
+  return MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}
+/* The Project Management Team in Procore, which is what scopes this queue. */
+function groupAssigned(x){
+  const n = (x.c && x.c.pm_team_names) || [];
+  if (!n.length) return '\u2014';
+  return n.length > 2 ? n[0] + ' +' + (n.length - 1) : n.join(', ');
 }
 
 const RQ_OPEN = new Set();
@@ -1741,10 +2192,12 @@ function renderReceived(){
   /* Oldest first - this is a work queue, not a report. */
   /* Entered and clean is done. Entered and wrong stays - see 42025AU010, which
      CE holds at 28,155.60 against a contract that cannot support it. */
+  const notApps = rows.filter(x => x.status === 'not a pay app');
+  rows = rows.filter(x => x.status !== 'not a pay app');
   const settled = rows.filter(x => x.ceState && !x.excCount);
   if (HIDE_ENTERED) rows = rows.filter(x => !(x.ceState && !x.excCount));
 
-  rows.sort((a,b) => (b.age == null ? -1 : b.age) - (a.age == null ? -1 : a.age));
+  rows = qcolSort(rows);
   const sum = rows.reduce((t,x) => t + (x.due || 0), 0);
   /* A scan carries no figures. Totalling those as zero reads as 'they are asking
      for nothing', which is the opposite of the truth - they are asking for an
@@ -1758,33 +2211,8 @@ function renderReceived(){
     const open = RQ_OPEN.has(x.id);
     const head =
       '<tr class="rqrow' + (open ? ' rqopen' : '') + '" data-rq="' + esc(x.id) + '">'
-      + '<td>' + esc(x.vendor || '(no vendor)')
-        + '<div class="rqsub">' + esc(x.number || 'no subcontract number')
-        + (x.project ? ' &middot; ' + esc(shortProject(x.project)) : '') + '</div></td>'
-      + '<td>' + (x.job ? esc(x.job) : '<span class="muted">&mdash;</span>') + '</td>'
-      + '<td>' + (x.f.PayRequest ? esc(String(x.f.PayRequest)) : '<span class="muted">&mdash;</span>')
-        + '<div class="rqsub">' + (x.f.PeriodEnding ? 'to ' + esc(shortDate(x.f.PeriodEnding)) : 'no period') + '</div></td>'
-      /* A blank here is not "they asked for nothing" - it is "nobody has keyed
-         this yet", which is the opposite instruction to the person reading it.
-         142 of the 252 were scans with no text layer. */
-      + '<td class="n">' + (x.due == null
-            ? '<span style="color:#b07d00">needs keying</span>'
-            : money(x.due))
-        + '<div class="rqsub">' + (x.due == null
-            ? 'no figures on the PDF'
-            : (x.f.CompletedToDate == null ? '' : 'of ' + money(x.f.CompletedToDate) + ' done')) + '</div></td>'
-      + '<td class="n"><span class="rqage ' + acls + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
-        + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div></td>'
-      + '<td>' + chk + '</td>'
-      + '<td>' + rqStatusPill(x.status)
-      + (x.ceState
-          ? ' <span class="pill b" title="' + esc(x.ceState === 'exact'
-              ? 'ComputerEase already carries this application at the amount asked for. It is entered; '
-                + 'whether it has been PAID is not visible here - committed_billed is invoiced, not paid.'
-              : 'ComputerEase carries more against this subcontract than this application claims, so it '
-                + 'is already entered and something else is on it too. Check the subcontract\'s invoices.')
-            + '">in CE</span>'
-          : '') + '</td></tr>';
+      + QCOLS.filter(qcolShown).map(c => '<td' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + c.cell(x) + '</td>').join('')
+      + '</tr>';
     if (!open) return head;
 
     const pre = {
@@ -1798,6 +2226,9 @@ function renderReceived(){
       .concat(x.f.PdfPath ? ['<a class="rqlink" href="' + esc(QUEUE_DOCS + x.f.PdfPath) + '" target="_blank" rel="noopener">Open the pay app PDF &rarr;</a>'] : [])
       .concat(x.f.MessageLink ? ['<a class="rqlink" href="' + esc(x.f.MessageLink) + '" target="_blank" rel="noopener">Open the original mail &rarr;</a>'] : [])
       .join(' &nbsp;&middot;&nbsp; ');
+    if (queueMode() === 'triage')
+      return head + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="'
+           + QCOLS.filter(qcolShown).length + '">' + triagePanel(x) + '</td></tr>';
     const panel = x.c ? payappPanel(x.c, pre, x.id)
       : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
         + esc(x.number || 'this number') + '</b>, so there is nothing to check these figures against.</div>';
@@ -1825,7 +2256,7 @@ function renderReceived(){
       + '</div></div>';
 
     return head
-      + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="7">'
+      + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="' + QCOLS.filter(qcolShown).length + '">'
       + editor + note + panel
       + (links ? '<div style="margin-top:10px">' + links + '</div>' : '')
       + '</td></tr>';
@@ -1844,14 +2275,74 @@ function renderReceived(){
             + ' and agreeing &middot; <a href="#" id="togentered">'
             + (HIDE_ENTERED ? 'show' : 'hide') + '</a></span>'
           : '')
-    +   '<span style="margin-left:auto">oldest first</span></div>'
+    +   (notApps.length ? '<span>&middot;</span><span>' + notApps.length
+          + ' moved to the invoice queue</span>' : '')
+    +   '<span>&middot;</span><span class="qmode">'
+    +   (queueMode() === 'triage' ? '<b>Triage</b> &middot; <a href="#" id="qmodesw">review</a>'
+                                  : '<a href="#" id="qmodesw">triage</a> &middot; <b>Review</b>') + '</span>'
+    +   '<span id="qfiltn"></span>'
+    +   '<span style="margin-left:auto">'
+    +   esc((QCOLS.find(c => c.k === QSORT.k) || {}).h || '') + (QSORT.dir > 0 ? ' \u25b2' : ' \u25bc')
+    +   '</span></div>'
     + '<table class="rqtab"><thead><tr>'
-    +   '<th>Subcontractor</th><th>Job</th><th>Pay req</th>'
-    +   '<th class="n" title="Balance due this application - what the subcontractor is asking to be paid now. Blank means the figure was not read off the PDF, usually because it is a scan.">Requested</th>'
-    +   '<th class="n" title="Days since the application arrived in payables@.">Age</th>'
-    +   '<th title="Whether this application can be checked against the contract, and whether it ties. &#10;&#10;contract ties - their adjusted contract agrees with Procore to the cent&#10;a figure - their adjusted contract differs from Procore by that amount&#10;matched by name - no subcontract number on the document; matched from the vendor and project in the subject&#10;needs keying - no figures came off the PDF, so there is nothing to compare&#10;unidentified - no subcontract number anywhere, so there is nothing to compare it to&#10;no commitment - the number read does not match any commitment in Procore">Contract check</th>'
-    +   '<th>Status</th>'
+    +   QCOLS.filter(qcolShown).map(c => '<th class="qsort' + (c.cls ? ' ' + c.cls : '')
+          + (QSORT.k === c.k ? ' on' : '') + '" data-qs="' + c.k + '"'
+          + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>'
+          + '<span class="qfh">' + c.h
+          + (QSORT.k === c.k ? (QSORT.dir > 0 ? ' \u25b2' : ' \u25bc') : '') + '</span>'
+          + '<button class="qffun" data-qfun="' + c.k + '" title="Filter this column"'
+          + ' aria-label="Filter ' + esc(c.h) + '">\u25be</button>'
+          + (c.h2 ? '<div class="rqth2">' + c.h2 + '</div>' : '') + '</th>').join('')
     + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+
+  QROWS = {}; rows.forEach(r => { QROWS[r.id] = r; });
+
+  el.querySelectorAll('th.qsort').forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.qs;
+      /* Same column toggles direction; a new column starts descending for
+         numbers and ascending for text, which is what people expect. */
+      if (QSORT.k === k) QSORT.dir = -QSORT.dir;
+      else { const c = QCOLS.find(c => c.k === k); QSORT = { k, dir: c && c.cls === 'n' ? -1 : 1 }; }
+      renderReceived();
+    };
+  });
+  el.querySelectorAll('button[data-qfun]').forEach(btn => {
+    btn.onclick = ev => {
+      ev.stopPropagation();                        // the funnel filters, it does not sort
+      openFilterPanel(el, btn.dataset.qfun, btn.closest('th'));
+    };
+  });
+  markFilterHeaders(el);
+  applyQueueFilter(el);
+
+  const sw = el.querySelector('#qmodesw');
+  if (sw) sw.onclick = ev => { ev.preventDefault();
+    QMODE = queueMode() === 'triage' ? 'review' : 'triage'; RQ_OPEN.clear(); renderReceived(); };
+
+  el.querySelectorAll('.tract button[data-tr]').forEach(btn => {
+    btn.onclick = async () => {
+      const row = rows.find(r => r.id === btn.dataset.tr);
+      const act = TRIAGE_ACTIONS.find(a => a.k === btn.dataset.trk);
+      const msgEl = btn.parentNode.querySelector('.msg');
+      if (!row || !act) return;
+      if (!row.itemId) { msgEl.className = 'msg bad';
+                         msgEl.textContent = 'This row has no list item behind it.'; return; }
+      btn.parentNode.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      RQ_MSG.set(row.id, { cls:'', text:'Saving\u2026' }); paintSaveNotes(el);
+      const res = await saveQueueItem(row.itemId, { Status: act.status });
+      btn.parentNode.querySelectorAll('button').forEach(b => { b.disabled = false; });
+      if (res && typeof res === 'object') {
+        Object.assign(row.f, res.stored || { Status: act.status });
+        row.status = act.status;
+        RQ_MSG.set(row.id, { cls:'ok', text: res.warn || ('Moved to \u201c' + act.status + '\u201d.') });
+        setTimeout(renderReceived, 400);
+      } else {
+        RQ_MSG.set(row.id, { cls:'bad', text:'Not saved \u2014 ' + res });
+      }
+      paintSaveNotes(el);
+    };
+  });
 
   const tog = el.querySelector('#togentered');
   if (tog) tog.onclick = ev => { ev.preventDefault(); HIDE_ENTERED = !HIDE_ENTERED; renderReceived(); };
@@ -1941,6 +2432,26 @@ function renderReceived(){
     };
   });
 
+  el.querySelectorAll('.rqrev button[data-noted]').forEach(btn => {
+    btn.onclick = async () => {
+      const row = rows.find(r => r.id === btn.dataset.noted);
+      if (!row) return;
+      if (!row.itemId) { RQ_MSG.set(row.id, { cls:'bad', text:'This row has no list item behind it.' });
+                         return paintSaveNotes(el); }
+      btn.disabled = true;
+      RQ_MSG.set(row.id, { cls:'', text:'Saving\u2026' }); paintSaveNotes(el);
+      const res = await saveQueueItem(row.itemId, { Status: 'approved as noted' });
+      btn.disabled = false;
+      if (res && typeof res === 'object') {
+        Object.assign(row.f, res.stored || { Status:'approved as noted' });
+        row.status = 'approved as noted';
+        RQ_MSG.set(row.id, { cls:'ok', text: res.warn || 'Approved as noted.' });
+        setTimeout(renderReceived, 400);
+      } else RQ_MSG.set(row.id, { cls:'bad', text:'Not saved \u2014 ' + res });
+      paintSaveNotes(el);
+    };
+  });
+
   el.querySelectorAll('.rqrev button[data-revise]').forEach(btn => {
     btn.onclick = async () => {
       const row = rows.find(r => r.id === btn.dataset.revise);
@@ -1970,7 +2481,9 @@ function renderReceived(){
 function paintSaveNotes(el){
   RQ_MSG.forEach((m, id) => {
     const sel = '.rqedit[data-edit="' + CSS.escape(id) + '"] .msg,'
-              + ' .rqrev button[data-savefigs="' + CSS.escape(id) + '"] ~ .msg';
+              + ' .rqrev button[data-savefigs="' + CSS.escape(id) + '"] ~ .msg,'
+              + ' .rqrev button[data-noted="' + CSS.escape(id) + '"] ~ .msg,'
+              + ' .tract button[data-tr="' + CSS.escape(id) + '"] ~ .msg';
     el.querySelectorAll(sel).forEach(box => { box.className = 'msg ' + m.cls; box.textContent = m.text; });
   });
 }
