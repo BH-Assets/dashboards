@@ -952,19 +952,40 @@ function payappPanel(r, pre, rowId){
   }
   const P = payappPosition(e, pre);
   const { nz, absorbed, theirPrev, theirDue, derivedPrev, earned, retDue, payNow, theirAsk } = P;
+  /* No floor can be stated once CE holds the application, or when CE already
+     carries more than the contract. Only the ceiling is real. */
+  const noFloor = !!P.ceState || e.minBilled > e.maxBilled + 0.005;
+  /* Retainage expected at the completed figure THEY state - the same call
+     payappBind makes as the reviewer types, so the two never disagree. */
+  const tbill   = P.nz(pre && pre.billed);
+  const retWant = (e.pctR == null || tbill == null) ? null : e.retAt(tbill);
+  const atCap   = retWant != null && e.retFull != null
+                  && Math.round(retWant * 100) === Math.round(e.retFull * 100);
 
   const ours = {
     contract: money2(e.contract),
-    billed: money2(e.minBilled) + ' &ndash; ' + money2(e.maxBilled),
-    retNow: (e.pctR == null ? '&mdash;'
-             : (e.thru50 ? e.pctR + '% capped at ' + money2(e.retFull) : e.pctR + '% of completed')),
+    billed: 'at most ' + money2(e.maxBilled),
+    retNow: retWant != null ? money2(retWant)
+            : (e.pctR == null ? '&mdash;'
+               : e.pctR + '% of completed'
+                 + (e.thru50 ? ', capped at ' + money2(e.retFull) : '')),
     prevPaid: absorbed ? (derivedPrev == null ? '&mdash;' : money2(derivedPrev)) : money2(e.prevPaid),
     due: P.ourDue == null ? '&mdash;' : money2(P.ourDue),
   };
   const sub = {
     contract: money2(e.original) + ' + ' + money2(e.cos) + ' CO',
-    billed: 'billed so far &rarr; contract',
-    retNow: 'from their completed figure',
+    billed: noFloor
+      ? (P.ceState
+          ? 'the contract. No floor &mdash; CE already holds this application'
+          : 'the contract. No floor &mdash; CE already carries more than the contract')
+      : 'the contract, and not below the ' + money2(e.minBilled) + ' already billed',
+    retNow: e.pctR == null
+      ? 'no retainage term on the commitment'
+      : e.thru50
+        ? e.pctR + '% through 50% completion &mdash; '
+          + (atCap ? 'cap of ' + money2(e.retFull) + ' reached, nothing further is withheld'
+                   : 'caps at ' + money2(e.retFull))
+        : e.pctR + '% of completed, no cap',
     prevPaid: absorbed
       ? (derivedPrev == null ? 'needs their balance due &mdash; see below'
                              : 'CE payable to date less this request')
@@ -1073,7 +1094,8 @@ function payappPanel(r, pre, rowId){
                 : 'if they bill to 100%') + '</span></div>')
    + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '')
    + (derivedPrev != null ? ' data-prevderived="' + derivedPrev.toFixed(2) + '"' : '')
-   + (P.ourPrev   != null ? ' data-ourprev="'     + P.ourPrev.toFixed(2)   + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
+   + (P.ourPrev   != null ? ' data-ourprev="'     + P.ourPrev.toFixed(2)   + '"' : '')
+   + (noFloor ? ' data-nofloor="1"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + '</div>'
    + ceLedgerPanel(r.number, pre && pre.payReq, e, P.theirDue, P.ourDue, P.ceState)
@@ -1314,9 +1336,11 @@ function payappBind(tr, r){
       } else if (kind === 'range') {
         /* A new application SHOULD exceed what CE has posted - that is the work
            done this period. Only below the floor or above the contract is wrong. */
-        if (v < e.minBilled - 0.005) put(k,'pabad','below billed ' + money2(e.minBilled));
-        else if (v > e.maxBilled + 0.005) put(k,'pabad','over contract by ' + money2(v - e.maxBilled));
-        else put(k,'paok','in range');
+        const noFloor = tab.dataset.nofloor === '1';
+        if (v > e.maxBilled + 0.005) put(k,'pabad','over contract by ' + money2(v - e.maxBilled));
+        else if (!noFloor && v < e.minBilled - 0.005)
+          put(k,'pabad','below the ' + money2(e.minBilled) + ' already billed');
+        else put(k,'paok','within the contract');
 
       } else if (k === 'due') {
         /* Our estimate of this payment, from THEIR completed figure but OUR
