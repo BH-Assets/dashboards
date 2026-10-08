@@ -123,7 +123,11 @@
                   border-bottom:1px solid #e3e8f0;white-space:nowrap}
   .rqtab thead th.n{text-align:right}
   .rqtab td{border-bottom:1px solid #f1f4f9;padding:9px 10px;vertical-align:top}
-  .rqtab td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  /* Everything left-aligned: this is a work queue that gets scanned down the
+     left edge, not a financial statement being totalled. */
+  .rqtab td.n,.rqtab th.n{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .rqtab th:first-child,.rqtab td:first-child{padding-left:18px}
+  .rqtab th:last-child,.rqtab td:last-child{padding-right:18px}
   .rqtab tr.rqrow{cursor:pointer}
   .rqtab tr.rqrow:hover td{background:#fafbfe}
   .rqtab tr.rqopen td{background:#f4f7fc}
@@ -136,6 +140,20 @@
   .rqnote{font-size:11.5px;color:#b07d00;margin-top:3px}
   .rqlink{font-size:11.5px;text-decoration:none;color:#1F3864;font-weight:600}
   .rqlink:hover{text-decoration:underline}
+  .rqedit{background:#fff;border:1px solid #e3e8f0;border-radius:8px;padding:12px 14px;margin:2px 0 12px}
+  .rqedit h4{margin:0 0 2px;font-size:12px;color:#1F3864;letter-spacing:.02em}
+  .rqedit .hint{font-size:11.5px;color:#7a869a;margin-bottom:9px}
+  .rqedit .fields{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+  .rqedit label{font-size:11px;color:#7a869a;display:block}
+  .rqedit input{display:block;margin-top:3px;font:inherit;font-size:12.5px;padding:5px 7px;
+                border:1px solid #cfd018;border-color:#cdd6e3;border-radius:6px;min-width:130px}
+  .rqedit input.miss{border-color:#e0b000;background:#fffdf5}
+  .rqedit button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 14px;border:0;border-radius:6px;
+                 background:#1F3864;color:#fff;cursor:pointer}
+  .rqedit button[disabled]{opacity:.55;cursor:default}
+  .rqedit .msg{font-size:11.5px;margin-left:10px}
+  .rqedit .msg.ok{color:#1b7a43}
+  .rqedit .msg.bad{color:#b3261e}
   .rqmsg{padding:30px 22px;color:#5a6473;line-height:1.75;font-size:13px}
   .rqmsg b{color:#1F3864}
   .rqmsg code{background:#eef2f8;border-radius:4px;padding:1px 5px;font-size:12px}
@@ -358,12 +376,14 @@ async function loadQueue(tok){
   for (let page = 0; url && page < 40; page++) {
     const r = await g(tok, url);
     if (!r.ok) return { items: null, reason: 'items', status: r.status };
-    for (const it of (r.body.value || [])) if (it.fields) out.push(it.fields);
+    for (const it of (r.body.value || [])) if (it.fields) out.push({ ...it.fields, _itemId: it.id });
     const next = r.body['@odata.nextLink'];
     /* Graph hands back an absolute URL and g() prepends GRAPH, so strip it. */
     url = next ? String(next).replace(GRAPH, '') : null;
   }
-  return { items: out, reason: null };
+  /* siteId and listId are kept so a correction can be PATCHed back without
+     resolving them again. */
+  return { items: out, reason: null, siteId: site.body.id, listId: lr.body.id };
 }
 
 /* ---- who sees which rows ----------------------------------------------------
@@ -1007,6 +1027,7 @@ function receivedRows(){
     return {
       f, c,
       id:       String(f.Title || f.MessageId || num || Math.random()),
+      itemId:   f._itemId,
       vendor:   (c && c.vendor) || f.Vendor || '',
       job:      String(f.JobNumber || (c && c.project_number) || '').trim(),
       project:  (c && c.project) || '',
@@ -1028,8 +1049,11 @@ function rqCheck(x){
      PM has to confirm it is their subcontract before anything else is believed. */
   if (String(x.f.MatchBasis || '') === 'roster')
     return ['<span class="pill y" title="No subcontract number appeared anywhere on this application. It was matched because the vendor and project named in the subject identified exactly one commitment. Confirm it is the right subcontract before checking the figures.">matched by name</span>', 2];
-  if (String(x.f.MatchBasis || '') === 'unmatched')
-    return ['<span class="pill y" title="No subcontract number was found on the form, in the subject or in the filename. Someone has to identify this one by hand.">unidentified</span>', 2];
+  /* Keyed on whether a number is present, NOT on MatchBasis - once someone
+     types the number in below, the row is identified and must stop calling
+     itself unidentified even though the pull's own basis still says unmatched. */
+  if (!x.number)
+    return ['<span class="pill y" title="No subcontract number was found on the form, in the subject or in the filename. Open the row and type it in.">unidentified</span>', 2];
   if (x.f.AdjustedContract == null)
     return ['<span class="pill y" title="No adjusted contract figure came off the PDF - usually a scan. The figures need keying by hand before this can be checked.">needs keying</span>', 2];
   const e = payappExpected(x.c);
@@ -1147,8 +1171,15 @@ function renderReceived(){
       + '<td>' + (x.job ? esc(x.job) : '<span class="muted">&mdash;</span>') + '</td>'
       + '<td>' + (x.f.PayRequest ? esc(String(x.f.PayRequest)) : '<span class="muted">&mdash;</span>')
         + '<div class="rqsub">' + (x.f.PeriodEnding ? 'to ' + esc(shortDate(x.f.PeriodEnding)) : 'no period') + '</div></td>'
-      + '<td class="n">' + (x.due == null ? '<span class="muted">&mdash;</span>' : money(x.due))
-        + '<div class="rqsub">' + (x.f.CompletedToDate == null ? '' : 'of ' + money(x.f.CompletedToDate) + ' done') + '</div></td>'
+      /* A blank here is not "they asked for nothing" - it is "nobody has keyed
+         this yet", which is the opposite instruction to the person reading it.
+         142 of the 252 were scans with no text layer. */
+      + '<td class="n">' + (x.due == null
+            ? '<span style="color:#b07d00">needs keying</span>'
+            : money(x.due))
+        + '<div class="rqsub">' + (x.due == null
+            ? 'no figures on the PDF'
+            : (x.f.CompletedToDate == null ? '' : 'of ' + money(x.f.CompletedToDate) + ' done')) + '</div></td>'
       + '<td class="n"><span class="rqage ' + acls + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
         + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div></td>'
       + '<td>' + chk + '</td>'
@@ -1167,9 +1198,32 @@ function renderReceived(){
     const panel = x.c ? payappPanel(x.c, pre)
       : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
         + esc(x.number || 'this number') + '</b>, so there is nothing to check these figures against.</div>';
+    /* Correcting a row by hand. The pull cannot read a scan, and roughly 142 of
+       252 rows arrived with no figures and often no number - so the queue is
+       only workable if a person can finish the identification here. The write
+       goes through this page's MSAL session, so SharePoint records WHO changed
+       it in the item's version history. That is the audit trail; nothing extra
+       is built for it. */
+    const F = (key, label, value, type) =>
+      '<label>' + label + '<input data-f="' + key + '" type="' + (type||'text') + '"'
+      + ' value="' + esc(value == null ? '' : String(value)) + '"'
+      + (value ? '' : ' class="miss"') + '></label>';
+    const editor = !x.itemId ? '' :
+      '<div class="rqedit" data-edit="' + esc(x.id) + '">'
+      + '<h4>Identify this application</h4>'
+      + '<div class="hint">Amber fields came back empty from the PDF. Filling the subcontract number matches it to a commitment and shows it to that job&rsquo;s PMs.</div>'
+      + '<div class="fields">'
+      +   F('Subcontract', 'Subcontract #', x.f.Subcontract)
+      +   F('JobNumber',   'Job',           x.f.JobNumber)
+      +   F('PayRequest',  'Pay request #', x.f.PayRequest)
+      +   F('PeriodEnding','Period ending', (x.f.PeriodEnding||'').slice(0,10), 'date')
+      +   '<button data-save="' + esc(x.id) + '">Save</button>'
+      +   '<span class="msg"></span>'
+      + '</div></div>';
+
     return head
       + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="7">'
-      + note + panel
+      + editor + note + panel
       + (links ? '<div style="margin-top:10px">' + links + '</div>' : '')
       + '</td></tr>';
   }).join('');
@@ -1185,7 +1239,10 @@ function renderReceived(){
     +   '<span style="margin-left:auto">oldest first</span></div>'
     + '<table class="rqtab"><thead><tr>'
     +   '<th>Subcontractor</th><th>Job</th><th>Pay req</th>'
-    +   '<th class="n">Requested</th><th class="n">Age</th><th>Check</th><th>Status</th>'
+    +   '<th class="n" title="Balance due this application - what the subcontractor is asking to be paid now. Blank means the figure was not read off the PDF, usually because it is a scan.">Requested</th>'
+    +   '<th class="n" title="Days since the application arrived in payables@.">Age</th>'
+    +   '<th title="Whether this application can be checked against the contract, and whether it ties. &#10;&#10;contract ties - their adjusted contract agrees with Procore to the cent&#10;a figure - their adjusted contract differs from Procore by that amount&#10;matched by name - no subcontract number on the document; matched from the vendor and project in the subject&#10;needs keying - no figures came off the PDF, so there is nothing to compare&#10;unidentified - no subcontract number anywhere, so there is nothing to compare it to&#10;no commitment - the number read does not match any commitment in Procore">Contract check</th>'
+    +   '<th>Status</th>'
     + '</tr></thead><tbody>' + body + '</tbody></table></div>';
 
   el.querySelectorAll('tr.rqrow').forEach(tr => {
@@ -1195,6 +1252,40 @@ function renderReceived(){
       renderReceived();
     };
   });
+
+  /* The detail row sits inside the table; without this a click on an input
+     bubbles to the row handler and collapses the thing being typed into. */
+  el.querySelectorAll('tr.rqdetail').forEach(tr => tr.onclick = e => e.stopPropagation());
+
+  el.querySelectorAll('.rqedit button[data-save]').forEach(btn => {
+    btn.onclick = async () => {
+      const box = btn.closest('.rqedit');
+      const msgEl = box.querySelector('.msg');
+      const row = rows.find(r => r.id === btn.dataset.save);
+      if (!row) return;
+      const patch = {};
+      box.querySelectorAll('input[data-f]').forEach(i => {
+        const k = i.dataset.f;
+        let v = i.value.trim();
+        if (k === 'Subcontract') v = v.toUpperCase();
+        if (k === 'PeriodEnding' && v) v = new Date(v + 'T00:00:00Z').toISOString();
+        const was = row.f[k] == null ? '' : String(k === 'PeriodEnding' ? String(row.f[k]).slice(0,10) : row.f[k]);
+        const now = k === 'PeriodEnding' ? v.slice(0,10) : v;
+        if (now !== was) patch[k] = v || null;
+      });
+      if (!Object.keys(patch).length) { msgEl.className = 'msg'; msgEl.textContent = 'Nothing changed.'; return; }
+      btn.disabled = true; msgEl.className = 'msg'; msgEl.textContent = 'Saving\u2026';
+      const ok = await saveQueueItem(row.itemId, patch);
+      btn.disabled = false;
+      if (ok === true) {
+        Object.assign(row.f, patch);          // keep the page in step with the list
+        msgEl.className = 'msg ok'; msgEl.textContent = 'Saved.';
+        setTimeout(renderReceived, 400);
+      } else {
+        msgEl.className = 'msg bad'; msgEl.textContent = 'Not saved \u2014 ' + ok;
+      }
+    };
+  });
   /* Bind the deltas on whichever rows are expanded, so the pre-filled "theirs"
      figures are reconciled the moment the row opens rather than on first keypress. */
   rows.forEach(x => {
@@ -1202,6 +1293,29 @@ function renderReceived(){
     const d = el.querySelector('tr[data-rqd="' + CSS.escape(x.id) + '"]');
     if (d) payappBind(d, x.c);
   });
+}
+
+/* PATCH one list item as the SIGNED-IN USER, not as an app. SharePoint then
+   records the name against the change in the item's version history, which is
+   the whole reason queue state lives in a list rather than in a JSON file. */
+async function saveQueueItem(itemId, fields){
+  const q = STATE.queue;
+  if (!q || !q.siteId || !q.listId) return 'the queue list is not loaded';
+  if (!itemId) return 'this row has no list item behind it';
+  try {
+    const tok = await token();
+    if (!tok) return 'not signed in';
+    const r = await fetch(GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId
+                          + '/items/' + encodeURIComponent(itemId) + '/fields',
+      { method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields) });
+    if (r.ok) return true;
+    let why = 'HTTP ' + r.status;
+    try { const b = await r.json(); if (b && b.error && b.error.message) why += ' - ' + b.error.message; } catch (_) {}
+    if (r.status === 403) why += ' (you need Contribute on the site, not just read)';
+    return why;
+  } catch (e) { return e.message || 'request failed'; }
 }
 
 function setTabCount(name, n){
