@@ -787,7 +787,14 @@ function compCell(r){
        for a certificate. Naming the contracts Billy does have makes it
        actionable instead of a shrug. */
     const others = (r.billy_other_contracts || []).filter(Boolean);
-    if (others.length) return '<span class="pill y" title="Billy has no contract for this commitment, so nothing about it has been verified. It does track ' + esc(others.join(', ')) + ' for this subcontractor on this job - a different contract, with different coverage requirements. A Billy contract needs creating for this one.">no Billy contract</span>';
+    /* Say only what the data proves. The compliance FEED carries no row for this
+       commitment - that is certain. Whether Billy holds the contract is a
+       separate question, and for Western AG 40324HV003 it demonstrably does:
+       Billy shows it alongside 30924HV003, non-compliant on four coverages,
+       while compliance_data.json carries 30924HV003 twice and 40324HV003 not at
+       all. So this is a gap in the pull, and the pill must not send anyone into
+       Billy to create a record that already exists. */
+    if (others.length) return '<span class="pill y" title="The compliance feed carries no row for this commitment, so the desk has nothing to show for it. It does carry ' + esc(others.join(', ')) + ' for this subcontractor on this job - a different contract with different coverage requirements, which is why that status is not shown here. Billy may well hold this contract; check it there before assuming nothing was verified.">no compliance record</span>';
     return '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>';
   }
   if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>';
@@ -806,15 +813,53 @@ function compCell(r){
 /* Which slice of the cycle to look at. "Submitted to payables / not submitted"
    is the one people ask for first and the one that cannot be built yet - it
    needs the payables@ join, because nothing we hold records that a draw arrived. */
-let QVIEW = 'open';
+let QVIEW = 'notbilled';   // the question people actually open this tab for
+/* Five views, not seven. "Billed out" and "No ComputerEase figure" were views of
+   their own and are now labels on the row - they describe a commitment, they are
+   not questions anyone opens this tab to ask.
+
+   The question people DO open it to ask is "who hasn't billed yet this cycle",
+   which this tab could never answer: nothing it held carried a date. The
+   received queue does, so it can now. */
 const QVIEWS = [
-  ['open',     'Still to bill'],
+  ['notbilled','Not billed this cycle'],
+  ['open',     'Left to bill'],
   ['blocked',  'Cannot be paid'],
   ['over',     'Over-billed'],
-  ['done',     'Billed out'],
-  ['nodata',   'No ComputerEase figure'],
   ['all',      'Everything'],
 ];
+
+/* "This cycle" is keyed on WHEN THE APPLICATION ARRIVED, not on the period it
+   covers. A subcontractor bills for the period that just closed, so a 30
+   September application lands in the first days of October - the first version
+   of this matched PeriodEnding against the current month and so reported every
+   sub as unbilled for the first three weeks of every month. Caught in test,
+   not in production, but only just.
+
+   35 days rather than 30 so a 25th-of-the-month biller is never briefly
+   invisible between cycles. PeriodEnding is a secondary signal for the rare
+   application that arrives late for an old period. */
+function receivedThisCycle(number){
+  const q = STATE.queue;
+  if (!q || !q.items) return undefined;          // list not loaded - say so, do not claim nobody billed
+  const want = String(number || '').trim().toUpperCase();
+  if (!want) return null;
+  const now = Date.now(), WINDOW = 35 * 86400000;
+  let best = null, bestAt = -1;
+  for (const f of q.items) {
+    if (String(f.Subcontract || '').trim().toUpperCase() !== want) continue;
+    const ra = f.ReceivedAt ? Date.parse(f.ReceivedAt) : NaN;
+    const pe = f.PeriodEnding ? Date.parse(f.PeriodEnding) : NaN;
+    const arrived = !isNaN(ra) && (now - ra) < WINDOW;
+    /* A period ending inside the window counts too, for an application that
+       arrived late but covers the cycle in question. */
+    const covers  = !isNaN(pe) && (now - pe) < WINDOW + 15 * 86400000 && pe <= now;
+    if (!arrived && !covers) continue;
+    const at = isNaN(ra) ? 0 : ra;
+    if (at > bestAt) { best = f; bestAt = at; }
+  }
+  return best;
+}
 
 function renderQueue(rows){
   const el = document.getElementById('queue'); if (!el) return;
@@ -829,18 +874,30 @@ function renderQueue(rows){
   const over   = all.filter(x => x.e.hasBilling && x.e.maxDue != null && x.e.maxDue < -0.5);
   const done   = all.filter(x => x.e.hasBilling && x.e.maxDue != null && Math.abs(x.e.maxDue) <= 0.5);
   const nodata = all.filter(x => !x.e.hasBilling);
-  const pick = { open, blocked: open.filter(x => x.blocked), over, done, nodata, all };
+  /* Who still has contract left AND has not sent an application this cycle. */
+  all.forEach(x => { x.got = receivedThisCycle(x.r.number); });
+  const queueLoaded = !!(STATE.queue && STATE.queue.items);
+  const notbilled = open.filter(x => !x.got);
+
+  const pick = { notbilled, open, blocked: open.filter(x => x.blocked), over, all };
+  if (!queueLoaded && QVIEW === 'notbilled') QVIEW = 'open';
   const live = pick[QVIEW] || open;
 
-  const counts = { open: open.length, blocked: open.filter(x=>x.blocked).length,
-                   over: over.length, done: done.length, nodata: nodata.length, all: all.length };
+  const counts = { notbilled: notbilled.length, open: open.length,
+                   blocked: open.filter(x=>x.blocked).length, over: over.length, all: all.length };
   const sel = '<label>Show</label><select id="q-view">'
     + QVIEWS.map(([k,label]) => `<option value="${k}"${k===QVIEW?' selected':''}>`
         + `${label} (${counts[k]})</option>`).join('') + '</select>';
 
   if (!live.length) {
+    /* An empty "not billed this cycle" is the GOOD outcome, and "Nothing in this
+       view" reads like a broken page rather than a clear month. */
+    const msg = QVIEW === 'notbilled'
+      ? 'Every subcontractor with contract left has sent an application this cycle.'
+        + '<div class="sub" style="margin-top:6px">Counted from what reached payables@ &mdash; an application sent somewhere else, or one we could not identify, is not visible here.</div>'
+      : 'Nothing in this view.';
     el.innerHTML = '<div class="qwrap"><div class="qbar">' + sel + '</div>'
-      + '<div class="qempty">Nothing in this view.</div></div>';
+      + '<div class="qempty">' + msg + '</div></div>';
     bindQView();
     return;
   }
@@ -867,6 +924,13 @@ function renderQueue(rows){
           + '<div class="qsub">' + esc(x.r.number||'') + (x.r.project ? ' &middot; ' + esc(shortProject(x.r.project)) : '') + '</div></td>'
         + '<td class="n">' + money(QVIEW === 'over' ? -(x.e.maxDue||0) : (x.e.maxDue||0))
           + '<div class="qsub">of ' + money(x.e.contract) + '</div></td>'
+        + '<td class="n">' + (!queueLoaded
+            ? '<span class="qsub">&mdash;</span>'
+            : x.got
+              ? '<span class="pill g" title="A pay application for this commitment is in the received queue for this cycle.">billed</span>'
+                + '<div class="qsub">' + esc(shortDate(x.got.ReceivedAt)) + (x.got.PayRequest ? ' &middot; #' + esc(String(x.got.PayRequest)) : '') + '</div>'
+              : '<span class="qsub" style="color:#b07d00">not billed yet</span>')
+          + '</td>'
         + '<td class="n">' + (x.blocked
             ? '<span class="qblock">cannot be paid</span><div class="qsub">non-compliant in Billy</div>'
             : (x.noBilly ? '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>' : ''))
@@ -874,17 +938,20 @@ function renderQueue(rows){
   }).join('');
 
   const headLabel = QVIEW === 'over' ? 'Over-billed by'
-                  : QVIEW === 'done' ? 'Billed out'
-                  : QVIEW === 'nodata' ? 'No ComputerEase figure'
-                  : 'Still to bill';
-  const headNum = (QVIEW === 'done' || QVIEW === 'nodata') ? '' :
-    '<span class="n">' + money(QVIEW === 'over' ? -total : total) + '</span>';
+                  : QVIEW === 'notbilled' ? 'Left to bill, not yet billed this cycle'
+                  : 'Left to bill';
+  const headNum = '<span class="n">' + money(QVIEW === 'over' ? -total : total) + '</span>';
+  /* The two dropped views, kept as facts rather than as places to navigate to. */
+  const tail = ' &middot; ' + done.length + ' billed out, ' + nodata.length + ' with no ComputerEase figure'
+    + (queueLoaded ? '' : ' &middot; <span style="color:#b07d00">pay app queue not loaded, so '
+        + '&ldquo;billed this cycle&rdquo; is unknown rather than no</span>');
 
   el.innerHTML = '<div class="qwrap">'
     + '<div class="qbar">' + sel + '</div>'
     + '<div class="qhead"><span class="l">' + headLabel + '</span>' + headNum
     +   '<span class="qsub">across ' + live.length + ' commitment' + (live.length===1?'':'s')
     +   (blocked.length && QVIEW !== 'blocked' ? ' &middot; <span class="qblock">' + blocked.length + ' cannot be paid until compliance clears</span>' : '')
+    +   tail
     +   '</span></div>' + body + '</div>';
   bindQView();
 }
@@ -1394,14 +1461,17 @@ function render(){
       <div class="tabpane" data-pane="expected">
         <div id="queue"></div>
         <div class="stub">
-          <h3>What this tab is, and is not</h3>
-          This is the <b>expected</b> side only &mdash; who can still bill, and how much. It
-          cannot say who has <b>already</b> billed this cycle, because nothing we hold carries a
-          billing date: ComputerEase gives a billed-to-date amount with no date attached, and
-          Procore's own payment fields read zero on every commitment because the billing happens
-          in ComputerEase.<br><br>
-          What has actually arrived is the <b>Pay applications received</b> tab, read from
-          payables@. Nothing on either tab is an approval.
+          <h3>How &ldquo;not billed this cycle&rdquo; is worked out</h3>
+          <b>Left to bill</b> is the contract less what ComputerEase says has been billed &mdash;
+          a position, with no date on it. <b>Billed this cycle</b> comes from the
+          <b>Pay applications received</b> tab: a commitment counts as billed when an application
+          for it has arrived in payables@ whose period ends this month, or which arrived in the
+          last 35 days if the form carried no period.<br><br>
+          So a row reading <b>not billed yet</b> means no application has reached payables@, not
+          that none was sent &mdash; a scan we could not identify, or one sent to someone's
+          personal inbox, looks the same from here. If the received queue has not loaded, the
+          column reads &mdash; rather than claiming nobody has billed.<br><br>
+          Nothing on either tab is an approval.
         </div>
       </div>
       <div class="tabpane" data-pane="commitments"><div id="table"></div></div>`;
