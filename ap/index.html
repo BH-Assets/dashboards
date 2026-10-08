@@ -140,6 +140,12 @@
   .rqmsg b{color:#1F3864}
   .rqmsg code{background:#eef2f8;border-radius:4px;padding:1px 5px;font-size:12px}
   .tablescroll{overflow-x:auto;border-radius:10px}
+  /* A horizontal scrollbar at the top as well, synced to the real one. The
+     table is wider than the page and the only scrollbar was at the BOTTOM,
+     so reading a right-hand column meant scrolling to the end of 600-odd
+     rows first just to reach the control. Hidden when nothing overflows. */
+  .tablescroll-top{overflow-x:auto;overflow-y:hidden;height:14px;margin-bottom:2px}
+  .tablescroll-top > div{height:1px}
   table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:12px}
   th,td{padding:7px 9px;text-align:center;border-bottom:1px solid #eef1f6;white-space:nowrap}
   th{background:#484B4D;color:#fff;font-size:11px;position:sticky;top:0;cursor:pointer;user-select:none}
@@ -1063,7 +1069,35 @@ function setTab(name){
   TAB = name;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('on', p.dataset.pane === name));
+  /* Measure AFTER the pane is visible. An element inside display:none reports
+     scrollWidth 0, so a sync that ran while the commitments tab was hidden set
+     the top scrollbar to zero width and hid it for good. */
+  syncTableScrollbars();
 }
+
+/* Keep the top scrollbar the same width as the table and in step with the real
+   one. Re-measured on every render and on resize, because the column widths
+   change with the data. */
+function syncTableScrollbars(){
+  const wrap = document.getElementById('table');
+  if (!wrap) return;
+  const top = wrap.querySelector('.tablescroll-top');
+  const bot = wrap.querySelector('.tablescroll');
+  const spacer = top && top.firstElementChild;
+  const tbl = bot && bot.querySelector('table');
+  if (!top || !bot || !spacer || !tbl) return;
+  spacer.style.width = tbl.scrollWidth + 'px';
+  top.style.display = tbl.scrollWidth > bot.clientWidth + 1 ? '' : 'none';
+  /* A scroll handler that writes to the other element fires its scroll event in
+     turn; without the latch they ping-pong and the bar stutters under the
+     pointer. */
+  let latch = false;
+  top.onscroll = () => { if (latch) return; latch = true; bot.scrollLeft = top.scrollLeft; latch = false; };
+  bot.onscroll = () => { if (latch) return; latch = true; top.scrollLeft = bot.scrollLeft; latch = false; };
+}
+/* Attached once, not per render - re-adding it on every render leaks a listener
+   for every filter change. */
+window.addEventListener('resize', syncTableScrollbars);
 
 function render(){
   const proj = document.getElementById('f-proj').value;
@@ -1156,7 +1190,7 @@ function render(){
     ['compliance','Compliance',''],
     ['revised_contract','Contract &middot; Procore','num'], ['ce_sov','Contract &middot; CE','num'],
     ['ce_billed','Billed to date','num'],
-    ['retainage_percent','Retainage',''], ['pm_team','PM','l'], ['status','Status','']
+    ['retainage_percent','Retainage',''], ['pm_team','PM','l']
   ];
   const head = cols.map(([k,label,cls]) =>
     `<th class="${cls}" data-col="${k}">${label}${STATE.sort.col===k ? (STATE.sort.dir>0?' ▲':' ▼') : ''}</th>`).join('');
@@ -1167,6 +1201,9 @@ function render(){
     })()}">
       <td class="l wrap">${esc(r.project)}${r.project_number ? `<div class="sub">${esc(r.project_number)}</div>` : ''}</td>
       <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
+        ${(r.status || r.executed === 'No') ? `<div class="sub">${esc(r.status||'')}${
+            r.executed === 'No' ? ' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>' : ''
+          }</div>` : ''}
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
         <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
           title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
@@ -1179,11 +1216,12 @@ function render(){
       <td class="num">${billedCell(r)}</td>
       <td>${retainageCell(r)}</td>
       <td class="l">${pmCell(r)}</td>
-      <td>${esc(r.status)}${r.executed==='Yes'?'':(r.executed==='No'?' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>':'')}</td>
-    </tr>`).join('') : `<tr><td colspan="10" class="empty">No commitments match these filters.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="9" class="empty">No commitments match these filters.</td></tr>`;
 
   document.getElementById('table').innerHTML =
-    `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    `<div class="tablescroll-top"><div></div></div>`
+  + `<div class="tablescroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  syncTableScrollbars();
 
   renderQueue(rows);
 
