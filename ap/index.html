@@ -754,6 +754,8 @@ function payappPanel(r, pre){
     warn.push('ComputerEase already holds this application &mdash; its billed-to-date ('
       + money2(e.billed) + ') equals their completed-to-date to the cent. '
       + '<b>Less previous payments is taken from their own form and has not been checked against anything.</b>');
+    warn.push('What was actually paid is in CE &mdash; <b>Subcontractor Detail Report by Vendor</b>, '
+      + 'the Payment / Amount column. If it differs from their figure, the ceiling above moves by that difference.');
     if (e.billed > e.contract + 0.005)
       warn.push('CE carries <b>' + money2(e.billed) + '</b> against a contract of '
         + money2(e.contract) + ' &mdash; <b>' + money2(e.billed - e.contract)
