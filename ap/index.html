@@ -154,6 +154,27 @@
   .rqedit .msg{font-size:11.5px;margin-left:10px}
   .rqedit .msg.ok{color:#1b7a43}
   .rqedit .msg.bad{color:#b3261e}
+  /* Figures left, the ComputerEase ledger right. Stacks under 1180px. */
+  .pacols{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .pacol1{flex:1 1 560px;min-width:0}
+  .pacol2{flex:1 1 100%}
+  .celed{flex:1 1 420px;min-width:0;border-left:1px solid #eef2f8;padding-left:22px}
+  @media (max-width:1180px){ .celed{border-left:0;padding-left:0;border-top:1px solid #eef2f8;padding-top:14px} }
+  .celed h4{margin:0 0 8px;font-size:12px;color:#1F3864;letter-spacing:.02em}
+  .celcode{font-weight:normal;color:#8a94a3;font-size:11px;margin-left:4px}
+  .celnone{font-size:12px;color:#7a869a;line-height:1.65;background:#fafbfe;border:1px solid #eef2f8;
+           border-radius:8px;padding:11px 13px}
+  .celtab{width:100%;border-collapse:collapse;font-size:12px;box-shadow:none;background:transparent}
+  .celtab th{background:#f7f9fc;color:#7a869a;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;
+             font-weight:700;padding:6px 8px;text-align:left;position:static;cursor:default;
+             border-bottom:1px solid #e3e8f0;white-space:nowrap}
+  .celtab td{padding:6px 8px;border-bottom:1px solid #f1f4f9;text-align:left;vertical-align:top;white-space:nowrap}
+  .celtab th.n,.celtab td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .celtab tfoot td{font-weight:700;border-top:2px solid #e3e8f0;border-bottom:0;color:#1F3864}
+  .celtab tr.celunpaid td{background:#fffdf5}
+  .celsub{font-size:10.5px;color:#8a94a3;font-weight:normal;margin-top:1px}
+  .celnotes{margin-top:10px;font-size:11.5px;color:#5a6473;line-height:1.7}
+  .celnotes div{margin-top:5px}
   .rqrev{margin-top:14px;padding-top:12px;border-top:1px solid #eef2f8;display:flex;
          align-items:center;gap:4px;flex-wrap:wrap}
   .rqrev button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 15px;border:0;border-radius:6px;
@@ -354,10 +375,16 @@ async function loadData(tok){
                           { headers: { Authorization: 'Bearer ' + tok } });
     if (e.ok) expected = await e.json();
   } catch (_) { /* leave expected null */ }
+  let ceInv = null;
+  try {
+    const c = await fetch(GRAPH + '/drives/' + drive.id + '/root:/' + encodeURI(CEINV_FILE) + ':/content',
+                          { headers: { Authorization: 'Bearer ' + tok } });
+    if (c.ok) ceInv = await c.json();
+  } catch (_) { /* leave ceInv null - the panel explains what is missing */ }
   const me = await whoAmI(tok);
   /* The queue site may not exist yet; loadQueue reports that rather than throwing. */
   const queue = await loadQueue(tok);
-  return { commitments, expected, me, queue };
+  return { commitments, expected, ceInv, me, queue };
 }
 
 /* Read the received queue. Every branch returns a REASON rather than throwing:
@@ -713,11 +740,123 @@ const PA_LINES = [
    complete. There is no innocent reading of that: CE has already posted this
    application, so nothing derived from ce_billed describes the position BEFORE
    it. */
-function ceHoldsThisApp(e, pre){
-  if (!pre || e.billed == null) return false;
+function ceEntryState(e, pre){
+  if (!pre || e.billed == null) return null;
   const t = pre.billed;
-  if (t === null || t === undefined || t === '') return false;
-  return Math.round(Number(t) * 100) === Math.round(Number(e.billed) * 100);
+  if (t === null || t === undefined || t === '') return null;
+  const theirs = Math.round(Number(t) * 100), ce = Math.round(Number(e.billed) * 100);
+  if (ce === theirs) return 'exact';
+  if (ce >  theirs) return 'ahead';
+  return null;                       // CE is behind it - a genuinely new application
+}
+function ceHoldsThisApp(e, pre){ return ceEntryState(e, pre) === 'exact'; }
+
+/* ---- The ComputerEase invoice ledger ---------------------------------------
+   ap_payapp_expected.json carries ONE number per subcontract: committed_billed,
+   cumulative and gross. Everything awkward on this page comes from that - the
+   double-counted previous payment, the cent-match test for whether CE already
+   holds an application, "most they can ask for $0.00". None of it is visible as
+   a fault because one aggregate cannot show you that Kone's PR5 was entered on
+   two lines, or that Specialty's PR2 is sitting unpaid.
+
+   This panel reads the per-invoice ledger instead, in the shape of CE's
+   "Subcontractor Detail Report by Vendor". Written by a Q-Tool export; absent
+   until that is scheduled, and the panel says so rather than showing nothing. */
+const CEINV_FILE = 'ap_ce_invoices.json';
+
+const ceLedger = number => {
+  const d = STATE.ceInv;
+  if (!d || !d.subcontracts) return null;
+  const k = String(number || '').trim().toUpperCase();
+  return d.subcontracts[k] || null;
+};
+
+/* What the ledger says that one aggregate cannot. */
+function ceLedgerFacts(led, payReq){
+  const inv = (led && led.invoices) || [];
+  const n2 = v => Number(v || 0);
+  const sum = f => inv.reduce((t,i) => t + n2(i[f]), 0);
+  const byNumber = {};
+  inv.forEach(i => { const k = String(i.number || '').trim().toUpperCase();
+                     (byNumber[k] = byNumber[k] || []).push(i); });
+  /* One invoice number on several lines. Kone's PR5 is 7,950.00 on the base and
+     14,410.00 on CO 002 - legitimate, but indistinguishable from a double entry
+     without looking, which is the point of showing it. */
+  const split = Object.keys(byNumber).filter(k => byNumber[k].length > 1)
+    .map(k => ({ number: k, lines: byNumber[k],
+                 total: byNumber[k].reduce((t,i) => t + n2(i.total), 0) }));
+  const unpaid = inv.filter(i => !i.check);
+  const want = String(payReq == null ? '' : payReq).trim().toUpperCase();
+  /* "PR5", "5", "PA 5" all name the same application on different forms. */
+  const norm = v => String(v||'').toUpperCase().replace(/[^0-9]/g,'');
+  const thisApp = want ? inv.filter(i => norm(i.number) && norm(i.number) === norm(want)) : [];
+  return {
+    inv, split, unpaid, thisApp,
+    invoiced: sum('total'), retention: sum('retention'),
+    payable: sum('payable'), paid: sum('paid'),
+    outstanding: sum('payable') - sum('paid'),
+  };
+}
+
+function ceLedgerPanel(number, payReq, e){
+  const led = ceLedger(number);
+  if (!led) {
+    const d = STATE.ceInv;
+    return '<div class="celed"><h4>ComputerEase invoices</h4><div class="celnone">'
+      + (d
+         ? 'No ledger rows for <b>' + esc(String(number || '')) + '</b> in the last ComputerEase export'
+           + (d.as_of ? ' (' + esc(d.as_of) + ')' : '') + '. Either nothing has been invoiced against it, '
+             + 'or the subcontract was not in scope of the export.'
+         : 'Not available yet. This needs the <b>Subcontractor Detail Report by Vendor</b> scheduled out '
+           + 'of ComputerEase Q-Tool and parsed into <code>' + CEINV_FILE + '</code>. Until then this page '
+           + 'sees only <code>committed_billed</code> &mdash; one cumulative, gross number per subcontract, '
+           + 'with no invoices, no dates and no payments.')
+      + '</div></div>';
+  }
+  const f = ceLedgerFacts(led, payReq);
+  const row = i => '<tr' + (i.check ? '' : ' class="celunpaid"') + '>'
+    + '<td>' + esc(i.number || '') + (i.line && i.line !== 'base'
+        ? '<div class="celsub">' + esc(i.line) + '</div>' : '') + '</td>'
+    + '<td>' + esc(i.date || '') + '</td>'
+    + '<td class="n">' + money2(i.total) + '</td>'
+    + '<td class="n">' + money2(i.retention) + '</td>'
+    + '<td class="n">' + money2(i.payable) + '</td>'
+    + '<td class="n">' + (i.check
+        ? money2(i.paid) + '<div class="celsub">#' + esc(i.check)
+          + (i.check_date ? ' &middot; ' + esc(i.check_date) : '') + '</div>'
+        : '<span class="pill y">unpaid</span>') + '</td></tr>';
+
+  const notes = [];
+  if (f.thisApp.length)
+    notes.push('<b>This application is in ComputerEase</b> as '
+      + f.thisApp.map(i => esc(i.number) + (i.line && i.line !== 'base' ? ' (' + esc(i.line) + ')' : '')
+                           + ' ' + money2(i.total)).join(' + ')
+      + (f.thisApp.every(i => !i.check)
+          ? ' &mdash; <b>entered, not paid</b>, ' + money2(f.thisApp.reduce((t,i)=>t+Number(i.payable||0),0)) + ' payable.'
+          : ' &mdash; paid.'));
+  f.split.forEach(sp => notes.push('Invoice <b>' + esc(sp.number) + '</b> is entered on '
+    + sp.lines.length + ' lines totalling ' + money2(sp.total)
+    + ' (' + sp.lines.map(l => esc(l.line || 'base') + ' ' + money2(l.total)).join(', ')
+    + '). Separate scope billed under one number, or the same work entered twice &mdash; the lines say which.'));
+  if (f.unpaid.length)
+    notes.push(f.unpaid.length + ' invoice' + (f.unpaid.length===1?'':'s') + ' unpaid, <b>'
+      + money2(f.outstanding) + '</b> outstanding.');
+  /* Two feeds, one number: if they disagree, one of them is stale. */
+  if (e && e.billed != null && Math.round(f.invoiced*100) !== Math.round(e.billed*100))
+    notes.push('<b>This ledger and <code>committed_billed</code> disagree</b> &mdash; ' + money2(f.invoiced)
+      + ' here against ' + money2(e.billed) + ' on the billing feed. One of the two exports is stale.');
+
+  return '<div class="celed"><h4>ComputerEase invoices'
+    + (led.vendor_code ? ' <span class="celcode">' + esc(led.vendor_code) + '</span>' : '') + '</h4>'
+    + '<table class="celtab"><thead><tr><th>Invoice</th><th>Date</th><th class="n">Total</th>'
+    + '<th class="n">Retention</th><th class="n">Payable</th><th class="n">Paid</th></tr></thead>'
+    + '<tbody>' + f.inv.map(row).join('') + '</tbody>'
+    + '<tfoot><tr><td colspan="2">Invoiced to date</td>'
+    + '<td class="n">' + money2(f.invoiced) + '</td><td class="n">' + money2(f.retention) + '</td>'
+    + '<td class="n">' + money2(f.payable) + '</td><td class="n">' + money2(f.paid) + '</td></tr></tfoot>'
+    + '</table>'
+    + (notes.length ? '<div class="celnotes">' + notes.map(n=>'<div>'+n+'</div>').join('') + '</div>' : '')
+    + '</div>';
 }
 
 /* One source of truth for what is payable. payappPanel renders it and the
@@ -747,10 +886,20 @@ function payappPosition(e, pre){
      amount the commitment is over-billed, which is the number the sub disputes. */
   const tb = nz(pre && pre.billed);
   const cap = tb == null ? null : Math.min(tb, e.contract);
-  const ourDue = (cap != null && usePrev != null && e.retAt(cap) != null)
-                   ? cap - e.retAt(cap) - usePrev : null;
-  return { nz, absorbed, theirPrev, theirDue, derivedPrev, usePrev, earned, retDue,
-           payNow, theirAsk, ourDue };
+  /* NOT usePrev. usePrev falls back to their own previous-payments figure, which
+     is the only source available once CE has absorbed the application - fine for
+     the ceiling, fatal here: an estimate built from their number agrees with
+     their number by construction and prints "matches" on a bad application. */
+  const ourPrev = derivedPrev != null ? derivedPrev : e.prevPaid;
+  const ourDue = (cap != null && ourPrev != null && e.retAt(cap) != null)
+                   ? cap - e.retAt(cap) - ourPrev : null;
+  /* CE carrying MORE than they claim complete is its own finding: it means CE
+     is ahead of their application, so nothing on our side describes the position
+     before it. */
+  const ceState = ceEntryState(e, pre);
+  const ceAhead = ceState === 'ahead' ? e.billed - tb : null;
+  return { nz, absorbed, ceState, theirPrev, theirDue, derivedPrev, usePrev, ourPrev, earned, retDue,
+           payNow, theirAsk, ourDue, ceAhead };
 }
 
 function payappPanel(r, pre, rowId){
@@ -810,6 +959,11 @@ function payappPanel(r, pre, rowId){
     + '<td class="padelta" data-d="' + k + '"></td></tr>').join('');
 
   const warn = [];
+  if (P.ceState)
+    warn.push('<b>Already entered in ComputerEase.</b> Whatever is agreed here has to be corrected on '
+      + 'the CE invoice as well as with the subcontractor &mdash; asking them for a revised application '
+      + 'does not change what is already posted. Whether it has been paid is not visible from this page; '
+      + 'the Payment / Amount column of <b>Subcontractor Detail Report by Vendor</b> says.');
   if (e.assumedZero) {
     warn.push('ComputerEase holds this subcontract but nothing is posted against its cost codes, so '
       + 'billed to date is taken as <b>zero</b> &mdash; the shape of a first or only billing. '
@@ -840,6 +994,18 @@ function payappPanel(r, pre, rowId){
         + 'bills scope that an approved change order removed, less than this is due &mdash; '
         + 'check column G against the deducted line before paying.');
   }
+  if (P.ceAhead != null) {
+    warn.push('ComputerEase shows <b>' + money2(e.billed) + '</b> billed against this subcontract, <b>'
+      + money2(P.ceAhead) + '</b> MORE than they are claiming complete. CE is ahead of their own '
+      + 'application, so previous payments on the left is not the position before this one and the '
+      + 'ceiling above is understated.'
+      + (e.cos && Math.round(P.ceAhead * 100) === Math.round(e.cos * 100)
+          ? ' The difference is <b>exactly the approved change order</b> of ' + money2(e.cos)
+            + ', so the change order value has most likely been posted into billings in CE while the '
+            + 'subcontractor is still billing the original contract. Check the subcontract\'s invoices '
+            + 'in CE before treating anything here as a finding against them.'
+          : ' Reconcile the subcontract\'s invoices in CE against their applications before paying.'));
+  }
   if (e.gap) warn.push(e.gap > 0
     ? 'Procore is <b>' + money2(e.gap) + '</b> higher than CE &mdash; an approved change order has not reached CE.'
     : 'CE is <b>' + money2(-e.gap) + '</b> higher than Procore &mdash; the change order was entered straight into CE.');
@@ -848,7 +1014,7 @@ function payappPanel(r, pre, rowId){
   if (e.flags.includes('sov_gap')) warn.push('Billed plus remaining does not reconcile to the schedule of values.');
   if (e.pctR && !e.dur) warn.push('No retainage term on the commitment &mdash; assuming it is withheld on every dollar.');
 
-  return '<div class="pawrap">'
+  return '<div class="pawrap"><div class="pacols"><div class="pacol1">'
    /* A negative ceiling is not "they may ask for minus two thousand" - it means
       the commitment is already billed past its contract. Seven live rows are in
       that state, so it is a real case, not a theoretical one. */
@@ -875,17 +1041,26 @@ function payappPanel(r, pre, rowId){
           + '<span class="n" style="color:#b3261e">' + money2(-e.maxDue) + '</span>'
           + '<span class="paref" style="margin-left:2px">nothing further is due</span></div>'
         : '<div class="pamax"><span class="l">Most they can ask for</span><span class="n">' + money2(e.maxDue) + '</span>'
-          + '<span class="paref" style="margin-left:2px">if they bill to 100%</span></div>')
+          + '<span class="paref" style="margin-left:2px">'
+          + (P.ceAhead != null
+              ? 'not a ceiling &mdash; ComputerEase already holds this application and more'
+              : e.maxDue != null && e.maxDue <= 0.005
+                ? 'ComputerEase has this subcontract at ' + money2(e.billed) + ' of ' + money2(e.contract)
+                  + ' &mdash; nothing is left on the contract'
+                : 'if they bill to 100%') + '</span></div>')
    + '<table class="patab" data-pa="x"' + (absorbed ? ' data-absorbed="1"' : '')
    + (derivedPrev != null ? ' data-prevderived="' + derivedPrev.toFixed(2) + '"' : '')
-   + (P.usePrev   != null ? ' data-ourprev="'     + P.usePrev.toFixed(2)   + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
+   + (P.ourPrev   != null ? ' data-ourprev="'     + P.ourPrev.toFixed(2)   + '"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
+   + '</div>'
+   + ceLedgerPanel(r.number, pre && pre.payReq, e)
+   + '<div class="pacol2">'
    + (rowId ? '<div class="rqrev">'
               + '<button data-savefigs="' + esc(rowId) + '" class="ghost">Save these figures</button>'
               + '<button data-revise="' + esc(rowId) + '">Request revision&hellip;</button>'
               + '<span class="msg"></span></div>' : '')
-   + '</div>';
+   + '</div></div>';
 }
 
 /* ---- Request revision -------------------------------------------------------
@@ -1360,6 +1535,7 @@ function rqStatusPill(s){
 }
 
 const RQ_OPEN = new Set();
+let HIDE_ENTERED = true;   // entered AND clean; never entered-and-wrong
 /* row id -> {cls,text}. Survives the re-render that follows a save. */
 const RQ_MSG  = new Map();
 
@@ -1374,6 +1550,17 @@ function receivedRows(){
   return q.items.map(f => {
     const num = String(f.Subcontract || '').trim().toUpperCase();
     const c = byNum[num] || null;
+    /* Whether ComputerEase already carries this application, and how many of its
+       figures disagree with the subcontract. An entered application with nothing
+       wrong is finished work; one with something wrong still needs a person. */
+    const ceRow = { state: null, exc: 0 };
+    if (c) {
+      const ee = payappExpected(c);
+      const pre0 = { contract:f.AdjustedContract, billed:f.CompletedToDate, retNow:f.RetainageHeld,
+                     prevPaid:f.PreviousPayments, due:f.BalanceDue };
+      ceRow.state = ceEntryState(ee, pre0);
+      try { ceRow.exc = correctionFigures(ee, pre0).lines.length; } catch (_) { ceRow.exc = 0; }
+    }
     return {
       f, c,
       /* The list item id, not a field - a field can be edited, and an id that
@@ -1386,6 +1573,7 @@ function receivedRows(){
       project:  (c && c.project) || '',
       number:   num,
       age:      daysSince(f.ReceivedAt),
+      ceState:  ceRow.state, excCount: ceRow.exc,
       due:      f.BalanceDue == null ? null : Number(f.BalanceDue),
       status:   String(f.Status || 'received'),
     };
@@ -1504,6 +1692,11 @@ function renderReceived(){
   }
 
   /* Oldest first - this is a work queue, not a report. */
+  /* Entered and clean is done. Entered and wrong stays - see 42025AU010, which
+     CE holds at 28,155.60 against a contract that cannot support it. */
+  const settled = rows.filter(x => x.ceState && !x.excCount);
+  if (HIDE_ENTERED) rows = rows.filter(x => !(x.ceState && !x.excCount));
+
   rows.sort((a,b) => (b.age == null ? -1 : b.age) - (a.age == null ? -1 : a.age));
   const sum = rows.reduce((t,x) => t + (x.due || 0), 0);
   /* A scan carries no figures. Totalling those as zero reads as 'they are asking
@@ -1536,13 +1729,22 @@ function renderReceived(){
       + '<td class="n"><span class="rqage ' + acls + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
         + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div></td>'
       + '<td>' + chk + '</td>'
-      + '<td>' + rqStatusPill(x.status) + '</td></tr>';
+      + '<td>' + rqStatusPill(x.status)
+      + (x.ceState
+          ? ' <span class="pill b" title="' + esc(x.ceState === 'exact'
+              ? 'ComputerEase already carries this application at the amount asked for. It is entered; '
+                + 'whether it has been PAID is not visible here - committed_billed is invoiced, not paid.'
+              : 'ComputerEase carries more against this subcontract than this application claims, so it '
+                + 'is already entered and something else is on it too. Check the subcontract\'s invoices.')
+            + '">in CE</span>'
+          : '') + '</td></tr>';
     if (!open) return head;
 
     const pre = {
       contract: x.f.AdjustedContract, billed: x.f.CompletedToDate,
       retNow:   x.f.RetainageHeld,    prevPaid: x.f.PreviousPayments,
       due:      x.f.BalanceDue,       // needed to back the current request out of CE
+      payReq:   x.f.PayRequest,       // to find this application in the CE ledger
     };
     const note = x.f.ParseNote ? '<div class="rqnote">&#9888;&nbsp;' + esc(x.f.ParseNote) + '</div>' : '';
     const links = []
@@ -1590,6 +1792,11 @@ function renderReceived(){
               ? ' &middot; ' + (rows.length - withFig) + ' not yet keyed' : '')
           : 'no figures keyed yet') + '</span>'
     +   '<span>&middot;</span><span>' + scopeNote + '</span>'
+    +   (settled.length
+          ? '<span>&middot;</span><span>' + settled.length + ' already entered in ComputerEase'
+            + ' and agreeing &middot; <a href="#" id="togentered">'
+            + (HIDE_ENTERED ? 'show' : 'hide') + '</a></span>'
+          : '')
     +   '<span style="margin-left:auto">oldest first</span></div>'
     + '<table class="rqtab"><thead><tr>'
     +   '<th>Subcontractor</th><th>Job</th><th>Pay req</th>'
@@ -1598,6 +1805,9 @@ function renderReceived(){
     +   '<th title="Whether this application can be checked against the contract, and whether it ties. &#10;&#10;contract ties - their adjusted contract agrees with Procore to the cent&#10;a figure - their adjusted contract differs from Procore by that amount&#10;matched by name - no subcontract number on the document; matched from the vendor and project in the subject&#10;needs keying - no figures came off the PDF, so there is nothing to compare&#10;unidentified - no subcontract number anywhere, so there is nothing to compare it to&#10;no commitment - the number read does not match any commitment in Procore">Contract check</th>'
     +   '<th>Status</th>'
     + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+
+  const tog = el.querySelector('#togentered');
+  if (tog) tog.onclick = ev => { ev.preventDefault(); HIDE_ENTERED = !HIDE_ENTERED; renderReceived(); };
 
   el.querySelectorAll('tr.rqrow').forEach(tr => {
     tr.onclick = () => {
@@ -1965,7 +2175,7 @@ function render(){
     const loaded = await loadData(tok);
     const ap = loaded.commitments;
     STATE.commitments = ap.commitments || [];
-    STATE.me = loaded.me; STATE.queue = loaded.queue;
+    STATE.me = loaded.me; STATE.queue = loaded.queue; STATE.ceInv = loaded.ceInv;
     if (loaded.expected) {
       STATE.billingMeta = loaded.expected;
       for (const row of (loaded.expected.rows || [])) STATE.billing[String(row.commitment||'').trim()] = row;
