@@ -1239,7 +1239,7 @@ function render(){
   const cols = [
     ['project','Project','l'], ['number','Commitment','l'], ['vendor','Subcontractor','l'],
     ['compliance','Compliance',''],
-    ['revised_contract','Contract &middot; Procore','num'], ['ce_sov','Contract &middot; CE','num'],
+    ['revised_contract','Rev contract &middot; Procore','num'], ['ce_sov','Revised contract &middot; CE','num'],
     ['ce_billed','Billed to date','num'],
     ['retainage_percent','Retainage',''], ['pm_team','PM','l']
   ];
@@ -1255,22 +1255,8 @@ function render(){
         ${(r.status || r.executed === 'No') ? `<div class="sub">${esc(r.status||'')}${
             r.executed === 'No' ? ' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>' : ''
           }</div>` : ''}
-${(() => {
-          /* Both figures on one line: the subcontract as executed, and where it
-             stands now. Reading them side by side is the point - the gap is what
-             has been added since signing. Shown here as well as in the contract
-             columns so the whole picture is in one cell without scrolling. */
-          const o = r.contract_value, v = r.revised_contract;
-          const has = x => x !== null && x !== undefined && x !== '';
-          if (!has(o) && !has(v)) return '';
-          const same = has(o) && has(v) && Math.round(Number(o)) === Math.round(Number(v));
-          const txt = same
-            ? 'contract ' + money(o) + ' <span class="muted">&middot; no COs</span>'
-            : (has(o) ? 'orig ' + money(o) : '')
-              + (has(o) && has(v) ? ' <span class="muted">&middot;</span> ' : '')
-              + (has(v) ? 'rev ' + money(v) : '');
-          return `<div class="sub" title="Left: the subcontract as originally executed. Right: the revised contract including approved change orders. The difference is what has been added since signing.">${txt}</div>`;
-        })()}
+        ${(r.contract_value !== null && r.contract_value !== undefined && r.contract_value !== '')
+            ? `<div class="sub" title="The subcontract as originally executed, before any change order. The revised figure is in the Rev contract &middot; Procore column; the difference is what has been added since signing.">orig ${money(r.contract_value)}</div>` : ''}
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
         <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
           title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
