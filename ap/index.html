@@ -781,9 +781,17 @@ const complianceFor = r => r.compliance || null;
 function compCell(r){
   const c = complianceFor(r);
   if (!c) return '<span class="pill" style="background:#eef1f6;color:#7a828f" title="This subcontractor holds a commitment but has no compliance record in Billy at all - not that they failed a check, that there is nothing to check.">not in Billy</span>';
-  if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>';
+  /* Billy tracks compliance PER CONTRACT. When the join could only match on
+     project and vendor, this status belongs to the subcontractor on this job and
+     not necessarily to THIS commitment - and a vendor can hold one compliant and
+     one non-compliant contract on the same project. Mark it rather than let a
+     weaker match read like an exact one. */
+  const weak = c.matched_on === 'project+vendor'
+    ? '<span class="sub" style="color:#b07d00" title="Billy had no contract number on this record, so this status was matched on the subcontractor and project rather than on this commitment. A vendor can hold two contracts on one job with different compliance - check Billy before relying on it.">vendor-level match</span>'
+    : '';
+  if (c.billy_is_compliant === 'Yes') return '<span class="pill g">compliant</span>' + weak;
   const t = c.notes ? ' title="' + esc(c.notes).replace(/"/g,'&quot;') + '"' : '';
-  return '<span class="pill r"' + t + '>non-compliant</span>';
+  return '<span class="pill r"' + t + '>non-compliant</span>' + weak;
 }
 
 /* The desk opens on one project, not all of them. A sub pay app is reviewed
@@ -940,6 +948,11 @@ function receivedRows(){
    called wrong from the list alone. Anything else here would be a false alarm. */
 function rqCheck(x){
   if (!x.c) return ['<span class="pill" style="background:#eef1f6;color:#7a828f" title="No commitment in Procore carries this subcontract number, so there is nothing to check it against. Usually a number mis-keyed on the form, or a commitment that was never created.">no commitment</span>', 3];
+  /* A roster match was made from the vendor and project NAMED in the subject,
+     not from a number on the document. It is the weakest basis we accept and the
+     PM has to confirm it is their subcontract before anything else is believed. */
+  if (String(x.f.MatchBasis || '') === 'roster')
+    return ['<span class="pill y" title="No subcontract number appeared anywhere on this application. It was matched because the vendor and project named in the subject identified exactly one commitment. Confirm it is the right subcontract before checking the figures.">matched by name</span>', 2];
   if (String(x.f.MatchBasis || '') === 'unmatched')
     return ['<span class="pill y" title="No subcontract number was found on the form, in the subject or in the filename. Someone has to identify this one by hand.">unidentified</span>', 2];
   if (x.f.AdjustedContract == null)
