@@ -400,6 +400,49 @@ const normName = n => String(n||'').toUpperCase().replace(/&/g,' AND ').replace(
 const money = v => (v === null || v === undefined || v === '') ? '' :
   '$' + Math.round(Number(v)).toLocaleString();
 const pct = v => (v === null || v === undefined || v === '') ? '' : Number(v).toFixed(0) + '%';
+/* Procore project names are institutional and long. Shorten for DISPLAY ONLY:
+   the full name stays in the title attribute, the job number sits on the line
+   beneath, and every filter still compares the full name - nothing downstream
+   ever sees the short form. */
+const PROJ_INST = /\b(community college|technical college|university|college|high school|middle school|elementary school|medical center|hospital|city of|county of)\b/i;
+const PROJ_DROP = /\b(renovations?|additions?|improvements?|construction|upgrades?|replacements?|expansions?|project|building|phase\s+[ivx\d]+)\b/gi;
+
+function shortProject(name){
+  const full = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!full) return '';
+  let s = full.replace(/\s*\([^)]*\)\s*$/, '');
+
+  /* An institution named before a separator is the campus, not the job.
+     "Auburn University - Comer Hall" is Comer Hall to everyone on it. */
+  const seg = s.split(/\s*[-–—:|]\s*/).map(x => x.trim()).filter(Boolean);
+  if (seg.length > 1 && seg[seg.length - 1].length >= 6) s = seg[seg.length - 1];
+
+  /* Same idea without a separator: keep what follows the institution, but only
+     when enough is left for the result to still identify the job. */
+  const m = s.match(PROJ_INST);
+  if (m) {
+    const tail = s.slice(s.indexOf(m[0]) + m[0].length).trim();
+    if (tail.split(/\s+/).filter(Boolean).length >= 2) s = tail;
+  }
+
+  const beforeDrop = s;
+  s = s.replace(PROJ_DROP, ' ').replace(/\s*&\s*/g, ' & ').replace(/\s+/g, ' ').trim();
+  s = s.replace(/^[-–—:|,\s]+|[-–—:|,\s]+$/g, '');
+  /* Stripping generic words off an already-trimmed name can leave a single word
+     that no longer identifies the job - "East Alabama Medical Center MRI
+     Addition" collapsed to "MRI". When that happens, keep the step before. */
+  const words = x => x.split(/\s+/).filter(Boolean).length;
+  if (words(s) < 2 && words(full) >= 4) s = beforeDrop;
+  if (!s) s = full;                                  // never return nothing
+
+  if (s.length > 26) {
+    const cut = s.slice(0, 26);
+    const sp  = cut.lastIndexOf(' ');
+    s = (sp > 12 ? cut.slice(0, sp) : cut).replace(/[\s,&-]+$/, '') + '…';
+  }
+  return s;
+}
+
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* Retainage is two fields. The percent alone cannot say whether it stops at 50%
@@ -804,7 +847,7 @@ function renderQueue(rows){
       + (g.length===1?'':'s') + ' &middot; ' + money(sum) + '</div>'
       + '<table class="qtab"><tbody>' + g.map(x =>
         '<tr><td>' + esc(x.r.vendor)
-          + '<div class="qsub">' + esc(x.r.number||'') + (x.r.project ? ' &middot; ' + esc(x.r.project) : '') + '</div></td>'
+          + '<div class="qsub">' + esc(x.r.number||'') + (x.r.project ? ' &middot; ' + esc(shortProject(x.r.project)) : '') + '</div></td>'
         + '<td class="n">' + money(QVIEW === 'over' ? -(x.e.maxDue||0) : (x.e.maxDue||0))
           + '<div class="qsub">of ' + money(x.e.contract) + '</div></td>'
         + '<td class="n">' + (x.blocked
@@ -997,7 +1040,7 @@ function renderReceived(){
       '<tr class="rqrow' + (open ? ' rqopen' : '') + '" data-rq="' + esc(x.id) + '">'
       + '<td>' + esc(x.vendor || '(no vendor)')
         + '<div class="rqsub">' + esc(x.number || 'no subcontract number')
-        + (x.project ? ' &middot; ' + esc(x.project) : '') + '</div></td>'
+        + (x.project ? ' &middot; ' + esc(shortProject(x.project)) : '') + '</div></td>'
       + '<td>' + (x.job ? esc(x.job) : '<span class="muted">&mdash;</span>') + '</td>'
       + '<td>' + (x.f.PayRequest ? esc(String(x.f.PayRequest)) : '<span class="muted">&mdash;</span>')
         + '<div class="rqsub">' + (x.f.PeriodEnding ? 'to ' + esc(shortDate(x.f.PeriodEnding)) : 'no period') + '</div></td>'
@@ -1199,11 +1242,13 @@ function render(){
       const c = complianceFor(r);
       return !c ? 'nobilly' : (c.billy_is_compliant === 'Yes' ? '' : 'noncompliant');
     })()}">
-      <td class="l wrap">${esc(r.project)}${r.project_number ? `<div class="sub">${esc(r.project_number)}</div>` : ''}</td>
+      <td class="l wrap"><span title="${esc(r.project)}">${esc(shortProject(r.project))}</span>${r.project_number ? `<div class="sub">${esc(r.project_number)}</div>` : ''}</td>
       <td class="l"><a href="${esc(r.procore_url)}" target="_blank" rel="noopener">${esc(r.number||'—')}</a>
         ${(r.status || r.executed === 'No') ? `<div class="sub">${esc(r.status||'')}${
             r.executed === 'No' ? ' <span class="pill y" title="Not executed in Procore - the commitment has not been signed by both parties, so the contract value shown is not yet binding.">unexecuted</span>' : ''
           }</div>` : ''}
+        ${(r.contract_value !== null && r.contract_value !== undefined && r.contract_value !== '')
+            ? `<div class="sub" title="The subcontract as originally executed, before any change order. The Contract &middot; Procore column is the revised figure; the difference between them is what has been added since.">orig ${money(r.contract_value)}</div>` : ''}
         ${r.billing_day ? `<div class="sub">bills ${esc(r.billing_day)}</div>` : ''}
         <div class="sub pacell"><button type="button" class="pabtn" aria-expanded="false" data-pa-for="${esc(r.number||'')}"
           title="Expected pay app: what their cover sheet should say, and the most they can ask for">pay app check</button></div></td>
@@ -1275,7 +1320,7 @@ function render(){
     for (const r of STATE.commitments)
       if (r.project && r.project_number && !projNum[r.project]) projNum[r.project] = String(r.project_number);
     const projects = [...new Set(STATE.commitments.map(r => r.project))]
-      .map(p => ({ name: p, label: (projNum[p] ? projNum[p] + ' \u00b7 ' : '') + p }))
+      .map(p => ({ name: p, label: (projNum[p] ? projNum[p] + ' \u00b7 ' : '') + shortProject(p) }))
       .sort((a,b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
     const pms = [...new Set(STATE.commitments.flatMap(r => r.pm_team_names || []))].sort();
 
