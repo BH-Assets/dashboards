@@ -1656,7 +1656,7 @@ const RQ_STATUS = {
   'approved and entered': ['#e4f4ea','#1b7a43','Entered in ComputerEase. Done.'],
   'revise and resubmit':  ['#fde8e6','#b3261e','Returned to the subcontractor for a corrected application.'],
   'approved as noted':    ['#e4f4ea','#1b7a43','Approved for payment with a recorded exception - pay the corrected amount, do not hold the cheque. Procore calls this Approved as Noted.'],
-  'not a pay app':        ['#eef1f6','#5a6473','An invoice, not a subcontractor pay application. Out of this queue.'],
+  'not a pay app':        ['#eef1f6','#5a6473','An invoice, not a subcontractor pay application. Out of this queue and worked in payables@ - it has not been sent anywhere.'],
 };
 function rqStatusPill(s){
   const k = String(s || 'received');
@@ -1686,8 +1686,11 @@ const TRIAGE_ACTIONS = [
   { k:'resubmit', label:'Resubmit', status:'revise and resubmit', cls:'bad',
     tip:'Not on our Attachment G, or the figures cannot stand. Goes back to the subcontractor for a corrected application.' },
   { k:'notpayapp', label:'Move to invoice queue', status:'not a pay app', cls:'',
-    tip:'This is an invoice, not a subcontractor pay application. It leaves this queue.' },
-  { k:'topm', label:'Confirm pay app → PM queue', status:'with PM', cls:'go',
+    tip:'An invoice, not a subcontractor pay application. It drops out of this queue and stays in '
+      + 'payables@ to be worked there. There is no invoice queue on the other side yet - when every '
+      + 'invoice is pulled this becomes a real destination.' },
+  { k:'undo', label:'Back to the pay app queue', status:'received', cls:'' },
+  { k:'topm', label:'Confirm pay app \u2192 PM queue', status:'with PM', cls:'go',
     tip:'A real pay application on our form. Goes to the job’s Project Management Team to be checked against the contract.' },
 ];
 
@@ -1728,8 +1731,11 @@ function triagePanel(x){
     +   '</div>'
     + '</div>'
     + '<div class="tract">'
-    +   TRIAGE_ACTIONS.map(a => '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
-          + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join('')
+    +   (x.status === 'not a pay app'
+          ? '<button data-tr="' + esc(x.id) + '" data-trk="undo" title="Put it back in the pay '
+            + 'application queue as it arrived.">Back to the pay app queue</button>'
+          : TRIAGE_ACTIONS.map(a => '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
+              + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join(''))
     +   '<span class="msg"></span>'
     + '</div></div>';
 }
@@ -2034,6 +2040,7 @@ function groupAssigned(x){
 
 const RQ_OPEN = new Set();
 let HIDE_ENTERED = true;   // entered AND clean; never entered-and-wrong
+let HIDE_NOTAPP  = true;   // invoices that are not pay applications
 /* row id -> {cls,text}. Survives the re-render that follows a save. */
 const RQ_MSG  = new Map();
 
@@ -2193,7 +2200,7 @@ function renderReceived(){
   /* Entered and clean is done. Entered and wrong stays - see 42025AU010, which
      CE holds at 28,155.60 against a contract that cannot support it. */
   const notApps = rows.filter(x => x.status === 'not a pay app');
-  rows = rows.filter(x => x.status !== 'not a pay app');
+  if (HIDE_NOTAPP) rows = rows.filter(x => x.status !== 'not a pay app');
   const settled = rows.filter(x => x.ceState && !x.excCount);
   if (HIDE_ENTERED) rows = rows.filter(x => !(x.ceState && !x.excCount));
 
@@ -2275,8 +2282,12 @@ function renderReceived(){
             + ' and agreeing &middot; <a href="#" id="togentered">'
             + (HIDE_ENTERED ? 'show' : 'hide') + '</a></span>'
           : '')
-    +   (notApps.length ? '<span>&middot;</span><span>' + notApps.length
-          + ' moved to the invoice queue</span>' : '')
+    +   (notApps.length
+          ? '<span>&middot;</span><span title="Not pay applications. They stay in payables@ for '
+            + 'Drew to work there - nothing was moved anywhere, this queue just stops showing them.">'
+            + notApps.length + ' not a pay app &middot; <a href="#" id="tognotapp">'
+            + (HIDE_NOTAPP ? 'show' : 'hide') + '</a></span>'
+          : '')
     +   '<span>&middot;</span><span class="qmode">'
     +   (queueMode() === 'triage' ? '<b>Triage</b> &middot; <a href="#" id="qmodesw">review</a>'
                                   : '<a href="#" id="qmodesw">triage</a> &middot; <b>Review</b>') + '</span>'
@@ -2343,6 +2354,9 @@ function renderReceived(){
       paintSaveNotes(el);
     };
   });
+
+  const tna = el.querySelector('#tognotapp');
+  if (tna) tna.onclick = ev => { ev.preventDefault(); HIDE_NOTAPP = !HIDE_NOTAPP; renderReceived(); };
 
   const tog = el.querySelector('#togentered');
   if (tog) tog.onclick = ev => { ev.preventDefault(); HIDE_ENTERED = !HIDE_ENTERED; renderReceived(); };
