@@ -18,7 +18,7 @@
     --line:#E8E6E7; --line-2:#e3e8f0; --rule:#eef1f6;
     --bg:#f5f7fa; --panel:#fff; --sand:#F2ECE1;
     --ok:#1a7f37; --warn:#9a6a00; --bad:#b3261e;
-    --side:248px;
+    --side:220px;          /* the demo's rail width */
     --rail:#484B4D;          /* the design system's dark grey */
   }
   * { box-sizing: border-box; }
@@ -108,6 +108,59 @@
   .pawarn div{padding:2px 0 2px 15px;text-indent:-15px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
+  /* ---- the VP's desk, measured off their file -----------------------------
+     Every number below is the demonstration's: 220px rail, 13px/12px nav rows,
+     30px page title, four stat cards with a 3px progress line, a toolbar over
+     the table, 18px/20px cells, uppercase 12px headers on a tint. The COLOURS
+     are ours - their teal #087e70 is our navy, their slate #0e293b is the BH
+     grey, their tag palette is our ok/warn/bad. Montserrat throughout. */
+  .shell{grid-template-columns:var(--side) 1fr;display:grid}
+  .side{width:auto;padding:28px 18px}
+  .sidetitle{font-size:23px;font-weight:750;letter-spacing:-.8px;padding:0 10px 30px;color:#fff;
+             text-transform:none}
+  .sidetitle span{font-size:12px;font-weight:750;letter-spacing:.11em;text-transform:uppercase;
+                  color:#98a0ab;margin-top:7px}
+  .sidecap{font-size:12px;font-weight:750;letter-spacing:.11em;padding:8px 12px;color:#9aa3ad}
+  .navitem{justify-content:space-between;margin:3px 0;padding:13px 12px;border-left:0;
+           border-radius:7px;font-size:14px}
+  .navitem.on{background:rgba(255,255,255,.17);color:#fff;border-left:0}
+  .navitem .nvn{background:rgba(255,255,255,.22);color:#fff;padding:2px 7px;border-radius:5px;
+                font-size:12px}
+  .navitem.on .nvn{background:var(--red)}
+  .navsep{margin:14px 10px}
+  .sidefoot{margin-top:auto;border-top:1px solid rgba(255,255,255,.18);padding:22px 10px 0;
+            font-size:13px;line-height:1.7;color:#aeb5bd}
+  .sidefoot strong{color:#fff;display:block}
+  .main{padding:0}
+  .topbar{justify-content:space-between;background:var(--panel);border-bottom:1px solid var(--line);
+          padding:17px 32px;margin:0}
+  .mainpad{padding:30px 32px}
+  .heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}
+  .heading h1{font-size:30px;letter-spacing:-1px;margin:5px 0 8px;color:var(--ink);font-weight:750}
+  .heading p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+  .wscards{grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:28px}
+  .wscard{border-radius:10px;padding:20px}
+  .wscard .l{font-size:14px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0}
+  .wscard .n{font-size:27px;letter-spacing:-.8px;font-weight:740;margin:8px 0}
+  .wscard .s{font-size:13px;color:var(--faint);margin:0}
+  .wscard .line{height:3px;background:var(--rule);border-radius:2px;margin-top:17px}
+  .wscard .line i{display:block;height:3px;background:var(--navy);border-radius:2px}
+  .rqwrap{border-radius:10px;padding:0;overflow:hidden}
+  .rqbar{padding:19px 20px;border-bottom:1px solid var(--line-2);gap:12px}
+  .rqbar .rqcount{font-size:17px;font-weight:700;color:var(--ink)}
+  .rqtab{font-size:14px}
+  .rqtab thead th{background:var(--rule);color:var(--muted);font-size:12px;letter-spacing:.04em;
+                  font-weight:700;padding:14px 20px;border-bottom:1px solid var(--line-2)}
+  .rqtab td{padding:18px 20px;border-top:1px solid var(--line-2);border-bottom:0;
+            vertical-align:middle}
+  .rqtab tbody tr.rqrow:hover{background:#f8fbfc}
+  .rqtab th:first-child,.rqtab td:first-child{padding-left:20px}
+  .rqtab th:last-child,.rqtab td:last-child{padding-right:20px}
+  .rqsub{color:var(--faint);font-size:12.5px;margin-top:5px}
+  /* Status as a pill, in our three states rather than their teal/amber/red. */
+  .rqtab .pill{display:inline-block;border-radius:5px;font-size:12px;font-weight:650;
+               padding:5px 8px;white-space:nowrap}
+
   /* ---- the intake checklist ---- */
   .intchk{display:grid;gap:5px;margin:0 0 11px}
   .intchk label{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);
@@ -155,20 +208,20 @@
      over a navy wash, a sticky white header, and a grey body carrying white
      panels - with the source document in its own column BESIDE the work rather
      than behind a tab. Reading the figures and checking them is one job. */
-  .drawerveil{position:fixed;inset:0;background:#0b223963;z-index:55;display:flex;
+  .drawerveil{position:fixed;inset:0;background:rgba(31,56,100,.39);z-index:55;display:flex;
               justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .16s}
   .drawerveil.on{opacity:1;pointer-events:auto}
   .drawer{position:fixed;top:0;right:0;height:100vh;width:min(100vw,1180px);
-          background:#f7f9fb;z-index:60;box-shadow:-20px 0 60px #112a3526;
+          background:var(--bg);z-index:60;box-shadow:-20px 0 60px rgba(33,30,30,.15);
           display:flex;flex-direction:column;transform:translateX(100%);
           transition:transform .17s ease-out}
   .drawer.on{transform:none}
-  .drawerhead{background:#fff;padding:18px 24px 0;border-bottom:1px solid #dbe5eb;
+  .drawerhead{background:var(--panel);padding:18px 24px 0;border-bottom:1px solid var(--line);
               position:sticky;top:0;z-index:2;flex:none}
   .drawerttl{display:flex;align-items:flex-start;gap:15px}
   .drawerttl h3{margin:0 0 5px;font-size:21px;color:var(--ink);font-weight:700;line-height:1.2}
   .drawerttl .sub{font-size:12.5px;color:var(--muted)}
-  .drawerx{margin-left:auto;appearance:none;border:1px solid var(--line-2);background:#fff;
+  .drawerx{margin-left:auto;appearance:none;border:1px solid var(--line-2);background:var(--panel);
            border-radius:8px;width:32px;height:32px;font-size:18px;line-height:1;color:var(--muted);
            cursor:pointer;flex:none}
   .drawerx:hover{background:var(--rule);color:var(--ink)}
@@ -178,14 +231,14 @@
         margin-bottom:-1px}
   .dtab:hover{color:var(--navy)}
   .dtab.on{color:var(--navy);border-bottom-color:var(--navy)}
-  .dtab .dn{margin-left:6px;background:var(--rule);color:#5b6472;border-radius:8px;padding:0 6px;
+  .dtab .dn{margin-left:6px;background:var(--rule);color:var(--muted);border-radius:8px;padding:0 6px;
             font-size:10.5px;font-variant-numeric:tabular-nums}
   .drawerbody{flex:1;overflow:auto;padding:22px 24px 30px;
               display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:22px;
               align-items:start}
   .dwork,.dsrc{min-width:0}
   /* White panels on the grey body, the way the demo separates them. */
-  .dwork,.dsrc>.srcpage{background:#fff;border:1px solid #dbe4eb;border-radius:11px}
+  .dwork,.dsrc>.srcpage{background:var(--panel);border:1px solid var(--line-2);border-radius:11px}
   .dwork{padding:16px 18px 20px}
   .dsrc{position:sticky;top:0}
   .dpane{display:none}.dpane.on{display:block}
@@ -892,15 +945,36 @@ function renderWsCounts(rows){
     b.textContent = c;
     b.className = 'nvn' + (c ? '' : ' zero');
   }
+  const WS_SUB = {
+    all:        'Everything that has arrived at payables@ and been identified.',
+    triage:     'Accounting assigns the job and commitment, checks the references, and routes.',
+    pmreview:   'With the job\u2019s Project Management Team to be checked against the contract.',
+    corrections:'Sent back for a corrected application, or returned by the PM.',
+    ready:      'Approved. Waiting on Accounting to key it into ComputerEase.',
+    entered:    'Keyed into ComputerEase. Entered does not mean paid.',
+  };
+  const ttl = document.getElementById('wsttl');
+  const sub = document.getElementById('wssub');
+  if (ttl) ttl.textContent = (WS_BY[WS] || {}).label || 'All invoices';
+  if (sub) sub.textContent = WS_SUB[WS] || '';
+  const who = document.getElementById('sfwho');
+  if (who) who.textContent = ((STATE.me || {}).name || (STATE.me || {}).email || '');
+
   const el = document.getElementById('wscards');
   if (!el) return;
+  const total = rows.length || 1;
   el.innerHTML = WS_CARDS.map(c => {
     const hit = rows.filter(x => wsMatches(x, c.k));
     const sum = hit.reduce((t,x) => t + (x.due || 0), 0);
+    /* The bar is this stage's share of the whole queue - the demo draws one and
+       it is the only thing on a stat card that says how big a pile this is
+       relative to the others. */
+    const pct = Math.round(100 * hit.length / total);
     return '<button class="wscard ' + c.cls + (WS === c.k ? ' on' : '') + '" data-ws="' + c.k + '">'
-      + '<div class="n">' + hit.length + '</div>'
       + '<div class="l">' + esc(c.label) + '</div>'
-      + '<div class="s">' + (sum ? money(sum) : '&mdash;') + '</div></button>';
+      + '<div class="n">' + hit.length + '</div>'
+      + '<div class="s">' + (sum ? money(sum) : '&mdash;') + '</div>'
+      + '<div class="line"><i style="width:' + pct + '%"></i></div></button>';
   }).join('');
   el.querySelectorAll('.wscard').forEach(b => b.onclick = () => {
     WS = WS === b.dataset.ws ? 'all' : b.dataset.ws;
@@ -3467,6 +3541,11 @@ function render(){
           <div class="sidecap">By job</div>
           <button class="navitem" data-pane="commitments">Job view</button>
           <button class="navitem" data-pane="expected">Expected to bill</button>
+          <div class="sidefoot">
+            <strong id="sfwho">&nbsp;</strong>
+            Nothing on this desk is an approval, and nothing here is entered into
+            ComputerEase.
+          </div>
         </aside>
         <div class="main">
           <div class="topbar">
@@ -3474,6 +3553,11 @@ function render(){
             <div class="grow"></div>
             <div id="viewas"></div>
           </div>
+          <div class="mainpad">
+          <div class="heading"><div>
+            <h1 id="wsttl">All invoices</h1>
+            <p id="wssub">Everything that has arrived at payables@ and been identified.</p>
+          </div></div>
           <div class="wscards" id="wscards"></div>
 
           <div class="tabpane" data-pane="received"><div id="received"></div></div>
@@ -3521,6 +3605,7 @@ function render(){
             <div class="cards" id="cards"></div>
             <div id="table"></div>
             <footer id="foot"></footer>
+          </div>
           </div>
         </div>
       </div>`;
