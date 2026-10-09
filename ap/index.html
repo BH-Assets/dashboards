@@ -108,6 +108,63 @@
   .pawarn div{padding:2px 0 2px 15px;text-indent:-15px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
+  /* ---- the source document ---- */
+  .srcpage{background:#fff;border:1px solid var(--line-2);border-radius:8px;padding:18px 20px 20px;
+           margin:14px 0 4px}
+  .srchead{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--ink);text-align:center;
+           padding-bottom:12px;border-bottom:1px solid var(--line-2)}
+  .srchead span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.03em;
+                text-transform:none;color:var(--muted);margin-top:3px}
+  .srcmeta{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:11.5px}
+  .srcmeta td{padding:3px 0;vertical-align:top}
+  .srcmeta td:first-child{color:var(--faint);font-weight:700;letter-spacing:.05em;width:130px}
+  .srctab{width:100%;border-collapse:collapse;font-size:12.5px}
+  .srctab td{padding:6px 0;border-bottom:1px dotted #d8dee7}
+  .srctab td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:14px}
+  .srctab tr.srctot td{border-bottom:0;border-top:2px solid var(--ink);font-weight:700;padding-top:9px}
+  .srcmiss{color:#b8bfc9;font-size:11px;font-style:italic}
+  .srcsov{margin-top:16px;padding-top:12px;border-top:1px solid var(--line-2)}
+  .srcsov h4{margin:0;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+             color:var(--faint)}
+  .tracttop{margin:0 0 14px}
+
+  /* ---- the detail drawer -------------------------------------------------
+     The panel used to open as a row inside the table, which pushed everything
+     below it down the page and made the thing you were reading move while you
+     read it. A drawer leaves the queue where it is. */
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(760px,100vw);
+          background:var(--panel);border-left:1px solid var(--line);z-index:60;
+          box-shadow:-14px 0 34px rgba(16,20,28,.16);display:flex;flex-direction:column;
+          transform:translateX(100%);transition:transform .16s ease-out}
+  .drawer.on{transform:none}
+  .drawerveil{position:fixed;inset:0;background:rgba(20,24,30,.26);z-index:55;
+              opacity:0;pointer-events:none;transition:opacity .16s}
+  .drawerveil.on{opacity:1;pointer-events:auto}
+  .drawerhead{padding:16px 20px 0;border-bottom:1px solid var(--line-2);flex:none}
+  .drawerttl{display:flex;align-items:flex-start;gap:12px}
+  .drawerttl h3{margin:0;font-size:16px;color:var(--ink);font-weight:700;line-height:1.25}
+  .drawerttl .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .drawerx{margin-left:auto;appearance:none;border:1px solid var(--line-2);background:#fff;
+           border-radius:7px;width:30px;height:30px;font-size:17px;line-height:1;color:var(--muted);
+           cursor:pointer;flex:none}
+  .drawerx:hover{background:var(--rule);color:var(--ink)}
+  .drawertabs{display:flex;gap:2px;margin-top:13px}
+  .dtab{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:600;
+        color:var(--faint);padding:8px 13px 7px;cursor:pointer;border-bottom:2px solid transparent;
+        margin-bottom:-1px}
+  .dtab:hover{color:var(--navy)}
+  .dtab.on{color:var(--navy);border-bottom-color:var(--navy)}
+  .dtab .dn{margin-left:6px;background:var(--rule);color:#5b6472;border-radius:8px;padding:0 6px;
+            font-size:10.5px;font-variant-numeric:tabular-nums}
+  .drawerbody{flex:1;overflow:auto;padding:4px 20px 26px}
+  .dpane{display:none}.dpane.on{display:block}
+  .dsoon{color:var(--muted);font-size:12.5px;line-height:1.6;padding:18px 0}
+  /* The panel markup was written for a table cell. Inside the drawer it is a
+     plain block, so the width cap and sticky positioning come off. */
+  .drawerbody .pawrap{position:static;width:auto;padding:14px 0 6px}
+  .drawerbody .trwrap{padding:14px 0 6px}
+  @media (max-width:760px){ .drawer{width:100vw} }
+
   /* ---- the shell --------------------------------------------------------
      A left rail of named views instead of three tabs. The views are the
      WORKFLOW - where a thing is, and therefore whose problem it is - which is
@@ -2033,7 +2090,14 @@ function triagePanel(x){
     +   '</div>'
     + '</div>'
     + statusTrail(x)
-    + '<div class="tract">'
+    + '</div>';
+}
+
+/* The actions, lifted out so they can sit ABOVE the document in triage. Drew is
+   deciding what the thing is, not reading it end to end - the decision should
+   not be below the fold. */
+function triageActions(x){
+  return '<div class="tract tracttop">'
     +   (x.status === 'not a pay app'
           ? '<button data-tr="' + esc(x.id) + '" data-trk="undo" title="Put it back in the pay '
             + 'application queue as it arrived.">Back to the pay app queue</button>'
@@ -2041,6 +2105,69 @@ function triagePanel(x){
               '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
               + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join(''))
     +   '<span class="msg"></span>'
+    + '</div>';
+}
+
+/* ---- the source document ----------------------------------------------------
+   The Attachment G cover, laid out the way the form lays it out, filled in with
+   what the parser took off the PDF. It is NOT a picture of the document and
+   does not pretend to be: a line the list does not carry says so rather than
+   showing a dash that could be read as zero.
+
+   There is no schedule of values here because nothing extracts one. The parser
+   reads the cover; the G703 branch reads only the GRAND TOTALS row. Line items
+   would have to be pulled out of the continuation sheet first, and until that
+   exists the honest answer is the PDF itself. */
+const SRC_LINES = [
+  ['AMOUNT OF ORIGINAL CONTRACT',                     null,               'not captured'],
+  ['APPROVED CHANGE ORDER(S)',                        null,               'not captured'],
+  ['ADJUSTED CONTRACT AMOUNT',                        'AdjustedContract', ''],
+  ['VALUE OF WORK IN PLACE',                          null,               'not captured'],
+  ['VALUE OF STORED MATERIALS',                       null,               'not captured'],
+  ['TOTAL COMPLETED &amp; STORED TO DATE',            'CompletedToDate',  ''],
+  ['LESS RETAINAGE',                                  'RetainageHeld',    ''],
+  ['LESS PREVIOUS PAYMENTS',                          'PreviousPayments', ''],
+  ['BALANCE DUE THIS PAYMENT ESTIMATE',               'BalanceDue',       'tot'],
+];
+
+function sourceDoc(x){
+  const f = x.f;
+  const head = [
+    ['FROM',           x.vendor || ''],
+    ['PROJECT',        x.project || x.job || ''],
+    ['SUBCONTRACT #',  f.Subcontract || ''],
+    ['PAY REQUEST #',  f.PayRequest || ''],
+    ['PERIOD ENDING',  f.PeriodEnding ? shortDate(f.PeriodEnding) : ''],
+  ];
+  const anyFig = SRC_LINES.some(([,k]) => k && f[k] != null && f[k] !== '');
+  const pdf = f.PdfPath
+    ? '<a class="rqlink" href="' + esc(QUEUE_DOCS + f.PdfPath) + '" target="_blank" '
+      + 'rel="noopener">Open the original PDF &rarr;</a>'
+    : '<span class="muted">No PDF was filed with this row.</span>';
+
+  return '<div class="srcpage">'
+    + '<div class="srchead">ATTACHMENT G<span>Subcontractor&rsquo;s application for payment</span></div>'
+    + '<table class="srcmeta"><tbody>'
+    +   head.map(([l,v]) => '<tr><td>' + l + '</td><td>'
+          + (v ? esc(String(v)) : '<span class="muted">&mdash;</span>') + '</td></tr>').join('')
+    + '</tbody></table>'
+    + (anyFig
+        ? '<table class="srctab"><tbody>' + SRC_LINES.map(([label, key, note]) => {
+            const v = key ? f[key] : null;
+            const has = v != null && v !== '';
+            return '<tr class="' + (note === 'tot' ? 'srctot' : '') + '">'
+              + '<td>' + label + '</td><td class="n">'
+              + (has ? money2(Number(v))
+                     : '<span class="srcmiss">' + (note || 'not read') + '</span>')
+              + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<div class="dsoon">Nothing came off this PDF &mdash; usually a scan. '
+          + 'The figures have to be keyed by hand; the Details tab is where that happens.</div>')
+    + '<div class="srcsov"><h4>Schedule of values</h4>'
+    +   '<div class="dsoon" style="padding:6px 0">Not extracted. The parser reads the cover '
+    +   'sheet, and a G703 continuation sheet only as far as its grand totals row &mdash; no line '
+    +   'items. Until that is built, the continuation sheet is in the PDF.</div>'
+    +   '<div style="margin-top:4px">' + pdf + '</div>'
     + '</div></div>';
 }
 
@@ -2589,6 +2716,7 @@ function renderReceived(){
      amount nobody has keyed yet. */
   const withFig = rows.filter(x => x.due != null).length;
 
+  const details = [];
   const body = rows.map(x => {
     const [chk] = rqCheck(x);
     const a = x.age;
@@ -2611,9 +2739,11 @@ function renderReceived(){
       .concat(x.f.PdfPath ? ['<a class="rqlink" href="' + esc(QUEUE_DOCS + x.f.PdfPath) + '" target="_blank" rel="noopener">Open the pay app PDF &rarr;</a>'] : [])
       .concat(x.f.MessageLink ? ['<a class="rqlink" href="' + esc(x.f.MessageLink) + '" target="_blank" rel="noopener">Open the original mail &rarr;</a>'] : [])
       .join(' &nbsp;&middot;&nbsp; ');
-    if (queueMode() === 'triage')
-      return head + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="'
-           + QCOLS.filter(qcolShown).length + '">' + triagePanel(x) + '</td></tr>';
+    if (queueMode() === 'triage') {
+      details.push({ x, details: triageActions(x) + triagePanel(x),
+                     source: sourceDoc(x), activity: statusTrail(x) });
+      return head;
+    }
     const trail = statusTrail(x);
     const panel = x.c ? payappPanel(x.c, pre, x.id)
       : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
@@ -2642,12 +2772,62 @@ function renderReceived(){
       +   '<span class="msg"></span>'
       + '</div></div>';
 
-    return head
-      + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="' + QCOLS.filter(qcolShown).length + '">'
-      + editor + trail + note + panel
-      + (links ? '<div style="margin-top:10px">' + links + '</div>' : '')
-      + '</td></tr>';
+    details.push({ x, activity: trail, source: sourceDoc(x),
+      details: editor + note + panel
+        + (links ? '<div style="margin-top:10px">' + links + '</div>' : '') });
+    return head;
   }).join('');
+
+  /* One row open at a time: a drawer has one position, and two open rows would
+     mean two detail panels fighting over it. */
+  const openOne = details.find(d => RQ_OPEN.has(d.x.id)) || null;
+  const drawer = (() => {
+    if (!openOne) return '<div class="drawerveil"></div><aside class="drawer" aria-hidden="true"></aside>';
+    const x = openOne.x;
+    const ttl = esc(x.vendor || '(no vendor)')
+      + (x.f.PayRequest ? ' &middot; ' + esc(String(x.f.PayRequest)) : '');
+    const sub = [x.job && esc(x.job), x.number && esc(x.number),
+                 x.f.Status && esc(String(x.f.Status))].filter(Boolean).join(' &middot; ');
+    let comments = [];
+    try { comments = JSON.parse(x.f.Comments || '[]'); } catch (_) { comments = []; }
+    if (!Array.isArray(comments)) comments = [];
+    const pane = (k, on, html) =>
+      '<div class="dpane' + (on ? ' on' : '') + '" data-dpane="' + k + '">' + html + '</div>';
+    return '<div class="drawerveil on"></div>'
+      + '<aside class="drawer on" role="dialog" aria-label="' + ttl + '">'
+      + '<div class="drawerhead"><div class="drawerttl"><div>'
+      +   '<h3>' + ttl + '</h3><div class="sub">' + sub + '</div></div>'
+      +   '<button class="drawerx" data-drawerx title="Close">&times;</button></div>'
+      + '<div class="drawertabs">'
+      +   '<button class="dtab on" data-dtab="source">Source document</button>'
+      +   '<button class="dtab" data-dtab="details">Details</button>'
+      +   '<button class="dtab" data-dtab="review">Review</button>'
+      +   '<button class="dtab" data-dtab="discussion">Discussion'
+      +     (comments.length ? '<span class="dn">' + comments.length + '</span>' : '') + '</button>'
+      +   '<button class="dtab" data-dtab="activity">Activity</button>'
+      + '</div></div>'
+      + '<div class="drawerbody"><div data-rqd="' + esc(x.id) + '">'
+      +   pane('source', true, openOne.source || '')
+      +   pane('details', false, openOne.details)
+      +   pane('review', false,
+            '<div class="dsoon">The review checks and the approve action are not built yet. '
+          + 'They need <b>BlockingIssues</b> and <b>AssignedApprover</b> on the row, and approval '
+          + 'gated on being that person &mdash; the schema is there, the behaviour is not. '
+          + 'For now the actions on the Details tab are what the desk can do.</div>')
+      +   pane('discussion', false,
+            (comments.length
+              ? '<div class="sttrail" style="display:block">' + comments.map(c =>
+                  '<div style="padding:8px 0;border-bottom:1px solid var(--rule)">'
+                  + '<b>' + esc(c.who || 'someone') + '</b> '
+                  + '<span class="qsub">' + esc(shortDate(c.at)) + '</span><br>'
+                  + esc(c.text || '') + '</div>').join('') + '</div>'
+              : '<div class="dsoon">No comments on this one yet.</div>')
+          + '<div class="dsoon">Writing a comment is not wired up yet. The <b>Comments</b> column '
+          + 'exists on the list now and holds {who, at, text}; the composer is the next piece.</div>')
+      +   pane('activity', false,
+            (openOne.activity || '<div class="dsoon">No status history on this row.</div>'))
+      + '</div></div></aside>';
+  })();
 
   el.innerHTML = '<div class="rqwrap">'
     + '<div class="rqbar"><span class="rqcount">' + rows.length + ' pay application'
@@ -2741,17 +2921,32 @@ function renderReceived(){
   const tog = el.querySelector('#togentered');
   if (tog) tog.onclick = ev => { ev.preventDefault(); HIDE_ENTERED = !HIDE_ENTERED; renderReceived(); };
 
+  el.insertAdjacentHTML('beforeend', drawer);
+
   el.querySelectorAll('tr.rqrow').forEach(tr => {
     tr.onclick = () => {
       const id = tr.dataset.rq;
-      if (RQ_OPEN.has(id)) { RQ_OPEN.delete(id); RQ_MSG.delete(id); } else RQ_OPEN.add(id);
+      const was = RQ_OPEN.has(id);
+      RQ_OPEN.clear(); RQ_MSG.delete(id);          // one at a time
+      if (!was) RQ_OPEN.add(id);
       renderReceived();
     };
   });
 
+  const shut = () => { RQ_OPEN.clear(); renderReceived(); };
+  const xBtn = el.querySelector('[data-drawerx]');
+  if (xBtn) xBtn.onclick = shut;
+  const veil = el.querySelector('.drawerveil');
+  if (veil) veil.onclick = shut;
+  el.querySelectorAll('.dtab').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.dtab').forEach(t => t.classList.toggle('on', t === b));
+    el.querySelectorAll('.dpane').forEach(p =>
+      p.classList.toggle('on', p.dataset.dpane === b.dataset.dtab));
+  });
+
   /* The detail row sits inside the table; without this a click on an input
      bubbles to the row handler and collapses the thing being typed into. */
-  el.querySelectorAll('tr.rqdetail').forEach(tr => tr.onclick = e => e.stopPropagation());
+  el.querySelectorAll('.drawer').forEach(d => d.onclick = e => e.stopPropagation());
 
   paintSaveNotes(el);
 
@@ -2863,7 +3058,7 @@ function renderReceived(){
      figures are reconciled the moment the row opens rather than on first keypress. */
   rows.forEach(x => {
     if (!RQ_OPEN.has(x.id) || !x.c) return;
-    const d = el.querySelector('tr[data-rqd="' + CSS.escape(x.id) + '"]');
+    const d = el.querySelector('[data-rqd="' + CSS.escape(x.id) + '"]');
     if (d) payappBind(d, x.c);
   });
 }
