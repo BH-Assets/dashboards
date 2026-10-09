@@ -2575,6 +2575,18 @@ function renderReceived(){
       + '</div></section></div>';
   })();
 
+  /* What this desk is for, in the words of the process the VP signed off. It
+     says "intake only" because the single most expensive mistake available here
+     is keying something into ComputerEase before a PM has seen it.
+     (Lost once already: it was defined inside a block I replaced wholesale, and
+     the page died on "duties is not defined" before anything rendered.) */
+  const duties = queueMode() !== 'triage' ? '' :
+      '<div class="demo"><div><strong>Accounting duties \u00b7 intake only</strong> '
+    + 'Assign the job and the commitment \u2014 subcontract or PO. Review the automatic checks, '
+    + 'verify the ComputerEase previous-paid reference, and flag application discrepancies for '
+    + 'the PM. A contract mismatch involves the process manager. '
+    + 'Nothing is entered into ComputerEase at this stage.</div></div>';
+
   el.innerHTML = duties + '<div class="panel">'
     + '<div class="toolbar"><span class="rqcount">' + rows.length + ' pay application'
     +   (rows.length === 1 ? '' : 's') + '</span>'
