@@ -3823,15 +3823,37 @@ function recon(i){
   const cell = (v, ok) => v == null ? '<strong class="mismatch">Unavailable</strong>'
                                      : '<strong class="' + (ok ? 'match' : 'mismatch') + '">' + money(v) + '</strong>';
   const L = i.ledger;
-  return '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app · adjusted contract</span><strong>' + money(i.contract) + '</strong></div>'
-    + '<div class="recon-row"><span' + tip(SRC.procore()) + '>Procore · commitment revised</span>' + cell(i.procoreAmount, i.procoreAmount != null && Math.abs(i.procoreAmount - i.contract) < .01) + '</div>'
-    + '<div class="recon-row"><span' + tip(SRC.ceSov()) + '>ComputerEase · subcontract SOV</span>' + cell(i.ceAmount, i.ceAmount != null && Math.abs(i.ceAmount - i.contract) < .01) + '</div>'
-    + '<p class="muted">Procore as of ' + esc(fmtTime(LIVE.cMeta && LIVE.cMeta.generated_at)) + ' · CE SOV as of ' + esc(fmtTime(LIVE.expected && LIVE.expected.generated_at)) + '.</p>'
-    + '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app · previous payments</span><strong>' + money(i.previous) + '</strong></div>'
-    + '<div class="recon-row"><span' + tip(SRC.ceCert()) + '>ComputerEase · previous certified</span>' + cell(i.ledgerPrevious, i.ledgerPrevious != null && Math.abs(i.previous - i.ledgerPrevious) < .01) + '</div>'
-    + '<p class="muted">Sum of CE payable on the commitment\'s earlier invoices (Subcontractor Detail Report)'
-    + (L.available ? ', as of ' + esc(L.asOf || '?') : ' &mdash; ' + esc(L.why)) + '. <span' + tip(SRC.cePaid()) + '>Cash actually paid on them</span>: '
-    + (i.ledgerPaid == null ? 'unavailable' : money(i.ledgerPaid)) + '. Previous certified, not cash paid, is what the form\'s line must equal.</p>'
+  const H = t => '<h4 style="margin:14px 0 4px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6b6b6b)">' + t + '</h4>';
+  const ok = v => v != null && Math.abs(v - i.contract) < .01;
+  const fmtD = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const want = digits(i.number);
+  const prior = (L.available && L.invoices ? L.invoices : []).slice().sort((x, y) => String(x.date || '').localeCompare(String(y.date || '')));
+  const appRow = x => {
+    const pays = (x.payments || []).filter(p => p.check);
+    const isThis = want && digits(x.number) === want;
+    const paid = pays.length
+      ? pays.map(p => 'Ck #' + esc(p.check) + (p.date ? ' · ' + fmtD(p.date) : '') + (Number(p.retention) < 0 ? ' (retainage)' : '')).join('<br>')
+      : '<span class="mismatch">Not paid</span>';
+    return '<div class="recon-row" style="align-items:flex-start"><span' + tip('ComputerEase invoice ' + (x.raw_reference || x.number)
+        + (x.date ? ', dated ' + fmtD(x.date) : '') + '. Billed ' + money(Number(x.total || 0)) + ', retainage ' + money(Number(x.retention || 0))
+        + ', payable ' + money(Number(x.payable || 0)) + '. Cheques from the Subcontractor Detail Report.') + '>'
+      + esc(x.number || x.raw_reference || '—') + (isThis ? ' <small class="mismatch">this application</small>' : '') + '</span>'
+      + '<span style="text-align:right"><strong>' + money(Number(x.payable || 0)) + '</strong><br><small class="muted">' + paid + '</small></span></div>';
+  };
+  return H('Adjusted contract amount')
+    + '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app</span><strong>' + money(i.contract) + '</strong></div>'
+    + '<div class="recon-row"><span' + tip(SRC.ceSov()) + '>CE</span>' + cell(i.ceAmount, ok(i.ceAmount)) + '</div>'
+    + '<div class="recon-row"><span' + tip(SRC.procore()) + '>Procore</span>' + cell(i.procoreAmount, ok(i.procoreAmount)) + '</div>'
+    + '<p class="muted" style="margin:4px 0 0">Procore as of ' + esc(fmtTime(LIVE.cMeta && LIVE.cMeta.generated_at)) + ' · CE as of ' + esc(fmtTime(LIVE.expected && LIVE.expected.generated_at)) + '.</p>'
+    + H('Previous payments')
+    + '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app</span><strong>' + money(i.previous) + '</strong></div>'
+    + '<div class="recon-row"><span' + tip(SRC.ceCert()) + '>CE</span>' + cell(i.ledgerPrevious, i.ledgerPrevious != null && i.previous != null && Math.abs(i.previous - i.ledgerPrevious) < .01) + '</div>'
+    + H('Pay apps in CE on ' + esc(i.commitment || 'this commitment'))
+    + (!L.available ? '<p class="muted">Unavailable &mdash; ' + esc(L.why) + '.</p>'
+       : !prior.length ? '<p class="muted">None. ComputerEase has no invoices on this commitment yet (as of ' + esc(L.asOf || '?') + ').</p>'
+       : prior.map(appRow).join('')
+         + '<p class="muted" style="margin:4px 0 0">Amounts are CE payable (billed less retainage). CE previous above = these, excluding this application, plus retainage released. '
+         + '<span' + tip(SRC.cePaid()) + '>Cash paid</span>: ' + (i.ledgerPaid == null ? 'unavailable' : money(i.ledgerPaid)) + '. CE as of ' + esc(L.asOf || '?') + '.</p>')
     + (i.ceHolds ? '<p class="mismatch">ComputerEase already holds this application (' + esc(i.ceSuggest) + '). It was entered before dashboard approval.</p>' : '')
     + (i.previous != null && i.ledgerPrevious != null && Math.abs(i.previous - i.ledgerPrevious) > .01
         ? '<p class="mismatch">Accounting verifies CE is correct for the selected commitment and payment basis. If the application is wrong, the PM marks it up and obtains a correction. If CE is wrong, accounting corrects its record.</p>' : '')
@@ -3877,7 +3899,7 @@ function draftSet(k, v){
   draftOf(i).cur[k] = v;
   if (k === 'JobNumber') { const dl = document.getElementById('commitList'); if (dl) dl.innerHTML = commitOptions(v); }
   const n = coverChanged(i).length, b = document.getElementById('coverSave'), u = document.getElementById('coverDirty');
-  if (b) b.disabled = !n; const x = document.getElementById('coverDiscard'); if (x) x.disabled = !n;
+  if (b) b.disabled = !n; const x = document.getElementById('coverDiscard'); if (x) x.textContent = n ? 'Discard' : 'Done';
   if (u) u.textContent = n ? n + ' unsaved change' + (n === 1 ? '' : 's') : '';
 }
 function jobOptions(sel){
@@ -3890,33 +3912,53 @@ function commitOptions(job){
   return LIVE.commitments.filter(c => !job || job === 'GL' || c.project_number === job)
     .map(c => '<option value="' + esc(c.number) + '">' + esc(c.vendor + ' · ' + (c.title || '')) + '</option>').join('');
 }
+const COVER_EDIT = {};
+const COVER_CSS = '<style>.cover .kv{padding:3px 0;min-height:0;align-items:center}.cover .kv span{font-size:.86em}'
+  + '.cover .kv strong{font-weight:600;font-variant-numeric:tabular-nums}.cover input,.cover select{padding:3px 8px;height:28px;font-size:.9em;margin:0}'
+  + '.cover .actions{margin-top:8px;gap:8px}.cover .actions button{padding:5px 12px}.cover .sep{border-top:1px solid var(--line,#ddd);margin:6px 0}</style>';
 function coverEditor(i){
   const d = draftOf(i).cur, pay = d.DocType !== 'invoice';
-  const inp = (k, type, extra) => '<input data-k="' + k + '" type="' + (type || 'text') + '" value="' + esc(d[k]) + '" oninput="draftSet(\'' + k + '\',this.value)"'
-    + ' style="max-width:190px;text-align:' + (type === 'number' ? 'right' : 'left') + '"' + (extra || '') + '>';
-  const row = (label, k, type, extra) => '<div class="kv" style="align-items:center"><span>' + label + '</span>' + inp(k, type, extra) + '</div>';
-  const num = ' step="0.01"';
   const n = coverChanged(i).length;
+  const editing = !!COVER_EDIT[i.id] || n > 0;
   const sub = String(d.Subcontract || '').trim().toUpperCase();
   const onRoster = !sub || !!LIVE.byNum[sub];
-  return '<div class="kv" style="align-items:center"><span>Document</span><select onchange="draftSet(\'DocType\',this.value);renderDetail()" style="max-width:190px">'
+  const warn = onRoster ? '' : '<p class="mismatch" style="margin:2px 0">No Procore commitment carries ' + esc(sub) + '.</p>';
+  const figs = pay ? [['Adjusted contract','AdjustedContract'],['Completed & stored to date','CompletedToDate'],['Retainage held','RetainageHeld'],
+                      ['Previous payments','PreviousPayments'],['Current payment due','BalanceDue']]
+                   : [['Invoice amount','BalanceDue']];
+  if (!editing) {
+    const v = (x) => (x === '' || x == null) ? '<strong class="muted">—</strong>' : '<strong>' + esc(x) + '</strong>';
+    const r = (label, x) => '<div class="kv"><span>' + label + '</span>' + v(x) + '</div>';
+    const per = d.PeriodEnding ? new Date(d.PeriodEnding + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    return COVER_CSS + '<div class="cover">'
+      + warn
+      + r(pay ? 'Pay request #' : 'Invoice #', d.PayRequest) + r('Billing period ending', per) + r('Cost code / GL account', d.CostCode)
+      + '<div class="sep"></div>'
+      + figs.map(([l, k]) => '<div class="kv' + (k === 'BalanceDue' ? ' total' : '') + '"><span>' + l + '</span>'
+          + (d[k] === '' ? '<strong class="muted">—</strong>' : '<strong>' + money(Number(d[k])) + '</strong>') + '</div>').join('')
+      + '<div class="actions"><button id="coverEdit" onclick="editCover()">Edit cover sheet</button></div></div>';
+  }
+  const inp = (k, type, extra) => '<input data-k="' + k + '" type="' + (type || 'text') + '" value="' + esc(d[k]) + '" oninput="draftSet(\'' + k + '\',this.value)"'
+    + ' style="max-width:180px;text-align:' + (type === 'number' ? 'right' : 'left') + '"' + (extra || '') + '>';
+  const row = (label, k, type, extra) => '<div class="kv"><span>' + label + '</span>' + inp(k, type, extra) + '</div>';
+  const num = ' step="0.01"';
+  return COVER_CSS + '<div class="cover editing">'
+    + '<div class="kv"><span>Document</span><select onchange="draftSet(\'DocType\',this.value);renderDetail()" style="max-width:180px">'
       + '<option value="pay app"' + (pay ? ' selected' : '') + '>Pay application</option><option value="invoice"' + (!pay ? ' selected' : '') + '>Invoice</option></select></div>'
-    + '<div class="kv" style="align-items:center"><span>Job</span><select id="coverJob" onchange="draftSet(\'JobNumber\',this.value)" style="max-width:260px">' + jobOptions(d.JobNumber) + '</select></div>'
+    + '<div class="kv"><span>Job</span><select id="coverJob" onchange="draftSet(\'JobNumber\',this.value)" style="max-width:240px">' + jobOptions(d.JobNumber) + '</select></div>'
     + row(pay ? 'Commitment (subcontract)' : 'Commitment / PO (optional)', 'Subcontract', 'text', ' list="commitList" placeholder="e.g. 41225AU002"')
-    + '<datalist id="commitList">' + commitOptions(d.JobNumber) + '</datalist>'
-    + (onRoster ? '' : '<p class="mismatch" style="margin:4px 0">No Procore commitment carries ' + esc(sub) + '.</p>')
+    + '<datalist id="commitList">' + commitOptions(d.JobNumber) + '</datalist>' + warn
     + row(pay ? 'Pay request #' : 'Invoice #', 'PayRequest')
     + row('Billing period ending', 'PeriodEnding', 'date')
     + row('Cost code / GL account', 'CostCode', 'text', ' placeholder="25AU018.01.402 or GL"')
-    + (pay ? row('Adjusted contract', 'AdjustedContract', 'number', num) + row('Completed & stored to date', 'CompletedToDate', 'number', num)
-           + row('Retainage held', 'RetainageHeld', 'number', num) + row('Previous payments', 'PreviousPayments', 'number', num)
-           + row('Current payment due', 'BalanceDue', 'number', num)
-         : row('Invoice amount', 'BalanceDue', 'number', num))
+    + '<div class="sep"></div>'
+    + figs.map(([l, k]) => row(l, k, 'number', num)).join('')
     + '<div class="actions" style="align-items:center"><button class="primary" id="coverSave" ' + (n ? '' : 'disabled') + ' onclick="saveCover()">Save changes</button>'
-    + '<button id="coverDiscard" ' + (n ? '' : 'disabled') + ' onclick="discardCover()">Discard</button>'
-    + '<span class="muted" id="coverDirty">' + (n ? n + ' unsaved change' + (n === 1 ? '' : 's') : '') + '</span></div>';
+    + '<button id="coverDiscard" onclick="discardCover()">' + (n ? 'Discard' : 'Done') + '</button>'
+    + '<span class="muted" id="coverDirty">' + (n ? n + ' unsaved change' + (n === 1 ? '' : 's') : '') + '</span></div></div>';
 }
-function discardCover(){ const i = item(); delete DRAFT[i.id]; renderDetail(); }
+function editCover(){ const i = item(); if (!i || !isAcctSeat() || i.status !== 'Intake') return; COVER_EDIT[i.id] = true; renderDetail(); }
+function discardCover(){ const i = item(); delete DRAFT[i.id]; delete COVER_EDIT[i.id]; renderDetail(); }
 async function saveCover(){
   const i = item(); if (!isAcctSeat() || i.status !== 'Intake') return;
   const changed = coverChanged(i); if (!changed.length) return;
@@ -3936,10 +3978,17 @@ async function saveCover(){
   const note = 'Cover sheet corrected: ' + changed.map(k => k + ' ' + (o[k] || '—') + ' → ' + (String(d[k]).trim() || '—')).join('; ');
   const id = i.id;
   if (await saveRow(i, fields, { note })) {
-    delete DRAFT[id];
+    delete DRAFT[id]; delete COVER_EDIT[id];
     const j = invoices.find(x => x.id === id); if (j) { j.checks.previous = false; selected = id; renderDetail(); }
     toast('Cover sheet saved. Re-tick the intake verification.');
   }
+}
+function docMeta(i){
+  const job = i.jobNumber === 'GL' ? GL_JOB : (i.jobNumber ? i.jobNumber + ' · ' + i.job : 'No job assigned');
+  return '<div style="border:1px solid var(--line,#ddd);border-radius:6px;padding:8px 12px;margin:6px 0 12px;line-height:1.45">'
+    + '<div style="font-size:.75em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6b6b6b)">Job</div><div><strong>' + esc(job) + '</strong></div>'
+    + '<div style="font-size:.75em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6b6b6b);margin-top:6px">Commitment</div><div><strong>'
+    + esc(i.commitment || 'Not assigned') + '</strong>' + (i.c && i.c.title ? ' <span class="muted">· ' + esc(i.c.title) + '</span>' : '') + '</div></div>';
 }
 function documentPages(i){
   const pay = i.type === 'Pay application';
@@ -3947,15 +3996,15 @@ function documentPages(i){
     setTimeout(() => loadPdf(i), 0);
     return '<article class="paper" id="paper-1" style="font-size:' + (14 * docZoom / 100) + 'px"><div class="dochead"><div><h3>' + esc(i.vendor)
       + '</h3><small>' + (i.number ? esc(i.number) + ' · ' : '') + 'Revision ' + i.revision + '</small></div></div>'
-      + '<h3>' + (pay ? 'Application for payment' : 'Invoice') + '</h3>' + parseNoteHTML(i)
-      + '<p class="muted">Correct anything the pull misread, straight from the PDF below. Nothing is saved until you press Save changes.</p>'
+      + '<h3>' + (pay ? 'Application for payment' : 'Invoice') + '</h3>' + docMeta(i) + parseNoteHTML(i)
+      + '<p class="muted">Check these against the PDF below. To correct one, press Edit cover sheet; nothing is saved until you press Save changes.</p>'
       + coverEditor(i)
       + '<div class="page-num">Type figures exactly as the subcontractor submitted them, even if they are wrong.</div></article>'
       + pdfArticle(i);
   }
   let html = '<article class="paper" id="paper-1" style="font-size:' + (14 * docZoom / 100) + 'px"><div class="dochead"><div><h3>' + esc(i.vendor)
-    + '</h3><small>' + (i.number ? esc(i.number) + ' · ' : '') + 'Revision ' + i.revision + '</small></div></div><h3>' + (pay ? 'Application for payment' : 'Invoice') + '</h3><p>'
-    + esc(i.jobNumber + ' ' + i.job) + '<br>Commitment: ' + esc(i.commitment || 'not assigned') + '<br>Billing period: ' + esc(i.period || '—') + '</p><p>' + esc(i.description) + '</p>'
+    + '</h3><small>' + (i.number ? esc(i.number) + ' · ' : '') + 'Revision ' + i.revision + '</small></div></div><h3>' + (pay ? 'Application for payment' : 'Invoice') + '</h3>'
+    + docMeta(i) + '<p>Billing period: ' + esc(i.period || '—') + '<br>' + esc(i.description) + '</p>'
     + parseNoteHTML(i)
     + (pay ? paperRow(i, 'revised', 'Adjusted contract', i.contract || null) + paperRow(i, 'earned', 'Completed & stored to date', i.earned)
             + paperRow(i, 'retain', 'Retainage held', i.retainHeld) + paperRow(i, 'previous', 'Previous payments', i.previous)
