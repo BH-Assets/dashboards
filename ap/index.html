@@ -648,6 +648,48 @@ function billedCell(r){
    committed_billed is GROSS of retainage. Confirmed 1 Oct 2026 against H.C.
    Blake's G702 on 2506-00400: the desk read $310,186 and the application showed
    $310,186.31 billed with $300,646.75 paid. Previously inferred, now measured. */
+/* ---- Previous certified, from the CE invoice ledger (connector, 9 Oct 2026) --
+   The figure the subcontractor's "Less previous payments" line must equal is
+   what BH previously CERTIFIED as payable: the sum of CE "Invoiced -> Payable"
+   on the commitment's earlier invoices, plus any retention since released.
+   NOT cheques cut (Payment -> Amount) - on the 10/9 export prior paid differs
+   from prior payable on 73 of 177 commitments - and NOT committed_billed less
+   an estimated retainage, which double counts once CE holds the application.
+
+   Used only when the ledger is FULL HISTORY. A ledger built with --since drops
+   earlier invoices (112 of 204 commitments understated on the June-cut file),
+   so with a since-filter the page falls back to committed_billed and says so. */
+const ledgerFull = () => {
+  const d = STATE.ceInv;
+  return !!(d && d.subcontracts && d.has_payment_data !== false
+            && !(d.filters && d.filters.since));
+};
+function ledgerSummary(number){
+  if (!ledgerFull()) return null;
+  const led = ceLedger(number);
+  if (!led || !(led.invoices || []).length) return null;
+  const n2 = v => Number(v || 0);
+  const inv = led.invoices;
+  const sum = (xs, f) => xs.reduce((t,i) => t + (typeof f === 'function' ? f(i) : n2(i[f])), 0);
+  /* Retention released later is paid against the ORIGINAL invoice, so it shows
+     as paid above payable. It has been certified by then, and a G702 counts it
+     in previous certificates - add it back. */
+  const released = i => Math.max(0, n2(i.paid) - n2(i.payable));
+  return { inv, asOf: STATE.ceInv.as_of || null,
+           invoiced: sum(inv,'total'), retention: sum(inv,'retention') - sum(inv, released),
+           certified: sum(inv,'payable') + sum(inv, released), paid: sum(inv,'paid'),
+           certOf: xs => sum(xs,'payable') + sum(xs, released), totalOf: xs => sum(xs,'total') };
+}
+const appDigits = v => String(v == null ? '' : v).toUpperCase().replace(/[^0-9]/g,'');
+/* The application under review, found in the ledger by its pay request number.
+   [] = not entered yet. null = cannot tell (no number keyed). */
+function ledgerThisApp(e, payReq){
+  if (!e || !e.ledger) return null;
+  const want = appDigits(payReq);
+  if (!want) return null;
+  return e.ledger.inv.filter(i => appDigits(i.number) === want);
+}
+
 function payappExpected(r){
   const b = billingFor(r);
   const contract = num0(r.revised_contract) || num0(r.contract_value);
@@ -666,11 +708,22 @@ function payappExpected(r){
     if (!thru50) return v * rate;
     return Math.min(v, contract/2) * rate;
   };
-  const retNow  = retAt(billed);
   const retFull = retAt(contract);
-  const prevPaid = (billed != null && retNow != null) ? billed - retNow : null;
+  /* Ledger first; committed_billed only when the ledger cannot answer. */
+  const L = ledgerSummary(r.number);
+  const apiBilled = billed;
+  const useBilled = L ? L.invoiced : billed;
+  const retNow  = L ? L.retention : retAt(useBilled);
+  const prevPaid = L ? L.certified
+                     : ((useBilled != null && retNow != null) ? useBilled - retNow : null);
   const maxDue = (retFull != null && prevPaid != null) ? (contract - retFull) - prevPaid : null;
-  return { contract, original:num0(r.contract_value), cos:num0(r.approved_change_orders),
+  if (L) return Object.assign(base(), {
+           billed: useBilled, retNow, prevPaid, maxDue, minBilled: useBilled,
+           hasBilling: true, assumedZero: false, ledger: L, apiBilled,
+           prevSource: 'ledger',
+           billedSource: 'CE invoice ledger' + (L.asOf ? ' as of ' + L.asOf : '') });
+  return Object.assign(base(), { prevSource: 'committed_billed', apiBilled });
+  function base(){ return { contract, original:num0(r.contract_value), cos:num0(r.approved_change_orders),
            pctR, dur, thru50, billed, retNow, retFull, prevPaid, maxDue, retAt,
            minBilled:billed, maxBilled:contract,
            past50: b ? !!b.past_50_pct : null,
@@ -681,7 +734,8 @@ function payappExpected(r){
            /* CE holds the subcontract but nothing is posted to its cost codes.
               Billed is zero, not unknown - the usual shape of a first billing. */
            assumedZero: !!b && b.ce_billed == null
-                        && ((b.flags || []).indexOf('no_committed_cells') !== -1) };
+                        && ((b.flags || []).indexOf('no_committed_cells') !== -1),
+           number: r.number }; }
 }
 const num0 = v => (v === null || v === undefined || v === '') ? 0 : Number(v);
 const money2 = v => (v === null || v === undefined || isNaN(v)) ? '—'
@@ -715,6 +769,12 @@ const PA_LINES = [
    application, so nothing derived from ce_billed describes the position BEFORE
    it. */
 function ceEntryState(e, pre){
+  const hit = ledgerThisApp(e, pre && pre.payReq);
+  if (hit && hit.length) return 'exact';          // the ledger has it, by number
+  if (hit && pre && pre.billed != null && pre.billed !== '') {
+    /* Not in the ledger: a new application. CE ahead of their claim is still a finding. */
+    return Number(e.billed) > Number(pre.billed) + 0.005 ? 'ahead' : null;
+  }
   if (!pre || e.billed == null) return null;
   const t = pre.billed;
   if (t === null || t === undefined || t === '') return null;
@@ -850,9 +910,15 @@ function ceLedgerPanel(number, payReq, e, theirDue, ourDue, ceState){
       + 'retention, payable or payment. An invoice with no cheque shown here has <b>not</b> been '
       + 'shown to be unpaid. The Subcontractor Detail Report by Vendor adds that half.');
 
-  if (e && e.billed != null && Math.round(f.invoiced*100) !== Math.round(e.billed*100))
+  const apiB = e ? (e.apiBilled != null ? e.apiBilled : e.billed) : null;
+  if (apiB != null && Math.round(f.invoiced*100) !== Math.round(apiB*100))
     notes.push('<b>This ledger and <code>committed_billed</code> disagree</b> &mdash; ' + money2(f.invoiced)
-      + ' here against ' + money2(e.billed) + ' on the billing feed. One of the two exports is stale.');
+      + ' here against ' + money2(apiB) + ' on the billing feed. committed_billed is attributed by '
+      + 'phase / category / cost type and is not a ledger; the invoices here are what CE holds'
+      + (d && d.as_of ? ' as of ' + esc(d.as_of) : '') + '.');
+  if (d && d.filters && d.filters.since)
+    notes.push('<b>Partial history.</b> This export starts at ' + esc(d.filters.since)
+      + '; invoices before it are missing, so the totals above are not invoiced-to-date.');
 
   return '<div class="celed"><h4>ComputerEase invoices'
     + (led.vendor_code ? ' <span class="celcode">' + esc(led.vendor_code) + '</span>' : '')
@@ -884,8 +950,11 @@ function payappPosition(e, pre){
   /* CE's cumulative payable less the request on the table = what was paid before.
      Sound only because CE posted this application at the amount asked for - which
      is exactly what ce_billed matching their completed-to-date tells us. */
-  const derivedPrev = (absorbed && theirDue != null && e.prevPaid != null)
-                        ? e.prevPaid - theirDue : null;
+  const hit = ledgerThisApp(e, pre && pre.payReq);
+  const derivedPrev = (absorbed && hit && hit.length)
+                        ? e.prevPaid - e.ledger.certOf(hit)        // prior invoices only
+                        : (absorbed && theirDue != null && e.prevPaid != null)
+                          ? e.prevPaid - theirDue : null;
   const usePrev = derivedPrev != null ? derivedPrev : theirPrev;
   /* Completed is capped at the contract - they cannot earn more than exists -
      and retainage is recomputed on that capped figure. */
@@ -980,7 +1049,9 @@ function payappPanel(r, pre, rowId){
     prevPaid: absorbed
       ? (derivedPrev == null ? 'needs their balance due &mdash; see below'
                              : 'CE payable to date less this request')
-      : 'billed less retainage held',
+      : (e.prevSource === 'ledger'
+          ? 'CE payable on prior invoices (certified, not cash paid)'
+          : 'billed less retainage held &mdash; estimate, ledger not loaded'),
     due: 'what we would pay on these figures',
   };
   const rows = PA_LINES.map(([k,kind,what,tip]) =>
@@ -997,8 +1068,11 @@ function payappPanel(r, pre, rowId){
   if (P.ceState)
     warn.push('<b>Already entered in ComputerEase.</b> Whatever is agreed here has to be corrected on '
       + 'the CE invoice as well as with the subcontractor &mdash; asking them for a revised application '
-      + 'does not change what is already posted. Whether it has been paid is not visible from this page; '
-      + 'the Payment / Amount column of <b>Subcontractor Detail Report by Vendor</b> says.');
+      + 'does not change what is already posted. '
+      + (e.prevSource === 'ledger'
+          ? 'Paid or not is in the CE invoices table below (as of ' + esc(e.ledger.asOf || 'the last export') + ').'
+          : 'Whether it has been paid is not visible from this page; '
+            + 'the Payment / Amount column of <b>Subcontractor Detail Report by Vendor</b> says.'));
   if (e.assumedZero) {
     warn.push('ComputerEase holds this subcontract but nothing is posted against its cost codes, so '
       + 'billed to date is taken as <b>zero</b> &mdash; the shape of a first or only billing. '
@@ -1009,17 +1083,25 @@ function payappPanel(r, pre, rowId){
         + 'posted to cost codes this subcontract does not carry. Settle that before paying.');
   }
   if (absorbed) {
-    warn.push('ComputerEase already holds this application &mdash; its billed-to-date ('
-      + money2(e.billed) + ') equals their completed-to-date to the cent, '
-      + 'so the usual previous-payments figure would be this application counted twice.');
+    warn.push(e.prevSource === 'ledger' && (ledgerThisApp(e, pre && pre.payReq) || []).length
+      ? 'ComputerEase already holds this application &mdash; the CE invoice ledger carries pay request '
+        + esc(String(pre.payReq)) + ', so it is left out of previous payments.'
+      : 'ComputerEase already holds this application &mdash; its billed-to-date ('
+        + money2(e.billed) + ') equals their completed-to-date to the cent, '
+        + 'so the usual previous-payments figure would be this application counted twice.');
     warn.push(derivedPrev == null
       ? 'Previous payments cannot be derived until their balance due is keyed. Until then the '
         + 'ceiling rests on their own figure. <b>Subcontractor Detail Report by Vendor</b>, '
         + 'Payment / Amount column, settles it.'
-      : 'Previous payments above is <b>derived</b>: CE payable to date (' + money2(e.prevPaid)
-        + ') less the ' + money2(theirDue) + ' being requested. That holds because CE posted this '
-        + 'application at the amount asked for. Confirm against <b>Subcontractor Detail Report by '
-        + 'Vendor</b>, Payment / Amount column, before paying.');
+      : (e.prevSource === 'ledger' && ledgerThisApp(e, pre && pre.payReq)
+         && ledgerThisApp(e, pre && pre.payReq).length
+          ? 'Previous payments above is the CE payable on every invoice <b>except</b> this one, '
+            + 'read from the CE invoice ledger' + (e.ledger.asOf ? ' (as of ' + esc(e.ledger.asOf) + ')' : '')
+            + '. It is what BH certified, not what has been cheque-cut.'
+          : 'Previous payments above is <b>derived</b>: CE payable to date (' + money2(e.prevPaid)
+            + ') less the ' + money2(theirDue) + ' being requested. That holds because CE posted this '
+            + 'application at the amount asked for. Confirm against <b>Subcontractor Detail Report by '
+            + 'Vendor</b>, Payment / Amount column, before paying.'));
     if (e.billed > e.contract + 0.005)
       warn.push('CE carries <b>' + money2(e.billed) + '</b> against a contract of '
         + money2(e.contract) + ' &mdash; <b>' + money2(e.billed - e.contract)
@@ -1041,6 +1123,12 @@ function payappPanel(r, pre, rowId){
             + 'in CE before treating anything here as a finding against them.'
           : ' Reconcile the subcontract\'s invoices in CE against their applications before paying.'));
   }
+  if (e.prevSource !== 'ledger')
+    warn.push('Previous payments is an <b>estimate</b> from <code>committed_billed</code> less a computed '
+      + 'retainage' + (STATE.ceInv && STATE.ceInv.filters && STATE.ceInv.filters.since
+          ? ' &mdash; the CE invoice ledger loaded starts at ' + esc(STATE.ceInv.filters.since)
+            + ', so it cannot supply prior certificates. Publish a full-history export.'
+          : ' &mdash; no full-history CE invoice ledger row for this commitment.'));
   if (e.gap) warn.push(e.gap > 0
     ? 'Procore is <b>' + money2(e.gap) + '</b> higher than CE &mdash; an approved change order has not reached CE.'
     : 'CE is <b>' + money2(-e.gap) + '</b> higher than Procore &mdash; the change order was entered straight into CE.');
@@ -1241,7 +1329,8 @@ async function requestRevision(x, msgEl){
   if (!x.c) return say('bad', 'There is no commitment behind this row to compare against.');
   const e = payappExpected(x.c);
   const pre = { contract: x.f.AdjustedContract, billed: x.f.CompletedToDate,
-                retNow: x.f.RetainageHeld, prevPaid: x.f.PreviousPayments, due: x.f.BalanceDue };
+                retNow: x.f.RetainageHeld, prevPaid: x.f.PreviousPayments, due: x.f.BalanceDue,
+                payReq: x.f.PayRequest };
   const fig = correctionFigures(e, pre);
   if (!fig.lines.length)
     return say('', 'Nothing on this application differs from the subcontract, so there is nothing to correct.');
@@ -2244,7 +2333,7 @@ function receivedRows(){
     if (c) {
       const ee = payappExpected(c);
       const pre0 = { contract:f.AdjustedContract, billed:f.CompletedToDate, retNow:f.RetainageHeld,
-                     prevPaid:f.PreviousPayments, due:f.BalanceDue };
+                     prevPaid:f.PreviousPayments, due:f.BalanceDue, payReq:f.PayRequest };
       ceRow.state = ceEntryState(ee, pre0);
       try { ceRow.exc = correctionFigures(ee, pre0).lines.length; } catch (_) { ceRow.exc = 0; }
     }
