@@ -108,6 +108,25 @@
   .pawarn div{padding:2px 0 2px 15px;text-indent:-15px}
   .total .n{color:#7F1B29}.ok .n{color:#1a7f37}.soon .n{color:#9a6a00}.bad .n{color:#b3261e}.gap .n{color:#1a4fb0}
   .section-title{font-size:15px;font-weight:bold;color:#7F1B29;margin:22px 0 10px}
+  /* ---- the intake checklist ---- */
+  .intchk{display:grid;gap:5px;margin:0 0 11px}
+  .intchk label{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);
+                line-height:1.45;cursor:pointer}
+  .intchk input{margin:2px 0 0;flex:none}
+  .intwarn{font-size:12px;color:var(--warn);margin-top:4px}
+  .tract button[disabled]{opacity:.45;cursor:not-allowed}
+
+  /* ---- the duties note ---- */
+  .duties{background:#fff;border:1px solid var(--line-2);border-left:3px solid var(--navy);
+          border-radius:9px;padding:13px 16px 14px;margin-bottom:14px}
+  .duties h4{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.05em;
+             text-transform:uppercase;color:var(--navy)}
+  .duties p{margin:0 0 7px;font-size:12.5px;line-height:1.6;color:var(--ink-2)}
+  .duties p:last-child{margin-bottom:0}
+  .duties .dutieswhere{color:var(--muted)}
+  .duties .dutiesgap{color:var(--bad)}
+  .duties code{font-size:11.5px;background:var(--rule);padding:1px 5px;border-radius:3px}
+
   /* ---- the source document ---- */
   .srcpage{background:#fff;border:1px solid var(--line-2);border-radius:8px;padding:18px 20px 20px;
            margin:14px 0 4px}
@@ -132,38 +151,54 @@
      The panel used to open as a row inside the table, which pushed everything
      below it down the page and made the thing you were reading move while you
      read it. A drawer leaves the queue where it is. */
-  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(760px,100vw);
-          background:var(--panel);border-left:1px solid var(--line);z-index:60;
-          box-shadow:-14px 0 34px rgba(16,20,28,.16);display:flex;flex-direction:column;
-          transform:translateX(100%);transition:transform .16s ease-out}
-  .drawer.on{transform:none}
-  .drawerveil{position:fixed;inset:0;background:rgba(20,24,30,.26);z-index:55;
-              opacity:0;pointer-events:none;transition:opacity .16s}
+  /* Drawn the way the demonstration draws it: a wide sheet off the right edge
+     over a navy wash, a sticky white header, and a grey body carrying white
+     panels - with the source document in its own column BESIDE the work rather
+     than behind a tab. Reading the figures and checking them is one job. */
+  .drawerveil{position:fixed;inset:0;background:#0b223963;z-index:55;display:flex;
+              justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .16s}
   .drawerveil.on{opacity:1;pointer-events:auto}
-  .drawerhead{padding:16px 20px 0;border-bottom:1px solid var(--line-2);flex:none}
-  .drawerttl{display:flex;align-items:flex-start;gap:12px}
-  .drawerttl h3{margin:0;font-size:16px;color:var(--ink);font-weight:700;line-height:1.25}
-  .drawerttl .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(100vw,1180px);
+          background:#f7f9fb;z-index:60;box-shadow:-20px 0 60px #112a3526;
+          display:flex;flex-direction:column;transform:translateX(100%);
+          transition:transform .17s ease-out}
+  .drawer.on{transform:none}
+  .drawerhead{background:#fff;padding:18px 24px 0;border-bottom:1px solid #dbe5eb;
+              position:sticky;top:0;z-index:2;flex:none}
+  .drawerttl{display:flex;align-items:flex-start;gap:15px}
+  .drawerttl h3{margin:0 0 5px;font-size:21px;color:var(--ink);font-weight:700;line-height:1.2}
+  .drawerttl .sub{font-size:12.5px;color:var(--muted)}
   .drawerx{margin-left:auto;appearance:none;border:1px solid var(--line-2);background:#fff;
-           border-radius:7px;width:30px;height:30px;font-size:17px;line-height:1;color:var(--muted);
+           border-radius:8px;width:32px;height:32px;font-size:18px;line-height:1;color:var(--muted);
            cursor:pointer;flex:none}
   .drawerx:hover{background:var(--rule);color:var(--ink)}
-  .drawertabs{display:flex;gap:2px;margin-top:13px}
+  .drawertabs{display:flex;gap:2px;margin-top:14px}
   .dtab{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:600;
-        color:var(--faint);padding:8px 13px 7px;cursor:pointer;border-bottom:2px solid transparent;
+        color:var(--faint);padding:9px 14px 8px;cursor:pointer;border-bottom:2px solid transparent;
         margin-bottom:-1px}
   .dtab:hover{color:var(--navy)}
   .dtab.on{color:var(--navy);border-bottom-color:var(--navy)}
   .dtab .dn{margin-left:6px;background:var(--rule);color:#5b6472;border-radius:8px;padding:0 6px;
             font-size:10.5px;font-variant-numeric:tabular-nums}
-  .drawerbody{flex:1;overflow:auto;padding:4px 20px 26px}
+  .drawerbody{flex:1;overflow:auto;padding:22px 24px 30px;
+              display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:22px;
+              align-items:start}
+  .dwork,.dsrc{min-width:0}
+  /* White panels on the grey body, the way the demo separates them. */
+  .dwork,.dsrc>.srcpage{background:#fff;border:1px solid #dbe4eb;border-radius:11px}
+  .dwork{padding:16px 18px 20px}
+  .dsrc{position:sticky;top:0}
   .dpane{display:none}.dpane.on{display:block}
-  .dsoon{color:var(--muted);font-size:12.5px;line-height:1.6;padding:18px 0}
+  .dsoon{color:var(--muted);font-size:12.5px;line-height:1.6;padding:16px 0}
   /* The panel markup was written for a table cell. Inside the drawer it is a
      plain block, so the width cap and sticky positioning come off. */
-  .drawerbody .pawrap{position:static;width:auto;padding:14px 0 6px}
-  .drawerbody .trwrap{padding:14px 0 6px}
-  @media (max-width:760px){ .drawer{width:100vw} }
+  .drawerbody .pawrap{position:static;width:auto;padding:10px 0 4px}
+  .drawerbody .trwrap{padding:10px 0 4px}
+  .drawerbody .trcols{display:block}
+  @media (max-width:1040px){
+    .drawerbody{display:flex;flex-direction:column}
+    .dsrc{position:static;order:2}
+  }
 
   /* ---- the shell --------------------------------------------------------
      A left rail of named views instead of three tabs. The views are the
@@ -2041,16 +2076,39 @@ function queueMode(){
 
 /* The three decisions Drew makes, in his words. Each is a status write and
    nothing else - no side effects, so a mis-click is undone by the next one. */
+/* The intake checklist the VP's review settled on. Ticking all four is what
+   unlocks Route to PM - the same shape as the demo, where routing requires the
+   previous-payment check and a commitment before it will move.
+
+   NOT PERSISTED. These live for as long as the page is open. What survives is
+   the consequence: routing writes a status change, and the trail records who
+   moved it and when. A column to store the ticks themselves would be the honest
+   next step if the audit has to show them individually. */
+const INTAKE_CHECKS = [
+  ['ident',  'Vendor, job, and commitment confirmed'],
+  ['prev',   'CE previous-paid reference verified on the same payment basis'],
+  ['dupmath','Duplicate / math checks reviewed'],
+  ['flag',   'Application discrepancies flagged'],
+];
+const RQ_CHECKED = new Map();        // row id -> Set of ticked check keys
+
+function intakeTicked(id){ return RQ_CHECKED.get(id) || new Set(); }
+function intakeReady(x){
+  const t = intakeTicked(x.id);
+  return INTAKE_CHECKS.every(([k]) => t.has(k)) && !!(x.f.Subcontract || '').trim();
+}
+
 const TRIAGE_ACTIONS = [
-  { k:'resubmit', label:'Resubmit', status:'revise and resubmit', cls:'bad',
-    tip:'Not on our Attachment G, or the figures cannot stand. Goes back to the subcontractor for a corrected application.' },
+  { k:'topm', label:'Route to PM', status:'with PM', cls:'go', gated:true,
+    tip:'All four intake checks ticked and a commitment assigned. Goes to the job’s Project '
+      + 'Management Team to be checked against the contract. Nothing is entered into ComputerEase.' },
+  { k:'resubmit', label:'Request correction', status:'revise and resubmit', cls:'bad',
+    tip:'The application cannot stand as submitted - wrong form, or figures that do not hold. '
+      + 'Goes back to the subcontractor for a corrected application, which returns through intake.' },
   { k:'notpayapp', label:'Move to invoice queue', status:'not a pay app', cls:'',
-    tip:'An invoice, not a subcontractor pay application. It drops out of this queue and stays in '
-      + 'payables@ to be worked there. There is no invoice queue on the other side yet - when every '
-      + 'invoice is pulled this becomes a real destination.' },
+    tip:'Not a subcontractor pay application. It leaves the pay app queue and is worked as an '
+      + 'ordinary invoice.' },
   { k:'undo', label:'Back to the pay app queue', status:'received', cls:'' },
-  { k:'topm', label:'Confirm pay app \u2192 PM queue', status:'with PM', cls:'go',
-    tip:'A real pay application on our form. Goes to the job’s Project Management Team to be checked against the contract.' },
 ];
 
 /* What Drew needs in the row he opens: the document, the mail it came in, and
@@ -2097,13 +2155,29 @@ function triagePanel(x){
    deciding what the thing is, not reading it end to end - the decision should
    not be below the fold. */
 function triageActions(x){
-  return '<div class="tract tracttop">'
+  const t = intakeTicked(x.id);
+  const ready = intakeReady(x);
+  const noCom = !(x.f.Subcontract || '').trim();
+  const list = x.status !== 'received' ? '' :
+      '<div class="intchk">'
+    + INTAKE_CHECKS.map(([k, label]) =>
+        '<label><input type="checkbox" data-ick="' + k + '" data-icr="' + esc(x.id) + '"'
+        + (t.has(k) ? ' checked' : '') + '> ' + label + '</label>').join('')
+    + (noCom ? '<div class="intwarn">No commitment on this row yet &mdash; key the subcontract '
+             + 'number on the Details tab before routing.</div>' : '')
+    + '</div>';
+  return list + '<div class="tract tracttop">'
     +   (x.status === 'not a pay app'
           ? '<button data-tr="' + esc(x.id) + '" data-trk="undo" title="Put it back in the pay '
             + 'application queue as it arrived.">Back to the pay app queue</button>'
-          : TRIAGE_ACTIONS.filter(a => a.k !== 'undo').map(a =>
-              '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
-              + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join(''))
+          : TRIAGE_ACTIONS.filter(a => a.k !== 'undo').map(a => {
+              const off = a.gated && !intakeReady(x);
+              return '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
+                + ' class="' + a.cls + '"' + (off ? ' disabled' : '')
+                + ' title="' + esc(off ? 'Tick all four intake checks, and assign a commitment, '
+                                       + 'before routing this to the PM.' : a.tip) + '">'
+                + a.label + '</button>';
+            }).join(''))
     +   '<span class="msg"></span>'
     + '</div>';
 }
@@ -2799,16 +2873,15 @@ function renderReceived(){
       +   '<h3>' + ttl + '</h3><div class="sub">' + sub + '</div></div>'
       +   '<button class="drawerx" data-drawerx title="Close">&times;</button></div>'
       + '<div class="drawertabs">'
-      +   '<button class="dtab on" data-dtab="source">Source document</button>'
-      +   '<button class="dtab" data-dtab="details">Details</button>'
+      +   '<button class="dtab on" data-dtab="details">Details</button>'
       +   '<button class="dtab" data-dtab="review">Review</button>'
       +   '<button class="dtab" data-dtab="discussion">Discussion'
       +     (comments.length ? '<span class="dn">' + comments.length + '</span>' : '') + '</button>'
       +   '<button class="dtab" data-dtab="activity">Activity</button>'
       + '</div></div>'
-      + '<div class="drawerbody"><div data-rqd="' + esc(x.id) + '">'
-      +   pane('source', true, openOne.source || '')
-      +   pane('details', false, openOne.details)
+      + '<div class="drawerbody" data-rqd="' + esc(x.id) + '">'
+      + '<div class="dwork">'
+      +   pane('details', true, openOne.details)
       +   pane('review', false,
             '<div class="dsoon">The review checks and the approve action are not built yet. '
           + 'They need <b>BlockingIssues</b> and <b>AssignedApprover</b> on the row, and approval '
@@ -2826,10 +2899,33 @@ function renderReceived(){
           + 'exists on the list now and holds {who, at, text}; the composer is the next piece.</div>')
       +   pane('activity', false,
             (openOne.activity || '<div class="dsoon">No status history on this row.</div>'))
-      + '</div></div></aside>';
+      + '</div>'
+      + '<div class="dsrc">' + (openOne.source || '') + '</div>'
+      + '</div></aside>';
   })();
 
-  el.innerHTML = '<div class="rqwrap">'
+  /* What this desk is for, in the words of the process the VP signed off. It
+     says "intake only" because the single most expensive mistake available here
+     is keying something into ComputerEase before a PM has seen it. */
+  const duties = queueMode() !== 'triage' ? '' :
+      '<div class="duties"><h4>Accounting duties &middot; intake only</h4>'
+    + '<p>Assign the job and the commitment &mdash; subcontract or PO. Review the automatic '
+    + 'checks, verify the ComputerEase previous-paid reference, and flag application '
+    + 'discrepancies for the PM. A contract mismatch involves the process manager. '
+    + '<b>Nothing is entered into ComputerEase at this stage.</b></p>'
+    + '<p class="dutieswhere"><b>The automatic checks are in two places.</b> The pill on each '
+    + 'row is the one-glance test &mdash; it compares the adjusted contract against the Procore '
+    + 'commitment, and only that, because completed-to-date is a range and retainage is derived, '
+    + 'so neither can be called wrong from the list alone. The figure-by-figure comparison, '
+    + 'including the ComputerEase previous-paid reference and the invoice ledger, is on the '
+    + '<b>Details</b> tab when you open a row.</p>'
+    + '<p class="dutiesgap"><b>Flagging a discrepancy for the PM is not built yet.</b> The three '
+    + 'actions here are resubmit, move to the invoice queue, and confirm to the PM queue &mdash; '
+    + 'none of them carries a reason with it. The <code>BlockingIssues</code> column now exists '
+    + 'on the list to hold one; nothing writes it. Until it does, a discrepancy has to be said '
+    + 'out loud rather than recorded.</p></div>';
+
+  el.innerHTML = duties + '<div class="rqwrap">'
     + '<div class="rqbar"><span class="rqcount">' + rows.length + ' pay application'
     +   (rows.length === 1 ? '' : 's') + '</span>'
     +   '<span>' + (withFig
@@ -2912,6 +3008,20 @@ function renderReceived(){
         RQ_MSG.set(row.id, { cls:'bad', text:'Not saved \u2014 ' + res });
       }
       paintSaveNotes(el);
+    };
+  });
+
+  el.querySelectorAll('input[data-ick]').forEach(cb => {
+    cb.onchange = () => {
+      const id = cb.dataset.icr;
+      const set = RQ_CHECKED.get(id) || new Set();
+      if (cb.checked) set.add(cb.dataset.ick); else set.delete(cb.dataset.ick);
+      RQ_CHECKED.set(id, set);
+      /* Only the routing button's state changes, so the panel is left alone -
+         a re-render here would close the drawer under the pointer. */
+      const row = rows.find(r => r.id === id);
+      const btn = el.querySelector('button[data-tr="' + CSS.escape(id) + '"][data-trk="topm"]');
+      if (row && btn) btn.disabled = !intakeReady(row);
     };
   });
 
