@@ -1745,9 +1745,16 @@ function statusTrail(x){
    Role decides the DEFAULT, never what anyone may see. The desk is already
    explicit that department scoping is not a security boundary. */
 const AP_TRIAGE_DEPARTMENTS = ['Accounting - Personnel', 'Accounting - Executives'];
+/* Named accounts beat department, for people whose department does not say what
+   they are doing on this page. */
+const TRIAGE_PEOPLE = ['hdatb@baileyharris.com'];
+const REVIEW_PEOPLE = ['tiffany.blackmon@baileyharris.com'];
 let QMODE = null;                         // 'triage' | 'review', null until /me resolves
 function queueMode(){
   if (QMODE) return QMODE;
+  const me = norm((STATE.me || {}).email || '');
+  if (TRIAGE_PEOPLE.map(norm).includes(me)) return 'triage';
+  if (REVIEW_PEOPLE.map(norm).includes(me)) return 'review';
   const d = norm((STATE.me || {}).dept || '');
   return AP_TRIAGE_DEPARTMENTS.map(norm).includes(d) ? 'triage' : 'review';
 }
