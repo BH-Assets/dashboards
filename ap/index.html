@@ -213,6 +213,12 @@
   .celnotes{margin-top:10px;font-size:11.5px;color:#5a6473;line-height:1.7}
   .celnotes div{margin-top:5px}
   .celwrong{color:#b3261e}
+  .sttrail{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:10px 0 2px;font-size:11.5px}
+  .stlab{color:#9aa4b2;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700}
+  .stleg{background:#f2f5fa;border:1px solid #e3e8f0;border-radius:999px;padding:2px 9px;color:#5a6473}
+  .stleg.on{background:#e7f0fb;border-color:#9fb6da;color:#1F3864;font-weight:600}
+  .stleg b{font-variant-numeric:tabular-nums}
+  .starr{color:#c3cbd8}
   .trwrap{padding:14px 2px 4px}
   .trcols{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start}
   .trdoc{flex:1 1 420px;min-width:0}
@@ -1370,7 +1376,7 @@ async function requestRevision(x, msgEl){
   /* The queue only stays true if returning an application is recorded. */
   let tail = '';
   if (x.itemId) {
-    const ok = await saveQueueItem(x.itemId, { Status: 'revise and resubmit' });
+    const ok = await saveQueueItem(x.itemId, statusPatch(x, 'revise and resubmit'));
     if (ok && typeof ok === 'object') { x.f.Status = 'revise and resubmit'; tail = ' Status set to revise and resubmit.'; }
     else tail = ' <b>Status not updated</b> — ' + esc(String(ok)) + '.';
   }
@@ -1665,6 +1671,72 @@ function rqStatusPill(s){
        + (d[2] ? ' title="' + esc(d[2]) + '"' : '') + '>' + esc(k) + '</span>';
 }
 
+/* ---- whose court, and how long ---------------------------------------------
+   An application is always waiting on somebody. The status says who, and
+   StatusChangedAt says since when - so "stuck" stops meaning "old" and starts
+   meaning "old IN ONE PLACE". A pay app 19 days in with 14 of them sitting with
+   a PM is a different conversation from one that arrived yesterday. */
+const STATUS_COURT = {
+  'received':             'AP',    // Drew has not triaged it
+  'AP verified':          'PM',    // triaged, waiting on the job's team
+  'with PM':              'PM',
+  'PM returned':          'AP',
+  'PM approved':          'AP',    // back to AP to enter
+  'approved as noted':    'AP',
+  'approved and entered': 'done',
+  'revise and resubmit':  'sub',
+  'not a pay app':        'out',
+};
+function withWhom(x){
+  switch (STATUS_COURT[x.status] || 'AP') {
+    case 'PM':   return groupAssigned(x) === '—' ? 'PM (unassigned)' : groupAssigned(x);
+    case 'sub':  return x.vendor || 'the subcontractor';
+    case 'done': return 'done';
+    case 'out':  return 'payables@';
+    default:     return 'AP';
+  }
+}
+/* Days in the CURRENT status. Falls back to arrival, which is right: a row
+   nobody has touched has been in "received" since it landed. */
+const ageInStatus = x => daysSince(x.f.StatusChangedAt || x.f.ReceivedAt);
+
+/* Every status write carries the clock with it, so the next person can see how
+   long it sat rather than inferring it from the version history. */
+function statusPatch(row, status){
+  const now = new Date().toISOString();
+  let log = [];
+  try { log = JSON.parse(row.f.StatusLog || '[]'); } catch (_) { log = []; }
+  if (!Array.isArray(log)) log = [];
+  /* Seed the first leg from arrival, or the time before the first triage
+     decision is simply missing from the trail. */
+  if (!log.length && row.f.ReceivedAt) log.push({ s: row.f.Status || 'received', at: row.f.ReceivedAt });
+  log.push({ s: status, at: now });
+  if (log.length > 40) log = log.slice(-40);
+  return { Status: status, StatusChangedAt: now, StatusLog: JSON.stringify(log) };
+}
+
+/* The trail, for anyone who can see the whole queue. Legs are closed by the
+   next entry; the last one is still running. */
+function statusTrail(x){
+  if (!(STATE.me || {}).seesAll) return '';
+  let log = [];
+  try { log = JSON.parse(x.f.StatusLog || '[]'); } catch (_) { log = []; }
+  if (!Array.isArray(log) || !log.length) {
+    if (!x.f.ReceivedAt) return '';
+    log = [{ s: x.status || 'received', at: x.f.ReceivedAt }];
+  }
+  const legs = log.map((e, i) => {
+    const end = i + 1 < log.length ? new Date(log[i+1].at) : new Date();
+    const d = Math.max(0, Math.round((end - new Date(e.at)) / 86400000));
+    return { s: e.s, at: e.at, days: d, open: i + 1 === log.length };
+  });
+  return '<div class="sttrail"><span class="stlab">Trail</span>'
+    + legs.map(l => '<span class="stleg' + (l.open ? ' on' : '') + '"'
+        + ' title="' + esc(l.s + ' since ' + shortDate(l.at)) + '">'
+        + esc(l.s) + ' <b>' + l.days + 'd</b></span>').join('<span class="starr">&rarr;</span>')
+    + '</div>';
+}
+
 /* ---- triage vs review ------------------------------------------------------
    One queue, two defaults. Drew in AP opens the condensed view: is this a pay
    app, and what happens to it. A PM opens the figures. Either can switch, and
@@ -1730,11 +1802,13 @@ function triagePanel(x){
           + 'It can still be routed; the figures get keyed downstream.</div>')
     +   '</div>'
     + '</div>'
+    + statusTrail(x)
     + '<div class="tract">'
     +   (x.status === 'not a pay app'
           ? '<button data-tr="' + esc(x.id) + '" data-trk="undo" title="Put it back in the pay '
             + 'application queue as it arrived.">Back to the pay app queue</button>'
-          : TRIAGE_ACTIONS.map(a => '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
+          : TRIAGE_ACTIONS.filter(a => a.k !== 'undo').map(a =>
+              '<button data-tr="' + esc(x.id) + '" data-trk="' + a.k + '"'
               + ' class="' + a.cls + '" title="' + esc(a.tip) + '">' + a.label + '</button>').join(''))
     +   '<span class="msg"></span>'
     + '</div></div>';
@@ -1753,13 +1827,18 @@ function triagePanel(x){
          are searchable even though neither is data. */
 const QCOLS = [
   { k:'invdate',
-    facet: x => x.f.PeriodEnding ? shortDate(x.f.PeriodEnding) : 'no period',
+    facet: x => { const d = effectiveInvDate(x); return d.v ? shortDate(d.v) : 'no date'; },
     h:'Inv Date', h2:'Period Ending',
-    tip:'Period ending on the application - the month of work it covers, not when it arrived.',
-    sort: x => x.f.PeriodEnding ? String(x.f.PeriodEnding).slice(0,10) : '',
-    find: x => (x.f.PeriodEnding ? shortDate(x.f.PeriodEnding) + ' ' + String(x.f.PeriodEnding).slice(0,10) : 'no period'),
-    cell: x => x.f.PeriodEnding ? esc(shortDate(x.f.PeriodEnding))
-                                : '<span class="muted">no period</span>' },
+    tip:'A pay application is dated by the work it covers, so this is its period ending. A real invoice is dated by the invoice, read off the document; those rows say "invoice date" underneath.',
+    sort: x => { const d = effectiveInvDate(x); return d.v ? String(d.v).slice(0,10) : ''; },
+    find: x => { const d = effectiveInvDate(x);
+      return d.v ? shortDate(d.v) + ' ' + String(d.v).slice(0,10)
+                   + (d.src === 'invoice' ? ' invoice date' : ' period ending')
+                 : 'no date no period'; },
+    cell: x => { const d = effectiveInvDate(x);
+      if (!d.v) return '<span class="muted">no date</span>';
+      return esc(shortDate(d.v))
+           + (d.src === 'invoice' ? '<div class="rqsub">invoice date</div>' : ''); } },
 
   { k:'invno',
     facet: x => x.f.PayRequest ? String(x.f.PayRequest) : '',
@@ -1786,6 +1865,15 @@ const QCOLS = [
     cell: x => (x.project ? esc(shortProject(x.project)) : '<span class="muted">&mdash;</span>')
              + (x.job ? '<div class="rqsub">' + esc(x.job) + '</div>' : '') },
 
+  { k:'with',
+    facet: x => withWhom(x),
+    h:'With', full:true,
+    tip:'Whose court it is now, from the status. PM states name the job\u2019s team; a returned application sits with the subcontractor.',
+    sort: x => withWhom(x).toLowerCase(),
+    find: x => withWhom(x) + ' ' + (x.status || ''),
+    cell: x => esc(withWhom(x))
+      + '<div class="rqsub">' + (ageInStatus(x) == null ? '' : ageInStatus(x) + 'd here') + '</div>' },
+
   { k:'group',
     triage: false,
     facet: x => groupAssigned(x) === '\u2014' ? 'unassigned' : groupAssigned(x),
@@ -1801,8 +1889,10 @@ const QCOLS = [
     sort: x => x.age == null ? -1 : x.age,
     find: x => (x.age == null ? '' : x.age + 'd ') + shortDate(x.f.ReceivedAt),
     cell: x => { const a = x.age, c = a == null ? 'a0' : a > 7 ? 'a2' : a > 3 ? 'a1' : 'a0';
+      const s = ageInStatus(x);
       return '<span class="rqage ' + c + '">' + (a == null ? '&mdash;' : a + 'd') + '</span>'
-           + '<div class="rqsub">' + esc(shortDate(x.f.ReceivedAt)) + '</div>'; } },
+           + '<div class="rqsub">' + (s != null && s !== a ? s + 'd in ' + esc(x.status || 'received')
+                                                           : esc(shortDate(x.f.ReceivedAt))) + '</div>'; } },
 
   { k:'sub',
     triage: false,
@@ -1841,7 +1931,7 @@ const QCOLS = [
 
   { k:'period',
     triage: false,
-    facet: x => x.f.PeriodEnding ? billingPeriod(x.f.PeriodEnding) : '',
+    facet: x => x.f.PeriodEnding ? billingPeriod(x.f.PeriodEnding) : 'not a billing period',
     h:'Period', tip:'Billing period the application covers, from its period ending.',
     sort: x => x.f.PeriodEnding ? String(x.f.PeriodEnding).slice(0,7) : '',
     find: x => x.f.PeriodEnding ? billingPeriod(x.f.PeriodEnding) : '',
@@ -1851,7 +1941,8 @@ const QCOLS = [
 
 /* A column hidden in triage is still filterable from review, and its filter
    keeps applying - hiding a column does not silently widen the view. */
-const qcolShown = c => !(queueMode() === 'triage' && c.triage === false);
+const qcolShown = c => !(queueMode() === 'triage' && c.triage === false)
+                    && !(c.full && !((STATE.me || {}).seesAll));
 
 /* Oldest first is the queue's job, so age descending is the default. */
 let QSORT = { k:'age', dir:-1 };
@@ -2023,6 +2114,16 @@ function applyQueueFilter(el){
 
 /* row id -> row, so the filter can read a row's values without re-deriving them */
 let QROWS = {};
+
+/* The date to show in the Inv Date column. InvoiceDate wins when it is there -
+   only a real invoice has one - and the period ending is the fallback, which is
+   what every pay application carries. */
+function effectiveInvDate(x){
+  const i = x.f.InvoiceDate, p = x.f.PeriodEnding;
+  if (i) return { v:i, src:'invoice' };
+  if (p) return { v:p, src:'period' };
+  return { v:null, src:null };
+}
 
 /* "Aug 2020" - the month of work the application covers, which is how CE and
    everyone in the office names a billing period. */
@@ -2236,6 +2337,7 @@ function renderReceived(){
     if (queueMode() === 'triage')
       return head + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="'
            + QCOLS.filter(qcolShown).length + '">' + triagePanel(x) + '</td></tr>';
+    const trail = statusTrail(x);
     const panel = x.c ? payappPanel(x.c, pre, x.id)
       : '<div class="rqmsg" style="padding:16px 0">No commitment in Procore carries <b>'
         + esc(x.number || 'this number') + '</b>, so there is nothing to check these figures against.</div>';
@@ -2258,13 +2360,14 @@ function renderReceived(){
       +   F('JobNumber',   'Job',           x.f.JobNumber)
       +   F('PayRequest',  'Pay request #', x.f.PayRequest)
       +   F('PeriodEnding','Period ending', (x.f.PeriodEnding||'').slice(0,10), 'date')
+      +   F('InvoiceDate','Invoice date', (x.f.InvoiceDate||'').slice(0,10), 'date')
       +   '<button data-save="' + esc(x.id) + '">Save</button>'
       +   '<span class="msg"></span>'
       + '</div></div>';
 
     return head
       + '<tr class="rqdetail" data-rqd="' + esc(x.id) + '"><td colspan="' + QCOLS.filter(qcolShown).length + '">'
-      + editor + note + panel
+      + editor + trail + note + panel
       + (links ? '<div style="margin-top:10px">' + links + '</div>' : '')
       + '</td></tr>';
   }).join('');
@@ -2341,7 +2444,7 @@ function renderReceived(){
                          msgEl.textContent = 'This row has no list item behind it.'; return; }
       btn.parentNode.querySelectorAll('button').forEach(b => { b.disabled = true; });
       RQ_MSG.set(row.id, { cls:'', text:'Saving\u2026' }); paintSaveNotes(el);
-      const res = await saveQueueItem(row.itemId, { Status: act.status });
+      const res = await saveQueueItem(row.itemId, statusPatch(row, act.status));
       btn.parentNode.querySelectorAll('button').forEach(b => { b.disabled = false; });
       if (res && typeof res === 'object') {
         Object.assign(row.f, res.stored || { Status: act.status });
@@ -2386,9 +2489,10 @@ function renderReceived(){
         const k = i.dataset.f;
         let v = i.value.trim();
         if (k === 'Subcontract') v = v.toUpperCase();
-        if (k === 'PeriodEnding' && v) v = new Date(v + 'T00:00:00Z').toISOString();
-        const was = row.f[k] == null ? '' : String(k === 'PeriodEnding' ? String(row.f[k]).slice(0,10) : row.f[k]);
-        const now = k === 'PeriodEnding' ? v.slice(0,10) : v;
+        const isDate = (k === 'PeriodEnding' || k === 'InvoiceDate');
+        if (isDate && v) v = new Date(v + 'T00:00:00Z').toISOString();
+        const was = row.f[k] == null ? '' : String(isDate ? String(row.f[k]).slice(0,10) : row.f[k]);
+        const now = isDate ? v.slice(0,10) : v;
         if (now !== was) patch[k] = v || null;
       });
       if (!Object.keys(patch).length) { msgEl.className = 'msg'; msgEl.textContent = 'Nothing changed.'; return; }
@@ -2454,7 +2558,7 @@ function renderReceived(){
                          return paintSaveNotes(el); }
       btn.disabled = true;
       RQ_MSG.set(row.id, { cls:'', text:'Saving\u2026' }); paintSaveNotes(el);
-      const res = await saveQueueItem(row.itemId, { Status: 'approved as noted' });
+      const res = await saveQueueItem(row.itemId, statusPatch(row, 'approved as noted'));
       btn.disabled = false;
       if (res && typeof res === 'object') {
         Object.assign(row.f, res.stored || { Status:'approved as noted' });
