@@ -3524,7 +3524,7 @@ const GRAPH = 'https://graph.microsoft.com/v1.0';
 const ACCOUNTING_DEPARTMENTS = ['Accounting - Executives','Accounting - Personnel','Executive','Directors'];
 const ACCOUNTING_PEOPLE = ['tiffany.blackmon@baileyharris.com','hdatb@baileyharris.com'];
 
-const GL_JOB = 'GL — overhead (no job)';
+const GL_JOB = 'None - General Ledger';
 const LIVE = { me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null,
                byNum:{}, billing:{}, pmName:{}, loadedAt:null, error:null };
 
@@ -3632,7 +3632,13 @@ function buildRecord(x, allRows){
   const f = x.f;
   const num = String(f.Subcontract || '').trim().toUpperCase();
   const c = LIVE.byNum[num] || null, b = LIVE.billing[num] || null;
-  const isInvoice = f.DocType === 'invoice' || f.Status === 'not a pay app';
+  /* The pull files anything that names a subcontract as a pay app. When it found
+     no Attachment G figures and there is no SOV, it is shown as an invoice; the
+     pull's guess is kept as payappSuspect so intake can switch it back. */
+  const payappSuspect = f.DocType !== 'invoice' && /not on attachment g|no text in the pdf/i.test(f.ParseNote || '')
+    && ![f.AdjustedContract, f.CompletedToDate, f.RetainageHeld, f.PreviousPayments].some(v => v != null && v !== '')
+    && !(parseJ(f.SOVLines, []) || []).length;
+  const isInvoice = f.DocType === 'invoice' || f.Status === 'not a pay app' || payappSuspect;
   const log = parseJ(f.StatusLog, []), comments = parseJ(f.Comments, []);
   const lastCorr = [...log].reverse().find(e => e.k);
   const pmEmail = lc(f.AssignedApprover) || lc(((c && c.pm_team) || [])[0]);
@@ -3679,10 +3685,10 @@ function buildRecord(x, allRows){
     received: fmtTime(f.ReceivedAt), receivedAt: f.ReceivedAt ? Date.parse(f.ReceivedAt) : Date.now(),
     stageEnteredAt: Date.parse(f.StatusChangedAt || f.ReceivedAt || '') || Date.now(),
     invoiceDate: f.InvoiceDate ? String(f.InvoiceDate).slice(0, 10) : '',
-    dueDate: '', period: f.PeriodEnding ? new Date(f.PeriodEnding).toLocaleDateString('en-US', { month:'long', year:'numeric', timeZone:'UTC' }) : '',
+    dueDate: f.DueDate ? String(f.DueDate).slice(0, 10) : '', period: f.PeriodEnding ? new Date(f.PeriodEnding).toLocaleDateString('en-US', { month:'long', year:'numeric', timeZone:'UTC' }) : '',
     costCode: f.CostCode || '', pdfPath: f.PdfPath || '', messageLink: f.MessageLink || '',
     parseNote: f.ParseNote || '',
-    sovLines: parseJ(f.SOVLines, null),
+    sovLines: parseJ(f.SOVLines, null), payappSuspect,
   };
   if (i.correctionKind) i.correctionOwner = i.correctionKind === 'system' ? 'Accounting'
                                           : i.correctionKind === 'contract' ? i.pm + ' / process manager' : i.pm;
@@ -3757,7 +3763,7 @@ async function saveRow(i, fields, logEntry, comment){
                if (r.status === 403) why += ' (you need Contribute on the AP Desk site)'; toast('Not saved: ' + why); return false; }
   const got = await r.json();
   const dropped = Object.keys(body).filter(k => k !== 'StatusLog' && k !== 'Comments' && String(got[k] ?? '').slice(0, 10) !== String(body[k] ?? '').slice(0, 10));
-  if (dropped.length) toast('SharePoint stored nothing for ' + dropped.join(', ') + ' — run Sync-PayAppListSchema-4.ps1.');
+  if (dropped.length) toast('SharePoint stored nothing for ' + dropped.join(', ') + ' — run Sync-PayAppListSchema-5.ps1.');
   const row = q.items.find(x => x.id === i.itemId); if (row) { row.f = got; }
   const keep = selected; rebuild(); draw(); if (keep && invoices.some(x => x.id === keep)) { selected = keep; renderDetail(); }
   return !dropped.length;
@@ -3806,6 +3812,7 @@ const tip = t => ' title="' + esc(t) + '" tabindex="0" style="cursor:help;text-d
 const SRC = {
   payapp: i => 'From the pay application itself. ' + (/^keyed by hand/i.test(i.parseNote || '')
       ? i.parseNote : (/^no text/i.test(i.parseNote || '') ? 'The PDF is a scan: this was typed in by hand, not read off the document.'
+      : /^read by OCR/i.test(i.parseNote || '') ? 'The PDF is a scan: this was read off the image by OCR (ap_payapps.py), not typed. OCR can misread digits.'
       : 'Read off the PDF by the payables@ pull (ap_payapps.py), or keyed by hand at intake.'))
       + ' Stored on the AP Pay Applications list.',
   procore: () => 'Procore > Commitments > this commitment > Revised Contract (original plus approved change orders). '
@@ -3917,13 +3924,14 @@ function calc(i){
    written until Save; a half-finished edit survives re-renders and closing the
    drawer, and routing refuses while one is pending. */
 const DRAFT = {};
-const COVER_KEYS = ['DocType','JobNumber','Subcontract','PayRequest','PeriodEnding','CostCode',
+const COVER_KEYS = ['DocType','JobNumber','Subcontract','PayRequest','PeriodEnding','InvoiceDate','DueDate','CostCode',
                     'AdjustedContract','CompletedToDate','RetainageHeld','PreviousPayments','BalanceDue'];
 const FIGS = ['AdjustedContract','CompletedToDate','RetainageHeld','PreviousPayments','BalanceDue'];
 function coverValues(i){
   const f = i.f, n = v => (v === null || v === undefined || v === '') ? '' : String(v);
   return { DocType: i.type === 'Invoice' ? 'invoice' : 'pay app', JobNumber: i.jobNumber || '', Subcontract: i.commitment || '',
     PayRequest: f.PayRequest || '', PeriodEnding: f.PeriodEnding ? String(f.PeriodEnding).slice(0, 10) : '', CostCode: f.CostCode || '',
+    InvoiceDate: f.InvoiceDate ? String(f.InvoiceDate).slice(0, 10) : '', DueDate: f.DueDate ? String(f.DueDate).slice(0, 10) : '',
     AdjustedContract: n(f.AdjustedContract), CompletedToDate: n(f.CompletedToDate), RetainageHeld: n(f.RetainageHeld),
     PreviousPayments: n(f.PreviousPayments), BalanceDue: n(f.BalanceDue) };
 }
@@ -3952,6 +3960,29 @@ const COVER_EDIT = {};
 const COVER_CSS = '<style>.cover .kv{padding:3px 0;min-height:0;align-items:center}.cover .kv span{font-size:.86em}'
   + '.cover .kv strong{font-weight:600;font-variant-numeric:tabular-nums}.cover input,.cover select{padding:3px 8px;height:28px;font-size:.9em;margin:0}'
   + '.cover .actions{margin-top:8px;gap:8px}.cover .actions button{padding:5px 12px}.cover .sep{border-top:1px solid var(--line,#ddd);margin:6px 0}</style>';
+/* Invoice & coding details: the source-document page for anything that is not a
+   pay application (no Attachment G, no SOV). Same fields as the demo's grid card. */
+function invoiceDetails(i, d, canEdit, omitAmount){
+  d = d || coverValues(i);
+  const fd = x => x ? new Date(String(x).slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const per = d.PeriodEnding ? new Date(String(d.PeriodEnding).slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
+  const jobName = n => { const c = LIVE.commitments.find(c => c.project_number === n); return c ? c.project : ''; };
+  const job = d.JobNumber === 'GL' ? GL_JOB : d.JobNumber ? d.JobNumber + (jobName(d.JobNumber) ? ' · ' + jobName(d.JobNumber) : '') : 'Not assigned';
+  const waitMin = i.status === 'Entered' ? null : waitingMinutes(i);
+  const rows = [['Job', job], ['PO/Sub #', d.Subcontract], ['Description', i.description], ['Invoice #', d.PayRequest],
+    ['Invoice date', fd(d.InvoiceDate)], ['Due date', fd(d.DueDate)], ['Accounting period', per], ['Cost code', d.CostCode],
+    ...(omitAmount ? [] : [['Invoice amount', d.BalanceDue === '' ? '' : money(Number(d.BalanceDue))]]),
+    ['Received', i.receivedDate], ['Current stage waiting', waitMin == null ? 'Completed' : duration(waitMin)],
+    ['Total since received', duration(Math.max(0, Math.floor((Date.now() - i.receivedAt) / 60000)))],
+    ['CE voucher / reference', i.reference || 'Not entered']];
+  const sub = String(d.Subcontract || '').trim().toUpperCase();
+  return (i.payappSuspect ? '<p class="muted" style="margin:0 0 8px">The pull filed this as a pay application but found no Attachment G or schedule of values, so it is shown as an invoice.'
+          + (canEdit ? ' If it is a pay application, press Edit and change Document to Pay application.' : '') + '</p>' : '')
+    + '<div class="cover">' + rows.map(([l, v]) => '<div class="kv' + (l === 'Invoice amount' ? ' total' : '') + '"><span>' + l + '</span>'
+        + (v === '' || v == null ? '<strong class="muted">—</strong>' : '<strong>' + esc(v) + '</strong>') + '</div>').join('')
+    + (sub && !LIVE.byNum[sub] ? '<p class="mismatch" style="margin:2px 0">No Procore commitment carries ' + esc(sub) + '.</p>' : '')
+    + (canEdit ? '<div class="actions"><button id="coverEdit" onclick="editCover()">Edit invoice details</button></div>' : '') + '</div>';
+}
 function coverEditor(i){
   const d = draftOf(i).cur, pay = d.DocType !== 'invoice';
   const n = coverChanged(i).length;
@@ -3962,6 +3993,7 @@ function coverEditor(i){
   const figs = pay ? [['Adjusted contract','AdjustedContract'],['Completed & stored to date','CompletedToDate'],['Retainage held','RetainageHeld'],
                       ['Previous payments','PreviousPayments'],['Current payment due','BalanceDue']]
                    : [['Invoice amount','BalanceDue']];
+  if (!editing && !pay) return COVER_CSS + invoiceDetails(i, d, true);
   if (!editing) {
     const v = (x) => (x === '' || x == null) ? '<strong class="muted">—</strong>' : '<strong>' + esc(x) + '</strong>';
     const r = (label, x) => '<div class="kv"><span>' + label + '</span>' + v(x) + '</div>';
@@ -3985,7 +4017,8 @@ function coverEditor(i){
     + row(pay ? 'Commitment (subcontract)' : 'Commitment / PO (optional)', 'Subcontract', 'text', ' list="commitList" placeholder="e.g. 41225AU002"')
     + '<datalist id="commitList">' + commitOptions(d.JobNumber) + '</datalist>' + warn
     + row(pay ? 'Pay request #' : 'Invoice #', 'PayRequest')
-    + row('Billing period ending', 'PeriodEnding', 'date')
+    + (pay ? row('Billing period ending', 'PeriodEnding', 'date')
+           : row('Invoice date', 'InvoiceDate', 'date') + row('Due date', 'DueDate', 'date') + row('Accounting period (month end)', 'PeriodEnding', 'date'))
     + row('Cost code / GL account', 'CostCode', 'text', ' placeholder="25AU018.01.402 or GL"')
     + '<div class="sep"></div>'
     + figs.map(([l, k]) => row(l, k, 'number', num)).join('')
@@ -4003,11 +4036,14 @@ async function saveCover(){
   for (const k of changed) {
     const v = String(d[k]).trim();
     if (FIGS.includes(k)) fields[k] = v === '' ? null : Number(v);
-    else if (k === 'PeriodEnding') fields[k] = v ? v + 'T00:00:00Z' : null;
+    else if (k === 'PeriodEnding' || k === 'InvoiceDate' || k === 'DueDate') fields[k] = v ? v + 'T00:00:00Z' : null;
     else if (k === 'Subcontract') fields[k] = v.toUpperCase();
     else fields[k] = v;
   }
   if (fields.Subcontract && LIVE.byNum[fields.Subcontract]) fields.Vendor = LIVE.byNum[fields.Subcontract].vendor;
+  if (changed.includes('DocType') && d.DocType === 'pay app' && !changed.some(k => FIGS.includes(k)))
+    fields.ParseNote = 'Confirmed as a pay application at intake by ' + LIVE.me.name + ', '
+      + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '.';
   if (changed.some(k => FIGS.includes(k)))
     fields.ParseNote = 'Keyed by hand from the PDF by ' + LIVE.me.name + ', '
       + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '.';
@@ -4028,6 +4064,17 @@ function docMeta(i){
 }
 function documentPages(i){
   const pay = i.type === 'Pay application';
+  const head = '<article class="paper" id="paper-1" style="font-size:' + (14 * docZoom / 100) + 'px"><div class="dochead"><div><h3>' + esc(i.vendor)
+      + '</h3><small>' + (i.number ? esc(i.number) + ' · ' : '') + 'Revision ' + i.revision + '</small></div></div>';
+  if (!pay) {
+    setTimeout(() => loadPdf(i), 0);
+    const intake = isAcctSeat() && i.status === 'Intake';
+    return head + '<h3>Invoice &amp; coding details</h3>' + (i.payappSuspect ? '' : parseNoteHTML(i))
+      + (intake ? '<p class="muted">Check these against the PDF below. To correct one, press Edit invoice details; nothing is saved until you press Save changes.</p>' + coverEditor(i)
+                : invoiceDetails(i, null, false, true) + paperRow(i, 'due', 'Invoice amount', i.amount))
+      + '<div class="page-num">Invoice details as filed or corrected at intake. The submitted PDF follows and is not altered.</div></article>'
+      + pdfArticle(i);
+  }
   if (isAcctSeat() && i.status === 'Intake') {
     setTimeout(() => loadPdf(i), 0);
     return '<article class="paper" id="paper-1" style="font-size:' + (14 * docZoom / 100) + 'px"><div class="dochead"><div><h3>' + esc(i.vendor)
@@ -4182,6 +4229,9 @@ function parseNoteHTML(i){
     return '<p class="mismatch">The PDF is a scan, so the pull read nothing from it. These figures were typed in '
       + 'afterwards, not read off the document &mdash; check them against the PDF below. '
       + 'SharePoint version history on this row shows who entered them.</p>';
+  if (/^read by OCR/i.test(n))
+    return '<p class="mismatch">The PDF is a scan; these figures were read off the image by OCR, which misreads digits. '
+      + 'Check every figure against the PDF below before routing.</p>';
   return n ? '<p class="mismatch">' + esc(n) + '</p>' : '';
 }
 const pdfCache = {};
