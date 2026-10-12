@@ -242,7 +242,7 @@ function reconIssues(i){const issues=[];if(duplicate(i))issues.push('Possible du
 function intakeBlockingIssues(i){return reconIssues(i).filter(issue=>!issue.startsWith('Revised contract amounts')&&!issue.startsWith('Previous-paid amount'))}
 function recon(i){if(i.type!=='Pay application')return '<p class="muted">Regular invoice: three-way pay application reconciliation does not apply.</p>';return `<div class="recon-row"><span>Pay app · revised contract</span><strong>${money(revised(i))}</strong></div><div class="recon-row"><span>Procore · subcontract / PO</span><strong class="${Math.abs(i.procoreAmount-revised(i))<.01?'match':'mismatch'}">${money(i.procoreAmount)}</strong></div><div class="recon-row"><span>ComputerEase · subcontract / PO</span><strong class="${Math.abs(i.ceAmount-revised(i))<.01?'match':'mismatch'}">${money(i.ceAmount)}</strong></div><p class="muted">Including approved changes. Reference amounts are simulated.</p><div class="recon-row"><span>Pay app · previous payments</span><strong>${money(i.previous)}</strong></div><div class="recon-row"><span>ComputerEase · previous paid</span><strong class="${Math.abs(i.previous-i.ledgerPrevious)<.01?'match':'mismatch'}">${money(i.ledgerPrevious)}</strong></div>${Math.abs(i.previous-i.ledgerPrevious)>.01?'<p class="mismatch">Accounting verifies CE is correct for the selected commitment and payment basis. If the application is wrong, the PM marks it up and obtains a correction. If CE is wrong, accounting corrects its record.</p>':''}`}
 function guide(i){if(i.status==='Intake')return '<strong>Accounting seat · Intake only</strong>Check the cover sheet against the PDF and correct anything there - job, commitment, period and figures - then save. Pick the reviewer, tick the verification and route. Contract and prior-billing differences ride through flagged; nothing is entered in CE yet.';if(i.status==='PM review')return '<strong>PM seat · Verify what has been earned</strong>Review every page and SOV line. Click a line to highlight it and attach a correction note, or complete the checklist and approve. Expand the calculation to see how the payment is derived.';if(i.status==='Correction needed')return '<strong>Correction pending · '+esc(i.correctionOwner||'PM')+' owns the next step</strong>'+esc(i.correctionOwner==='Accounting'?'Resolve accounting-system or coding discrepancies, then return through intake.':'Obtain a corrected application from the subcontractor, then accounting rechecks it.');if(i.status==='Ready for entry')return '<strong>Accounting seat · Approved, not entered</strong>Recheck current system references before recording the CE entry. A changed reference blocks entry and returns the document for review.';return '<strong>Accounting entry recorded</strong>Approval and accounting entry are separate from payment.'}
-function renderDetail(){const i=item();if(!i)return;enrichMissing(i);const pay=i.type==='Pay application';document.getElementById('detail').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeDetail()"><section class="drawer" role="dialog" aria-modal="true" aria-label="Invoice review"><header class="drawerheader"><div><div class="eyebrow">${i.number?esc(i.number)+' · ':''}${i.type} · Revision ${i.revision}</div><h2>${esc(i.vendor)}</h2><span class="muted">${esc(i.job)} · ${esc(i.pm)}</span></div><div class="closegroup"><select class="role-at-review" aria-label="View invoice as" onchange="setRole(this.value)">${roleOptions().map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select>${badge(i.status)}<button aria-label="Close review" onclick="closeDetail()">✕</button></div></header><div class="drawerbody"><div class="sourcecol"><div class="viewer-toolbar"><strong>Source document</strong><div class="paper-tabs">${[1,2].map(n=>`<button onclick="document.getElementById('paper-${n}').scrollIntoView({behavior:'smooth',block:'nearest'})">${n}</button>`).join('')}</div><select aria-label="Document zoom" onchange="setDocZoom(Number(this.value))">${[85,100,125].map(z=>`<option value="${z}" ${z===docZoom?'selected':''}>${z}%</option>`).join('')}</select><button onclick="window.print()">Print / save</button></div><p class="source-warning">Cover sheet as parsed or keyed at intake; the submitted PDF follows and is never altered.</p>${pay&&isPmSeat(i)&&i.status==='PM review'?'<p class="annotate-help">Click a cover-sheet amount or SOV row to highlight it and attach a note.</p>':''}<div class="pages-scroll" id="documentPages" style="font-size:${docZoom}%">${documentPages(i)}</div></div><div><div class="guide">${guide(i)}</div><div class="tabs">${[['review','Review'],['notes','Discussion'],['history','Activity']].map(([v,t])=>`<button class="${tab===v?'active':''}" onclick="tab='${v}';renderDetail()">${t}${v==='notes'?' ('+i.notes.length+')':''}</button>`).join('')}</div>${tab==='review'?reviewPanel(i):tab==='notes'?discussion(i):historyPanel(i)}</div></div></section></div>`;document.querySelector('.drawerheader button')?.focus();}
+function renderDetail(){const i=item();if(!i)return;enrichMissing(i);const pay=i.type==='Pay application';document.getElementById('detail').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeDetail()"><section class="drawer" role="dialog" aria-modal="true" aria-label="Invoice review"><header class="drawerheader"><div><div class="eyebrow">${i.number?esc(i.number)+' · ':''}${i.type} · Revision ${i.revision}</div><h2>${esc(i.vendor)}</h2><span class="muted">${esc(i.job)} · ${esc(i.pm)}</span></div><div class="closegroup"><select class="role-at-review" aria-label="View invoice as" onchange="setRole(this.value)">${roleOptions().map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select>${badge(i.status)}<button aria-label="Close review" onclick="closeDetail()">✕</button></div></header><div class="drawerbody"><div class="sourcecol"><div class="viewer-toolbar"><strong>Source document</strong><div class="paper-tabs">${(pay?[1,2,3]:[1,2]).map(n=>`<button onclick="document.getElementById('paper-${n}').scrollIntoView({behavior:'smooth',block:'nearest'})">${n}</button>`).join('')}</div><select aria-label="Document zoom" onchange="setDocZoom(Number(this.value))">${[85,100,125].map(z=>`<option value="${z}" ${z===docZoom?'selected':''}>${z}%</option>`).join('')}</select><button onclick="window.print()">Print / save</button></div><p class="source-warning">Cover sheet as parsed or keyed at intake; the submitted PDF follows and is never altered.</p>${pay&&isPmSeat(i)&&i.status==='PM review'?'<p class="annotate-help">Click a cover-sheet amount or SOV row to highlight it and attach a note.</p>':''}<div class="pages-scroll" id="documentPages" style="font-size:${docZoom}%">${documentPages(i)}</div></div><div><div class="guide">${guide(i)}</div><div class="tabs">${[['review','Review'],['notes','Discussion'],['history','Activity']].map(([v,t])=>`<button class="${tab===v?'active':''}" onclick="tab='${v}';renderDetail()">${t}${v==='notes'?' ('+i.notes.length+')':''}</button>`).join('')}</div>${tab==='review'?reviewPanel(i):tab==='notes'?discussion(i):historyPanel(i)}</div></div></section></div>`;document.querySelector('.drawerheader button')?.focus();}
 function enrichMissing(i){if(!i.markups)enrich(i)}
 function setDocZoom(z){docZoom=z;const el=document.getElementById('documentPages');el.style.fontSize=z+'%';el.querySelectorAll('.paper table').forEach(t=>t.style.fontSize=(12*z/100)+'px');el.querySelectorAll('.paper').forEach(p=>p.style.fontSize=(14*z/100)+'px')}
 function marked(i,page,target){return i.markups.filter(m=>m.page===page&&m.target===target)}
@@ -527,7 +527,7 @@ const shortDate = iso => {
 };
 
 /* ==== helpers ==== */
-// Same normalisation compliance_pull.js uses, so the join keys agree.
+// Same normalization compliance_pull.js uses, so the join keys agree.
 const normName = n => String(n||'').toUpperCase().replace(/&/g,' AND ').replace(/[.,'"]/g,' ')
   .replace(/\b(LLC|L L C|INC|INCORPORATED|CO|COMPANY|CORP|CORPORATION|LP|LLP|PC|PLLC)\b/g,' ')
   .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
@@ -918,7 +918,7 @@ function billedCell(r){
    The figure the subcontractor's "Less previous payments" line must equal is
    what BH previously CERTIFIED as payable: the sum of CE "Invoiced -> Payable"
    on the commitment's earlier invoices, plus any retention since released.
-   NOT cheques cut (Payment -> Amount) - on the 10/9 export prior paid differs
+   NOT checks cut (Payment -> Amount) - on the 10/9 export prior paid differs
    from prior payable on 73 of 177 commitments - and NOT committed_billed less
    an estimated retainage, which double counts once CE holds the application.
 
@@ -1108,7 +1108,7 @@ function ceLedgerPanel(number, payReq, e, theirDue, ourDue, ceState){
       + '</div></div>';
   }
   /* Job Cost Detail carries billings and nothing else. Without this the panel
-     would mark every invoice unpaid, including Kone's four cleared by cheque. */
+     would mark every invoice unpaid, including Kone's four cleared by check. */
   const hasPay = !(d && d.has_payment_data === false);
   const f = ceLedgerFacts(led, payReq);
 
@@ -1168,12 +1168,12 @@ function ceLedgerPanel(number, payReq, e, theirDue, ourDue, ceState){
             + (f.outstanding > ourDue ? ' more' : ' less') + ' than the ' + money2(ourDue)
             + ' this application supports. The ComputerEase invoice carries the same error as the '
             + 'paperwork, so correcting the subcontractor does not fix it &mdash; the posted invoice '
-            + 'has to be corrected too, before the cheque run.</span>'
+            + 'has to be corrected too, before the check run.</span>'
           : '.'));
   }
   if (!hasPay)
     notes.push('<b>Billings only.</b> This feed is the Job Cost Detail export, which carries no '
-      + 'retention, payable or payment. An invoice with no cheque shown here has <b>not</b> been '
+      + 'retention, payable or payment. An invoice with no check shown here has <b>not</b> been '
       + 'shown to be unpaid. The Subcontractor Detail Report by Vendor adds that half.');
 
   const apiB = e ? (e.apiBilled != null ? e.apiBilled : e.billed) : null;
@@ -1363,7 +1363,7 @@ function payappPanel(r, pre, rowId){
          && ledgerThisApp(e, pre && pre.payReq).length
           ? 'Previous payments above is the CE payable on every invoice <b>except</b> this one, '
             + 'read from the CE invoice ledger' + (e.ledger.asOf ? ' (as of ' + esc(e.ledger.asOf) + ')' : '')
-            + '. It is what BH certified, not what has been cheque-cut.'
+            + '. It is what BH certified, not what has been check-cut.'
           : 'Previous payments above is <b>derived</b>: CE payable to date (' + money2(e.prevPaid)
             + ') less the ' + money2(theirDue) + ' being requested. That holds because CE posted this '
             + 'application at the amount asked for. Confirm against <b>Subcontractor Detail Report by '
@@ -1450,7 +1450,7 @@ function payappPanel(r, pre, rowId){
               + '<button data-savefigs="' + esc(rowId) + '" class="ghost">Save these figures</button>'
               + '<button data-noted="' + esc(rowId) + '" class="ghost"'
                 + ' title="Approve for payment with the exception recorded - pay the corrected amount '
-                + 'rather than holding the cheque. Procore calls this Approved as Noted.">'
+                + 'rather than holding the check. Procore calls this Approved as Noted.">'
                 + 'Approve as noted</button>'
               + '<button data-revise="' + esc(rowId) + '">Request revision&hellip;</button>'
               + '<span class="msg"></span></div>' : '')
@@ -1923,7 +1923,7 @@ const RQ_STATUS = {
   'PM returned':          ['#f9e3e4','#7f1b29','The PM sent it back. See their note before it goes to the sub.'],
   'approved and entered': ['#e8e6e7','#211e1e','Entered in ComputerEase. Done.'],
   'revise and resubmit':  ['#f9e3e4','#7f1b29','Returned to the subcontractor for a corrected application.'],
-  'approved as noted':    ['#e8e6e7','#211e1e','Approved for payment with a recorded exception - pay the corrected amount, do not hold the cheque. Procore calls this Approved as Noted.'],
+  'approved as noted':    ['#e8e6e7','#211e1e','Approved for payment with a recorded exception - pay the corrected amount, do not hold the check. Procore calls this Approved as Noted.'],
   'not a pay app':        ['#e8e6e7','#484b4d','An invoice, not a subcontractor pay application. Out of this queue and worked in payables@ - it has not been sent anywhere.'],
 };
 function rqStatusPill(s){
@@ -3622,7 +3622,7 @@ function ledgerFor(num, payReq){
 const STATUS_IN = { 'received':'Intake', 'AP verified':'Intake', 'not a pay app':'Intake',
   'with PM':'PM review', 'revise and resubmit':'Correction needed', 'PM returned':'Correction needed',
   'PM approved':'Ready for entry', 'ready for entry':'Ready for entry', 'approved as noted':'Ready for entry',
-  'approved and entered':'Entered', 'duplicate archived':'Duplicate archived' };
+  'approved and entered':'Entered', 'duplicate archived':'Duplicate archived', 'email only':'Duplicate archived' };
 const parseJ = (s, d) => { try { const v = JSON.parse(s || ''); return v == null ? d : v; } catch (_) { return d; } };
 const numOrNull = v => (v === null || v === undefined || v === '') ? null : Number(v);
 const groupKey = f => String(f.OriginalTitle || f.Title || '').trim();
@@ -3659,7 +3659,7 @@ function buildRecord(x, allRows){
     contract: Number(f.AdjustedContract || 0), changes: 0,
     earned: numOrNull(f.CompletedToDate), retainHeld: numOrNull(f.RetainageHeld),
     previous: numOrNull(f.PreviousPayments),
-    retain: retPct, thru50,
+    retain: retPct, thru50, retDuration: (c && c.retainage_duration) || '', retBase: procore ?? Number(f.AdjustedContract || 0),
     retAt: v => (retPct == null || v == null) ? null : (thru50 ? Math.min(v, (procore ?? Number(f.AdjustedContract || 0)) / 2) : v) * retPct / 100,
     // references
     procoreAmount: procore, ceAmount: b && b.ce_sov != null ? Number(b.ce_sov) : null,
@@ -3682,6 +3682,7 @@ function buildRecord(x, allRows){
     dueDate: '', period: f.PeriodEnding ? new Date(f.PeriodEnding).toLocaleDateString('en-US', { month:'long', year:'numeric', timeZone:'UTC' }) : '',
     costCode: f.CostCode || '', pdfPath: f.PdfPath || '', messageLink: f.MessageLink || '',
     parseNote: f.ParseNote || '',
+    sovLines: parseJ(f.SOVLines, null),
   };
   if (i.correctionKind) i.correctionOwner = i.correctionKind === 'system' ? 'Accounting'
                                           : i.correctionKind === 'contract' ? i.pm + ' / process manager' : i.pm;
@@ -3756,7 +3757,7 @@ async function saveRow(i, fields, logEntry, comment){
                if (r.status === 403) why += ' (you need Contribute on the AP Desk site)'; toast('Not saved: ' + why); return false; }
   const got = await r.json();
   const dropped = Object.keys(body).filter(k => k !== 'StatusLog' && k !== 'Comments' && String(got[k] ?? '').slice(0, 10) !== String(body[k] ?? '').slice(0, 10));
-  if (dropped.length) toast('SharePoint stored nothing for ' + dropped.join(', ') + ' — run Sync-PayAppListSchema-3.ps1.');
+  if (dropped.length) toast('SharePoint stored nothing for ' + dropped.join(', ') + ' — run Sync-PayAppListSchema-4.ps1.');
   const row = q.items.find(x => x.id === i.itemId); if (row) { row.f = got; }
   const keep = selected; rebuild(); draw(); if (keep && invoices.some(x => x.id === keep)) { selected = keep; renderDetail(); }
   return !dropped.length;
@@ -3789,13 +3790,15 @@ function reconIssues(i){
      Procore's (lower) revised contract it is the contract discrepancy above,
      which rides through to the PM - Specialty PR2 billed a pre-CO contract. */
   if (i.contract && i.earned > i.contract + .01) issues.push('Completed and stored amount exceeds the revised contract.');
+  issues.push(...sovIssues(i));
+  if (i.c && !retTermKnown(i)) issues.push('Retainage term is not documented on the Procore commitment.');
   return issues;
 }
 /* Same asymmetry as the demo: duplicates, math and missing data stop at intake;
    contract, prior-billing and retainage discrepancies ride through to the PM. */
 function intakeBlockingIssues(i){
   return reconIssues(i).filter(x => !x.startsWith('Revised contract amounts') && !x.startsWith('Previous-paid amount')
-                                 && !x.startsWith('Retainage held'));
+                                 && !x.startsWith('Retainage') && !x.startsWith('SOV'));
 }
 /* ---- where every figure comes from (hover) ---------------------------------- */
 const cents = v => v == null ? null : Math.round((v + Math.sign(v) * 1e-7) * 100) / 100;   // half-up, not float-down
@@ -3812,12 +3815,44 @@ const SRC = {
   ceCert: () => 'ComputerEase > Subcontractor Detail Report by Vendor > Invoiced > Payable, summed over this commitment\'s '
       + 'earlier invoices (this application excluded), plus any retention released since. Export as of '
       + ((LIVE.ceInv && LIVE.ceInv.as_of) || '?') + '.',
-  cePaid: () => 'ComputerEase > Subcontractor Detail Report by Vendor > Payment > Amount: cheques actually cut on the earlier invoices. Information only.',
+  cePaid: () => 'ComputerEase > Subcontractor Detail Report by Vendor > Payment > Amount: checks actually cut on the earlier invoices. Information only.',
   retTerms: i => 'Procore commitment: Retainage % (' + (i.retain == null ? 'not set' : i.retain + '%') + ') and the Retainage Duration field ('
       + ((i.c && i.c.retainage_duration) || 'not set') + '), applied to completed & stored. Thru 50% caps it at half the Procore revised contract.',
   calcDue: () => 'Completed & stored, less retainage, less previous payments - all three as submitted on the pay application.',
   ceDue: () => 'Completed & stored (as submitted), less retainage per the subcontract terms, less ComputerEase previous certified.',
 };
+const retTermKnown = i => i.retain != null && !!String(i.retDuration || '').trim();
+function retTermText(i){
+  if (!retTermKnown(i)) return null;
+  if (/n\/?a/i.test(i.retDuration) || i.retain === 0) return i.retain ? i.retain + '% (duration N/A)' : 'No retainage';
+  return i.retain + '% ' + (i.thru50 ? 'through 50% of contract' : 'throughout');
+}
+function retainageBlock(i, H, cell){
+  const L = i.ledger, term = retTermText(i), want = cents(i.retAt(i.earned));
+  let out = H('Retainage')
+    + '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app · held to date</span><strong>' + money(i.retainHeld) + '</strong></div>'
+    + '<div class="recon-row"><span' + tip(SRC.retTerms(i)) + '>Subcontract term (Procore)</span>'
+    + (term ? '<strong>' + esc(term) + '</strong>' : '<strong class="mismatch">Not documented</strong>') + '</div>';
+  if (i.thru50 && i.retBase) {
+    const half = cents(i.retBase / 2), past = i.earned != null && i.earned > half + .01;
+    out += '<div class="recon-row"><span' + tip('Half of the Procore revised contract (the pay app adjusted contract if Procore has none). Retainage is taken on completed work up to this amount and not beyond it.') + '>50% of contract</span><strong>' + money(half) + '</strong></div>'
+      + '<p class="muted" style="margin:2px 0 6px">' + (i.earned == null ? 'Completed & stored not keyed yet.'
+          : past ? 'Completed & stored (' + money(i.earned) + ') is past 50%, so retainage stops growing: ' + i.retain + '% of ' + money(half) + ' = ' + money(cents(half * i.retain / 100)) + '.'
+                 : 'Completed & stored (' + money(i.earned) + ') is under 50%, so ' + i.retain + '% applies to all of it.') + '</p>';
+  }
+  out += '<div class="recon-row"><span' + tip(SRC.retTerms(i)) + '>Per subcontract</span>'
+    + (want == null ? '<strong class="muted">' + (term ? 'Needs completed & stored' : 'Cannot calculate') + '</strong>'
+                    : cell(want, i.retainHeld != null && Math.abs(want - i.retainHeld) <= 1)) + '</div>';
+  if (L && L.available && L.invoices && L.invoices.length) {
+    const want2 = digits(i.number), prior = L.invoices.filter(x => !(want2 && digits(x.number) === want2));
+    const held = prior.reduce((t, x) => t + Number(x.retention || 0), 0);
+    const rel = prior.reduce((t, x) => t + (x.payments || []).reduce((u, p) => u + (Number(p.retention) < 0 ? -Number(p.retention) : 0), 0), 0);
+    out += '<div class="recon-row"><span' + tip('ComputerEase Subcontractor Detail: retention on the earlier invoices, less retention released by later checks. As of ' + (L.asOf || '?') + '.') + '>CE · retainage held on earlier pay apps</span><strong>'
+      + money(cents(held - rel)) + '</strong></div>';
+  }
+  if (!term && i.c) out += '<p class="mismatch" style="margin:4px 0">The Retainage % or Retainage Duration field is blank on this Procore commitment, so the desk cannot tell whether retainage stops at 50%. Fill it in on the commitment; until then the check assumes retainage throughout.</p>';
+  return out;
+}
 function recon(i){
   if (i.type !== 'Pay application') return '<p class="muted">Regular invoice: three-way pay application reconciliation does not apply.</p>';
   const cell = (v, ok) => v == null ? '<strong class="mismatch">Unavailable</strong>'
@@ -3836,7 +3871,7 @@ function recon(i){
       : '<span class="mismatch">Not paid</span>';
     return '<div class="recon-row" style="align-items:flex-start"><span' + tip('ComputerEase invoice ' + (x.raw_reference || x.number)
         + (x.date ? ', dated ' + fmtD(x.date) : '') + '. Billed ' + money(Number(x.total || 0)) + ', retainage ' + money(Number(x.retention || 0))
-        + ', payable ' + money(Number(x.payable || 0)) + '. Cheques from the Subcontractor Detail Report.') + '>'
+        + ', payable ' + money(Number(x.payable || 0)) + '. Checks from the Subcontractor Detail Report.') + '>'
       + esc(x.number || x.raw_reference || '—') + (isThis ? ' <small class="mismatch">this application</small>' : '') + '</span>'
       + '<span style="text-align:right"><strong>' + money(Number(x.payable || 0)) + '</strong><br><small class="muted">' + paid + '</small></span></div>';
   };
@@ -3848,6 +3883,7 @@ function recon(i){
     + H('Previous payments')
     + '<div class="recon-row"><span' + tip(SRC.payapp(i)) + '>Pay app</span><strong>' + money(i.previous) + '</strong></div>'
     + '<div class="recon-row"><span' + tip(SRC.ceCert()) + '>CE</span>' + cell(i.ledgerPrevious, i.ledgerPrevious != null && i.previous != null && Math.abs(i.previous - i.ledgerPrevious) < .01) + '</div>'
+    + retainageBlock(i, H, cell)
     + H('Pay apps in CE on ' + esc(i.commitment || 'this commitment'))
     + (!L.available ? '<p class="muted">Unavailable &mdash; ' + esc(L.why) + '.</p>'
        : !prior.length ? '<p class="muted">None. ComputerEase has no invoices on this commitment yet (as of ' + esc(L.asOf || '?') + ').</p>'
@@ -4000,7 +4036,7 @@ function documentPages(i){
       + '<p class="muted">Check these against the PDF below. To correct one, press Edit cover sheet; nothing is saved until you press Save changes.</p>'
       + coverEditor(i)
       + '<div class="page-num">Type figures exactly as the subcontractor submitted them, even if they are wrong.</div></article>'
-      + pdfArticle(i);
+      + (pay ? sovPage(i) : '') + pdfArticle(i);
   }
   let html = '<article class="paper" id="paper-1" style="font-size:' + (14 * docZoom / 100) + 'px"><div class="dochead"><div><h3>' + esc(i.vendor)
     + '</h3><small>' + (i.number ? esc(i.number) + ' · ' : '') + 'Revision ' + i.revision + '</small></div></div><h3>' + (pay ? 'Application for payment' : 'Invoice') + '</h3>'
@@ -4011,18 +4047,129 @@ function documentPages(i){
            : paperRow(i, 'invoice', 'Services / materials', i.amount))
     + paperRow(i, 'due', 'Current payment due', i.amount)
     + '<div class="page-num">Cover sheet figures as parsed or keyed at intake. The submitted PDF is not altered.</div></article>'
-    + pdfArticle(i);
+    + (pay ? sovPage(i) : '') + pdfArticle(i);
   setTimeout(() => loadPdf(i), 0);
   return html;
 }
 function pdfArticle(i){
-  return '<article class="paper" id="paper-2"><h3>Submitted document</h3>'
+  return '<article class="paper" id="paper-' + (i.type === 'Pay application' ? 3 : 2) + '"><h3>Submitted document</h3>'
     + (i.pdfPath ? '<iframe id="pdfFrame" title="Submitted PDF" style="width:100%;height:70vh;border:1px solid #E8E6E7"></iframe>'
                  + '<p><a href="' + esc(QUEUE_DOCS + i.pdfPath) + '" target="_blank" rel="noopener">Open the PDF in SharePoint</a>'
                  + (i.messageLink ? ' · <a href="' + esc(i.messageLink) + '" target="_blank" rel="noopener">Open the original email</a>' : '') + '</p>'
                  : '<p class="muted">No PDF is filed against this row.</p>')
-    + '<div class="page-num">Schedule of values lines are not extracted yet; review them on the PDF.</div></article>';
+    + '<div class="page-num">The submitted PDF, as received. Nothing on it is altered.</div></article>';
 }
+/* ---- page 2: schedule of values (continuation sheet) -------------------------
+   Keyed by hand at intake, like the cover sheet: read-only until Edit, nothing
+   written until Save. Stored as JSON on SOVLines: [{d, s, c}] = description,
+   scheduled value, work completed & stored to date. A new application starts
+   from the lines (descriptions and scheduled values) of the latest earlier
+   application on the same commitment that has them. */
+const SOVDRAFT = {}, SOV_EDIT = {};
+const sovNum = v => (v === '' || v == null || isNaN(Number(v))) ? null : Number(v);
+function priorSov(i){
+  if (!i.commitment) return null;
+  const prev = invoices.filter(x => x.id !== i.id && x.commitment === i.commitment && Array.isArray(x.sovLines) && x.sovLines.length && x.receivedAt <= i.receivedAt)
+                       .sort((a, b) => b.receivedAt - a.receivedAt)[0];
+  return prev || null;
+}
+function sovOf(i){
+  if (SOVDRAFT[i.id]) return SOVDRAFT[i.id].cur;
+  return Array.isArray(i.sovLines) ? i.sovLines : [];
+}
+const sovChanged = i => !!SOVDRAFT[i.id] && JSON.stringify(SOVDRAFT[i.id].cur) !== JSON.stringify(SOVDRAFT[i.id].orig);
+function sovTotals(lines){
+  let s = 0, c = 0, anyS = false, anyC = false;
+  for (const l of lines) { const a = sovNum(l.s), b = sovNum(l.c); if (a != null) { s += a; anyS = true; } if (b != null) { c += b; anyC = true; } }
+  return { s: anyS ? cents(s) : null, c: anyC ? cents(c) : null };
+}
+function sovIssues(i){
+  const L = Array.isArray(i.sovLines) ? i.sovLines : []; if (!L.length) return [];
+  const t = sovTotals(L), out = [];
+  if (t.s != null && i.contract && Math.abs(t.s - i.contract) > .01) out.push('SOV scheduled total does not equal the adjusted contract on the cover sheet.');
+  if (t.c != null && i.earned != null && Math.abs(t.c - i.earned) > .01) out.push('SOV completed & stored total does not equal the cover sheet.');
+  return out;
+}
+function sovTotalsHTML(i, lines){
+  const t = sovTotals(lines);
+  const cmp = (v, ref, label) => '<div class="kv' + (label.startsWith('Total complete') ? ' total' : '') + '"><span>' + label + '</span><strong class="'
+    + (v == null || ref == null ? '' : Math.abs(v - ref) < .01 ? 'match' : 'mismatch') + '">' + (v == null ? '—' : money(v))
+    + (v != null && ref != null && Math.abs(v - ref) >= .01 ? ' <small>(cover sheet ' + money(ref) + ')</small>' : '') + '</strong></div>';
+  return cmp(t.s, i.contract || null, 'Total scheduled') + cmp(t.c, i.earned, 'Total complete & stored');
+}
+function sovPage(i){
+  const can = isAcctSeat() && i.status === 'Intake';
+  const editing = can && (!!SOV_EDIT[i.id] || sovChanged(i));
+  const lines = sovOf(i);
+  const pm = isPmSeat(i) && i.status === 'PM review';
+  const prior = priorSov(i), pl = prior ? prior.sovLines : [];
+  const head = '<article class="paper" id="paper-2" style="font-size:' + (14 * docZoom / 100) + 'px"><h3>Schedule of values</h3><p>' + esc(i.vendor)
+    + (i.number ? ' · ' + esc(i.number) : '') + '<br>' + esc(i.jobNumber ? i.jobNumber + ' · ' + i.job : i.job) + ' · Revision ' + i.revision + '</p>';
+  const th = '<thead><tr><th style="width:7%">#</th><th style="width:31%">Description</th><th>Scheduled value</th><th>Complete & stored</th><th style="width:10%">%</th><th>Balance</th></tr></thead>';
+  if (!editing) {
+    if (!lines.length) return head + '<p class="muted">No schedule of values keyed for this application yet'
+        + (can ? (prior ? '. Edit starts from the ' + esc(pl.length + '') + ' lines on ' + esc(prior.number || 'the earlier application') + '.' : '. Key it from the continuation sheet in the PDF.') : '; review it on the PDF.') + '</p>'
+        + (can ? '<div class="actions"><button id="sovEdit" onclick="editSov()">Key schedule of values</button></div>' : '')
+        + '<div class="page-num">Page 2 · Continuation sheet (G703)</div></article>';
+    return head + '<table style="font-size:' + (12 * docZoom / 100) + 'px">' + th + '<tbody>'
+      + lines.map((l, j) => { const a = sovNum(l.s), b = sovNum(l.c), n = j + 1, mk = marked(i, 2, 'line-' + n).length;
+          return '<tr class="sov-row ' + (mk ? 'marked-line' : '') + '"' + (pm ? ' onclick="addMarkup(2,\'line-' + n + '\')" tabindex="0" onkeydown="if(event.key===\'Enter\')addMarkup(2,\'line-' + n + '\')"' : ' style="cursor:default"') + '>'
+            + '<td>' + n + '</td><td>' + esc(l.d || '') + '</td><td>' + (a == null ? '—' : money(a)) + '</td><td>' + (b == null ? '—' : money(b)) + '</td>'
+            + '<td>' + (a && b != null ? (b / a * 100).toFixed(1) + '%' : '—') + '</td><td>' + (a == null ? '—' : money(cents(a - (b || 0)))) + '</td></tr>'; }).join('')
+      + '</tbody></table>' + sovTotalsHTML(i, lines)
+      + lines.map((l, j) => annotationHTML(i, 2, 'line-' + (j + 1))).join('')
+      + (can ? '<div class="actions"><button id="sovEdit" onclick="editSov()">Edit schedule of values</button></div>' : '')
+      + '<div class="page-num">Page 2 · Continuation sheet (G703) · keyed from the PDF' + (pm ? ' · click a line to mark it up' : '') + '</div></article>';
+  }
+  const n = sovChanged(i);
+  const inp = (j, k, v, num) => '<input data-sov="' + j + ':' + k + '" ' + (num ? 'type="number" step="0.01" style="text-align:right;width:100%"' : 'type="text" style="width:100%"')
+    + ' value="' + esc(v == null ? '' : v) + '" oninput="sovSet(' + j + ',\'' + k + '\',this.value)">';
+  return head + '<div class="cover editing"><table style="font-size:' + (12 * docZoom / 100) + 'px">'
+    + '<thead><tr><th style="width:6%">#</th><th style="width:40%">Description</th><th>Scheduled value</th><th>Complete & stored</th><th style="width:6%"></th></tr></thead><tbody>'
+    + lines.map((l, j) => { const p = pl[j];
+        return '<tr><td>' + (j + 1) + '</td><td>' + inp(j, 'd', l.d) + '</td><td>' + inp(j, 's', l.s, 1) + '</td><td>' + inp(j, 'c', l.c, 1)
+          + (p && sovNum(p.c) != null ? '<small class="muted">prev ' + money(sovNum(p.c)) + '</small>' : '') + '</td>'
+          + '<td><button title="Remove line" style="padding:2px 8px" onclick="sovRemove(' + j + ')">×</button></td></tr>'; }).join('')
+    + '</tbody></table><div id="sovTotals">' + sovTotalsHTML(i, lines) + '</div>'
+    + '<div class="actions" style="align-items:center"><button onclick="sovAdd()">Add line</button>'
+    + '<button class="primary" id="sovSave" ' + (n ? '' : 'disabled') + ' onclick="saveSov()">Save schedule</button>'
+    + '<button id="sovDiscard" onclick="discardSov()">' + (n ? 'Discard' : 'Done') + '</button>'
+    + '<span class="muted" id="sovDirty">' + (n ? 'Unsaved changes' : '') + '</span></div></div>'
+    + '<div class="page-num">Page 2 · Type each line exactly as submitted. Totals are checked against the cover sheet.</div></article>';
+}
+function sovDraft(i){
+  if (!SOVDRAFT[i.id]) {
+    const saved = Array.isArray(i.sovLines) ? i.sovLines : [];
+    const prior = priorSov(i);
+    const start = saved.length ? saved : (prior ? prior.sovLines.map(l => ({ d: l.d || '', s: l.s ?? '', c: '' })) : [{ d: '', s: '', c: '' }]);
+    SOVDRAFT[i.id] = { orig: JSON.parse(JSON.stringify(saved)), cur: JSON.parse(JSON.stringify(start)) };
+  }
+  return SOVDRAFT[i.id];
+}
+function editSov(){ const i = item(); if (!i || !isAcctSeat() || i.status !== 'Intake') return; sovDraft(i); SOV_EDIT[i.id] = true; renderDetail(); setTimeout(() => document.getElementById('paper-2')?.scrollIntoView({ block: 'nearest' }), 0); }
+function sovSet(j, k, v){
+  const i = item(); if (!i || !SOVDRAFT[i.id]) return;
+  SOVDRAFT[i.id].cur[j][k] = v;
+  const n = sovChanged(i), t = document.getElementById('sovTotals'), b = document.getElementById('sovSave'), d = document.getElementById('sovDiscard'), u = document.getElementById('sovDirty');
+  if (t) t.innerHTML = sovTotalsHTML(i, SOVDRAFT[i.id].cur);
+  if (b) b.disabled = !n; if (d) d.textContent = n ? 'Discard' : 'Done'; if (u) u.textContent = n ? 'Unsaved changes' : '';
+}
+function sovAdd(){ const i = item(); sovDraft(i).cur.push({ d: '', s: '', c: '' }); renderDetail(); }
+function sovRemove(j){ const i = item(); sovDraft(i).cur.splice(j, 1); renderDetail(); }
+function discardSov(){ const i = item(); delete SOVDRAFT[i.id]; delete SOV_EDIT[i.id]; renderDetail(); }
+async function saveSov(){
+  const i = item(); if (!isAcctSeat() || i.status !== 'Intake' || !sovChanged(i)) return;
+  const lines = SOVDRAFT[i.id].cur.filter(l => String(l.d || '').trim() || sovNum(l.s) != null || sovNum(l.c) != null)
+    .map(l => ({ d: String(l.d || '').trim(), s: sovNum(l.s), c: sovNum(l.c) }));
+  const t = sovTotals(lines), id = i.id;
+  if (await saveRow(i, { SOVLines: JSON.stringify(lines) }, { note: 'Schedule of values keyed by hand: ' + lines.length + ' line(s), scheduled '
+        + (t.s == null ? '—' : money(t.s)) + ', complete & stored ' + (t.c == null ? '—' : money(t.c)) + '.' })) {
+    delete SOVDRAFT[id]; delete SOV_EDIT[id];
+    const j = invoices.find(x => x.id === id); if (j) { j.checks.previous = false; selected = id; renderDetail(); }
+    toast('Schedule of values saved. Re-tick the intake verification.');
+  }
+}
+
 /* The pull writes ParseNote ONCE, at intake, and never revisits it. A scan arrives
    with "no text in the PDF" and blank figures; if figures are on the row now,
    a person typed them later - so say that, not the stale note. */
@@ -4091,9 +4238,24 @@ function intakeExtras(i){
   if (i.status !== 'Intake') return '';
   const dis = !isAcctSeat() ? 'disabled' : '';
   const sib = revisionCandidates(i);
-  return sib.length ? '<button ' + dis + ' onclick="linkRevision()">Link as revision ' + (Math.max(...sib.map(s => s.revision)) + 1)
-    + ' of ' + esc(sib[0].number || 'the earlier submission') + '</button>' : '';
+  return (sib.length ? '<button ' + dis + ' onclick="linkRevision()">Link as revision ' + (Math.max(...sib.map(s => s.revision)) + 1)
+    + ' of ' + esc(sib[0].number || 'the earlier submission') + '</button>' : '')
+    + (duplicate(i) ? '' : '<button ' + dis + ' onclick="archiveDuplicate()">Archive as duplicate</button>')
+    + '<button ' + dis + ' onclick="emailOnly()">Not an invoice · email only</button>';
 }
+/* Not everything payables@ receives is billing: contracts, COIs, waivers, statements,
+   order confirmations. "Email only" takes the row off the desk (Status "email only")
+   with the reason logged; the email itself stays where it is in payables@. */
+const NOT_INVOICE = ['Contract or change order', 'Insurance / COI', 'Lien waiver', 'Statement or past-due notice',
+                     'Order confirmation or quote', 'Payment receipt', 'Other correspondence'];
+function emailOnly(){ const i = item(); if (!isAcctSeat() || i.status !== 'Intake') return;
+  modal('<h2>Not an invoice?</h2><p>This takes it off the AP Desk. Nothing is entered in CE and the email stays in payables@.</p>'
+    + '<label style="display:block;margin:10px 0 4px">What is it?</label><select id="eoKind" style="width:100%">' + NOT_INVOICE.map(k => '<option>' + esc(k) + '</option>').join('') + '</select>'
+    + '<label style="display:block;margin:10px 0 4px">Note (optional)</label><textarea id="eoNote" rows="2" style="width:100%" placeholder="e.g. forwarded to compliance"></textarea>'
+    + (i.messageLink ? '<p class="muted">To flag it for follow-up, <a href="' + esc(i.messageLink) + '" target="_blank" rel="noopener">open the email in Outlook</a> and flag it there.</p>' : '')
+    + '<div class="actions"><button class="primary" onclick="confirmEmailOnly()">Mark as email only</button><button onclick="closeModal()">Cancel</button></div>'); }
+async function confirmEmailOnly(){ const i = item(); const k = document.getElementById('eoKind').value, n = document.getElementById('eoNote').value.trim(); closeModal();
+  if (await saveRow(i, { Status: 'email only' }, { s: 'email only', note: 'Not an invoice (' + k + ')' + (n ? ': ' + n : '') + '. Removed from the desk; no accounting entry.' })) { closeDetail(); draw(); toast('Marked email only'); } }
 /* ---- intake panel: the reviewer, and nothing else to key -------------------- */
 function reviewerField(i){
   const dis = !isAcctSeat() ? 'disabled' : '';
@@ -4165,6 +4327,7 @@ async function routePM(){
   const i = item();
   if (!isAcctSeat() || i.status !== 'Intake' || !i.checks.previous || !canRoute(i) || intakeBlockingIssues(i).length) return;
   if (coverChanged(i).length) { toast('Save or discard the cover-sheet changes first.'); return; }
+  if (sovChanged(i)) { toast('Save or discard the schedule of values first.'); return; }
   if (!i.pmEmail) { toast('Choose the reviewer first.'); return; }
   const issues = reconIssues(i);
   await saveRow(i, { Status: 'with PM', Subcontract: i.commitment || '', JobNumber: i.jobNumber || '', AssignedApprover: i.pmEmail,
@@ -4172,8 +4335,8 @@ async function routePM(){
                      PrevBillingBasis: i.ledgerPrevious != null ? 'CE prior certified (Sub Detail payable), as of ' + i.ledger.asOf : '' },
     { s: 'with PM', note: 'Intake verified; routed to ' + i.pm + (issues.length ? ' with flags: ' + issues.join(' ') : '') + ' No CE entry created.' });
 }
-async function archiveDuplicate(){ const i = item(); if (!isAcctSeat() || i.status !== 'Intake' || !duplicate(i)) return;
-  modal('<h2>Archive duplicate?</h2><p>This exact resend leaves the original active. A corrected submission should be linked as a revision instead.</p><div class="actions"><button class="danger" onclick="confirmArchive()">Archive this duplicate</button><button onclick="closeModal()">Cancel</button></div>'); }
+async function archiveDuplicate(){ const i = item(); if (!isAcctSeat() || i.status !== 'Intake') return;
+  modal('<h2>Archive duplicate?</h2>' + (duplicate(i) ? '' : '<p class="mismatch">The desk did not find a matching original by vendor and number. Archive only if you know this is a resend.</p>') + '<p>This exact resend leaves the original active. A corrected submission should be linked as a revision instead.</p><div class="actions"><button class="danger" onclick="confirmArchive()">Archive this duplicate</button><button onclick="closeModal()">Cancel</button></div>'); }
 async function confirmArchive(){ const i = item(); closeModal();
   if (await saveRow(i, { Status: 'duplicate archived' }, { s: 'duplicate archived', note: 'Archived exact resend; no accounting entry created.' })) { closeDetail(); draw(); } }
 async function addComment(){ const t = document.getElementById('comment').value.trim(); if (!t) return;
