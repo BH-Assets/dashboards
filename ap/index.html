@@ -3622,7 +3622,7 @@ function ledgerFor(num, payReq){
 const STATUS_IN = { 'received':'Intake', 'AP verified':'Intake', 'not a pay app':'Intake',
   'with PM':'PM review', 'revise and resubmit':'Correction needed', 'PM returned':'Correction needed',
   'PM approved':'Ready for entry', 'ready for entry':'Ready for entry', 'approved as noted':'Ready for entry',
-  'approved and entered':'Entered', 'duplicate archived':'Duplicate archived', 'email only':'Duplicate archived' };
+  'approved and entered':'Entered', 'duplicate archived':'Duplicate archived', 'email only':'Duplicate archived', 'handled outside desk':'Duplicate archived' };
 const parseJ = (s, d) => { try { const v = JSON.parse(s || ''); return v == null ? d : v; } catch (_) { return d; } };
 const numOrNull = v => (v === null || v === undefined || v === '') ? null : Number(v);
 const groupKey = f => String(f.OriginalTitle || f.Title || '').trim();
@@ -3693,6 +3693,12 @@ function buildRecord(x, allRows){
   if (i.correctionKind) i.correctionOwner = i.correctionKind === 'system' ? 'Accounting'
                                           : i.correctionKind === 'contract' ? i.pm + ' / process manager' : i.pm;
   i.receivedDate = new Date(i.receivedAt).toISOString().slice(0, 10);
+  /* Dealt with outside the desk (12 Oct): kept off every queue, listed under
+     "Handled elsewhere". Email in Deleted Items is marked by the pull; an item
+     at intake that ComputerEase already holds is hidden here, without a write. */
+  i.hiddenWhy = { 'handled outside desk': 'Email is in payables@ Deleted Items', 'email only': 'Not an invoice (email only)',
+                  'duplicate archived': 'Archived duplicate' }[f.Status] || '';
+  if (i.status === 'Intake' && i.ceHolds && window.AP_HIDE_CE_HELD !== false) { i.hiddenWhy = 'Already in ComputerEase (' + (i.ceSuggest || 'matched') + ')'; i.status = 'Duplicate archived'; }
   return i;
 }
 function rebuild(){
@@ -3774,7 +3780,11 @@ async function reloadLive(){ const keep = selected; try { await loadLive(); rebu
 function duplicate(i){
   return invoices.some(x => x.id !== i.id && x.status !== 'Duplicate archived'
     && ((x.commitment && x.commitment === i.commitment && digits(x.number) && digits(x.number) === digits(i.number))
-        || (!i.commitment && lc(x.vendor) === lc(i.vendor) && lc(x.number) === lc(i.number))));
+        /* No commitment: same vendor AND same invoice number. Both must be known -
+           a blank number on two "Unknown vendor" rows is not a match (12 Oct:
+           every unread invoice flagged every other one as a duplicate). */
+        || (!i.commitment && String(i.number || '').trim() && i.vendor !== 'Unknown vendor'
+            && lc(x.vendor) === lc(i.vendor) && lc(x.number) === lc(i.number))));
 }
 function figuresMissing(i){ return i.type === 'Pay application' && [i.contract || null, i.earned, i.retainHeld, i.previous].some(v => v == null); }
 function reconIssues(i){
@@ -4465,8 +4475,16 @@ function liveBanner(){
 }
 /* ---- By job: the previous desk's project view, put back --------------------- */
 const JOB_VIEWS = { 'Job view': 'commitments', 'Expected to bill': 'expected' };
+const HANDLED = 'Handled elsewhere';
 function draw(){
   legacyDraw();
+  const navs0 = document.querySelector('.sidebar .navs');
+  if (navs0 && !document.getElementById('handlednav') && isAcctSeat()) {
+    const n = invoices.filter(x => x.hiddenWhy).length;
+    navs0.insertAdjacentHTML('beforeend', '<button id="handlednav" class="nav ' + (view === HANDLED ? 'active' : '') + '" onclick="setView(\'' + HANDLED + '\')">'
+      + HANDLED + '<b>' + n + '</b></button>');
+  }
+  if (view === HANDLED) { drawHandled(); return; }
   const navs = document.querySelector('.sidebar .navs');
   if (navs && !document.getElementById('byjob')) navs.insertAdjacentHTML('afterend',
     '<div id="byjob"><div class="eyebrow" style="margin-top:18px">By job</div><nav class="navs" aria-label="By job">'
@@ -4485,6 +4503,17 @@ function draw(){
   } catch (e) { document.getElementById('jobview').innerHTML = '<div class="alert">Job view could not load: ' + esc(e.message) + '</div>'; }
 }
 
+function drawHandled(){
+  const main = document.querySelector('main'); if (!main) return;
+  const rows = invoices.filter(x => x.hiddenWhy).sort((a, b) => b.receivedAt - a.receivedAt);
+  main.innerHTML = '<div class="heading"><div><div class="eyebrow">Invoice workflow</div><h1>' + HANDLED + '</h1><p class="muted">'
+    + 'Kept off the queues: the email is in payables@ Deleted Items, ComputerEase already holds it, it was marked email only, or it was archived as a duplicate. '
+    + 'Open one to see it; to put it back on the desk, set its Status to received in the AP Pay Applications list.</p></div></div>'
+    + '<div class="demo">' + liveBanner() + '</div><div class="card"><h3>' + rows.length + ' items</h3><table><thead><tr><th>Vendor</th><th>Description</th><th>Received</th><th>Why</th><th></th></tr></thead><tbody>'
+    + rows.map(x => '<tr><td>' + esc(x.vendor) + '</td><td>' + esc(x.description) + '</td><td>' + esc(x.receivedDate) + '</td><td>' + esc(x.hiddenWhy)
+        + '</td><td><button onclick="openDetail(' + x.id + ')">Open</button></td></tr>').join('')
+    + '</tbody></table></div>';
+}
 async function boot(){
   document.getElementById('app').innerHTML = '<main style="padding:40px"><p class="muted">Signing in and loading live data…</p></main>';
   try {
