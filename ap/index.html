@@ -4548,6 +4548,16 @@ const STAGES = [['Intake', 'Accounting intake', 'Intake'], ['PM review', 'PM rev
 const OTHER_DESKS = [['Compliance Desk', 'https://compliance.baileyharris.com'], ['Project Information', 'https://projects.baileyharris.com'],
                      ['Precon Desk', '/precon/'], ['Prequal & Sub Rating', '/prequal/']];
 let peekId = null;
+/* "Open items": everything still in the process, i.e. not entered and not archived.
+   The launcher links here as /ap/#open. */
+const OPEN_VIEW = 'Open items';
+const isOpenItem = i => i.status !== 'Entered' && i.status !== 'Duplicate archived';
+const __currentRows = currentRows;
+currentRows = function(){
+  if (view !== OPEN_VIEW) return __currentRows();
+  const v = view; view = 'All invoices';
+  try { return __currentRows().filter(isOpenItem); } finally { view = v; }
+};
 
 /* Columns asked for on 14 Oct. Mutated in place: the demo's sort, filter and
    column-picker code all read gridColumns / defaultColumns. */
@@ -4687,6 +4697,7 @@ function draw(){
   const nav = '<nav class="bh-side" aria-label="AP Desk sections"><button class="bh-side-close" aria-label="Close menu">✕</button>'
     + '<div class="bh-side-h">Stages</div>' + STAGES.map(([l, v, s]) => side(l, v, count(s))).join('')
     + (acct ? side(HANDLED, HANDLED, invoices.filter(x => x.hiddenWhy).length) : '')
+    + side(OPEN_VIEW, OPEN_VIEW, scoped.filter(isOpenItem).length)
     + side('All invoices', 'All invoices', scoped.length)
     + '<div class="bh-side-divider"></div><div class="bh-side-h">By job</div>' + Object.keys(JOB_VIEWS).map(v => side(v, v)).join('')
     + '<div class="bh-side-divider"></div><div class="bh-side-h">Other desks</div>'
@@ -4799,6 +4810,8 @@ async function boot(){
     rebuild();
     role = LIVE.me.isAccounting ? 'Accounting' : LIVE.me.name;
     view = role === 'Accounting' ? 'All invoices' : 'PM review';
+    if (/^#open\b/i.test(location.hash)) view = OPEN_VIEW;   /* the launcher's "Open invoices & pay apps" link */
+    if (/^#review\b/i.test(location.hash)) view = 'PM review';   /* the launcher's "Approve invoices (n)" button */
     draw();
   } catch (e) {
     document.getElementById('app').innerHTML = '<main style="padding:40px"><h1>AP Desk</h1><div class="alert">' + esc(e.message || String(e)) + '</div><p class="muted">Contact itadmin@baileyharris.com.</p></main>';
