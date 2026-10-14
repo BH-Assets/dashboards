@@ -27,7 +27,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--bh-font
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 h1,h2,h3{margin:0}
 a{color:var(--ink)}
-.wrap{max-width:1280px;margin:0 auto;padding:0 40px}
+.wrap{max-width:1440px;margin:0 auto;padding:0 56px}
+.wrap.page{padding-top:48px;padding-bottom:16px}
 .mono{font-weight:600;letter-spacing:.02em}
 
 /* ---- header ---- */
@@ -61,7 +62,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
 .greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
 .greet .nm{display:block;font-weight:800}
-.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:600px}
+.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:760px}
 .hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
 .acts{display:flex;gap:10px;flex-wrap:wrap}
 .acts a{min-height:44px}
@@ -87,8 +88,10 @@ a.wxc:hover{background:var(--cream)}
 .wxc .txt{min-width:0}
 
 /* ---- pulse: active jobs and the team, under the weather ---- */
-.pulse{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;margin-top:40px;align-items:start}
-.pulse.one{grid-template-columns:1fr}
+/* two columns under the weather: desks and links on the left, jobs and team on the right */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:start}
+.layout.solo{grid-template-columns:minmax(0,1fr)}
+.pulse{display:grid;gap:24px;align-content:start}
 .pstats{border-top:3px solid var(--ink);padding:20px 22px 22px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .ptop{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
 .pbig{font-size:56px;font-weight:800;line-height:1;letter-spacing:-.01em}
@@ -96,7 +99,7 @@ a.wxc:hover{background:var(--cream)}
 .pcap a{font-weight:700;text-decoration:none;white-space:nowrap}
 .pcap a:hover{color:var(--maroon)}
 .bars{margin-top:18px;display:grid;gap:10px}
-.bar{display:grid;grid-template-columns:140px minmax(0,1fr) 44px;align-items:center;gap:12px;font-size:13px}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 36px;align-items:center;gap:12px;font-size:13px}
 .bar .lab{color:var(--muted)}
 .bar .trk{height:14px;background:var(--gray);position:relative}
 .bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:0 4px 4px 0;min-width:2px}
@@ -104,7 +107,7 @@ a.wxc:hover{background:var(--cream)}
 .pmini{display:flex;gap:28px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
 .pmini b{display:block;font-size:22px;color:var(--ink);font-weight:800;line-height:1.1}
 .pasof{font-size:11.5px;color:var(--faint);margin-top:12px}
-@media (max-width:960px){.pulse{grid-template-columns:1fr}}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.pulse{order:-1;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}}
 @media (max-width:640px){.pbig{font-size:44px}.bar{grid-template-columns:110px minmax(0,1fr) 36px}}
 
 /* ---- safety strip ---- */
@@ -119,11 +122,11 @@ a.wxc:hover{background:var(--cream)}
 .safety .stamp{margin-left:auto;font-size:11px;color:#8f8573}
 
 main{padding:0}
-.banner{border-left:4px solid var(--charcoal);background:var(--cream);padding:12px 16px;font-size:13.5px;margin:24px 0 0}
+.banner{border-left:4px solid var(--charcoal);background:var(--cream);padding:12px 16px;font-size:13.5px;margin:0 0 24px}
 .banner b{display:block;margin-bottom:2px}
 
 /* ---- section labels ---- */
-.sec{margin:44px 0 0}
+.sec{margin:0 0 48px}
 .sechead{display:flex;align-items:center;gap:16px;margin:0 0 22px}
 .sechead .blk{background:var(--brand-red);color:#fff;font-size:19px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
   padding:9px 18px;line-height:1.2;position:relative}
@@ -134,7 +137,7 @@ main{padding:0}
 .sechead .cap{font-size:13px;color:var(--muted)}
 
 /* ---- desk tiles ---- */
-.tiles{display:grid;gap:22px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tiles{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .tile{border-top:3px solid var(--ink);padding:22px 22px 18px;display:flex;flex-direction:column;min-width:0;background:#fff}
 .tile.locked{background:var(--gray);border-top-color:var(--charcoal)}
 .tile h3{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -192,7 +195,7 @@ a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2
 .person .kind .dt{display:block;font-size:11px;color:var(--faint);margin-top:3px}
 
 /* ---- applications ---- */
-.apps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
 a.app{display:block;background:#fff;padding:16px 18px 18px;text-decoration:none;color:inherit;min-width:0}
 a.app:hover{background:var(--cream)}
 .appname{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px;font-weight:700;line-height:1.25}
@@ -208,7 +211,7 @@ a.app:hover{background:var(--cream)}
 .gate p{color:var(--muted);font-size:14px;margin:0 0 22px}
 
 /* ---- footer area ---- */
-.foot{color:var(--faint);font-size:12px;margin-top:40px;display:flex;gap:14px;flex-wrap:wrap}
+.foot{color:var(--faint);font-size:12px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
 details.diag{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
 details.diag summary{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer}
 pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:12px 0 10px;white-space:pre-wrap;word-break:break-word}
@@ -224,11 +227,9 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
 .endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
 
 /* ---- narrower screens ---- */
-@media (max-width:1160px){ .tiles{grid-template-columns:repeat(3,minmax(0,1fr))} .apps{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:960px){
   .wrap,.hero-in{padding-left:20px;padding-right:20px}
-  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .apps{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .wrap.page{padding-top:32px}
   .greet{font-size:46px}
   .deco{display:none}
   .hero-card{padding:20px 20px 22px;right:0;max-width:none}
@@ -312,29 +313,33 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
     <nav class="wxstrip" id="wx" aria-label="Weather at the offices" hidden></nav>
     <div class="safety" id="safety" hidden></div>
 
-    <div class="wrap">
+    <div class="wrap page">
       <div id="fatal" class="banner" hidden></div>
       <div id="degraded" class="banner" hidden></div>
 
-      <section class="pulse" id="pulse" aria-label="Jobs and team" hidden>
-        <div class="pstats" id="pstats" hidden></div>
-        <section class="panel" id="peoplepanel" hidden></section>
-      </section>
+      <div class="layout" id="layout">
+        <div class="main">
+          <section class="sec" id="sec-desks">
+            <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
+            <div class="tiles" id="tiles"></div>
+          </section>
 
-      <section class="sec" id="sec-desks">
-        <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
-        <div class="tiles" id="tiles"></div>
-      </section>
+          <section class="sec" id="rail" hidden>
+            <div class="sechead"><span class="blk dark">This week</span></div>
+            <div class="week">
+              <section class="panel" id="newspanel" hidden></section>
+            </div>
+          </section>
 
-      <section class="sec" id="rail" hidden>
-        <div class="sechead"><span class="blk dark">This week</span></div>
-        <div class="week">
-          <section class="panel" id="newspanel" hidden></section>
+          <div id="appsections"></div>
+          <p class="empty" id="noresults" hidden>Nothing matches that.</p>
         </div>
-      </section>
 
-      <div id="appsections"></div>
-      <p class="empty" id="noresults" hidden>Nothing matches that.</p>
+        <aside class="pulse" id="pulse" aria-label="Jobs and team" hidden>
+          <div class="pstats" id="pstats" hidden></div>
+          <section class="panel" id="peoplepanel" hidden></section>
+        </aside>
+      </div>
 
       <p class="foot">
         <span id="asof"></span>
@@ -732,10 +737,43 @@ function renderWeather(data){
 }
 
 /* ---------- quick actions ---------- */
+/* "Approve invoices (n)" appears only for a PM with items waiting on them in AP
+   Desk: Status "with PM" and AssignedApprover = the signed-in person, the same
+   rule AP Desk uses for its PM review queue. It sits after the second action,
+   before IT help, and opens AP Desk on PM review. */
+let apReviewCount = 0, lastActions = [];
+const AP_SITE = "/sites/APDesk", AP_LIST = "AP Pay Applications";
+
+async function loadApReview(email){
+  if (!email) return;
+  const s = await graph("/sites/" + SP_HOST + ":" + AP_SITE + "?$select=id");
+  if (!(s.ok && s.body && s.body.id)){ log("ap review", "APDesk site HTTP " + s.status); return; }
+  let url = "/sites/" + s.body.id + "/lists/" + encodeURIComponent(AP_LIST) +
+            "/items?$expand=fields($select=Status,AssignedApprover)&$select=id&$top=500";
+  let n = 0, pages = 0;
+  while (url && pages < 10){
+    const r = await graph(url);
+    if (!r.ok || !r.body){ log("ap review", "list HTTP " + r.status); return; }
+    (r.body.value || []).forEach(x => {
+      const f = x.fields || {};
+      if (f.Status === "with PM" && String(f.AssignedApprover || "").trim().toLowerCase() === email) n++;
+    });
+    const next = r.body["@odata.nextLink"];
+    url = next ? next.replace("https://graph.microsoft.com/v1.0", "") : null;
+    pages++;
+  }
+  apReviewCount = n;
+  log("ap review", n + " waiting on " + email);
+  renderActions(lastActions);
+}
+
 function renderActions(items){
   const host = $("#acts");
   if (!host) return;
-  const ok = (items || []).map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
+  lastActions = items || [];
+  const ok = lastActions.map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
+  if (apReviewCount > 0)
+    ok.splice(Math.min(2, ok.length), 0, { name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
   host.innerHTML = ok.slice(0, 4).map((a, i) =>
     '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
       (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(a.name) + '</a>').join("");
@@ -899,7 +937,7 @@ function layoutPulse(){
   const p = $("#pulse"); if (!p) return;
   const a = !$("#pstats").hidden, b = !$("#peoplepanel").hidden;
   p.hidden = !(a || b);
-  p.classList.toggle("one", !(a && b));
+  const l = $("#layout"); if (l) l.classList.toggle("solo", p.hidden);
 }
 
 /* ============ boot ============ */
@@ -991,7 +1029,7 @@ async function main(){
   }
 
   /* job title and office under the name, from the profile User.Read already covers */
-  const me = await graph("/me?$select=displayName,jobTitle,officeLocation");
+  const me = await graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName");
   if (me.ok && me.body){
     const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
     $("#acctrole").textContent = role;
@@ -1076,6 +1114,10 @@ async function main(){
   }
 
   try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
+  try {
+    const email = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
+    await loadApReview(email);
+  } catch(e){ log("ap review", "failed " + (e && e.message)); }
 
   /* ---- the desks ---- */
   const host = $("#tiles");
