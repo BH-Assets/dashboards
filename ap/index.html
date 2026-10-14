@@ -193,7 +193,68 @@
 #jobview .celnotes div{margin-top:4px}
 #jobview .celwrong{color:#7f1b29;font-weight:600}
 #jobview .celnone{font-size:12.5px;color:#484b4d;line-height:1.5}
-</style></head><body><div id="app"></div><div id="detail"></div><div id="modal"></div><div id="toast" role="status"></div><script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script><script>
+</style><link rel="stylesheet" href="/bh-shell.css"><style>/* AP Desk on the BH shell */
+/* AP Desk on the BH shell (claude/bh-ui-spec.md). Scoped to .bh-page so the
+   review drawer and modals keep the desk's own styles. Tokens only, no new hex. */
+.bh-page .bh-header .bh-logo{width:auto;height:56px}
+.bh-page .bh-header button,.bh-page .bh-side button{font-family:var(--bh-font)}
+.bh-page .bh-side{min-height:calc(100vh - 100px)}
+.bh-page .bh-side-item{border-radius:0;box-shadow:none;justify-content:flex-start}
+.bh-page .bh-kpi{text-align:left}
+.ap-work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:0;align-items:start}
+.ap-list{min-width:0;padding:20px 24px 32px 40px;border-right:1px solid var(--bh-hairline)}
+.ap-toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:12px}
+.ap-toolbar .ap-field{display:flex;flex-direction:column;gap:4px}
+.ap-toolbar .ap-field.grow{flex:1 1 180px}
+.ap-toolbar #role{width:160px}
+.ap-toolbar .ap-field .bh-input{width:100%}
+.ap-toolbar .ap-spacer{flex:1 1 0}
+.ap-toolbar .bh-btn,.ap-toolbar .bh-btn-outline{min-height:44px}
+.ap-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.ap-filters button{font:600 12px var(--bh-font);background:var(--bh-light-gray);border:0;border-radius:0;padding:6px 10px;cursor:pointer;color:var(--bh-ink)}
+.ap-scroll{overflow:auto;max-height:calc(100vh - 330px);border:1px solid var(--bh-hairline)}
+.ap-scroll .bh-table{min-width:1100px}
+.ap-scroll .bh-table thead th{position:sticky;top:0;z-index:2}
+.bh-table th .ap-th{display:flex;align-items:center;gap:6px}
+.bh-table th button{background:none;border:0;color:#fff;font:600 11px var(--bh-font);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0;border-radius:0}
+.bh-table th button.ap-filter{font-weight:600;text-transform:none;letter-spacing:0;color:var(--bh-light-gray);text-decoration:underline;text-underline-offset:2px}
+.bh-table th button.ap-filter.on{color:#fff;font-weight:700}
+.bh-table tbody tr{cursor:pointer}
+.bh-table tbody tr:hover td{background:var(--bh-light-gray)}
+.bh-table tbody tr.is-selected td{background:var(--bh-cream)}
+.bh-table td{vertical-align:top}
+.bh-table td .ap-sub{display:block;font-size:12px;color:var(--bh-ink-muted);margin-top:2px}
+.bh-table td .ap-open{background:none;border:0;padding:0;font:600 13px var(--bh-font);color:var(--bh-ink);text-align:left;cursor:pointer;border-radius:0}
+.bh-table td .ap-open:hover{color:var(--bh-maroon);text-decoration:underline}
+.bh-table td.num,.bh-table th.num{text-align:right}
+.bh-table td .bh-chip+.bh-chip{margin-left:4px}
+.ap-empty{padding:28px;text-align:center;color:var(--bh-ink-muted)}
+.ap-note{margin-top:10px}
+.ap-note button{font:600 12px var(--bh-font);background:none;border:1px solid var(--bh-slate);border-radius:0;padding:4px 10px;margin-left:8px;cursor:pointer}
+.ap-peek{position:sticky;top:0;padding:20px 24px 32px}
+.ap-peek .bh-panel{border-top:3px solid var(--bh-black)}
+.ap-peek-head{background:var(--bh-cream);padding:16px 20px}
+.ap-peek-head .ap-name{font-size:22px;font-weight:800;text-transform:uppercase;line-height:1.1;margin:4px 0}
+.ap-peek-body{padding:4px 20px 16px}
+.ap-kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--bh-hairline);font-size:13px}
+.ap-kv strong{font-weight:600;text-align:right}
+.ap-flags{margin:12px 0 0;padding:0;list-style:none}
+.ap-flags li{font-size:12px;padding:6px 0;border-bottom:1px solid var(--bh-hairline)}
+.ap-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.ap-actions .bh-btn,.ap-actions .bh-btn-outline{width:100%}
+.ap-activity .bh-label{display:block;margin:4px 0 6px}
+.ap-activity p{font-size:12px;color:var(--bh-ink-muted);margin:0 0 6px}
+.ap-section{padding:24px 40px}
+.ap-section h2{margin:0 0 6px}
+.ap-banner{font-size:12px;color:var(--bh-ink-muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ap-banner button{font:600 12px var(--bh-font);background:none;border:1px solid var(--bh-slate);border-radius:0;padding:4px 10px;cursor:pointer}
+@media (max-width:1200px){.ap-work{grid-template-columns:1fr}.ap-peek{position:static;border-top:1px solid var(--bh-hairline)}.ap-list{border-right:0;padding:16px 20px}}
+@media (max-width:960px){.ap-scroll{max-height:none}.ap-section{padding:20px}}
+.ap-count{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.ap-link{background:none;border:0;padding:0;font:600 12px var(--bh-font);letter-spacing:.04em;text-transform:uppercase;color:var(--bh-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:0}
+.bh-page .bh-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+@media (max-width:960px){.bh-page .bh-header>a.bh-btn-outline{display:none}.bh-page .bh-kpi-value{font-size:22px}}
+</style><script src="/bh-shell.js" defer></script></head><body class="bh-page"><div id="app"></div><div id="detail"></div><div id="modal"></div><div id="toast" role="status"></div><script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script><script>
 let jobs=[];let pms=[];const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(v);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let role='Accounting',view='All invoices',query='',jobFilter='',selected=null,tab='review';let invoices=[];const statuses=['Intake','PM review','Correction needed','Ready for entry','Entered'];
 function legacySeed(){invoices=[
 {id:1,vendor:'Piedmont Concrete',number:'APP-007',type:'Pay application',job:jobs[0],pm:pms[0],amount:67500,received:'Oct 5',age:4,status:'Intake',contract:500000,changes:25000,earned:315000,retain:10,previous:216000,ledgerPrevious:225000,description:'Concrete foundations and slab on grade',checks:{},notes:[],audit:[]},
@@ -4476,44 +4537,261 @@ function liveBanner(){
 /* ---- By job: the previous desk's project view, put back --------------------- */
 const JOB_VIEWS = { 'Job view': 'commitments', 'Expected to bill': 'expected' };
 const HANDLED = 'Handled elsewhere';
-function draw(){
-  legacyDraw();
-  const navs0 = document.querySelector('.sidebar .navs');
-  if (navs0 && !document.getElementById('handlednav') && isAcctSeat()) {
-    const n = invoices.filter(x => x.hiddenWhy).length;
-    navs0.insertAdjacentHTML('beforeend', '<button id="handlednav" class="nav ' + (view === HANDLED ? 'active' : '') + '" onclick="setView(\'' + HANDLED + '\')">'
-      + HANDLED + '<b>' + n + '</b></button>');
+/* ---- the BH shell (claude/bh-ui-spec.md) -----------------------------------
+   Header, black side menu, KPI strip, a scrollable list on the left and the
+   selected item's summary on the right. The review drawer, modals, and every
+   intake / PM / entry action are unchanged: "Open review" opens the same drawer. */
+const AP_LOGO = 'data:image/png;base64,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';
+const STAGES = [['Intake', 'Accounting intake', 'Intake'], ['PM review', 'PM review', 'PM review'],
+                ['Correction', 'Corrections', 'Correction needed'], ['Ready for entry', 'Ready for entry', 'Ready for entry'],
+                ['Entered', 'Entered', 'Entered']];
+const OTHER_DESKS = [['Compliance Desk', 'https://compliance.baileyharris.com'], ['Project Information', 'https://projects.baileyharris.com'],
+                     ['Precon Desk', '/precon/'], ['Prequal & Sub Rating', '/prequal/']];
+let peekId = null;
+
+/* Columns asked for on 14 Oct. Mutated in place: the demo's sort, filter and
+   column-picker code all read gridColumns / defaultColumns. */
+gridColumns.splice(0, gridColumns.length,
+  { key: 'vendor', label: 'Vendor / Inv', type: 'text', width: 230 },
+  { key: 'job', label: 'Job # / Name', type: 'text', width: 210 },
+  { key: 'commitment', label: 'PO/Sub #', type: 'text', width: 120 },
+  { key: 'type', label: 'Type', type: 'choice', width: 80 },
+  { key: 'amount', label: 'Amount', type: 'number', width: 120 },
+  { key: 'dueDate', label: 'Due Date', type: 'date', width: 110 },
+  { key: 'status', label: 'Status', type: 'choice', width: 170 },
+  { key: 'responsible', label: 'Assigned', type: 'text', width: 170 },
+  { key: 'age', label: 'Age', type: 'number', width: 80 },
+  { key: 'pm', label: 'Reviewer', type: 'text', width: 150 },
+  { key: 'number', label: 'Inv #', type: 'text', width: 120 },
+  { key: 'description', label: 'Description', type: 'text', width: 220 },
+  { key: 'invoiceDate', label: 'Inv Date', type: 'date', width: 110 },
+  { key: 'costCode', label: 'Cost Code', type: 'text', width: 160 },
+  { key: 'reference', label: 'CE Voucher / Reference', type: 'text', width: 170 },
+  { key: 'waiting', label: 'In stage', type: 'number', width: 100 },
+  { key: 'receivedDate', label: 'Received', type: 'date', width: 110 });
+defaultColumns.splice(0, defaultColumns.length, 'vendor', 'job', 'commitment', 'type', 'amount', 'dueDate', 'status', 'responsible', 'age', 'pm');
+visibleColumns = [...defaultColumns];
+sortColumn = 'age'; sortDirection = 'desc';
+
+const ageMinutes = i => Math.max(0, Math.floor((Date.now() - i.receivedAt) / 60000));
+const typeCode = i => i.type === 'Pay application' ? 'PR' : 'INV';
+function columnValue(i, key){
+  if (key === 'waiting') return waitingMinutes(i);
+  if (key === 'age') return ageMinutes(i);
+  if (key === 'type') return typeCode(i);
+  if (key === 'responsible') return nextOwner(i);
+  if (key === 'vendor') return i.vendor;
+  if (key === 'job') return (i.jobNumber || '') + ' ' + (i.job || '');
+  if (key === 'reference') return i.reference || '';
+  return i[key] ?? '';
+}
+const fmtDay = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '—';
+const ageText = n => n < 1440 ? Math.floor(n / 60) + 'h' : Math.floor(n / 1440) + 'd';
+function statusChips(i){
+  let h = '<span class="bh-chip">' + esc(i.status === 'Intake' ? 'Intake' : i.status) + '</span>';
+  if (i.status === 'Intake' && intakeBlockingIssues(i).length) h += '<span class="bh-chip is-bad">Blocked</span>';
+  else if (['Intake', 'PM review'].includes(i.status) && reconIssues(i).length) h += '<span class="bh-chip is-warn">Check</span>';
+  if (duplicate(i)) h += '<span class="bh-chip is-warn">Possible duplicate</span>';
+  return h;
+}
+function apCell(i, key){
+  switch (key) {
+    case 'vendor': {
+      const code = i.c && i.c.ce_code ? i.c.ce_code : '';
+      const sub = [code, i.number ? '#' + i.number : ''].filter(Boolean).join(' · ');
+      return '<button class="ap-open" onclick="event.stopPropagation();openDetail(' + i.id + ')">' + esc(i.vendor) + '</button>' + (sub ? '<span class="ap-sub">' + esc(sub) + '</span>' : '');
+    }
+    case 'job': return i.jobNumber ? esc(i.jobNumber) + '<span class="ap-sub">' + esc(i.job) + '</span>' : '<span class="ap-sub">Not assigned</span>';
+    case 'commitment': return esc(i.commitment || '—');
+    case 'type': return '<span class="bh-chip">' + typeCode(i) + '</span>';
+    case 'amount': return i.amount ? money(i.amount) : '—';
+    case 'dueDate': case 'invoiceDate': case 'receivedDate': return fmtDay(i[key]);
+    case 'status': return statusChips(i);
+    case 'responsible': return esc(nextOwner(i)) + '<span class="ap-sub">' + esc(nextAction(i)) + '</span>';
+    case 'age': return ageText(ageMinutes(i));
+    case 'waiting': return i.status === 'Entered' ? '—' : duration(waitingMinutes(i));
+    case 'pm': return esc(i.pm || 'Unassigned');
+    case 'reference': return esc(i.reference || 'Not entered');
+    default: return esc(columnValue(i, key));
   }
-  if (view === HANDLED) { drawHandled(); return; }
-  const navs = document.querySelector('.sidebar .navs');
-  if (navs && !document.getElementById('byjob')) navs.insertAdjacentHTML('afterend',
-    '<div id="byjob"><div class="eyebrow" style="margin-top:18px">By job</div><nav class="navs" aria-label="By job">'
-    + Object.keys(JOB_VIEWS).map(v => '<button class="nav ' + (v === view ? 'active' : '') + '" onclick="setView(\'' + v + '\')">' + v + '</button>').join('')
-    + '</nav></div>');
-  if (!JOB_VIEWS[view]) return;
-  const main = document.querySelector('main'); if (!main) return;
-  main.innerHTML = '<div class="heading"><div><div class="eyebrow">By job</div><h1>' + esc(view) + '</h1><p class="muted">'
-    + (view === 'Job view'
-        ? 'Commitments for a project or PM: compliance, Procore and ComputerEase contract, billed to date, retainage terms, and the pay app check for each subcontractor.'
-        : 'Who can still bill this cycle, how much, and who has not sent an application yet.')
-    + '</p></div></div><div class="demo">' + liveBanner() + '</div><div id="jobview"></div>';
-  try {
-    window.JobView.mount(document.getElementById('jobview'), JOB_VIEWS[view],
-      { cm: LIVE.cMeta, expected: LIVE.expected, ceInv: LIVE.ceInv, me: LIVE.me, queue: LIVE.queue });
-  } catch (e) { document.getElementById('jobview').innerHTML = '<div class="alert">Job view could not load: ' + esc(e.message) + '</div>'; }
+}
+function apTable(rows){
+  const cols = gridColumns.filter(c => visibleColumns.includes(c.key));
+  const num = k => ['amount', 'age', 'waiting'].includes(k) ? ' num' : '';
+  return '<table class="bh-table"><thead><tr>' + cols.map(c => '<th scope="col" class="' + num(c.key) + '" aria-sort="'
+      + (sortColumn === c.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none') + '"><div class="ap-th">'
+      + '<button onclick="sortGrid(\'' + c.key + '\')" title="Sort by ' + esc(c.label) + '">' + c.label + ' ' + (sortColumn === c.key ? (sortDirection === 'asc' ? '▲' : '▼') : '↕') + '</button>'
+      + '<button class="ap-filter ' + (columnFilters[c.key] ? 'on' : '') + '" onclick="openColumnFilter(\'' + c.key + '\')" aria-label="Filter ' + esc(c.label) + '">' + (columnFilters[c.key] ? 'Filtered' : 'Filter') + '</button>'
+      + '</div></th>').join('') + '</tr></thead><tbody>'
+    + (rows.map(i => '<tr data-id="' + i.id + '" class="' + (i.id === peekId ? 'is-selected' : '') + '" onclick="peek(' + i.id + ')" ondblclick="openDetail(' + i.id + ')">'
+        + cols.map(c => '<td class="' + num(c.key).trim() + '">' + apCell(i, c.key) + '</td>').join('') + '</tr>').join('')
+       || '<tr><td colspan="' + cols.length + '"><div class="ap-empty">No invoices match this queue and its filters.' + (hasFilters() ? ' <button class="bh-btn-outline" onclick="clearGridFilters()">Clear filters</button>' : '') + '</div></td></tr>')
+    + '</tbody></table>';
+}
+function peek(id){
+  peekId = id;
+  document.querySelectorAll('#rows tr[data-id]').forEach(tr => tr.classList.toggle('is-selected', Number(tr.dataset.id) === id));
+  const el = document.getElementById('peek'); if (el) el.innerHTML = peekHTML(invoices.find(x => x.id === id));
+}
+function peekHTML(i){
+  if (!i) return '<div class="bh-panel"><div class="ap-peek-body"><p class="bh-caption" style="padding-top:16px">Pick a row to see its summary here.</p></div></div>';
+  const pay = i.type === 'Pay application';
+  const kv = (l, v) => '<div class="ap-kv"><span>' + l + '</span><strong>' + v + '</strong></div>';
+  const comp = i.compliance === 'Yes' ? '<span class="bh-chip is-ok">Compliant</span>'
+             : i.compliance ? '<span class="bh-chip is-bad">Not compliant</span>' : '<span class="bh-chip">No record</span>';
+  const flags = reconIssues(i);
+  const want = pay && i.ledgerPrevious != null && i.earned != null && typeof i.retAt === 'function' ? cents(i.earned - (cents(i.retAt(i.earned)) ?? i.retainHeld ?? 0) - i.ledgerPrevious) : null;
+  return '<div class="bh-panel"><div class="ap-peek-head"><div class="bh-label">' + (pay ? 'Pay application' : 'Invoice') + (i.number ? ' · ' + esc(i.number) : '') + '</div>'
+    + '<div class="ap-name">' + esc(i.vendor) + '</div><div class="bh-caption">' + esc([i.commitment, i.jobNumber, i.c && i.c.contract_form].filter(Boolean).join(' · ') || 'No commitment or job yet') + '</div></div>'
+    + '<div class="ap-peek-body">'
+    + (pay ? kv('Previous payments (CE ledger)', i.ledgerPrevious == null ? '—' : money(i.ledgerPrevious))
+           + kv('Current payment due (submitted)', money(i.amount))
+           + (want != null ? kv('Due on CE previous certified', money(Math.max(0, want))) : '')
+           + kv('Retainage held', i.retainHeld == null ? '—' : money(i.retainHeld))
+           + kv('Billy compliance', comp)
+           : kv('Amount', i.amount ? money(i.amount) : '—') + kv('Invoice date', fmtDay(i.invoiceDate)) + kv('Due date', fmtDay(i.dueDate))
+           + kv('Cost code', esc(i.costCode || '—')))
+    + kv('Status', statusChips(i)) + kv('Assigned', esc(nextOwner(i))) + kv('Reviewer', esc(i.pm || 'Unassigned')) + kv('Age', ageText(ageMinutes(i)))
+    + (flags.length ? '<ul class="ap-flags">' + flags.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '')
+    + '<div class="ap-actions"><button class="bh-btn" onclick="openDetail(' + i.id + ')">Open review</button>'
+    + (i.messageLink ? '<a class="bh-btn-outline" href="' + esc(i.messageLink) + '" target="_blank" rel="noopener">Open email</a>' : '<span></span>') + '</div>'
+    + '<div class="ap-activity"><span class="bh-label">Activity</span>' + (i.audit || []).slice(-3).reverse().map(a => '<p>' + esc(a.action) + (a.time ? ' · ' + esc(a.time) : '') + '</p>').join('') + '</div>'
+    + '</div></div>';
+}
+function apKpis(scoped){
+  const n = s => scoped.filter(i => i.status === s);
+  const inRev = n('PM review');
+  const oldest = inRev.length ? Math.max(...inRev.map(waitingMinutes)) : 0;
+  const blocked = scoped.filter(i => (i.status === 'Intake' && intakeBlockingIssues(i).length) || i.status === 'Correction needed').length;
+  const k = (l, v, cls) => '<div class="bh-kpi"><div class="bh-label">' + l + '</div><div class="bh-kpi-value' + (cls ? ' ' + cls : '') + '">' + v + '</div></div>';
+  return '<div class="bh-kpis">'
+    + (role === 'Accounting' ? k('Awaiting intake', n('Intake').length) : '')
+    + k(role === 'Accounting' ? 'Awaiting reviewers' : 'Awaiting your review', inRev.length)
+    + k('Oldest in review', inRev.length ? ageText(oldest).replace('d', ' days').replace('h', ' hours') : '—')
+    + k('In review', money(inRev.reduce((t, i) => t + (i.amount || 0), 0)))
+    + k('Blocked', blocked, blocked ? 'is-bad' : '') + '</div>';
+}
+function asOfText(){
+  const a = asOfs(), t = [a.commitments, a.expected].filter(Boolean).map(x => Date.parse(x)).filter(x => !isNaN(x));
+  return t.length ? new Date(Math.min(...t)).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Loading';
+}
+function draw(){
+  const app = document.getElementById('app'); if (!app) return;
+  document.body.classList.add('bh-page');
+  const acct = role === 'Accounting';
+  const scoped = summaryRows();
+  const count = s => scoped.filter(i => i.status === s).length;
+  const initials = String((LIVE.me || {}).name || '').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+  const side = (label, v, n) => '<button class="bh-side-item" ' + (view === v ? 'aria-current="page"' : '') + ' onclick="setView(\'' + v + '\')">' + label
+      + (n != null ? '<span class="bh-count">' + n + '</span>' : '') + '</button>';
+  const nav = '<nav class="bh-side" aria-label="AP Desk sections"><button class="bh-side-close" aria-label="Close menu">✕</button>'
+    + '<div class="bh-side-h">Stages</div>' + STAGES.map(([l, v, s]) => side(l, v, count(s))).join('')
+    + (acct ? side(HANDLED, HANDLED, invoices.filter(x => x.hiddenWhy).length) : '')
+    + side('All invoices', 'All invoices', scoped.length)
+    + '<div class="bh-side-divider"></div><div class="bh-side-h">By job</div>' + Object.keys(JOB_VIEWS).map(v => side(v, v)).join('')
+    + '<div class="bh-side-divider"></div><div class="bh-side-h">Other desks</div>'
+    + OTHER_DESKS.map(([l, h]) => '<a class="bh-side-item" href="' + h + '">' + esc(l) + '</a>').join('') + '</nav>';
+  let body;
+  if (JOB_VIEWS[view]) body = '<div class="ap-section"><h2 class="bh-section-title">' + esc(view) + '</h2><p class="bh-caption">'
+      + (view === 'Job view' ? 'Commitments for a project or PM: compliance, Procore and ComputerEase contract, billed to date, retainage terms, and the pay app check for each trade partner.'
+                             : 'Who can still bill this cycle, how much, and who has not sent an application yet.')
+      + '</p><div class="ap-banner">' + liveBanner() + '</div><div id="jobview"></div></div>';
+  else if (view === HANDLED) {
+    const rows = invoices.filter(x => x.hiddenWhy).sort((a, b) => b.receivedAt - a.receivedAt);
+    body = '<div class="ap-section"><h2 class="bh-section-title">' + HANDLED + '</h2><p class="bh-caption">Kept off the queues: the email is in payables@ Deleted Items, ComputerEase already holds it, it was marked email only, or it was archived as a duplicate. To put one back, set its Status to received in the AP Pay Applications list.</p>'
+      + '<div class="ap-scroll" style="margin-top:12px"><table class="bh-table" style="min-width:0"><thead><tr><th>Vendor</th><th>Description</th><th>Received</th><th>Why</th><th></th></tr></thead><tbody>'
+      + (rows.map(x => '<tr><td>' + esc(x.vendor) + '</td><td>' + esc(x.description) + '</td><td>' + esc(fmtDay(x.receivedDate)) + '</td><td>' + esc(x.hiddenWhy)
+          + '</td><td><button class="bh-btn-outline" onclick="openDetail(' + x.id + ')">Open</button></td></tr>').join('') || '<tr><td colspan="5"><div class="ap-empty">Nothing here.</div></td></tr>')
+      + '</tbody></table></div></div>';
+  } else {
+    const rows = currentRows();
+    if (!rows.some(r => r.id === peekId)) peekId = rows.length ? rows[0].id : null;
+    body = '<div class="ap-work"><section class="ap-list" aria-label="' + esc(view) + '">'
+      + '<div class="ap-toolbar"><div class="ap-field grow"><label class="bh-label" for="apSearch">Search</label><input id="apSearch" aria-label="Search invoices" class="bh-input" placeholder="Trade partner, job or commitment" value="' + esc(query) + '" oninput="setSearch(this.value)"></div>'
+      + '<div class="ap-field"><label class="bh-label" for="role">View as</label><select id="role" class="bh-select" onchange="setRole(this.value)">' + roleOptions().map(r => '<option ' + (r === role ? 'selected' : '') + '>' + esc(r) + '</option>').join('') + '</select></div>'
+      + '<div class="ap-spacer"></div><button class="bh-btn-outline" onclick="exportRows()">Export</button>'
+      + (acct ? '<button class="bh-btn" onclick="logInvoice()">Log an invoice</button>' : '') + '</div>'
+      + (hasFilters() ? '<div class="ap-filters">' + filterChips().replace(/<\/?div[^>]*>/g, '').replace(/<strong>[^<]*<\/strong>/, '') + '<button onclick="clearGridFilters()">Clear filters</button></div>' : '')
+      + '<div class="ap-count"><span class="bh-caption">' + rows.length + ' ' + esc(view === 'All invoices' ? 'invoices' : view.toLowerCase()) + '</span><button class="ap-link" onclick="openColumns()">Columns</button></div>'
+      + '<div class="ap-scroll" id="rows">' + apTable(rows) + '</div>'
+      + '<div class="ap-note bh-caption ap-banner">' + liveBanner() + '</div>'
+      + '<p class="bh-caption">Approval does not mean paid. Workflow state is saved to the AP Pay Applications list as the signed-in user; nothing is written to ComputerEase.</p>'
+      + '</section><aside class="ap-peek" id="peek" aria-label="Selected item">' + peekHTML(invoices.find(x => x.id === peekId)) + '</aside></div>';
+  }
+  app.innerHTML = '<div class="bh-topbar"></div><header class="bh-header">'
+    + '<button class="bh-menu-btn" aria-label="Open menu" aria-expanded="false">☰</button>'
+    + '<a href="/" aria-label="All desks"><img class="bh-logo" src="' + AP_LOGO + '" alt="Bailey-Harris"></a>'
+    + '<div><h1 class="bh-desk-name">AP Desk</h1><div class="bh-desk-sub">Pay applications and invoices, from intake through PM review to entry</div></div>'
+    + '<div class="bh-header-spacer"></div><div class="bh-asof"><span class="bh-label">Data as of</span><strong>' + esc(asOfText()) + '</strong></div>'
+    + '<a class="bh-btn-outline" href="/">All desks</a><div class="bh-avatar" title="' + esc((LIVE.me || {}).name || '') + '">' + esc(initials || '–') + '</div></header>'
+    + '<div class="bh-layout">' + nav + '<button class="bh-scrim" aria-label="Close menu"></button><main class="bh-main">' + apKpis(scoped) + body + '</main></div>';
+  if (JOB_VIEWS[view]) {
+    try { window.JobView.mount(document.getElementById('jobview'), JOB_VIEWS[view], { cm: LIVE.cMeta, expected: LIVE.expected, ceInv: LIVE.ceInv, me: LIVE.me, queue: LIVE.queue }); }
+    catch (e) { document.getElementById('jobview').innerHTML = '<div class="alert">Job view could not load: ' + esc(e.message) + '</div>'; }
+  }
+}
+function drawHandled(){ view = HANDLED; draw(); }
+
+/* ---- Export: the rows on screen, as shown --------------------------------- */
+function exportRows(){
+  const rows = currentRows(); if (!rows.length) { toast('Nothing to export.'); return; }
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const head = ['Vendor', 'CE vendor code', 'Invoice / pay request #', 'Job #', 'Job name', 'PO/Sub #', 'Type', 'Amount', 'Due date', 'Status', 'Assigned', 'Age (days)', 'Reviewer', 'Received'];
+  const body = rows.map(i => [i.vendor, i.c && i.c.ce_code || '', i.number, i.jobNumber, i.job, i.commitment, typeCode(i), i.amount || '', i.dueDate || '', i.status, nextOwner(i),
+                              Math.floor(ageMinutes(i) / 1440), i.pm, i.receivedDate]);
+  const csv = [head, ...body].map(r => r.map(q).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'ap-desk-' + view.toLowerCase().replace(/\s+/g, '-') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Exported ' + rows.length + ' rows');
 }
 
-function drawHandled(){
-  const main = document.querySelector('main'); if (!main) return;
-  const rows = invoices.filter(x => x.hiddenWhy).sort((a, b) => b.receivedAt - a.receivedAt);
-  main.innerHTML = '<div class="heading"><div><div class="eyebrow">Invoice workflow</div><h1>' + HANDLED + '</h1><p class="muted">'
-    + 'Kept off the queues: the email is in payables@ Deleted Items, ComputerEase already holds it, it was marked email only, or it was archived as a duplicate. '
-    + 'Open one to see it; to put it back on the desk, set its Status to received in the AP Pay Applications list.</p></div></div>'
-    + '<div class="demo">' + liveBanner() + '</div><div class="card"><h3>' + rows.length + ' items</h3><table><thead><tr><th>Vendor</th><th>Description</th><th>Received</th><th>Why</th><th></th></tr></thead><tbody>'
-    + rows.map(x => '<tr><td>' + esc(x.vendor) + '</td><td>' + esc(x.description) + '</td><td>' + esc(x.receivedDate) + '</td><td>' + esc(x.hiddenWhy)
-        + '</td><td><button onclick="openDetail(' + x.id + ')">Open</button></td></tr>').join('')
-    + '</tbody></table></div>';
+/* ---- Log an invoice: one that did not come through payables@ -------------- */
+function logInvoice(){
+  if (role !== 'Accounting') return;
+  const f = (id, label, type, extra) => '<label style="display:block;margin:10px 0 4px">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" style="width:100%"' + (extra || '') + '>';
+  modal('<h2>Log an invoice</h2><p class="muted">For an invoice that did not arrive in payables@. It goes to Accounting intake like any other; nothing is entered in CE.</p>'
+    + '<label style="display:block;margin:10px 0 4px">Type</label><select id="liType" style="width:100%"><option value="invoice">Invoice</option><option value="pay app">Pay application</option></select>'
+    + f('liVendor', 'Vendor') + f('liNumber', 'Invoice / pay request #')
+    + '<label style="display:block;margin:10px 0 4px">Job</label><select id="liJob" style="width:100%">' + jobOptions('') + '</select>'
+    + f('liSub', 'PO/Sub # (optional)', 'text', ' list="liCommits"') + '<datalist id="liCommits">' + commitOptions('') + '</datalist>'
+    + f('liAmount', 'Amount', 'number', ' step="0.01"') + f('liDate', 'Invoice date', 'date') + f('liDue', 'Due date', 'date')
+    + f('liDesc', 'Description') + '<label style="display:block;margin:10px 0 4px">PDF (optional)</label><input id="liPdf" type="file" accept="application/pdf">'
+    + '<div class="actions"><button class="primary" id="liSave" onclick="saveLoggedInvoice()">Add to intake</button><button onclick="closeModal()">Cancel</button></div>');
 }
+async function saveLoggedInvoice(){
+  const v = id => (document.getElementById(id) || {}).value || '';
+  const vendor = v('liVendor').trim(), amount = v('liAmount');
+  if (!vendor) { toast('Enter the vendor.'); return; }
+  if (amount === '' || isNaN(Number(amount))) { toast('Enter the amount.'); return; }
+  const q = LIVE.queue; if (!q || !q.siteId) { toast('The queue list is not loaded.'); return; }
+  const btn = document.getElementById('liSave'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const tok = await token(); if (!tok) return;
+    const now = new Date().toISOString(), who = LIVE.me.name, sub = v('liSub').trim().toUpperCase();
+    const fields = { Title: 'manual|' + Date.now(), Status: 'received', DocType: v('liType'), Vendor: vendor, PayRequest: v('liNumber').trim(),
+      JobNumber: v('liJob'), Subcontract: sub, BalanceDue: Number(amount), Description: v('liDesc').trim() || (v('liType') === 'invoice' ? 'Invoice' : 'Pay application'),
+      ReceivedAt: now, ParseNote: 'Logged by hand on the desk by ' + who + '.',
+      StatusLog: JSON.stringify([{ s: 'received', at: now, by: who, note: 'Logged on the desk (did not arrive in payables@).' }]) };
+    if (v('liDate')) fields.InvoiceDate = v('liDate') + 'T00:00:00Z';
+    if (v('liDue')) fields.DueDate = v('liDue') + 'T00:00:00Z';
+    if (sub && LIVE.byNum[sub] && !fields.JobNumber) fields.JobNumber = LIVE.byNum[sub].project_number;
+    const file = (document.getElementById('liPdf') || {}).files; const pdf = file && file[0];
+    if (pdf) {
+      const safe = s => String(s || '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80);
+      const path = 'payapps/' + safe(fields.JobNumber || 'unmatched') + '/manual/' + now.slice(0, 10) + '_' + safe(pdf.name);
+      const up = await fetch(GRAPH + '/sites/' + q.siteId + '/drive/root:/' + path.split('/').map(encodeURIComponent).join('/') + ':/content',
+                             { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/pdf' }, body: pdf });
+      if (!up.ok) { toast('PDF not uploaded (HTTP ' + up.status + '); the invoice was not added.'); return; }
+      fields.PdfPath = path;
+    }
+    const r = await fetch(GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId + '/items', { method: 'POST',
+      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) });
+    if (!r.ok) { let why = 'HTTP ' + r.status; try { why += ' ' + ((await r.json()).error.message || ''); } catch (_) {} toast('Not added: ' + why); return; }
+    const made = await r.json();
+    closeModal(); await reloadLive(); view = 'Accounting intake'; peekId = Number(made.id); draw(); toast('Added to Accounting intake');
+  } finally { const b = document.getElementById('liSave'); if (b) { b.disabled = false; b.textContent = 'Add to intake'; } }
+}
+
 async function boot(){
   document.getElementById('app').innerHTML = '<main style="padding:40px"><p class="muted">Signing in and loading live data…</p></main>';
   try {
