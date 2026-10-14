@@ -4812,6 +4812,7 @@ async function boot(){
     view = role === 'Accounting' ? 'All invoices' : 'PM review';
     if (/^#open\b/i.test(location.hash)) view = OPEN_VIEW;   /* the launcher's "Open invoices & pay apps" link */
     if (/^#review\b/i.test(location.hash)) view = 'PM review';   /* the launcher's "Approve invoices (n)" button */
+    if (/^#intake\b/i.test(location.hash)) view = 'Accounting intake';   /* the launcher's "Open AP Queue (n)" button */
     draw();
   } catch (e) {
     document.getElementById('app').innerHTML = '<main style="padding:40px"><h1>AP Desk</h1><div class="alert">' + esc(e.message || String(e)) + '</div><p class="muted">Contact itadmin@baileyharris.com.</p></main>';
