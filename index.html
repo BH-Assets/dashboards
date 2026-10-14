@@ -62,7 +62,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
 .greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
 .greet .nm{display:block;font-weight:800}
-.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:760px}
+.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:960px}
 .hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
 .acts{display:flex;gap:10px;flex-wrap:wrap}
 .acts a{min-height:44px}
@@ -737,33 +737,78 @@ function renderWeather(data){
 }
 
 /* ---------- quick actions ---------- */
-/* "Approve invoices (n)" appears only for a PM with items waiting on them in AP
-   Desk: Status "with PM" and AssignedApprover = the signed-in person, the same
-   rule AP Desk uses for its PM review queue. It sits after the second action,
-   before IT help, and opens AP Desk on PM review. */
-let apReviewCount = 0, lastActions = [];
+/* Two queue buttons, each shown only when its count is above zero:
+   - "Approve invoices (n)" for a PM: Status "with PM" and AssignedApprover = the
+     signed-in person, the same rule as AP Desk's PM review queue. Opens PM review.
+   - "Open AP Queue (n)" for Accounting (same test as AP Desk: the two named people
+     or an Accounting department): the Accounting intake queue, counted the way AP
+     Desk counts it. Opens Accounting intake.
+   Both sit after the second quick action, before IT help. */
+let apReviewCount = 0, apQueueCount = 0, lastActions = [];
 const AP_SITE = "/sites/APDesk", AP_LIST = "AP Pay Applications";
+const AP_ACCOUNTING_PEOPLE = ["tiffany.blackmon@baileyharris.com", "hdatb@baileyharris.com"];
+const AP_ACCOUNTING_DEPTS = ["accounting - executives", "accounting - personnel", "executive", "directors"];
+/* list Status -> AP Desk stage, copied from AP Desk (connector STATUS_IN) */
+const AP_STAGE = { "received":"Intake", "AP verified":"Intake", "not a pay app":"Intake",
+  "with PM":"PM review", "revise and resubmit":"Correction needed", "PM returned":"Correction needed",
+  "PM approved":"Ready for entry", "ready for entry":"Ready for entry", "approved as noted":"Ready for entry",
+  "approved and entered":"Entered", "duplicate archived":"Duplicate archived", "email only":"Duplicate archived",
+  "handled outside desk":"Duplicate archived" };
+const digitsOf = v => String(v == null ? "" : v).replace(/[^0-9]/g, "");
 
-async function loadApReview(email){
-  if (!email) return;
+async function apListRows(){
   const s = await graph("/sites/" + SP_HOST + ":" + AP_SITE + "?$select=id");
-  if (!(s.ok && s.body && s.body.id)){ log("ap review", "APDesk site HTTP " + s.status); return; }
+  if (!(s.ok && s.body && s.body.id)){ log("ap queue", "APDesk site HTTP " + s.status); return null; }
   let url = "/sites/" + s.body.id + "/lists/" + encodeURIComponent(AP_LIST) +
-            "/items?$expand=fields($select=Status,AssignedApprover)&$select=id&$top=500";
-  let n = 0, pages = 0;
-  while (url && pages < 10){
+    "/items?$expand=fields($select=Status,AssignedApprover,Title,OriginalTitle,Revision,Subcontract,PayRequest)&$select=id&$top=500";
+  const out = []; let pages = 0;
+  while (url && pages < 20){
     const r = await graph(url);
-    if (!r.ok || !r.body){ log("ap review", "list HTTP " + r.status); return; }
-    (r.body.value || []).forEach(x => {
-      const f = x.fields || {};
-      if (f.Status === "with PM" && String(f.AssignedApprover || "").trim().toLowerCase() === email) n++;
-    });
+    if (!r.ok || !r.body){ log("ap queue", "list HTTP " + r.status); return null; }
+    (r.body.value || []).forEach(x => out.push({ id: Number(x.id), f: x.fields || {} }));
     const next = r.body["@odata.nextLink"];
     url = next ? next.replace("https://graph.microsoft.com/v1.0", "") : null;
     pages++;
   }
-  apReviewCount = n;
-  log("ap review", n + " waiting on " + email);
+  return out;
+}
+
+/* Same steps as AP Desk: one record per document (latest revision), keep the
+   ones at intake, and drop those ComputerEase already holds. */
+async function apIntakeCount(rows, drives){
+  const groups = {};
+  rows.forEach(r => { const k = String(r.f.OriginalTitle || r.f.Title || "").trim(); (groups[k] = groups[k] || []).push(r); });
+  const heads = Object.values(groups).map(g => g.sort((a, b) =>
+    (Number(a.f.Revision || 1) - Number(b.f.Revision || 1)) || (a.id - b.id))[g.length - 1]);
+  const open = heads.filter(r => (AP_STAGE[r.f.Status] || "Intake") === "Intake");
+  const maybeHeld = open.filter(r => digitsOf(r.f.PayRequest) && String(r.f.Subcontract || "").trim());
+  let held = new Set();
+  if (maybeHeld.length && drives && drives.APData){
+    const f = await graphRaw("/drives/" + drives.APData + "/root:/ap_ce_invoices.json:/content");
+    if (f.ok){
+      try {
+        const ce = JSON.parse(f.text);
+        const full = ce && ce.subcontracts && ce.has_payment_data !== false && !(ce.filters && ce.filters.since);
+        if (full) maybeHeld.forEach(r => {
+          const led = ce.subcontracts[String(r.f.Subcontract).trim().toUpperCase()];
+          const want = digitsOf(r.f.PayRequest);
+          if (led && (led.invoices || []).some(x => digitsOf(x.number) === want)) held.add(r);
+        });
+      } catch(_) { log("ap queue", "ap_ce_invoices.json parse failed"); }
+    } else log("ap queue", "ap_ce_invoices.json HTTP " + f.status);
+  }
+  return open.filter(r => !held.has(r)).length;
+}
+
+async function loadApQueues(email, dept, drives){
+  if (!email) return;
+  const rows = await apListRows();
+  if (!rows) return;
+  apReviewCount = rows.filter(r => r.f.Status === "with PM" &&
+    String(r.f.AssignedApprover || "").trim().toLowerCase() === email).length;
+  const acct = AP_ACCOUNTING_PEOPLE.includes(email) || AP_ACCOUNTING_DEPTS.includes(String(dept || "").trim().toLowerCase());
+  if (acct) apQueueCount = await apIntakeCount(rows, drives);
+  log("ap queue", apReviewCount + " waiting on " + email + (acct ? ", " + apQueueCount + " at Accounting intake" : ""));
   renderActions(lastActions);
 }
 
@@ -772,9 +817,11 @@ function renderActions(items){
   if (!host) return;
   lastActions = items || [];
   const ok = lastActions.map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
-  if (apReviewCount > 0)
-    ok.splice(Math.min(2, ok.length), 0, { name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
-  host.innerHTML = ok.slice(0, 4).map((a, i) =>
+  const queue = [];
+  if (apReviewCount > 0) queue.push({ name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
+  if (apQueueCount > 0)  queue.push({ name: "Open AP Queue (" + apQueueCount + ")", _u: safeUrl("/ap/#intake") });
+  ok.splice(Math.min(2, ok.length), 0, ...queue);
+  host.innerHTML = ok.slice(0, 5).map((a, i) =>
     '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
       (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(a.name) + '</a>').join("");
   host.parentElement.hidden = false;
@@ -1029,7 +1076,7 @@ async function main(){
   }
 
   /* job title and office under the name, from the profile User.Read already covers */
-  const me = await graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName");
+  const me = await graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
   if (me.ok && me.body){
     const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
     $("#acctrole").textContent = role;
@@ -1116,7 +1163,7 @@ async function main(){
   try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
   try {
     const email = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
-    await loadApReview(email);
+    await loadApQueues(email, me.body && me.body.department, drives);
   } catch(e){ log("ap review", "failed " + (e && e.message)); }
 
   /* ---- the desks ---- */
