@@ -8,482 +8,335 @@
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAicAAAGHCAYAAABrpPKuAAAACXBIWXMAAAsSAAALEgHS3X78AAANXElEQVR4nO3dT24cZ37G8Z8cIZnASMic4CV6l5WI5ABkTmDlBOJydlGQA5hez2I0y6yGzi6rUCdwc5+FdIEGa5dggIkITOJMPGNl0U3rH22opVa/T1V9PkDDNAywH0Cw8fVb1dX3Xr58WQAAKT7rPQAA4HXiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIcr/3gBSL1o6r6knvHezE8sf+fjUMb/8zAixae1JVx713BLhYDcNF7xH75M/+B7P7s/8p4uSVw6o66T2CnXj7z/HL2x8Wrd3+OFTV9R2vZ6thePFp53GH4/LvX9W7YT0H/uzXlr0HJBEnzFXbvN75j+KitZuqevba69qJC8D+iBN410Gto+WHcNmcuFzVOlaWVbV0wgLwaYgTeH+3wfIPVVWL1p7XJlRKrADsjDiBD/dg87qNladVdVnrULnuuAtg1MQJ7M4Xm9ftqcqTqrp0ogKwHc85gU/jQVX9uqr+a9HaxaK10857AEZDnMCn96iqvlm0dr1o7fGitcPegwCSiRPYn1ZVv6yq60Vr5yIF4G7iBPbvoNYPhhMpAHcQJ9DPG5HSeQtADHEC/R1U1Zebe1Ie9h4D0Js4gRytqv5t0dqlSz3AnIkTyPNFrS/1OEUBZkmcQKaDWp+iXDhFAeZGnEC2R1W1XLR23HsIwL6IE8j3oNaBctp7CMA+iBMYh4NaP2X2rPcQgE9NnMC4/FqgAFMnTmB8BAowaeIExkmgAJMlTmC8BAowSeIExu2JjxkDUyNOYNwOav0xYw9qAyZDnMD4HVTVZe8RALsiTmAaThatPe49AmAXxAlMx/mitaPeIwA+ljiB6TioqoveIwA+ljiBaTnxHTzA2IkTmJ6L3gMAPoY4gelpHs4GjJk4gWk67z0A4EOJE5im5t4TYKzECUyX554AoyROYLq+8Fh7YIzECUzbWe8BANsSJzBtD3sPANiWOIFpO3FpBxgbcQLTd9p7AMA2xAlM32nvAQDbECcwfce9BwBsQ5zA9J30HgCwDXECM7BozekJMBriBObBJ3aA0RAnMA+nvQcAvK/7vQcQ56veA2r9f/nHr/38oOMWAPZMnPCG1TCc995wl809E0e1PgE4LcGyLfecAKMhThiF1TA8q6pnVXVZVbVo7ajW3xvzuKoOug0bD/ecAKPhnhNGaTUM16thOF8Nw2FV/WNV3fTeBMBuiBNGbzUMT2p9yeeq8xQAdsBlHSZhNQwvqup00dpFVT3qPOe9fH7/T6p9/rO9vNeff/bZ4W//+m9O9/JmH+Bv/+ovDr/9/vud/b7f/P67+s3//t/Ofh+wX+KESVkNw9nmfpT4p6K2z39W//LdfuKk1jcQf7OvN9vWP//+T3f6+35x+Gf1r//x253+TmB/XNZhih6We1AARkucMDmbSzznvXcA8GHECVN1UU5PAEZJnDBJm9OTy947ANieOGHKlr0HALA9ccKUXfceAMD2xAmTtRqGZe8NAGxPnAAAUcQJABBFnAAAUcQJk7Vo7bT3BgC2J06YsqPeAwDYnjhhyk57DwBge+KESVq0dljrLwAEYGTECVP1uKoOeo8AYHvihMlZtHZU6zgBYITu9x4Au7S5nHNZTk0Yp9NFa+e9R+zZUe8B5BEnTMYmTJZV9aDzFPhQJ5sXzJrLOkzCorXjEiYAk+DkhFHbnJY8rqove28BYDfECaO0aO1hrT8q/Kj3FgB2S5wQb3M6clzrh6rd/tUNrwATJU54w6K1Ze8NrzmqqtZ7BAD7JU54m08KANCVT+sAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQ5X7vAcT5u94DtnC0eR1W1fHm59ZvDgC7IE54w2oYlr03fIxFa0e1DpWHm9dB10EAbE2cMCmrYbiuquuquqyqWrR2VlVnVXXSaxMA23HPCZO2GoaL1TCcVtXfV9XQeQ4A70GcMAurYbis9eWep723APDTXNZhNlbD8KKqHi5au6iqR53nwF2+Wg3Dee8R+7RobVkuu/IWJyfMzmoYzsoJCkAsccJcnZV7UAAiiRNmaXOJ57z3DgDeJU6YrdUwXJTTE4A44oS5u+w9AIA3iRPmTpwAhBEnzNrYH9cPMEXiBKpueg8A4BVxAlXPeg8A4BVxAgBEEScAQBRxAusvBAQghDiBqoPeAwB4xbcSM2uL1k57vff//PH7ujq41+vt73Ry8/Kqx/v++1/ee/Df9+pwV7/vP7/7w65+FdCBOGHuHvZ64+vffVv/9Ltve739nVbDcNrjfX/e2rKqTnq8N5DHZR3mrlucAHA3ccJsLVo7q6rWewcAbxInzNKitcOqetJ7BwDvEifM1WX5lA5AJHHC7Cxauyg3XwLE8mkdZmNzKeeyhAlANCcnzMLm5tfrEiY/pcszTgDe5uSEydqclDysqvPyqRyA0RAnTMqiteNaf1fOw6r6ovOcsXnRewBAlTjhLT0f576lo82rah0jh+WSzcd61nsAQJU44V3f9B5AN9e9BwBUuSEWeOW69wCAKnECbKyGYdl7A0CVOAHWnvceAHBLnABVboYFgogToKpq2XsAwC1xAlStH+sPEEGcAM9Xw+ABbEAMcQJc9B4A8DpxArikA0QRJzBvT1fDcN17BMDrxAnM20XvAQBvEycwX8NqGFzSAeKIE5iv894DAO4iTmCehtUwXPQeAXAXcQLzdN57AMCPEScwP8+dmgDJxAnMz1nvAQA/RZzAvPxqNQy+gRiIJk5gPp6Xe02AERAnMA83VXXmC/6AMRAnMA+PXc4BxkKcwPT9yqdzgDERJzBtX6+G4XHvEQDbECcwXc9Xw3DWewTAtsQJTNPzqjrtPQLgQ4gTmJ6nVXXqkznAWN3vPQDYqa9dygHGzskJTMdXwgSYAicnMH63D1i77D0EYBecnMC4XVXVsTABpsTJCYzXV6thOO89AmDXxAmMz1V5HD0wYeIExuOm1lFy0XsIwKckTiDfTVU9qaonnl0CzIE4gWxfV9X5ahiuew8B2BdxAnluquqi1icl132nAOyfOIEcQ60v31y4fAPMmTiB/r6uqkvPKgFYEyfQx1WtL91cOiUBeJM4gf15WlWXVbV0LwnAjxMn8Ok8r6plrWPEJRuA9yROYHeuqupZvQoSl2sAPoA4gQ9zGyLXVfVsNQzLrmsAJkScwI+72vx1WVUvahMj7hcB+LTECXNxU+u4eN3ytZ+f1TpAXvhCPYC+7r18+bL3BgCAH3zWewAAwOvECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFH+H7ZG0O0BLkloAAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* ===== Bailey-Harris brand — red, cream, charcoal and black are chrome and
-   identity; green / amber / red are reserved for status in the data. ===== */
+/* ===== Bailey-Harris launcher, on the BH shell (claude/bh-ui-spec.md).
+   Red, black, slate, cream and light gray are chrome; green / amber / red
+   fills are status in the data and nothing else. Square corners, no shadows.
+   Tokens come from /bh-shell.css, linked after this block. ===== */
 :root{
-  color-scheme: light;
-  --paper:#f5f7fa; --surface:#ffffff; --surface-2:#faf9f7;
-  --ink:#211E1E; --muted:#5b6472; --faint:#8a919b;
-  --line:#E8E6E7; --line-soft:#F1EFF0;
-  --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D; --cream:#F2ECE1;
-  /* decorative only — the weather sun. Deliberately not --warn, which is a
-     status colour, and not --brand-red, which is identity. */
-  --sun:#F7A928;
-  --ok:#006100;   --ok-soft:#C6EFCE;
-  --warn:#9C6500; --warn-soft:#FFEB9C;
-  --crit:#9C0006; --crit-soft:#FFC7CE;
-  --shadow:0 1px 2px rgba(33,30,30,.06),0 8px 24px -16px rgba(33,30,30,.22);
-  --shadow-lift:0 2px 4px rgba(33,30,30,.07),0 14px 30px -18px rgba(33,30,30,.3);
+  --paper:#ffffff; --ink:#211E1E; --muted:#484B4D; --faint:#8a8d90;
+  --line:#E8E6E7; --gray:#E8E6E7; --cream:#F2ECE1;
+  --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D;
+  --sun:#F7A928; /* decorative only: the weather sun */
+  --ok:#006100; --ok-soft:#C6EFCE; --warn:#9C6500; --warn-soft:#FFEB9C; --crit:#9C0006; --crit-soft:#FFC7CE;
 }
 *{box-sizing:border-box}
 [hidden]:not([hidden="until-found"]){display:none!important}
-body{margin:0;background:var(--paper);color:var(--ink);
-  font-family:'Figtree',Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;
-  -webkit-font-smoothing:antialiased}
-h1,h2,h3{margin:0;font-family:'Figtree',Arial,Helvetica,sans-serif}
-.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
-a{color:var(--maroon)}
-:focus-visible{outline:2px solid var(--maroon);outline-offset:2px}
-.wrap{max-width:1280px;margin:0 auto;padding:0 22px}
-/* The rail floats rather than sitting in a grid column: the link sections keep
-   clear of it while it lasts and then run the full width, so the page does not
-   end with a tall empty gutter. */
-/* The rail floats rather than sitting in a grid column, and comes first in the
-   source so the sections after it keep clear while it lasts and then run the
-   full width — the page does not end with a tall empty gutter. */
-.cols{display:flow-root}
-.rail{float:right;width:322px;margin:0 0 22px 30px;display:flex;flex-direction:column;gap:16px}
-@media (max-width:1040px){
-  .cols{display:flex;flex-direction:column}
-  .cols > .main{order:1}
-  .rail{order:2;float:none;width:auto;margin:4px 0 22px;flex-direction:row;flex-wrap:wrap}
-  .rail > *{flex:1 1 300px}
-}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--bh-font,Figtree,Arial,sans-serif);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0}
+a{color:var(--ink)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 40px}
+.mono{font-weight:600;letter-spacing:.02em}
 
-/* ---- masthead ---- */
-.bh-topbar{height:6px;background:var(--brand-red);width:100%}
-header.bh-header{background:#fff;border-bottom:1px solid var(--line);
-  position:sticky;top:0;z-index:20}
-.masthead{display:flex;align-items:center;gap:18px;padding:11px 0 12px;flex-wrap:wrap}
-.bh-logo{height:56px;width:auto;flex:none}
-.bh-titles{min-width:0}
-.bh-title{color:var(--ink);font-size:20px;font-weight:800;letter-spacing:.045em;
-  text-transform:uppercase;line-height:1.15}
-.bh-sub{color:var(--muted);font-size:12.5px;margin-top:2px}
-.acct{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted)}
-.acct .who{font-weight:600;color:var(--ink)}
-
-/* ---- buttons: black and charcoal only ---- */
-.btn{appearance:none;font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:.01em;
-  background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:8px;
-  padding:10px 20px;cursor:pointer;text-decoration:none;display:inline-block}
-.btn:hover{background:var(--charcoal);border-color:var(--charcoal)}
-.btn.ghost{background:#fff;color:var(--charcoal);border:1px solid var(--charcoal)}
-.btn.ghost:hover{background:var(--charcoal);color:#fff}
-.btn.sm{padding:7px 14px;font-size:11.5px}
-
-main{padding:0 0 76px}
-
-/* ---- hero: photo band, date, clock, weather ---- */
-.hero{position:relative;overflow:hidden;background:var(--ink);margin-bottom:34px;
-  border-bottom:4px solid var(--brand-red)}
-.hero-bg{position:absolute;inset:0;background:url("hero.jpg") center 62% / cover no-repeat;
-  filter:saturate(.82)}
-.hero-scrim{position:absolute;inset:0;background:
-  linear-gradient(97deg,rgba(23,21,21,.95) 0%,rgba(23,21,21,.88) 38%,rgba(23,21,21,.52) 72%,rgba(23,21,21,.42) 100%)}
-.hero-dots{position:absolute;right:28px;bottom:26px;width:96px;height:44px;opacity:.38;
-  fill:#fff;pointer-events:none}
-.hero-inner{position:relative;padding:34px 22px 0;display:flex;gap:30px;
-  align-items:flex-start;flex-wrap:wrap}
-.hero-left{min-width:0;flex:1 1 380px}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;
-  font-size:10.5px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
-  color:#fff;background:var(--brand-red);padding:5px 11px 5px 9px;border-radius:3px}
-.eyebrow svg{width:11px;height:11px;fill:#fff;opacity:.85}
-.hero-greet{color:#fff;font-size:33px;font-weight:800;letter-spacing:.005em;
-  line-height:1.1;margin:15px 0 0}
-.hero-tag{color:rgba(255,255,255,.62);font-size:13.5px;margin-top:9px;max-width:46ch}
-.clock{display:flex;align-items:baseline;gap:9px;margin-top:17px}
-.clock .t{font:700 30px/1 "JetBrains Mono",monospace;color:#fff;font-variant-numeric:tabular-nums;
-  letter-spacing:-.01em}
-.clock .z{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(255,255,255,.55)}
-
-/* weather */
-.wx{flex:0 1 330px;min-width:270px;border:1px solid rgba(255,255,255,.17);border-radius:9px;
-  background:rgba(255,255,255,.07);backdrop-filter:blur(3px);padding:15px 17px 13px;color:#fff}
-.wx-top{display:flex;align-items:center;gap:14px}
-.wx-icon{width:48px;height:48px;flex:none;stroke:#fff;fill:none;stroke-width:1.7;
-  stroke-linecap:round;stroke-linejoin:round}
-.wx-icon .sun{fill:var(--sun);stroke:none}
-.wx-icon .drop{fill:rgba(255,255,255,.85);stroke:none}
-.wx-temp{font:700 34px/1 'Figtree',sans-serif;letter-spacing:-.02em}
-.wx-body{min-width:0}
-.wx-cond{font-size:13.5px;font-weight:700;letter-spacing:.01em}
-.wx-sub{font-size:11.5px;color:rgba(255,255,255,.66);margin-top:2px;
-  font-variant-numeric:tabular-nums}
-.wx-days{display:flex;gap:2px;margin-top:13px;padding-top:11px;
-  border-top:1px solid rgba(255,255,255,.14)}
-.wx-day{flex:1;text-align:center;min-width:0}
-.wx-day .d{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:rgba(255,255,255,.55);display:block}
-.wx-day svg{width:25px;height:25px;margin:5px auto 3px;display:block;stroke:#fff;fill:none;
-  stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.wx-day svg .sun{fill:var(--sun);stroke:none}
-.wx-day svg .drop{fill:rgba(255,255,255,.85);stroke:none}
-.wx-day .hi{font:600 12px/1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
-.wx-day .lo{font:400 12px/1 "JetBrains Mono",monospace;color:rgba(255,255,255,.5);
-  font-variant-numeric:tabular-nums;margin-left:4px}
-.wx-place{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(255,255,255,.42);margin-top:11px}
-
-/* search sits on the hero's bottom edge */
-.searchrow{position:relative;padding:26px 22px 26px;display:flex;gap:10px;
-  align-items:center;flex-wrap:wrap}
-.search{position:relative;flex:1 1 340px;max-width:460px}
-.search input{width:100%;font-family:inherit;font-size:14px;color:var(--ink);
-  background:#fff;border:1px solid transparent;border-radius:8px;
-  padding:12px 14px 12px 40px;box-shadow:0 10px 30px -14px rgba(0,0,0,.65)}
+/* ---- header ---- */
+header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.lh .wrap{display:flex;align-items:center;gap:18px;min-height:78px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.brand img{height:30px;width:auto;display:block}
+.brand .wm{font-size:12px;font-weight:800;letter-spacing:.04em;line-height:1.05;text-transform:uppercase}
+.brand .wm small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.06em}
+.lh .spacer{flex:1 1 20px}
+.search{position:relative;flex:0 1 300px;min-width:200px}
+.search input{width:100%;font:14px var(--bh-font,Figtree,sans-serif);color:var(--ink);background:#fff;
+  border:1px solid var(--charcoal);border-radius:0;min-height:40px;padding:0 34px 0 12px}
 .search input::placeholder{color:var(--faint)}
-.search input:focus{outline:2px solid var(--brand-red);outline-offset:1px}
-.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);
-  width:16px;height:16px;stroke:var(--faint);fill:none;stroke-width:2}
-.search kbd{position:absolute;right:11px;top:50%;transform:translateY(-50%);
-  font:600 10px/1 "JetBrains Mono",monospace;color:var(--faint);
-  border:1px solid var(--line);border-radius:4px;padding:4px 6px;background:var(--surface-2)}
+.search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 11px/1 var(--bh-font,sans-serif);
+  color:var(--faint);border:1px solid var(--line);padding:3px 6px;background:#fff}
 .search input:not(:placeholder-shown) ~ kbd{display:none}
+.acct{display:flex;align-items:center;gap:10px;min-width:0}
+.acct .av{width:36px;height:36px;flex:none;background:var(--charcoal);color:#fff;display:grid;place-items:center;
+  font-weight:700;font-size:13px}
+.acct .who{display:block;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap}
+.acct .role{display:block;font-size:12px;color:var(--muted);line-height:1.25;white-space:nowrap}
 
-/* ---- quick actions: a pill row on the hero, no section of its own ---- */
-.acts{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
-a.act{display:inline-flex;align-items:center;gap:7px;text-decoration:none;
-  font-size:12px;font-weight:700;letter-spacing:.01em;color:#fff;
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
-  border-radius:999px;padding:9px 15px;white-space:nowrap;
-  transition:background .14s ease,border-color .14s ease}
-a.act:hover{background:var(--brand-red);border-color:var(--brand-red)}
-a.act svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+/* ---- hero: The Laurel in red duotone ---- */
+.hero{position:relative;overflow:hidden;background:var(--brand-red);min-height:500px}
+.hero-photo{position:absolute;inset:0;background:url("hero.jpg") center 55% / cover no-repeat;
+  filter:grayscale(1) contrast(1.12) brightness(.95);mix-blend-mode:multiply}
+/* a red wash behind the greeting so black and white type both read */
+.hero-wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(33,30,30,.74) 0%,rgba(33,30,30,.5) 40%,rgba(33,30,30,.2) 75%,rgba(33,30,30,.12) 100%)}
+.hero-in{position:relative;padding:44px 40px 0;max-width:1280px;margin:0 auto;min-height:500px}
+.today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
+.greet .nm{display:block;font-weight:800}
+.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:600px}
+.hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.acts a{min-height:44px}
+.deco{position:absolute;right:40px;bottom:112px;display:flex;align-items:flex-start;gap:34px;pointer-events:none}
+.deco .dots{display:grid;grid-template-columns:repeat(4,22px);gap:10px}
+.deco .dots i{width:22px;height:22px;border-radius:50%;background:#fff;display:block}
+.deco .sq{width:106px;height:106px;background:#fff}
+.caption{position:absolute;right:16px;bottom:12px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
+
+/* ---- weather: one cell per office ---- */
+.wxstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-bottom:1px solid var(--line)}
+a.wxc{display:flex;align-items:center;gap:12px;padding:14px 22px;text-decoration:none;color:var(--ink);
+  border-right:1px solid var(--line);min-width:0}
+a.wxc:last-child{border-right:0}
+a.wxc:hover{background:var(--cream)}
+.wxc .pl{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.wxc .tp{display:block;font-size:22px;font-weight:700;line-height:1.1}
+.wxc .cd{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxc svg{width:30px;height:30px;flex:none;margin-left:auto;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wxc svg .sun{fill:var(--sun);stroke:none}
+.wxc svg .drop{fill:var(--charcoal);stroke:none}
+.wxc .txt{min-width:0}
+
+/* ---- pulse: active jobs and the team, under the weather ---- */
+.pulse{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;margin-top:40px;align-items:start}
+.pulse.one{grid-template-columns:1fr}
+.pstats{border-top:3px solid var(--ink);padding:20px 22px 22px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ptop{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.pbig{font-size:56px;font-weight:800;line-height:1;letter-spacing:-.01em}
+.pcap{font-size:13px;color:var(--muted);max-width:42ch;padding-bottom:4px}
+.pcap a{font-weight:700;text-decoration:none;white-space:nowrap}
+.pcap a:hover{color:var(--maroon)}
+.bars{margin-top:18px;display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:140px minmax(0,1fr) 44px;align-items:center;gap:12px;font-size:13px}
+.bar .lab{color:var(--muted)}
+.bar .trk{height:14px;background:var(--gray);position:relative}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:0 4px 4px 0;min-width:2px}
+.bar .val{text-align:right;font-weight:700}
+.pmini{display:flex;gap:28px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.pmini b{display:block;font-size:22px;color:var(--ink);font-weight:800;line-height:1.1}
+.pasof{font-size:11.5px;color:var(--faint);margin-top:12px}
+@media (max-width:960px){.pulse{grid-template-columns:1fr}}
+@media (max-width:640px){.pbig{font-size:44px}.bar{grid-template-columns:110px minmax(0,1fr) 36px}}
 
 /* ---- safety strip ---- */
-.safety{background:var(--cream);border-bottom:1px solid #e4dcc9;margin:-34px 0 30px}
-.safety .wrap{display:flex;align-items:center;gap:20px;padding:13px 22px;flex-wrap:wrap}
-.safety .big{font:800 27px/1 'Figtree',sans-serif;color:var(--maroon);
-  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.safety .lbl{font-size:10.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--charcoal);line-height:1.35;max-width:14ch}
-.safety .sep{width:1px;align-self:stretch;background:#e0d7c2;margin:0 4px}
-.safety .talk{font-size:13px;color:var(--ink)}
-.safety .talk b{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--charcoal);margin-bottom:2px}
+.safety{background:var(--cream);border-bottom:1px solid var(--line)}
+.safety .wrap{display:flex;align-items:center;gap:20px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.safety .big{font-size:26px;font-weight:800;color:var(--maroon);line-height:1}
+.safety .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal);max-width:16ch;line-height:1.3}
+.safety .sep{width:1px;align-self:stretch;background:#ddd3bf}
+.safety .talk{font-size:13px}
+.safety .talk b{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal)}
 .safety a{color:var(--maroon);font-weight:700;text-decoration:none}
-.safety a:hover{text-decoration:underline}
-.safety .stamp{margin-left:auto;font-size:11px;color:#9b917e}
+.safety .stamp{margin-left:auto;font-size:11px;color:#8f8573}
 
-/* ---- rail panels ---- */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;
-  box-shadow:var(--shadow);overflow:hidden}
-.panel > h2{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;
-  letter-spacing:.15em;text-transform:uppercase;color:var(--charcoal);
-  padding:13px 16px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
-.panel > h2::before{content:"";width:9px;height:9px;flex:none;background:var(--brand-red);
-  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
-.panel > h2 .n{margin-left:auto;font:600 10px/1 "JetBrains Mono",monospace;color:var(--faint)}
-.panel .all{display:block;padding:10px 16px;border-top:1px solid var(--line-soft);
-  font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--charcoal);text-decoration:none;background:var(--surface-2)}
-.panel .all:hover{color:var(--maroon)}
+main{padding:0}
+.banner{border-left:4px solid var(--charcoal);background:var(--cream);padding:12px 16px;font-size:13.5px;margin:24px 0 0}
+.banner b{display:block;margin-bottom:2px}
 
-/* newsletter: one issue, its sections underneath */
-.issue{display:block;padding:15px 16px 14px;text-decoration:none;color:inherit;
-  border-bottom:1px solid var(--line);background:var(--cream)}
-.issue:hover{background:#efe7d8}
-.issue .when{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--brand-red)}
-.issue .h{font-size:16px;font-weight:800;line-height:1.25;margin-top:4px;letter-spacing:.005em}
-.issue .x{color:var(--muted);font-size:12px;line-height:1.4;margin-top:4px}
-a.part{display:flex;align-items:center;gap:10px;padding:11px 16px;text-decoration:none;
-  color:inherit;border-bottom:1px solid var(--line-soft)}
-a.part:last-of-type{border-bottom:0}
-a.part:hover{background:var(--surface-2)}
-a.part .n{font-size:13px;font-weight:700;flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-a.part .go{flex:none;width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2}
-a.part:hover .go{stroke:var(--maroon)}
-
-.panel .sub{font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--faint);padding:9px 16px 7px;background:var(--surface-2);
-  border-bottom:1px solid var(--line-soft);border-top:1px solid var(--line-soft)}
-.panel .sub:first-of-type{border-top:0}
-.noneout{padding:11px 16px;font-size:12.5px;color:var(--faint);
-  border-bottom:1px solid var(--line-soft)}
-.hol{display:flex;align-items:baseline;gap:8px;padding:9px 16px;background:var(--cream);
-  border-bottom:1px solid var(--line-soft);font-size:12px}
-.hol b{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--maroon);flex:none}
-.hol .d{margin-left:auto;font-size:11px;color:var(--charcoal);flex:none}
-.person{display:flex;align-items:center;gap:11px;padding:10px 16px;
-  border-bottom:1px solid var(--line-soft)}
-.person:last-of-type{border-bottom:0}
-.person .av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
-  font:800 10.5px/1 'Figtree',sans-serif;color:#fff;background:var(--charcoal)}
-.person.m0 .av{background:var(--maroon)} .person.m2 .av{background:var(--ink)}
-.person .who{min-width:0;flex:1}
-.person .who{display:block}
-.person .nm{display:block;font-size:13px;font-weight:700;line-height:1.25;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.person .rl{display:block;font-size:11px;color:var(--muted);line-height:1.3;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.person .kind{flex:none;text-align:right}
-.person .kind .k{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--charcoal);background:var(--cream);border:1px solid var(--line);
-  border-radius:3px;padding:1px 4px;display:inline-block}
-.person .kind .k.now{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
-.person.away .av{background:var(--faint)}
-.person .kind .dt{display:block;font-size:10px;color:var(--faint);margin-top:3px}
-
-/* ---- weather: location picker + site rows ---- */
-.wx-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}
-.wx-head .lbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
-  color:rgba(255,255,255,.5)}
-.wx-head a.more{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.1em;
-  text-transform:uppercase;color:rgba(255,255,255,.72);text-decoration:none;
-  display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.wx-head a.more:hover{color:#fff}
-.wx-head a.more svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.4}
-.wx-head a.more + select{margin-left:10px}
-.wx-head select{margin-left:auto;font-family:inherit;font-size:11px;font-weight:700;color:#fff;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:5px;
-  padding:4px 7px;cursor:pointer;max-width:170px}
-.wx-head select option{color:var(--ink);background:#fff}
-
-/* ---- section headings ---- */
-.sec{margin:0 0 26px;display:flow-root}
-.sechead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.sechead h2{font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--charcoal);white-space:nowrap;display:flex;align-items:center;gap:9px}
-.sechead h2::before{content:"";width:11px;height:11px;flex:none;
-  background:var(--brand-red);
-  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
-.sechead .rule{flex:1;height:1px;background:var(--line)}
-.sechead .count{font:600 11px/1 "JetBrains Mono",monospace;color:var(--faint)}
+/* ---- section labels ---- */
+.sec{margin:44px 0 0}
+.sechead{display:flex;align-items:center;gap:16px;margin:0 0 22px}
+.sechead .blk{background:var(--brand-red);color:#fff;font-size:19px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+  padding:9px 18px;line-height:1.2;position:relative}
+/* the label block runs out to the left edge of the window, as on the canvas */
+.sechead .blk::before{content:"";position:absolute;top:0;bottom:0;right:100%;width:100vw;background:inherit}
+.sechead .blk.dark{background:var(--ink)}
+.sechead .rest{font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+.sechead .cap{font-size:13px;color:var(--muted)}
 
 /* ---- desk tiles ---- */
-.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));align-items:stretch}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
-  padding:17px;display:flex;flex-direction:column;min-width:0}
-.tile.locked{background:var(--surface-2)}
-.tilehead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-.tile h3{font-size:15.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
-.tile.locked h3{color:var(--muted)}
-.tilehead .tag{margin-left:auto;flex:none}
-.tile p{color:var(--muted);font-size:13.5px;margin:0 0 16px;flex:1}
-.tile .msg{font-size:12.5px;margin:0 0 16px}
-.stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:6px;
-  overflow:hidden;margin-bottom:16px}
-.stat{flex:1 1 100px;padding:10px 13px;border-right:1px solid var(--line);background:var(--surface-2)}
-.stat:last-child{border-right:0}
-.stat .k{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--muted);display:block;margin-bottom:5px}
-.stat .v{font:600 17px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.tiles{display:grid;gap:22px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tile{border-top:3px solid var(--ink);padding:22px 22px 18px;display:flex;flex-direction:column;min-width:0;background:#fff}
+.tile.locked{background:var(--gray);border-top-color:var(--charcoal)}
+.tile h3{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tile h3::before{content:"";width:11px;height:11px;flex:none;background:var(--brand-red)}
+.tile.locked h3::before{background:var(--charcoal)}
+.tile .big{font-size:40px;font-weight:800;line-height:1.1;margin:12px 0 8px;letter-spacing:-.01em}
+.tile.locked .big{color:var(--charcoal);font-size:34px}
+.tile .big .bh-chip{font-size:13px;vertical-align:middle}
+.tile p{margin:0 0 18px;color:var(--muted);font-size:13.5px;line-height:1.45}
+.tile .msg{flex:0;font-size:12.5px;margin-top:-8px}
+.tile .sublinks{margin:-6px 0 16px;display:grid;gap:6px}
+.tile .sublinks a{font-size:13px;font-weight:700;text-decoration:none}
+.tile .sublinks a::after{content:" \2192"}
+.tile .sublinks a:hover{color:var(--maroon)}
+.tile .foot{display:flex;align-items:center;gap:10px;margin-top:auto}
+.tile .foot .bh-chip{font-size:10.5px}
+.tile .go{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
+.tile .go:hover{color:var(--maroon)}
+.tile .go::after{content:" \2192"}
+.tile.locked .go::after{content:""}
+.tile.locked .go{margin-left:0;color:var(--charcoal)}
 
-/* ---- app cards ---- */
-.apps{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(202px,1fr))}
-a.app{display:flex;align-items:flex-start;gap:11px;text-decoration:none;color:inherit;
-  background:var(--surface);border:1px solid var(--line);border-radius:7px;
-  padding:11px 12px;box-shadow:var(--shadow);min-width:0;min-height:62px;
-  transition:box-shadow .14s ease,transform .14s ease,border-color .14s ease}
-a.app:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px);border-color:#dcd9da}
-a.app:active{transform:translateY(0)}
-.mono-badge{flex:none;width:32px;height:32px;border-radius:6px;display:grid;place-items:center;
-  font:800 11.5px/1 'Figtree',sans-serif;letter-spacing:.02em;color:#fff}
-.mono-badge.m0{background:var(--maroon)}
-.mono-badge.m1{background:var(--charcoal)}
-.mono-badge.m2{background:var(--ink)}
-.appbody{min-width:0;flex:1}
-.appname{font-size:13px;font-weight:700;letter-spacing:.005em;line-height:1.25;
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.appdesc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:2px}
-.pill{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  border-radius:3px;padding:1px 4px;background:var(--cream);color:var(--charcoal);
-  border:1px solid var(--line);flex:none}
+/* ---- this week: newsletter and team ---- */
+.week{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.panel{border-top:3px solid var(--ink);background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.panel > h2{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:14px 18px;border-bottom:1px solid var(--line)}
+.panel > h2::before{content:"";width:11px;height:11px;background:var(--brand-red);flex:none}
+.panel > h2 .n{margin-left:auto;font-size:12px;font-weight:600;color:var(--faint)}
+.panel .k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);padding:2px 6px}
+.panel .k.now{background:var(--ink);color:#fff}
+.panel .all{display:block;padding:11px 18px;border-top:1px solid var(--line);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+.panel .all:hover{color:var(--maroon)}
+.issue{display:block;padding:16px 18px;text-decoration:none;color:inherit;background:var(--cream);border-bottom:1px solid var(--line)}
+.issue .when{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
+.issue .h{font-size:17px;font-weight:800;margin-top:3px}
+.issue .x{color:var(--muted);font-size:12.5px;margin-top:3px}
+a.part{display:flex;align-items:center;padding:11px 18px;text-decoration:none;color:inherit;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:600}
+a.part:last-child{border-bottom:0}
+a.part:hover{background:var(--cream)}
+a.part .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2;flex:none}
+.panel .sub{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid var(--line)}
+.noneout{padding:11px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--line)}
+.hol{display:flex;gap:8px;align-items:baseline;padding:9px 18px;background:var(--cream);border-bottom:1px solid var(--line);font-size:13px}
+.hol b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--maroon)}
+.hol .d{margin-left:auto;font-size:12px;color:var(--muted)}
+.person{display:flex;align-items:center;gap:11px;padding:10px 18px;border-bottom:1px solid var(--line)}
+.person:last-child{border-bottom:0}
+.person .av{width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--charcoal)}
+.person.m0 .av{background:var(--maroon)} .person.m2 .av{background:var(--ink)} .person.away .av{background:var(--faint)}
+.person .who{flex:1;min-width:0}
+.person .nm{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .rl{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .kind{text-align:right;flex:none}
+.person .kind .dt{display:block;font-size:11px;color:var(--faint);margin-top:3px}
 
-.tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  border-radius:4px;padding:3px 7px;display:inline-block}
-.tag.neutral{background:var(--cream);color:var(--charcoal);border:1px solid var(--line)}
-.tag.ok{background:var(--ok-soft);color:var(--ok)}
-.tag.warn{background:var(--warn-soft);color:var(--warn)}
-.tag.crit{background:var(--crit-soft);color:var(--crit)}
+/* ---- applications ---- */
+.apps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+a.app{display:block;background:#fff;padding:16px 18px 18px;text-decoration:none;color:inherit;min-width:0}
+a.app:hover{background:var(--cream)}
+.appname{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px;font-weight:700;line-height:1.25}
+.appdesc{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:3px}
+.pill{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);padding:1px 5px}
+.empty{color:var(--faint);font-size:14px;padding:24px 0 0}
 
-/* ---- gate ---- */
-.gatewrap{position:relative;min-height:calc(100vh - 88px);display:grid;place-items:center;
-  padding:40px 22px;overflow:hidden}
-.gatewrap .hero-bg,.gatewrap .hero-scrim{position:absolute;inset:0}
-.gatewrap .hero-scrim{background:linear-gradient(180deg,rgba(23,21,21,.88),rgba(23,21,21,.78))}
-.gate{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:8px;
-  box-shadow:0 24px 60px -24px rgba(0,0,0,.7);
-  padding:40px 30px;text-align:center;max-width:430px;width:100%}
-.gate .rule{width:44px;height:4px;background:var(--brand-red);margin:0 auto 20px;border-radius:2px}
-.gate img{height:72px;width:auto;margin-bottom:22px}
-.gate h2{font-size:15px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+/* ---- sign-in gate ---- */
+.gatewrap{position:relative;min-height:calc(100vh - 86px);display:grid;place-items:center;padding:40px 20px;overflow:hidden;background:var(--brand-red)}
+.gate{position:relative;background:#fff;padding:40px 34px;text-align:center;max-width:430px;width:100%}
+.gate img{height:64px;width:auto;margin-bottom:20px}
+.gate h2{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
 .gate p{color:var(--muted);font-size:14px;margin:0 0 22px}
 
-.banner{border:1px solid var(--line);border-left:4px solid var(--charcoal);background:var(--cream);
-  color:var(--ink);border-radius:6px;padding:12px 15px;font-size:13.5px;margin-bottom:22px}
-.banner b{display:block;margin-bottom:3px}
-.empty{color:var(--faint);font-size:13.5px;padding:18px 0}
-
-details.diag{margin-top:38px;border-top:1px solid var(--line);padding-top:14px}
-details.diag summary{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);cursor:pointer}
-details.diag summary:hover{color:var(--ink)}
-pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:12px;
-  overflow-x:auto;font:400 12px/1.55 "JetBrains Mono",monospace;margin:12px 0 10px;
-  white-space:pre-wrap;word-break:break-word}
-.foot{color:var(--faint);font-size:12px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+/* ---- footer area ---- */
+.foot{color:var(--faint);font-size:12px;margin-top:40px;display:flex;gap:14px;flex-wrap:wrap}
+details.diag{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+details.diag summary{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:12px 0 10px;white-space:pre-wrap;word-break:break-word}
+.tag.ok{font-size:10px;font-weight:700;text-transform:uppercase;background:var(--ok-soft);color:var(--ok);padding:2px 6px}
+/* kept as it was: the flywheel band */
 .endband{margin-top:46px;background:var(--ink);color:#fff;padding:26px 0 24px}
 .endband .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .endband img{height:40px;width:auto;flex:none}
-/* the three values as a loop, the way the brand mark draws them */
 .flywheel{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
-.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;
-  stroke-width:2.1;stroke-linecap:round}
-.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
-  color:rgba(255,255,255,.88);white-space:nowrap}
-.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);
-  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;stroke-width:2.1;stroke-linecap:round}
+.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.88);white-space:nowrap}
+.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
 .endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
-@media (max-width:860px){
-  .acts{margin-left:0;width:100%}
-  a.act{font-size:11.5px;padding:8px 13px}
-}
-@media (max-width:760px){
-  .hero-dots{display:none}
-  .safety .stamp{display:none}
-  .safety .big{font-size:23px}
-  .hero-inner{padding:26px 22px 0;gap:20px}
-  .hero-greet{font-size:25px}
-  .clock .t{font-size:25px}
-  .wx{flex:1 1 100%}
-}
-/* ---- phones ---- */
-@media (max-width:600px){
-  /* two links per row instead of one: the list is the page's length problem,
-     and on a phone nobody needs to be told what Procore is */
-  .apps{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
-  a.app{min-height:54px;padding:9px 10px;gap:9px;align-items:center}
-  .mono-badge{width:28px;height:28px;font-size:10.5px;border-radius:5px}
-  .appname{font-size:12px;line-height:1.2}
-  .appdesc{display:none}
-  .pill{font-size:8px}
-  .sec{margin-bottom:20px}
-  .tiles{gap:11px}
-  .tile{padding:15px}
-  .wrap{padding:0 16px}
-  .safety .wrap,.hero-inner,.searchrow{padding-left:16px;padding-right:16px}
-  .hero-greet{font-size:22px}
-  .hero-tag{display:none}
-  .clock{margin-top:13px}
-  .clock .t{font-size:22px}
-  .acts{gap:6px}
-  a.act{font-size:11px;padding:7px 11px}
-  a.act svg{display:none}
-  .searchrow{padding-top:20px;padding-bottom:20px}
-  .panel > h2{padding:11px 14px}
-  a.news{padding:11px 14px}
-  .person{padding:9px 14px}
-  .endband .wrap{gap:12px}
-  .endband img{height:32px}
-  .flywheel{gap:7px;width:100%}
-  .flywheel span{font-size:9.5px;letter-spacing:.1em}
-  .flywheel i.ch{width:7px;height:9px}
+
+/* ---- narrower screens ---- */
+@media (max-width:1160px){ .tiles{grid-template-columns:repeat(3,minmax(0,1fr))} .apps{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (max-width:960px){
+  .wrap,.hero-in{padding-left:20px;padding-right:20px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .apps{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .greet{font-size:46px}
+  .deco{display:none}
+  .hero-card{padding:20px 20px 22px;right:0;max-width:none}
+  .search{order:5;flex:1 1 100%}
 }
 @media (max-width:640px){
-  header.bh-header{position:static}
-  .bh-logo{height:44px}
-  .bh-title{font-size:17px}
-  .acct{margin-left:0;flex:1 1 100%}
-  .search kbd{display:none}
+  header.lh{position:static}
+  .acct .role{display:none}
+  .hero,.hero-in{min-height:0}
+  .hero-in{padding-top:28px;padding-bottom:120px}
+  .greet{font-size:32px}
+  .hero-card{position:relative;bottom:auto}
+  .caption{display:none}
+  .hero-card p{font-size:15px}
+  .tiles{grid-template-columns:1fr}
+  .apps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .appdesc{display:none}
+  .sechead .cap{display:none}
+  .wxstrip{grid-template-columns:repeat(3,minmax(0,1fr))}
+  a.wxc{padding:12px 14px} a.wxc svg{display:none}
   .endband .since{margin-left:0;flex:1 1 100%}
+  .endband .wrap{gap:12px}
+  .endband img{height:32px}
+  .flywheel{gap:7px;width:100%} .flywheel span{font-size:9.5px;letter-spacing:.1em} .flywheel i.ch{width:7px;height:9px}
+  .safety .stamp{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="/bh-shell.css">
 </head>
-<body>
+<body class="bh-page">
 
 <div class="bh-topbar"></div>
-<header class="bh-header">
+<header class="lh">
   <div class="wrap">
-    <div class="masthead">
-      <img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris Construction">
-      <div class="bh-titles">
-        <div class="bh-title">Bailey-Harris</div>
-        <div class="bh-sub">Everything, in one place</div>
-      </div>
-      <div class="acct" id="acct" hidden>
-        <span class="who" id="acctname"></span>
-        <button class="btn ghost sm" id="signout">Sign out</button>
-      </div>
+    <a class="brand" href="/" aria-label="Bailey-Harris home">
+      <img src="data:image/png;base64,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" alt="">
+      <span class="wm">Bailey-Harris<small>Construction</small></span>
+    </a>
+    <span class="spacer"></span>
+    <div class="search" id="searchbox" hidden>
+      <input id="q" type="search" placeholder="Search desks and applications" autocomplete="off" spellcheck="false" aria-label="Search desks and applications">
+      <kbd>/</kbd>
     </div>
+    <div class="acct" id="acct" hidden>
+      <span class="av" id="acctav" aria-hidden="true"></span>
+      <span><span class="who" id="acctname"></span><span class="role" id="acctrole"></span></span>
+    </div>
+    <button class="bh-btn-outline" id="signout" hidden>Sign out</button>
   </div>
 </header>
 
 <main>
 
   <div id="gatewrap" class="gatewrap" hidden>
-    <div class="hero-bg"></div>
-    <div class="hero-scrim"></div>
+    <div class="hero-photo"></div>
     <section id="gate" class="gate">
       <img src="data:image/png;base64,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" alt="">
-      <div class="rule"></div>
       <h2>Sign in to continue</h2>
       <p>Use your Bailey-Harris Microsoft account.</p>
-      <button class="btn" id="signin">Sign in with Microsoft</button>
+      <button class="bh-btn" id="signin">Sign in with Microsoft</button>
     </section>
   </div>
 
   <div id="app" hidden>
-    <section class="hero">
-      <div class="hero-bg"></div>
-      <div class="hero-scrim"></div>
-      <div class="wrap hero-inner">
-        <div class="hero-left">
-          <span class="eyebrow">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v4M17 2v4M3 9h18M5 4h14a2 2 0 012 2v13a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-            <span id="today">&nbsp;</span>
-          </span>
-          <h1 class="hero-greet" id="greet">Good morning</h1>
-          <p class="hero-tag" id="tagline">Your desks, dashboards and the applications you use every day.</p>
-          <div class="clock"><span class="t" id="clock">&nbsp;</span><span class="z" id="tz"></span></div>
-        </div>
-        <div class="wx" id="wx" hidden></div>
+    <section class="hero" aria-label="Welcome">
+      <div class="hero-photo"></div>
+      <div class="hero-wash"></div>
+      <div class="hero-in">
+        <div class="today" id="today">&nbsp;</div>
+        <h1 class="greet"><span id="greet">Good morning</span><span class="nm" id="greetname"></span></h1>
+        <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
       </div>
-      <div class="wrap searchrow">
-        <div class="search">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input id="q" type="search" placeholder="Find an app or a desk" autocomplete="off" spellcheck="false" aria-label="Filter">
-          <kbd>/</kbd>
-        </div>
+      <div class="hero-card">
+        <p id="tagline">Your desks, dashboards and the applications you use every day.</p>
         <nav class="acts" id="acts" aria-label="Quick actions"></nav>
       </div>
+      <div class="caption" id="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
     </section>
 
+    <nav class="wxstrip" id="wx" aria-label="Weather at the offices" hidden></nav>
     <div class="safety" id="safety" hidden></div>
 
     <div class="wrap">
       <div id="fatal" class="banner" hidden></div>
       <div id="degraded" class="banner" hidden></div>
 
-      <div class="cols">
-        <aside class="rail" id="rail">
+      <section class="pulse" id="pulse" aria-label="Jobs and team" hidden>
+        <div class="pstats" id="pstats" hidden></div>
+        <section class="panel" id="peoplepanel" hidden></section>
+      </section>
+
+      <section class="sec" id="sec-desks">
+        <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <section class="sec" id="rail" hidden>
+        <div class="sechead"><span class="blk dark">This week</span></div>
+        <div class="week">
           <section class="panel" id="newspanel" hidden></section>
-          <section class="panel" id="peoplepanel" hidden></section>
-        </aside>
-
-        <div class="main">
-          <section class="sec" id="sec-desks">
-            <div class="sechead"><h2>Desks and dashboards</h2><span class="rule"></span></div>
-            <div class="tiles" id="tiles"></div>
-          </section>
-
-          <div id="appsections"></div>
-
-          <p class="empty" id="noresults" hidden>Nothing matches that.</p>
         </div>
-      </div>
+      </section>
 
-      <p class="foot" style="clear:both">
+      <div id="appsections"></div>
+      <p class="empty" id="noresults" hidden>Nothing matches that.</p>
+
+      <p class="foot">
         <span id="asof"></span>
         <span id="linksrc"></span>
       </p>
@@ -492,7 +345,7 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;p
         <summary>Diagnostics</summary>
         <div>
           <pre id="diag">…</pre>
-          <button class="btn ghost sm" id="copy">Copy diagnostics</button>
+          <button class="bh-btn-outline" id="copy">Copy diagnostics</button>
           <span class="tag ok" id="copied" hidden>copied</span>
         </div>
       </details>
@@ -540,48 +393,59 @@ const ACCESS_CONTACT = "itadmin@baileyharris.com";
    Everything else comes from links.json in SharePoint. */
 const DESKS = [
   {
+    key: "ap",
+    title: "AP Desk",
+    blurb: "Commitments on file. Pay applications and invoices, from intake through PM review to entry.",
+    href: "/ap/",
+    group: null,
+    audience: "Accounting",
+    library: "APData",
+    file: "ap_commitments.json",
+    quiet: true,   /* not group-gated here, so a failed read shows a dash, not an error */
+    links: [{ label: "Open invoices &amp; pay apps", href: "/ap/#open" }],
+    count: d => (d.commitments || []).length
+  },
+  {
     key: "compliance",
     title: "Compliance Desk",
-    blurb: "Subcontractor and vendor insurance compliance, licences and expiries. Open to everyone.",
+    blurb: "Trade partner COIs and coverage from Billy, joined to Procore contracts and Alabama licensing.",
     href: "https://compliance.baileyharris.com",
     group: null,
+    audience: "Everyone",
     external: true
   },
   {
     key: "projects",
     title: "Project Information",
-    blurb: "Every job on a map \u2014 team, owner, contract, RFIs and change orders, refreshed hourly from Procore.",
+    blurb: "Financials, profitability, forecasting and monthly projections from Procore and ComputerEase.",
     href: "https://projects.baileyharris.com",
     group: null,
+    audience: "Project teams",
     external: true
-  },
-  {
-    key: "prequal",
-    title: "Prequal &amp; Sub Ratings",
-    blurb: "How subcontractors actually performed — ratings, notes, prequalification and diversity classifications.",
-    href: "/prequal/",
-    group: "b32fdca5-a99d-40d8-aabd-54975d34c386",
-    groupName: "BH-Desk-Prequal",
-    library: "PrequalData",
-    file: "ratings.json",
-    stats: d => [
-      ["Ratings", d.rows.length],
-      ["Jobs", new Set(d.rows.map(r => r.jn).filter(Boolean)).size]
-    ]
   },
   {
     key: "precon",
     title: "Precon Desk",
-    blurb: "What we have built, for pricing what we are about to bid — $/SF, schedule duration and comparables.",
+    blurb: "Jobs on file. Price a job against what Bailey-Harris has built, escalated to today.",
     href: "/precon/",
     group: "41c5a747-de87-4e3a-9523-3e0da1bd08ac",
     groupName: "BH-Desk-Precon",
     library: "PreconData",
     file: "projects.json",
-    stats: d => [
-      ["Jobs", d.rows.length],
-      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp && !p.flag).length]
-    ]
+    count: d => d.rows.length
+  },
+  {
+    key: "prequal",
+    title: "Prequal &amp; Sub Rating",
+    blurb: "Trade partner ratings, with prequalification and diversity classifications.",
+    blurbFor: d => "Trade partner ratings across " + new Set(d.rows.map(r => r.sid || r.s).filter(Boolean)).size.toLocaleString("en-US") +
+                   " companies, with prequalification and diversity classifications.",
+    href: "/prequal/",
+    group: "b32fdca5-a99d-40d8-aabd-54975d34c386",
+    groupName: "BH-Desk-Prequal",
+    library: "PrequalData",
+    file: "ratings.json",
+    count: d => d.rows.length
   }
 ];
 
@@ -687,7 +551,7 @@ function badgeClass(name){
 function renderApps(doc){
   const host = $("#appsections");
   host.innerHTML = "";
-  let n = 0;
+  let n = 0, first = true;
   (doc.groups || []).forEach(g => {
     const items = (g.items || [])
       .map(it => Object.assign({}, it, { _u: safeUrl(it.url) }))
@@ -696,20 +560,19 @@ function renderApps(doc){
     const sec = document.createElement("section");
     sec.className = "sec";
     sec.innerHTML =
-      '<div class="sechead"><h2>' + esc(g.name || "Applications") + '</h2>' +
-      '<span class="rule"></span><span class="count">' + items.length + '</span></div>' +
+      '<div class="sechead"><span class="blk dark">' + esc(g.name || "Applications") + '</span>' +
+      (first ? '<span class="rest">Applications</span>' : '') + '</div>' +
       '<div class="apps">' + items.map(it => {
         n++;
         return '<a class="app" href="' + esc(it._u) + '"' +
           (opensTab(it._u) ? ' target="_blank" rel="noopener noreferrer"' : '') +
           ' data-find="' + esc(((it.name || "") + " " + (it.desc || "")).toLowerCase()) + '">' +
-          '<span class="mono-badge ' + badgeClass(it.name) + '" aria-hidden="true">' + esc(initials(it.name)) + '</span>' +
-          '<span class="appbody">' +
             '<span class="appname">' + esc(it.name) +
               (it.tag ? '<span class="pill">' + esc(it.tag) + '</span>' : '') + '</span>' +
             (it.desc ? '<span class="appdesc">' + esc(it.desc) + '</span>' : '') +
-          '</span></a>';
+          '</a>';
       }).join("") + '</div>';
+    first = false;
     host.append(sec);
   });
   log("app links", n);
@@ -749,16 +612,8 @@ function greeting(){
 
 /* ============ date and clock ============ */
 function paintClock(){
-  const now = new Date();
-  $("#today").textContent = now.toLocaleDateString("en-US",
+  $("#today").textContent = new Date().toLocaleDateString("en-US",
     { weekday: "long", month: "long", day: "numeric" });
-  $("#clock").textContent = now.toLocaleTimeString("en-US",
-    { hour: "numeric", minute: "2-digit" });
-  try {
-    const z = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
-      .formatToParts(now).find(x => x.type === "timeZoneName");
-    $("#tz").textContent = z ? z.value : "";
-  } catch(_) {}
 }
 
 /* ============ weather ============ */
@@ -828,24 +683,26 @@ function wxLocations(w){
 function wxRemembered(){ try { return localStorage.getItem("bh.wx") || ""; } catch(_) { return ""; } }
 function wxRemember(v){ try { localStorage.setItem("bh.wx", v); } catch(_) {} }
 
-async function fetchWeather(cfg){
-  if (!cfg || cfg.lat == null || cfg.lon == null) return null;
+/* Open-Meteo takes a list of coordinates in one request and answers with a list. */
+async function fetchWeather(){
+  const list = wxAll;
+  if (!list.length) return null;
   const url = "https://api.open-meteo.com/v1/forecast"
-    + "?latitude="  + encodeURIComponent(cfg.lat)
-    + "&longitude=" + encodeURIComponent(cfg.lon)
-    + "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m"
-    + "&daily=weather_code,temperature_2m_max,temperature_2m_min"
-    + "&temperature_unit=fahrenheit&wind_speed_unit=mph"
-    + "&timezone=" + encodeURIComponent(cfg.tz || "auto")
-    + "&forecast_days=4";
+    + "?latitude="  + list.map(l => encodeURIComponent(l.lat)).join(",")
+    + "&longitude=" + list.map(l => encodeURIComponent(l.lon)).join(",")
+    + "&current=temperature_2m,is_day,weather_code"
+    + "&daily=temperature_2m_max,temperature_2m_min"
+    + "&temperature_unit=fahrenheit"
+    + "&timezone=" + encodeURIComponent(list[0].tz || "auto")
+    + "&forecast_days=1";
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 7000);
   try {
     const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer" });
     if (!r.ok) { log("weather", "HTTP " + r.status); return null; }
     const j = await r.json();
-    log("weather", "ok");
-    return j;
+    log("weather", "ok, " + list.length + " offices");
+    return Array.isArray(j) ? j : [j];
   } catch(e) {
     log("weather", "unavailable");
     return null;
@@ -853,58 +710,25 @@ async function fetchWeather(cfg){
 }
 
 let wxLast = null;
-/* The weather is decoration. If it cannot be fetched the panel simply never
-   appears — a launcher must not lead with an error nobody can act on. */
-function renderWeather(data, cfg){
+/* The weather is decoration. If it cannot be fetched the strip simply never
+   appears; a launcher must not lead with an error nobody can act on. Each
+   office opens its National Weather Service hourly forecast and radar. */
+function renderWeather(data){
   const el = $("#wx");
-  if (!data || !data.current || !el) return;
-  const c = data.current, d = data.daily || {};
-  const night = c.is_day === 0;
-  const cond = (WXCODE[c.weather_code] || ["cloud", "Current conditions"])[1];
-
-  let days = "";
-  const codes = d.weather_code || [], hi = d.temperature_2m_max || [],
-        lo = d.temperature_2m_min || [], iso = d.time || [];
-  for (let i = 1; i < Math.min(4, iso.length); i++){
-    const dt = new Date(iso[i] + "T12:00:00");
-    days += '<div class="wx-day"><span class="d">' +
-      esc(dt.toLocaleDateString("en-US", { weekday: "short" })) + '</span>' +
-      wxSvg("", codes[i], false) +
-      '<span class="hi">' + degF(hi[i]) + '</span><span class="lo">' + degF(lo[i]) + '</span></div>';
-  }
-
-  const many = wxAll.length > 1;
-  const fc = safeUrl((cfg && cfg.forecastUrl) || nwsUrl(cfg));
-  const head =
-    '<div class="wx-head"><span class="lbl">Weather</span>' +
-    (fc ? '<a class="more" href="' + esc(fc) + '" target="_blank" rel="noopener noreferrer" ' +
-          'title="Hourly forecast and radar">Hourly' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '') +
-    (many
-      ? '<select id="wxpick" aria-label="Location">' + wxAll.map((l, i) =>
-          '<option value="' + i + '"' + (l === cfg ? ' selected' : '') + '>' +
-          esc(l.label || ("Location " + (i + 1))) + '</option>').join("") + '</select>'
-      : '') +
-    '</div>';
-
-  el.innerHTML = head +
-    '<div class="wx-top">' + wxSvg("wx-icon", c.weather_code, night) +
-      '<div class="wx-temp">' + degF(c.temperature_2m) + '</div>' +
-      '<div class="wx-body"><div class="wx-cond">' + esc(cond) + '</div>' +
-        '<div class="wx-sub">Feels ' + degF(c.apparent_temperature) +
-        ' &middot; Wind ' + (c.wind_speed_10m == null ? "\u2014" : Math.round(c.wind_speed_10m)) +
-        ' mph</div></div></div>' +
-    (days ? '<div class="wx-days">' + days + '</div>' : '') +
-    (many ? '' : '<div class="wx-place">' + esc((cfg && cfg.label) || "") + '</div>');
+  if (!el) return;
+  if (!data || !data.length){ el.hidden = true; return; }
+  el.innerHTML = wxAll.map((l, i) => {
+    const w = data[i] || {}, c = w.current || {}, d = w.daily || {};
+    const cond = (WXCODE[c.weather_code] || ["cloud", ""])[1];
+    const hi = (d.temperature_2m_max || [])[0], lo = (d.temperature_2m_min || [])[0];
+    const fc = safeUrl(l.forecastUrl || nwsUrl(l));
+    return '<a class="wxc" href="' + esc(fc || "#") + '" target="_blank" rel="noopener noreferrer" title="Hourly forecast and radar for ' + esc(l.label) + '">' +
+      '<span class="txt"><span class="pl">' + esc(l.label) + '</span>' +
+      '<span class="tp">' + degF(c.temperature_2m) + '</span>' +
+      '<span class="cd">' + esc(cond) + (hi != null ? ' &middot; ' + degF(hi) + ' / ' + degF(lo) : '') + '</span></span>' +
+      (c.weather_code != null ? wxSvg("", c.weather_code, c.is_day === 0) : '') + '</a>';
+  }).join("");
   el.hidden = false;
-
-  const pick = $("#wxpick");
-  if (pick) pick.addEventListener("change", async e => {
-    const loc = wxAll[Number(e.target.value)] || wxAll[0];
-    wxCfg = loc;
-    wxRemember(loc.label);
-    renderWeather(await fetchWeather(loc), loc);
-  });
 }
 
 /* ---------- quick actions ---------- */
@@ -912,11 +736,10 @@ function renderActions(items){
   const host = $("#acts");
   if (!host) return;
   const ok = (items || []).map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
-  host.innerHTML = ok.slice(0, 4).map(a =>
-    '<a class="act" href="' + esc(a._u) + '"' +
-      (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' +
-      esc(a.name) + '</a>').join("");
+  host.innerHTML = ok.slice(0, 4).map((a, i) =>
+    '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
+      (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(a.name) + '</a>').join("");
+  host.parentElement.hidden = false;
   log("quick actions", ok.length);
 }
 
@@ -1029,6 +852,56 @@ function renderTeam(people, out, holidays, moreUrl, outKnown){
   log("team", away.length + " out, " + mile.length + " milestones, " + hols.length + " holidays");
 }
 
+/* ---------- pulse: active jobs, from the Project Information data ---------- */
+/* Same file and site the Project Information dashboard reads. Job counts only:
+   no contract, cost or profit figures on the launcher. If the read fails (no
+   access, or the file is missing) the block simply does not appear. */
+const PROJ_SITE = "/sites/" + SP_HOST + ":/sites/Resources";
+const PROJ_FILE = "Compliance Dashboard/projects_data.json";
+const STAGE_ROWS = [["pre-construction", "Pre-construction"], ["construction", "Construction"], ["post-construction", "Post-construction"]];
+let pulseShown = false;
+
+async function loadPulse(){
+  const s = await graph(PROJ_SITE + "?$select=id");
+  if (!(s.ok && s.body && s.body.id)){ log("pulse", "Resources site HTTP " + s.status); return; }
+  const f = await graphRaw("/sites/" + s.body.id + "/drive/root:/" + PROJ_FILE.split("/").map(encodeURIComponent).join("/") + ":/content");
+  if (!f.ok){ log("pulse", "projects_data.json HTTP " + f.status); return; }
+  let data;
+  try { data = JSON.parse(f.text); } catch(_) { log("pulse", "projects_data.json parse failed"); return; }
+  /* the dashboard drops its internal FY-tracking projects; so do we */
+  const rows = (data.projects || []).filter(r => !/\bFY\s?\d{2,4}\b/i.test((r.project || "") + " " + (r.project_number || "")));
+  const stg = r => String(r.stage || "").toLowerCase();
+  const active = rows.filter(r => r.group ? r.group === "active" : STAGE_ROWS.some(x => x[0] === stg(r)));
+  const warranty = rows.filter(r => r.group ? r.group === "warranty" : /warranty/.test(stg(r))).length;
+  const closing = active.filter(r => r.closing_this_month).length;
+  const counts = STAGE_ROWS.map(([k, label]) => [label, active.filter(r => stg(r) === k).length]);
+  const max = Math.max(1, ...counts.map(c => c[1]));
+  const when = data.generated_at || data.generated || "";
+  $("#pstats").innerHTML =
+    '<div class="bh-label">Active jobs</div>' +
+    '<div class="ptop"><div class="pbig">' + n0(active.length) + '</div>' +
+    '<div class="pcap">Pre-construction through post-construction, from Procore. ' +
+    '<a href="https://projects.baileyharris.com" rel="noopener">Open Project Information \u2192</a></div></div>' +
+    '<div class="bars" role="list" aria-label="Active jobs by stage">' + counts.map(([label, n]) =>
+      '<div class="bar" role="listitem" title="' + esc(label) + ': ' + n + ' job' + (n === 1 ? '' : 's') + '">' +
+      '<span class="lab">' + esc(label) + '</span>' +
+      '<span class="trk"><span class="fill" style="width:' + (n / max * 100).toFixed(1) + '%"></span></span>' +
+      '<span class="val">' + n0(n) + '</span></div>').join("") + '</div>' +
+    '<div class="pmini"><span><b>' + n0(closing) + '</b>closing this month</span>' +
+    '<span><b>' + n0(warranty) + '</b>in warranty</span></div>' +
+    (when ? '<div class="pasof">As of ' + esc(new Date(when).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + '</div>' : '');
+  $("#pstats").hidden = false;
+  pulseShown = true;
+  log("pulse", active.length + " active, " + closing + " closing, " + warranty + " warranty");
+  layoutPulse();
+}
+function layoutPulse(){
+  const p = $("#pulse"); if (!p) return;
+  const a = !$("#pstats").hidden, b = !$("#peoplepanel").hidden;
+  p.hidden = !(a || b);
+  p.classList.toggle("one", !(a && b));
+}
+
 /* ============ boot ============ */
 let pipelinePeople = null;
 let pipelineNewsletter = null;
@@ -1041,12 +914,13 @@ async function main(){
   paintClock();
   setInterval(paintClock, 15000);
   /* fired before sign-in resolves so the panel is ready when the page appears */
-  wxPromise = fetchWeather(wxCfg);
+  wxPromise = fetchWeather();
 
   if (typeof msal === "undefined"){
     $("#app").hidden = false;
     wxLast = await wxPromise;
-    renderWeather(wxLast, wxCfg);
+    renderWeather(wxLast);
+    $("#searchbox").hidden = false;
     renderApps(FALLBACK);
     banner("#degraded", "Sign-in is unavailable right now.",
       "The Microsoft authentication script did not load, so the desks cannot be opened from here. " +
@@ -1073,15 +947,18 @@ async function main(){
   const acct = accounts[0];
   app.setActiveAccount(acct);
   $("#acct").hidden = false;
-  $("#acctname").textContent = (acct.name || acct.username || "").split(" ")[0] || acct.username;
+  $("#signout").hidden = false;
+  $("#searchbox").hidden = false;
+  $("#acctname").textContent = acct.name || acct.username || "";
+  $("#acctav").textContent = initials(acct.name || acct.username || "?");
   $("#app").hidden = false;
   log("signed in as", acct.username);
 
   const first = (acct.name || "").trim().split(/\s+/)[0];
-  if (first) $("#greet").textContent = greeting() + ", " + first;
+  if (first){ $("#greet").textContent = greeting() + ","; $("#greetname").textContent = first; }
 
   wxLast = await wxPromise;
-  renderWeather(wxLast, wxCfg);
+  renderWeather(wxLast);
 
   const claims = acct.idTokenClaims || {};
   const myGroups = new Set(Array.isArray(claims.groups) ? claims.groups : []);
@@ -1111,6 +988,14 @@ async function main(){
     renderDesksUnavailable();
     applyFilter();
     return;
+  }
+
+  /* job title and office under the name, from the profile User.Read already covers */
+  const me = await graph("/me?$select=displayName,jobTitle,officeLocation");
+  if (me.ok && me.body){
+    const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
+    $("#acctrole").textContent = role;
+    if (me.body.displayName) $("#acctname").textContent = me.body.displayName;
   }
 
   if (overage){
@@ -1190,75 +1075,61 @@ async function main(){
     $("#linksrc").textContent = "Links: built into this page.";
   }
 
+  try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
+
   /* ---- the desks ---- */
   const host = $("#tiles");
   host.innerHTML = "";
   for (const desk of DESKS){
     const allowed = !desk.group || myGroups.has(desk.group);
-    const el = document.createElement("article");
-    el.className = "tile" + (allowed ? "" : " locked");
-    el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
+    if (!allowed){ host.append(lockedTile(desk)); log("tile " + desk.key, "locked"); continue; }
 
-    if (!allowed){
-      el.innerHTML =
-        '<div class="tilehead"><h3>' + desk.title + '</h3>' +
-        '<span class="tag neutral">no access</span></div>' +
-        '<p>' + esc(desk.blurb) + '</p>' +
-        '<p class="msg">Access is granted through <span class="mono">' + esc(desk.groupName) + '</span>.</p>' +
-        '<a class="btn ghost" href="mailto:' + esc(ACCESS_CONTACT) +
-          '?subject=' + encodeURIComponent("Access request: " + desk.key) +
-          '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") +
-          '">Request access</a>';
-      host.append(el);
-      log("tile " + desk.key, "locked");
-      continue;
-    }
-
-    let statsHtml = "", tag = "";
-
+    let big = "\u2014", blurb = desk.blurb, msg = "";
     if (desk.library && siteId){
       const driveId = drives[desk.library];
-      if (!driveId){
-        tag = '<span class="tag crit">no library</span>';
-        statsHtml = '<p class="msg" style="color:var(--crit)">No document library called <span class="mono">' +
-          esc(desk.library) + '</span> on the site.</p>';
-        log("tile " + desk.key, "library missing");
-      } else {
-        const f = await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content");
-        if (f.ok){
-          try {
-            const data = JSON.parse(f.text);
-            statsHtml = '<div class="stats">' + desk.stats(data).map(p =>
-              '<div class="stat"><span class="k">' + esc(p[0]) + '</span>' +
-              '<span class="v">' + n0(p[1]) + '</span></div>').join("") + '</div>';
-            log("tile " + desk.key, desk.file + " read, " + (data.rows ? data.rows.length : "?") + " rows");
-          } catch (e) {
-            tag = '<span class="tag crit">bad file</span>';
-            statsHtml = '<p class="msg" style="color:var(--crit)">' + esc(desk.file) + ' is not valid JSON.</p>';
-            log("tile " + desk.key, desk.file + " parse failed");
-          }
-        } else if (f.status === 403){
-          tag = '<span class="tag crit">403</span>';
-          statsHtml = '<p class="msg" style="color:var(--crit)">You are in <span class="mono">' +
-            esc(desk.groupName) + '</span> but SharePoint denied the read. The group has not been granted on the ' +
-            '<span class="mono">' + esc(desk.library) + '</span> library.</p>';
-          log("tile " + desk.key, "403 — Entra membership without a SharePoint grant");
-        } else if (f.status === 404){
-          tag = '<span class="tag warn">no data</span>';
-          statsHtml = '<p class="msg" style="color:var(--warn)">' + esc(desk.file) +
-            ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.</p>';
-          log("tile " + desk.key, desk.file + " 404");
-        } else {
-          tag = '<span class="tag crit">HTTP ' + f.status + '</span>';
-          log("tile " + desk.key, "HTTP " + f.status);
+      const f = driveId ? await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content") : { ok: false, status: "no library" };
+      if (f.ok){
+        try {
+          const data = JSON.parse(f.text);
+          big = n0(desk.count(data));
+          if (desk.blurbFor) blurb = desk.blurbFor(data);
+          log("tile " + desk.key, desk.file + " read");
+        } catch (e) {
+          if (!desk.quiet){ big = chip("bad", "bad file"); msg = esc(desk.file) + " is not valid JSON."; }
+          log("tile " + desk.key, desk.file + " parse failed");
         }
+      } else if (desk.quiet){
+        log("tile " + desk.key, desk.file + " HTTP " + f.status + " (shown as a dash)");
+      } else if (f.status === "no library"){
+        big = chip("bad", "no library");
+        msg = 'No document library called <span class="mono">' + esc(desk.library) + '</span> on the site.';
+        log("tile " + desk.key, "library missing");
+      } else if (f.status === 403){
+        big = chip("bad", "403");
+        msg = 'You are in <span class="mono">' + esc(desk.groupName) + '</span> but SharePoint denied the read. ' +
+              'The group has not been granted on the <span class="mono">' + esc(desk.library) + '</span> library.';
+        log("tile " + desk.key, "403 \u2014 Entra membership without a SharePoint grant");
+      } else if (f.status === 404){
+        big = chip("warn", "no data");
+        msg = esc(desk.file) + ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.';
+        log("tile " + desk.key, desk.file + " 404");
+      } else {
+        big = chip("bad", "HTTP " + f.status);
+        log("tile " + desk.key, "HTTP " + f.status);
       }
     }
-
+    const el = document.createElement("article");
+    el.className = "tile";
+    el.dataset.find = (desk.title + " " + desk.blurb + " " + (desk.audience || desk.groupName || "")).replace(/&amp;/g, "&").toLowerCase();
     el.innerHTML =
-      '<div class="tilehead"><h3>' + desk.title + '</h3>' + tag + '</div>' +
-      '<p>' + esc(desk.blurb) + '</p>' + statsHtml +
-      '<a class="btn" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') + '>Open</a>';
+      '<h3>' + desk.title + '</h3>' +
+      '<div class="big">' + big + '</div>' +
+      '<p>' + esc(blurb) + '</p>' +
+      (msg ? '<p class="msg">' + msg + '</p>' : '') +
+      (desk.links ? '<div class="sublinks">' + desk.links.map(l => '<a href="' + esc(l.href) + '">' + l.label + '</a>').join("") + '</div>' : '') +
+      '<div class="foot"><span class="bh-chip">' + esc(desk.audience || desk.groupName) + '</span>' +
+      '<a class="go" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') +
+      ' aria-label="Open ' + desk.title + '">Open</a></div>';
     host.append(el);
   }
 
@@ -1299,39 +1170,47 @@ function applySite(site){
   const outKnown = !!(pipelinePeople && Array.isArray(pipelinePeople.out));
   renderTeam(people, out, hols, site && site.peopleUrl, outKnown);
 
-  /* the rail floats, so an empty one would hold open a 322px gutter */
+  layoutPulse();
+  /* no newsletter: no "This week" section at all */
   const rail = $("#rail");
   if (rail){
-    const anyPanel = Array.from(rail.children).some(el => !el.hidden);
+    const anyPanel = Array.from(rail.querySelectorAll('.panel')).some(el => !el.hidden);
     rail.hidden = !anyPanel;
     log("rail", anyPanel ? "shown" : "empty, hidden");
   }
 
+  const cap = $("#caption");
+  if (cap && site && typeof site.heroCaption === "string") { cap.textContent = site.heroCaption; cap.hidden = !site.heroCaption; }
+
   const list = wxLocations(site && site.weather);
   if (!list.length) return;
+  const same = JSON.stringify(list.map(l => [l.label, l.lat, l.lon])) === JSON.stringify(wxAll.map(l => [l.label, l.lat, l.lon]));
   wxAll = list;
-  const want = wxRemembered();
-  const next = list.find(l => l.label === want) || list[0];
-  const same = wxCfg && Number(next.lat) === Number(wxCfg.lat) && Number(next.lon) === Number(wxCfg.lon);
-  wxCfg = next;
-  if (same) { renderWeather(wxLast, next); return; }
-  fetchWeather(next).then(d => { wxLast = d; renderWeather(d, next); });
+  if (same) { renderWeather(wxLast); return; }
+  fetchWeather().then(d => { wxLast = d; renderWeather(d); });
+}
+
+const chip = (k, t) => '<span class="bh-chip is-' + k + '">' + esc(t) + '</span>';
+
+function lockedTile(desk, why){
+  const el = document.createElement("article");
+  el.className = "tile locked";
+  el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
+  el.innerHTML =
+    '<h3>' + desk.title + '</h3>' +
+    '<div class="big">' + (why ? "Unavailable" : "No access") + '</div>' +
+    '<p>' + (why ? esc(why)
+      : 'Access is granted through <span class="mono">' + esc(desk.groupName) + '</span>. Ask IT and they will add you.') + '</p>' +
+    (why ? '' : '<div class="foot"><a class="go" href="mailto:' + esc(ACCESS_CONTACT) +
+      '?subject=' + encodeURIComponent("Access request: " + desk.key) +
+      '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") + '">Ask IT to add you</a></div>');
+  return el;
 }
 
 function renderDesksUnavailable(){
   const host = $("#tiles");
   host.innerHTML = "";
-  DESKS.forEach(desk => {
-    const el = document.createElement("article");
-    el.className = "tile locked";
-    el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
-    el.innerHTML =
-      '<div class="tilehead"><h3>' + desk.title + '</h3>' +
-      '<span class="tag neutral">unavailable</span></div>' +
-      '<p>' + esc(desk.blurb) + '</p>' +
-      '<p class="msg">Sign-in has to succeed before this can open.</p>';
-    host.append(el);
-  });
+  DESKS.forEach(desk => host.append(lockedTile(desk, "Sign-in has to succeed before this can open.")));
 }
 
 /* ============ events ============ */
