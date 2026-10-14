@@ -1,0 +1,119 @@
+/* bh-shell.css — Bailey-Harris dashboard shell.
+   Shared by every page on dashboard.baileyharris.com. Link it AFTER a page's own styles.
+   Spec: claude/bh-ui-spec.md in the "BH Dashboards and Data" project. Look: "BH Dashboard UI" canvas.
+   Every class is prefixed bh- so it cannot collide with a desk's own CSS. */
+
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
+
+:root{
+  /* brand palette (Bailey-Harris brand guide) */
+  --bh-red:#ed2b30; --bh-maroon:#7f1b29; --bh-slate:#484b4d; --bh-black:#211e1e;
+  --bh-light-gray:#e8e6e7; --bh-cream:#f2ece1; --bh-white:#ffffff;
+  /* roles */
+  --bh-surface:var(--bh-white); --bh-surface-muted:var(--bh-light-gray); --bh-surface-warm:var(--bh-cream);
+  --bh-ink:var(--bh-black); --bh-ink-muted:var(--bh-slate); --bh-hairline:var(--bh-light-gray);
+  --bh-accent:var(--bh-red); --bh-focus:var(--bh-red);
+  /* status — DATA ONLY, never chrome */
+  --bh-ok-bg:#c6efce; --bh-ok-ink:#006100;
+  --bh-warn-bg:#ffeb9c; --bh-warn-ink:#9c6500;
+  --bh-bad-bg:#ffc7ce; --bh-bad-ink:#9c0006;
+  /* compliance tags — keep their own colors */
+  --bh-tag-global-bg:#ddebf7; --bh-tag-global-ink:#1f3864;
+  --bh-tag-warranty-bg:#ffe9c7; --bh-tag-warranty-ink:#8a5a00;
+  --bh-tag-inactive-bg:#e9ecf1; --bh-tag-inactive-ink:#6b7480;
+  --bh-font:Figtree,"Helvetica Neue",Arial,sans-serif;
+  --bh-side-w:240px; --bh-menu-breakpoint:960px; /* breakpoint is documentation; the media query below is the real value */
+}
+/* light-only by design: a dark OS must not pull the page off-brand */
+:root:not([data-theme="light"]){color-scheme:light}
+
+/* artifact-port shim: [hidden] must win over any display value */
+[hidden]:not([hidden=until-found i]){display:none!important}
+
+.bh-page{margin:0;background:var(--bh-surface);color:var(--bh-ink);font-family:var(--bh-font);font-variant-numeric:tabular-nums}
+.bh-page a{color:var(--bh-ink)} .bh-page a:hover{color:var(--bh-maroon)}
+
+/* ---------- header ---------- */
+.bh-topbar{height:8px;background:var(--bh-accent)}
+.bh-header{display:flex;flex-wrap:wrap;align-items:center;gap:18px;padding:18px 40px;border-bottom:1px solid var(--bh-hairline);background:var(--bh-surface)}
+.bh-header .bh-logo{width:56px;height:56px;display:block}
+.bh-desk-name{font-size:28px;font-weight:800;line-height:1;text-transform:uppercase;margin:0}
+.bh-desk-sub{font-size:13px;line-height:1.4;color:var(--bh-ink-muted);margin-top:4px}
+.bh-header-spacer{flex:1 1 20px}
+.bh-asof{text-align:right}
+.bh-asof .bh-label{display:block}
+.bh-asof strong{font-size:14px;font-weight:600}
+.bh-avatar{width:40px;height:40px;background:var(--bh-slate);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+
+/* ---------- layout: side menu + work ---------- */
+.bh-layout{display:flex;align-items:stretch;min-height:calc(100vh - 100px)}
+.bh-main{flex:1 1 auto;min-width:0}
+.bh-side{flex:0 0 var(--bh-side-w);background:var(--bh-black);color:#fff;padding:24px 0 32px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
+.bh-side-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bh-light-gray);padding:0 24px 10px}
+.bh-side-h:not(:first-child){margin-top:16px}
+.bh-side-item{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 24px;color:#fff!important;text-decoration:none;font-size:14px;font-weight:500;background:none;border:0;width:100%;text-align:left;font-family:inherit;cursor:pointer;box-sizing:border-box}
+.bh-side-item::before{content:"";width:10px;height:10px;flex:none}
+.bh-side-item:hover{background:var(--bh-slate)}
+.bh-side-item .bh-count{margin-left:auto;font-weight:600}
+.bh-side-item.is-on,.bh-side-item[aria-current]{background:#fff;color:var(--bh-black)!important;font-weight:600}
+.bh-side-item.is-on::before,.bh-side-item[aria-current]::before{background:var(--bh-accent)}
+.bh-side-divider{height:1px;background:var(--bh-slate);margin:20px 24px}
+.bh-menu-btn,.bh-side-close{display:none;width:44px;height:44px;align-items:center;justify-content:center;border:0;cursor:pointer;background:var(--bh-black);color:#fff}
+.bh-side-close{background:var(--bh-slate);align-self:flex-end;margin:0 16px 12px}
+.bh-scrim{display:none}
+
+/* below 960px the menu tucks away and slides out from the left — it never moves to the top */
+@media (max-width:960px){
+  .bh-header{padding:14px 20px}
+  .bh-menu-btn,.bh-side-close{display:flex}
+  .bh-side{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:1000;overflow-y:auto;transform:translateX(-100%);transition:transform .2s ease}
+  body.bh-menu-open .bh-side{transform:none}
+  body.bh-menu-open .bh-scrim{display:block;position:fixed;inset:0;z-index:999;background:rgba(33,30,30,.55);border:0;padding:0}
+  .bh-asof{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){.bh-side{transition:none}}
+
+/* ---------- KPI strip ---------- */
+.bh-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--bh-hairline);border-bottom:1px solid var(--bh-hairline)}
+.bh-kpi{background:#fff;padding:16px 40px}
+.bh-kpi-value{font-size:30px;font-weight:700;line-height:1.1}
+.bh-kpi-value.is-bad{color:var(--bh-bad-ink)} .bh-kpi-value.is-warn{color:var(--bh-warn-ink)}
+@media (max-width:960px){.bh-kpi{padding:12px 20px}.bh-kpi-value{font-size:24px}}
+
+/* ---------- type helpers ---------- */
+.bh-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--bh-ink-muted)}
+.bh-section-title{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0}
+.bh-caption{font-size:13px;line-height:1.4;color:var(--bh-ink-muted)}
+
+/* ---------- buttons: never red, never green ---------- */
+.bh-btn,.bh-btn-outline{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;font:600 13px/1 var(--bh-font);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;cursor:pointer;border-radius:0}
+.bh-btn{background:var(--bh-black);color:#fff!important;border:0}
+.bh-btn:hover{background:var(--bh-slate)}
+.bh-btn-outline{background:#fff;color:var(--bh-black)!important;border:1px solid var(--bh-slate)}
+.bh-btn-outline:hover{background:var(--bh-cream)}
+
+/* ---------- chips: color only for status in the data ---------- */
+.bh-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;white-space:nowrap;background:var(--bh-light-gray);color:var(--bh-black)}
+.bh-chip.is-ok{background:var(--bh-ok-bg);color:var(--bh-ok-ink)}
+.bh-chip.is-warn{background:var(--bh-warn-bg);color:var(--bh-warn-ink)}
+.bh-chip.is-bad{background:var(--bh-bad-bg);color:var(--bh-bad-ink)}
+.bh-chip.tag-global{background:var(--bh-tag-global-bg);color:var(--bh-tag-global-ink)}
+.bh-chip.tag-warranty{background:var(--bh-tag-warranty-bg);color:var(--bh-tag-warranty-ink)}
+.bh-chip.tag-inactive{background:var(--bh-tag-inactive-bg);color:var(--bh-tag-inactive-ink)}
+
+/* ---------- tables ---------- */
+.bh-table-wrap{overflow-x:auto}
+.bh-table{width:100%;border-collapse:collapse}
+.bh-table th{background:var(--bh-slate);color:#fff;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:left;padding:10px 12px;white-space:nowrap}
+.bh-table td{padding:11px 12px;border-bottom:1px solid var(--bh-hairline);font-size:13px}
+.bh-table tr.is-selected td{background:var(--bh-cream)}
+.bh-table .num{text-align:right}
+
+/* ---------- panels and inputs ---------- */
+.bh-panel{border-top:3px solid var(--bh-black);background:#fff}
+.bh-panel-muted{background:var(--bh-surface-muted);padding:20px 24px}
+.bh-input,.bh-select{min-height:44px;padding:0 12px;border:1px solid var(--bh-slate);border-radius:0;font:14px var(--bh-font);color:var(--bh-ink);background:#fff;box-sizing:border-box}
+
+/* ---------- focus: 2px red ring everywhere ---------- */
+.bh-page :focus-visible{outline:2px solid var(--bh-focus);outline-offset:2px}
+.bh-side :focus-visible{outline-offset:-2px}
