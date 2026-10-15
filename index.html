@@ -194,6 +194,35 @@ a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2
 .person .kind{text-align:right;flex:none}
 .person .kind .dt{display:block;font-size:11px;color:var(--faint);margin-top:3px}
 
+/* ---- my day: the signed-in person's meetings, mail, tasks and BH work ---- */
+.sechead .mdhide{margin-left:auto;font:700 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.1em;text-transform:uppercase;
+  background:#fff;border:1px solid var(--line);color:var(--muted);padding:6px 10px;cursor:pointer;border-radius:0}
+.sechead .mdhide:hover{border-color:var(--charcoal);color:var(--ink)}
+.md{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start}
+.md > .panel{min-width:0}
+.mdc .mdr{display:flex;align-items:flex-start;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;min-width:0}
+.mdc a.mdr:hover{background:var(--cream)}
+.mdr .t{flex:none;width:68px;font-size:12px;font-weight:700;line-height:1.35;padding-top:1px}
+.mdr .t small{display:block;font-weight:500;color:var(--faint);font-size:11px}
+.mdr .b{flex:1;min-width:0}
+.mdr .sx{display:block;font-size:13.5px;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mdr .sb{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mdr .r{flex:none;text-align:right;font-size:11.5px;color:var(--faint);padding-top:1px}
+.mdr.past{opacity:.5}
+.mdr .join{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--maroon);text-decoration:none;white-space:nowrap}
+.mdr .join:hover{text-decoration:underline}
+.mdr .n2{display:inline-block;min-width:30px;text-align:center;font-size:15px;font-weight:800;padding:2px 6px;background:var(--gray)}
+.panel .k.crit{background:var(--crit-soft);color:var(--crit)}
+.panel .k.warn{background:var(--warn-soft);color:var(--warn)}
+.mdc .none{padding:12px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--line)}
+.mdc .more{padding:8px 18px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
+.mdc .alls{display:flex}
+.mdc .alls .all{flex:1}
+.mdc .alls .all + .all{border-left:1px solid var(--line)}
+.md.priv .sx,.md.priv .sb{filter:blur(5px);user-select:none}
+.mdnote{font-size:12.5px;color:var(--muted);margin:12px 0 0}
+.mdnote button{font:inherit;font-weight:700;color:var(--maroon);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+@media (max-width:640px){.md{grid-template-columns:1fr}.mdr .t{width:58px}.sechead .mdhide{display:none}}
 /* ---- applications ---- */
 .apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
 a.app{display:block;background:#fff;padding:16px 18px 18px;text-decoration:none;color:inherit;min-width:0}
@@ -319,6 +348,13 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
 
       <div class="layout" id="layout">
         <div class="main">
+          <section class="sec" id="sec-myday" hidden>
+            <div class="sechead"><span class="blk">My day</span><span class="cap" id="mdcap"></span>
+              <button class="mdhide" id="mdhide" type="button" aria-pressed="false">Hide details</button></div>
+            <div class="md" id="mdgrid"></div>
+            <p class="mdnote" id="mdnote" hidden></p>
+          </section>
+
           <section class="sec" id="sec-desks">
             <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
             <div class="tiles" id="tiles"></div>
@@ -953,6 +989,7 @@ async function loadPulse(){
   if (!f.ok){ log("pulse", "projects_data.json HTTP " + f.status); return; }
   let data;
   try { data = JSON.parse(f.text); } catch(_) { log("pulse", "projects_data.json parse failed"); return; }
+  projRows = data.projects || []; projSiteId = s.body.id;   /* My day reads the team from the same file */
   /* the dashboard drops its internal FY-tracking projects; so do we */
   const rows = (data.projects || []).filter(r => !/\bFY\s?\d{2,4}\b/i.test((r.project || "") + " " + (r.project_number || "")));
   const stg = r => String(r.stage || "").toLowerCase();
@@ -985,6 +1022,328 @@ function layoutPulse(){
   const a = !$("#pstats").hidden, b = !$("#peoplepanel").hidden;
   p.hidden = !(a || b);
   const l = $("#layout"); if (l) l.classList.toggle("solo", p.hidden);
+}
+
+/* ============ my day ============ */
+/* The signed-in person's own day: today's meetings, unread and flagged mail,
+   open To Do and Planner tasks, and the Bailey-Harris work waiting on them.
+   Outlook and tasks use their OWN token with three extra delegated scopes, so
+   the rest of the page never depends on them: until those scopes are consented
+   the panel simply shows the Bailey-Harris items. Subjects and senders only —
+   Mail.ReadBasic cannot read a message body. Nothing here is stored. */
+const MY_SCOPES = ["Mail.ReadBasic", "Calendars.Read", "Tasks.Read"];
+const MY_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"; } catch(_) { return "America/Chicago"; } })();
+const OUTLOOK = { mail: "https://outlook.office.com/mail/", cal: "https://outlook.office.com/calendar/view/day",
+                  todo: "https://to-do.office.com/tasks/", planner: "https://tasks.office.com/" };
+/* Procore team roles that belong to the client or the design team, not to us
+   (same list as the Compliance Desk's "My projects" filter) */
+const EXTERNAL_ROLE = /^(owner|architect|construction manager|(geotechnical|mechanical|electrical|civil|structural|plumbing|fire protection) engineer)( contact)?$/i;
+const MD = { cal: null, mail: null, tasks: null, waiting: null, connect: false, off: false };
+let myTok = null, myAcct = null, myEmail = "", projRows = null, projSiteId = null, mdTimer = null;
+
+async function gMy(path, tz){
+  const h = { Authorization: "Bearer " + myTok };
+  if (tz) h.Prefer = 'outlook.timezone="' + tz + '"';
+  const res = await fetch("https://graph.microsoft.com/v1.0" + path, { headers: h });
+  let body = null;
+  try { body = await res.json(); } catch(_) {}
+  return { ok: res.ok, status: res.status, body };
+}
+async function myToken(){
+  try {
+    const r = await app.acquireTokenSilent({ scopes: MY_SCOPES, account: myAcct });
+    MD.connect = false; MD.off = false;
+    return r.accessToken;
+  } catch (e) {
+    /* never redirect on our own: the page must not bounce people to a consent
+       screen at 8am. Offer it instead. */
+    /* not consented yet (AADSTS65001) is IT's job, not the person's: say so
+       rather than offering a button that ends on "Need admin approval" */
+    const why = String((e && e.errorCode) || "") + " " + String((e && (e.errorMessage || e.message)) || "");
+    const noConsent = /consent_required|AADSTS65001|AADSTS90094/i.test(why);
+    MD.connect = e instanceof msal.InteractionRequiredAuthError && !noConsent;
+    MD.off = noConsent;
+    log("my day", "Outlook token not available — " + ((e && e.errorCode) || (e && e.message) || e));
+    return null;
+  }
+}
+
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = d => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+const hm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+const md = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const dow = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const todayYmd = () => ymd(new Date());
+/* a Graph dateTimeTimeZone already in MY_TZ (we asked for it) reads as local time */
+const localOf = dt => dt && dt.dateTime ? new Date(String(dt.dateTime).replace(/\.\d+$/, "")) : null;
+const dayDiff = (a, b) => Math.round((new Date(a + "T12:00:00") - new Date(b + "T12:00:00")) / 86400000);
+function whenMail(iso){
+  const d = new Date(iso); if (isNaN(d)) return "";
+  return ymd(d) === todayYmd() ? hm(d) : md(d);
+}
+function dueChip(due){
+  if (!due) return "";
+  const t = todayYmd(), diff = dayDiff(due, t);
+  if (diff < 0) return '<span class="k crit">Overdue</span>';
+  if (diff === 0) return '<span class="k now">Today</span>';
+  if (diff === 1) return '<span class="k">Tomorrow</span>';
+  return '<span class="k">' + esc(dow(new Date(due + "T12:00:00"))) + '</span>';
+}
+const extLink = (u, inner, cls) => {
+  const s = safeUrl(u);
+  return s ? '<a class="' + cls + '" href="' + esc(s) + '" target="_blank" rel="noopener noreferrer">' + inner + '</a>'
+           : '<div class="' + cls + '">' + inner + '</div>';
+};
+
+/* ---------- meetings ---------- */
+async function loadCalendar(){
+  const s = new Date(); s.setHours(0, 0, 0, 0);
+  const e = new Date(s); e.setDate(e.getDate() + 1);
+  const r = await gMy("/me/calendarView?startDateTime=" + encodeURIComponent(s.toISOString()) +
+    "&endDateTime=" + encodeURIComponent(e.toISOString()) +
+    "&$select=subject,start,end,isAllDay,isCancelled,showAs,location,onlineMeeting,webLink,responseStatus" +
+    "&$orderby=start/dateTime&$top=40", MY_TZ);
+  if (!r.ok){ log("my day calendar", "HTTP " + r.status); MD.cal = null; return; }
+  const ev = (r.body.value || []).filter(x => !x.isCancelled &&
+    !(x.responseStatus && x.responseStatus.response === "declined"));
+  MD.cal = ev.map(x => ({ subject: x.subject || "(no subject)", allDay: !!x.isAllDay,
+    start: localOf(x.start), end: localOf(x.end),
+    where: (x.location && x.location.displayName) || "",
+    join: x.onlineMeeting && x.onlineMeeting.joinUrl, link: x.webLink, free: x.showAs === "free" }));
+  log("my day calendar", MD.cal.length + " today");
+}
+function cardCalendar(){
+  if (!MD.cal) return "";
+  const now = new Date();
+  const allDay = MD.cal.filter(x => x.allDay);
+  const timed = MD.cal.filter(x => !x.allDay && x.start);
+  const past = timed.filter(x => x.end && x.end <= now);
+  const ahead = timed.filter(x => !(x.end && x.end <= now));
+  const rows = [];
+  allDay.forEach(x => rows.push(
+    extLink(x.link, '<span class="t">All day</span><span class="b"><span class="sx">' + esc(x.subject) + '</span>' +
+      (x.where ? '<span class="sb">' + esc(x.where) + '</span>' : '') + '</span>', "mdr")));
+  ahead.slice(0, 6).forEach(x => {
+    const live = x.start <= now;
+    rows.push('<div class="mdr">' +
+      '<span class="t">' + esc(hm(x.start)) + '<small>' + (x.end ? esc(hm(x.end)) : '') + '</small></span>' +
+      '<span class="b">' + (safeUrl(x.link)
+          ? '<a class="sx" href="' + esc(safeUrl(x.link)) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">' + esc(x.subject) + '</a>'
+          : '<span class="sx">' + esc(x.subject) + '</span>') +
+        '<span class="sb">' + esc(x.where || (x.join ? "Microsoft Teams" : "")) + '</span></span>' +
+      '<span class="r">' + (live ? '<span class="k now">Now</span><br>' : '') +
+        (x.join && safeUrl(x.join) ? '<a class="join" href="' + esc(safeUrl(x.join)) + '" target="_blank" rel="noopener noreferrer">Join</a>' : '') +
+      '</span></div>');
+  });
+  const more = ahead.length > 6 ? '<div class="more">and ' + (ahead.length - 6) + ' more later today</div>' : '';
+  const earlier = past.length ? '<div class="more">' + past.length + ' earlier today</div>' : '';
+  const body = rows.length ? rows.join("") + more + earlier
+    : (earlier || "") + '<div class="none">' + (past.length ? "Nothing else on your calendar today." : "No meetings today.") + '</div>';
+  return '<section class="panel mdc"><h2>Meetings today<span class="n">' + (ahead.length + allDay.length) + '</span></h2>' +
+    body + '<a class="all" href="' + OUTLOOK.cal + '" target="_blank" rel="noopener noreferrer">Open calendar</a></section>';
+}
+
+/* ---------- mail ---------- */
+async function loadMail(){
+  const sel = "&$select=subject,from,receivedDateTime,importance,webLink,flag";
+  /* $orderby with $filter: Graph requires the ordered property to lead the filter */
+  const [f, u, fl] = await Promise.all([
+    gMy("/me/mailFolders/inbox?$select=unreadItemCount"),
+    gMy("/me/mailFolders/inbox/messages?$filter=" + encodeURIComponent("receivedDateTime ge 2000-01-01T00:00:00Z and isRead eq false") +
+        "&$orderby=receivedDateTime%20desc&$top=5" + sel),
+    gMy("/me/messages?$filter=" + encodeURIComponent("flag/flagStatus eq 'flagged'") + "&$top=50" + sel, MY_TZ)
+  ]);
+  if (!f.ok && !u.ok && !fl.ok){ log("my day mail", "HTTP " + f.status + "/" + u.status + "/" + fl.status); MD.mail = null; return; }
+  const flagged = (fl.ok && fl.body.value || []).map(m => ({
+    subject: m.subject || "(no subject)", from: (m.from && m.from.emailAddress && m.from.emailAddress.name) || "",
+    at: m.receivedDateTime, link: m.webLink,
+    due: m.flag && m.flag.dueDateTime && m.flag.dueDateTime.dateTime ? String(m.flag.dueDateTime.dateTime).slice(0, 10) : "" }));
+  flagged.sort((a, b) => (a.due || "9999") .localeCompare(b.due || "9999") || String(b.at).localeCompare(String(a.at)));
+  MD.mail = {
+    unread: f.ok ? (f.body.unreadItemCount || 0) : null,
+    newest: (u.ok && u.body.value || []).map(m => ({ subject: m.subject || "(no subject)",
+      from: (m.from && m.from.emailAddress && m.from.emailAddress.name) || "", at: m.receivedDateTime,
+      link: m.webLink, high: m.importance === "high" })),
+    flagged, flagOk: fl.ok
+  };
+  log("my day mail", (MD.mail.unread == null ? "?" : MD.mail.unread) + " unread, " + flagged.length + " flagged" +
+    (fl.ok ? "" : " (flags HTTP " + fl.status + ")"));
+}
+function mailRow(m, right){
+  return extLink(m.link, '<span class="b"><span class="sx">' + esc(m.subject) + '</span>' +
+    '<span class="sb">' + esc(m.from) + '</span></span><span class="r">' + right + '</span>', "mdr");
+}
+function cardMail(){
+  const m = MD.mail; if (!m) return "";
+  let body = "";
+  body += '<div class="sub">Unread in your inbox' + (m.unread != null ? ' · ' + n0(m.unread) : '') + '</div>';
+  body += m.newest.length ? m.newest.map(x => mailRow(x, (x.high ? '<span class="k crit">High</span><br>' : '') + esc(whenMail(x.at)))).join("")
+    : '<div class="none">Inbox is read.</div>';
+  if (m.flagged.length){
+    body += '<div class="sub">Flagged · ' + n0(m.flagged.length) + '</div>';
+    body += m.flagged.slice(0, 4).map(x => mailRow(x, x.due ? dueChip(x.due) : esc(whenMail(x.at)))).join("");
+    if (m.flagged.length > 4) body += '<div class="more">and ' + (m.flagged.length - 4) + ' more flagged</div>';
+  }
+  return '<section class="panel mdc"><h2>Inbox<span class="n">' + (m.unread != null ? n0(m.unread) + ' unread' : '') + '</span></h2>' +
+    body + '<a class="all" href="' + OUTLOOK.mail + '" target="_blank" rel="noopener noreferrer">Open Outlook</a></section>';
+}
+
+/* ---------- tasks: To Do and Planner ---------- */
+async function loadTasks(){
+  const out = []; let okAny = false;
+  const lists = await gMy("/me/todo/lists");
+  if (lists.ok){
+    okAny = true;
+    /* flagged email already has its own section */
+    const ls = (lists.body.value || []).filter(l => l.wellknownListName !== "flaggedEmails").slice(0, 12);
+    const res = await Promise.all(ls.map(l => gMy("/me/todo/lists/" + encodeURIComponent(l.id) +
+      "/tasks?$filter=" + encodeURIComponent("status ne 'completed'") + "&$top=100")));
+    res.forEach((r, i) => {
+      if (!r.ok){ log("my day to do", ls[i].displayName + " HTTP " + r.status); return; }
+      (r.body.value || []).forEach(t => out.push({ title: t.title || "(untitled)",
+        due: t.dueDateTime && t.dueDateTime.dateTime ? String(t.dueDateTime.dateTime).slice(0, 10) : "",
+        src: ls[i].wellknownListName === "defaultList" ? "To Do" : "To Do · " + (ls[i].displayName || ""),
+        high: t.importance === "high", link: OUTLOOK.todo }));
+    });
+  } else log("my day to do", "HTTP " + lists.status);
+
+  const pl = await gMy("/me/planner/tasks");
+  if (pl.ok){
+    okAny = true;
+    const open = (pl.body.value || []).filter(t => (t.percentComplete || 0) < 100);
+    const plans = {};
+    const ids = Array.from(new Set(open.map(t => t.planId).filter(Boolean))).slice(0, 10);
+    const pr = await Promise.all(ids.map(id => gMy("/planner/plans/" + encodeURIComponent(id) + "?$select=id,title")));
+    pr.forEach((r, i) => { if (r.ok && r.body) plans[ids[i]] = r.body.title; });
+    /* Planner keeps a due date as an instant; read it in local time */
+    open.forEach(t => out.push({ title: t.title || "(untitled)",
+      due: t.dueDateTime ? ymd(new Date(t.dueDateTime)) : "",
+      src: "Planner" + (plans[t.planId] ? " · " + plans[t.planId] : ""),
+      high: (t.priority != null && t.priority <= 3), link: OUTLOOK.planner }));
+  } else log("my day planner", "HTTP " + pl.status);
+
+  if (!okAny){ MD.tasks = null; return; }
+  out.sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (b.high - a.high));
+  MD.tasks = out;
+  const t = todayYmd();
+  log("my day tasks", out.length + " open, " + out.filter(x => x.due && x.due < t).length + " overdue");
+}
+function cardTasks(){
+  const ts = MD.tasks; if (!ts) return "";
+  const t = todayYmd();
+  const over = ts.filter(x => x.due && x.due < t).length, today = ts.filter(x => x.due === t).length;
+  const rows = ts.slice(0, 7).map(x => extLink(x.link,
+    '<span class="b"><span class="sx">' + esc(x.title) + '</span><span class="sb">' + esc(x.src) + '</span></span>' +
+    '<span class="r">' + (x.high ? '<span class="k">Important</span><br>' : '') + dueChip(x.due) + '</span>', "mdr")).join("");
+  const sub = (over || today) ? '<div class="sub">' + [over ? over + ' overdue' : '', today ? today + ' due today' : ''].filter(Boolean).join(' · ') + '</div>' : '';
+  return '<section class="panel mdc"><h2>Tasks<span class="n">' + n0(ts.length) + ' open</span></h2>' + sub +
+    (rows || '<div class="none">No open tasks.</div>') +
+    (ts.length > 7 ? '<div class="more">and ' + (ts.length - 7) + ' more</div>' : '') +
+    '<div class="alls"><a class="all" href="' + OUTLOOK.todo + '" target="_blank" rel="noopener noreferrer">To Do</a>' +
+    '<a class="all" href="' + OUTLOOK.planner + '" target="_blank" rel="noopener noreferrer">Planner</a></div></section>';
+}
+
+/* ---------- waiting on you: Bailey-Harris work ---------- */
+async function loadWaiting(){
+  const w = { ap: apReviewCount, intake: apQueueCount, jobs: [], bad: [], soon: [], read: false };
+  if (projRows && myEmail){
+    w.jobs = projRows.filter(p => (p.team || []).some(t =>
+      String(t.email || "").trim().toLowerCase() === myEmail && !EXTERNAL_ROLE.test(String(t.role || "").trim())))
+      .map(p => String(p.project_number || "")).filter(Boolean);
+  }
+  if (w.jobs.length && projSiteId){
+    const f = await graphRaw("/sites/" + projSiteId + "/drive/root:/" +
+      ["Compliance Dashboard", "compliance_data.json"].map(encodeURIComponent).join("/") + ":/content");
+    if (f.ok){
+      try {
+        const mine = new Set(w.jobs);
+        const rows = (JSON.parse(f.text).rows || []).filter(r => mine.has(String(r.project_number || "")) &&
+          String(r.contract_active || "Yes") === "Yes");
+        w.bad = rows.filter(r => r.status === "Non-Compliant");
+        w.soon = rows.filter(r => r.status === "Expiring Soon");
+        w.read = true;
+      } catch(_) { log("my day compliance", "compliance_data.json parse failed"); }
+    } else log("my day compliance", "compliance_data.json HTTP " + f.status);
+  }
+  MD.waiting = w;
+  log("my day waiting", "AP " + w.ap + "/" + w.intake + ", " + w.jobs.length + " of your jobs, " +
+    w.bad.length + " non-compliant, " + w.soon.length + " expiring");
+}
+function cardWaiting(){
+  const w = MD.waiting; if (!w) return "";
+  const rows = [];
+  if (w.ap > 0) rows.push('<a class="mdr" href="/ap/#review"><span class="b"><span class="sx" style="filter:none">Invoices to approve</span>' +
+    '<span class="sb" style="filter:none">Pay apps and invoices assigned to you</span></span><span class="r"><span class="n2">' + n0(w.ap) + '</span></span></a>');
+  if (w.intake > 0) rows.push('<a class="mdr" href="/ap/#intake"><span class="b"><span class="sx" style="filter:none">AP intake queue</span>' +
+    '<span class="sb" style="filter:none">Not yet routed or entered</span></span><span class="r"><span class="n2">' + n0(w.intake) + '</span></span></a>');
+  const comp = w.bad.concat(w.soon);
+  if (comp.length){
+    rows.push('<div class="sub">Trade partner compliance on your jobs</div>');
+    comp.slice(0, 5).forEach(r => rows.push(extLink("https://compliance.baileyharris.com",
+      '<span class="b"><span class="sx">' + esc(r.vendor || "") + '</span><span class="sb">' +
+      esc([r.project_number, r.notes || (r.status === "Expiring Soon" ? "Coverage expiring soon" : r.status)].filter(Boolean).join(" · ")) + '</span></span>' +
+      '<span class="r">' + (r.status === "Non-Compliant" ? '<span class="k crit">Non-compliant</span>' : '<span class="k warn">Expiring</span>') + '</span>', "mdr")));
+    if (comp.length > 5) rows.push('<div class="more">and ' + (comp.length - 5) + ' more on the Compliance Desk</div>');
+  }
+  /* someone with jobs or an AP role gets a reassuring empty state; everyone
+     else gets no card at all */
+  if (!rows.length && !(w.jobs.length && w.read)) return "";
+  const n = (w.ap || 0) + (w.intake || 0) + comp.length;
+  return '<section class="panel mdc"><h2>Waiting on you<span class="n">' + n0(n) + '</span></h2>' +
+    (rows.join("") || '<div class="none">Nothing waiting on you across your ' + w.jobs.length + ' job' + (w.jobs.length === 1 ? '' : 's') + '.</div>') +
+    (w.jobs.length ? '<a class="all" href="https://compliance.baileyharris.com" rel="noopener">Open Compliance Desk</a>' : '') + '</section>';
+}
+
+/* ---------- the section ---------- */
+function renderMyDay(){
+  const sec = $("#sec-myday"); if (!sec) return;
+  const cards = [cardCalendar(), cardWaiting(), cardTasks(), cardMail()].filter(Boolean);
+  $("#mdgrid").innerHTML = cards.join("");
+  const note = $("#mdnote");
+  if (MD.connect || MD.off){
+    note.innerHTML = MD.connect
+      ? 'Your meetings, email and tasks can show here too. <button type="button" id="mdconnect">Connect Outlook and To Do</button>'
+      : 'Meetings, email and tasks will show here once IT turns them on for the launcher.';
+    note.hidden = false;
+    const b = $("#mdconnect");
+    if (b) b.addEventListener("click", () => app.acquireTokenRedirect({ scopes: MY_SCOPES, account: myAcct }));
+  } else note.hidden = true;
+  /* one line under the heading: what the day holds, in counts */
+  const bits = [], now = new Date(), t = todayYmd();
+  if (MD.cal){ const n = MD.cal.filter(x => x.allDay || !(x.end && x.end <= now)).length; bits.push(n + " meeting" + (n === 1 ? "" : "s") + " left today"); }
+  if (MD.mail && MD.mail.unread != null) bits.push(n0(MD.mail.unread) + " unread");
+  if (MD.tasks){ const o = MD.tasks.filter(x => x.due && x.due < t).length; if (o) bits.push(o + " task" + (o === 1 ? "" : "s") + " overdue"); }
+  if (MD.waiting && MD.waiting.ap) bits.push(MD.waiting.ap + " invoice" + (MD.waiting.ap === 1 ? "" : "s") + " to approve");
+  $("#mdcap").textContent = bits.join(" · ");
+  sec.hidden = !(cards.length || !note.hidden);
+  log("my day", cards.length + " card(s)");
+}
+
+async function refreshPersonal(){
+  myTok = await myToken();
+  if (!myTok){ MD.cal = MD.mail = MD.tasks = null; renderMyDay(); return; }
+  await Promise.all([
+    loadCalendar().catch(e => log("my day calendar", "failed " + e.message)),
+    loadMail().catch(e => log("my day mail", "failed " + e.message)),
+    loadTasks().catch(e => log("my day tasks", "failed " + e.message))
+  ]);
+  /* a token, but every source refused: the scopes are not in it yet */
+  MD.off = !MD.cal && !MD.mail && !MD.tasks;
+  renderMyDay();
+}
+function startMyDay(acct){
+  myAcct = acct;
+  const r = refreshPersonal();
+  /* people leave the launcher open all day; keep it current without a reload */
+  if (!mdTimer) mdTimer = setInterval(() => { if (!document.hidden) refreshPersonal(); }, 5 * 60 * 1000);
+  return r;
+}
+
+function mdPrivacy(on){
+  const g = $("#mdgrid"), b = $("#mdhide");
+  if (g) g.classList.toggle("priv", on);
+  if (b){ b.textContent = on ? "Show details" : "Hide details"; b.setAttribute("aria-pressed", on ? "true" : "false"); }
+  try { localStorage.setItem("bh.mdpriv", on ? "1" : "0"); } catch(_) {}
 }
 
 /* ============ boot ============ */
@@ -1160,11 +1519,17 @@ async function main(){
     $("#linksrc").textContent = "Links: built into this page.";
   }
 
+  /* My day: Outlook and tasks run alongside everything below, on their own token */
+  myEmail = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
+  const personal = startMyDay(acct).catch(e => log("my day", "failed " + (e && e.message)));
+
   try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
   try {
-    const email = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
-    await loadApQueues(email, me.body && me.body.department, drives);
+    await loadApQueues(myEmail, me.body && me.body.department, drives);
   } catch(e){ log("ap review", "failed " + (e && e.message)); }
+  try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
+  renderMyDay();   /* the Outlook half renders itself whenever it lands; the desks do not wait for it */
+  void personal;
 
   /* ---- the desks ---- */
   const host = $("#tiles");
@@ -1305,6 +1670,8 @@ function renderDesksUnavailable(){
 /* ============ events ============ */
 $("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
 $("#signout").addEventListener("click", () => app.logoutRedirect());
+$("#mdhide").addEventListener("click", () => mdPrivacy(!$("#mdgrid").classList.contains("priv")));
+try { if (localStorage.getItem("bh.mdpriv") === "1") mdPrivacy(true); } catch(_) {}
 $("#q").addEventListener("input", applyFilter);
 $("#q").addEventListener("keydown", e => { if (e.key === "Escape"){ e.target.value = ""; applyFilter(); } });
 document.addEventListener("keydown", e => {
