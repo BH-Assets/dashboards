@@ -176,8 +176,15 @@
 #jobview .stub h3{margin:0 0 6px;font-size:14px;color:#211E1E}
 #jobview .tabpane{display:none}#jobview .tabpane.on{display:block}
 #jobview .stub{margin-top:18px;font-size:13px;color:#484b4d;line-height:1.6}
-#jobview .pacols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
-@media(max-width:1000px){#jobview .pacols{grid-template-columns:1fr}}
+#jobview .pacols{display:grid;grid-template-columns:minmax(500px,640px) minmax(280px,1fr);gap:28px;align-items:start}
+/* the two-column check needs more than the 680px the single-column one uses; the
+   sidebar and page padding are what the 340px leaves out */
+#jobview .pawrap:has(.pacols){width:min(1180px,calc(100vw - 340px))}
+/* every #jobview td is nowrap (the job table), and a .parow cell passes that down:
+   the ledger note and the warnings ran out of their box as one line */
+#jobview .pawrap .pacol2,#jobview .pawrap .pamax,#jobview .pawrap .patab td:first-child{white-space:normal}
+#jobview .pacol2 > .celed:first-child{margin-top:0}
+@media(max-width:1000px){#jobview .pacols{grid-template-columns:1fr}#jobview .pawrap:has(.pacols){width:calc(100vw - 80px)}}
 #jobview .ghost{background:none;border:1px solid #d5d4d6;border-radius:7px;padding:6px 10px;font-size:12.5px;color:#211e1e}
 #jobview .rqrev{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 #jobview .celed{margin-top:14px;background:#fff;border:1px solid #e8e6e7;border-radius:9px;padding:12px 14px}
@@ -1504,8 +1511,8 @@ function payappPanel(r, pre, rowId){
    + (noFloor ? ' data-nofloor="1"' : '') + '><thead><tr><th></th><th class="n">Ours</th>'
    +   '<th class="n">Theirs</th><th class="n"></th></tr></thead><tbody>' + rows + '</tbody></table>'
    + '</div>'
-   + ceLedgerPanel(r.number, pre && pre.payReq, e, P.theirDue, P.ourDue, P.ceState)
    + '<div class="pacol2">'
+   + ceLedgerPanel(r.number, pre && pre.payReq, e, P.theirDue, P.ourDue, P.ceState)
    + (warn.length ? '<div class="pawarn">' + warn.map(w=>'<div>&#9888;&nbsp; '+w+'</div>').join('') + '</div>' : '')
    + (rowId ? '<div class="rqrev">'
               + '<button data-savefigs="' + esc(rowId) + '" class="ghost">Save these figures</button>'
