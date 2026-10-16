@@ -1026,7 +1026,7 @@ function layoutPulse(){
 
 /* ============ my day ============ */
 /* The signed-in person's own day: today's meetings, unread and flagged mail,
-   open To Do and Planner tasks, and the Bailey-Harris work waiting on them.
+   open Microsoft To Do tasks (plus a link to Procore My Open Items), and the Bailey-Harris work waiting on them.
    Outlook and tasks use their OWN token with three extra delegated scopes, so
    the rest of the page never depends on them: until those scopes are consented
    the panel simply shows the Bailey-Harris items. Subjects and senders only —
@@ -1034,7 +1034,8 @@ function layoutPulse(){
 const MY_SCOPES = ["Mail.ReadBasic", "Calendars.Read", "Tasks.Read"];
 const MY_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"; } catch(_) { return "America/Chicago"; } })();
 const OUTLOOK = { mail: "https://outlook.office.com/mail/", cal: "https://outlook.office.com/calendar/view/day",
-                  todo: "https://to-do.office.com/tasks/", planner: "https://tasks.office.com/" };
+                  todo: "https://to-do.office.com/tasks/",
+                  procore: "https://app.procore.com/webclients/host/companies/15326/tools/opentasks" };
 /* Procore team roles that belong to the client or the design team, not to us
    (same list as the Compliance Desk's "My projects" filter) */
 const EXTERNAL_ROLE = /^(owner|architect|construction manager|(geotechnical|mechanical|electrical|civil|structural|plumbing|fire protection) engineer)( contact)?$/i;
@@ -1188,7 +1189,10 @@ function cardMail(){
     body + '<a class="all" href="' + OUTLOOK.mail + '" target="_blank" rel="noopener noreferrer">Open Outlook</a></section>';
 }
 
-/* ---------- tasks: To Do and Planner ---------- */
+/* ---------- tasks: Microsoft To Do (Planner is not used at BH) ----------
+   Procore's "My Open Items" has no API a page can read for another person: the only
+   company-level endpoint is /rest/v2.0/companies/{id}/open_items/mine, which answers for
+   whoever holds the token. So the card links to it rather than counting it. */
 async function loadTasks(){
   const out = []; let okAny = false;
   const lists = await gMy("/me/todo/lists");
@@ -1207,20 +1211,6 @@ async function loadTasks(){
     });
   } else log("my day to do", "HTTP " + lists.status);
 
-  const pl = await gMy("/me/planner/tasks");
-  if (pl.ok){
-    okAny = true;
-    const open = (pl.body.value || []).filter(t => (t.percentComplete || 0) < 100);
-    const plans = {};
-    const ids = Array.from(new Set(open.map(t => t.planId).filter(Boolean))).slice(0, 10);
-    const pr = await Promise.all(ids.map(id => gMy("/planner/plans/" + encodeURIComponent(id) + "?$select=id,title")));
-    pr.forEach((r, i) => { if (r.ok && r.body) plans[ids[i]] = r.body.title; });
-    /* Planner keeps a due date as an instant; read it in local time */
-    open.forEach(t => out.push({ title: t.title || "(untitled)",
-      due: t.dueDateTime ? ymd(new Date(t.dueDateTime)) : "",
-      src: "Planner" + (plans[t.planId] ? " · " + plans[t.planId] : ""),
-      high: (t.priority != null && t.priority <= 3), link: OUTLOOK.planner }));
-  } else log("my day planner", "HTTP " + pl.status);
 
   if (!okAny){ MD.tasks = null; return; }
   out.sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (b.high - a.high));
@@ -1240,7 +1230,7 @@ function cardTasks(){
     (rows || '<div class="none">No open tasks.</div>') +
     (ts.length > 7 ? '<div class="more">and ' + (ts.length - 7) + ' more</div>' : '') +
     '<div class="alls"><a class="all" href="' + OUTLOOK.todo + '" target="_blank" rel="noopener noreferrer">To Do</a>' +
-    '<a class="all" href="' + OUTLOOK.planner + '" target="_blank" rel="noopener noreferrer">Planner</a></div></section>';
+    '<a class="all" href="' + OUTLOOK.procore + '" target="_blank" rel="noopener noreferrer">My Procore open items</a></div></section>';
 }
 
 /* ---------- waiting on you: Bailey-Harris work ---------- */
