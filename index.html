@@ -83,8 +83,30 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .caption{position:absolute;right:16px;bottom:12px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
 
-/* ---- weather: one cell per office ---- */
-.wxstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-bottom:1px solid var(--line)}
+/* ---- weather: where you are now, then four days ---- */
+.wxstrip{display:grid;grid-template-columns:minmax(300px,1.7fr) repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.wxnow{display:flex;align-items:stretch;border-right:1px solid var(--line);min-width:0}
+a.wxmain{flex:1;display:flex;align-items:center;gap:12px;padding:14px 22px;text-decoration:none;color:var(--ink);min-width:0}
+a.wxmain:hover{background:var(--cream)}
+.wxnow .txt{min-width:0}
+.wxnow .pl{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxnow .tp{display:block;font-size:28px;font-weight:700;line-height:1.1}
+.wxnow .cd{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxnow svg{width:36px;height:36px;flex:none;margin-left:auto;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wxnow svg .sun,.wxd svg .sun{fill:var(--sun);stroke:none}
+.wxnow svg .drop,.wxd svg .drop{fill:var(--charcoal);stroke:none}
+.pin{display:inline-block;width:8px;height:8px;background:var(--brand-red);border-radius:50%;margin-right:6px;vertical-align:1px}
+.pin.job{border-radius:0;background:var(--ink)}
+.wxsel{display:flex;align-items:center;padding:0 14px 0 0}
+.wxsel select{font:600 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.04em;border:1px solid var(--line);background:#fff;padding:5px 6px;color:var(--ink);max-width:150px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wxd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;column-gap:10px;padding:12px 18px;border-right:1px solid var(--line);min-width:0}
+.wxd:last-child{border-right:0}
+.wxd .dn{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.wxd svg{grid-row:1 / span 2;grid-column:2;justify-self:end;width:28px;height:28px;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wxd .hl{font-size:14px;color:var(--muted)} .wxd .hl b{font-size:17px;color:var(--ink)}
+.wxd .rn{grid-column:1 / span 2;font-size:11.5px;color:var(--muted)}
+.rn.hi{color:var(--charcoal);font-weight:700}
 a.wxc{display:flex;align-items:center;gap:12px;padding:14px 22px;text-decoration:none;color:var(--ink);
   border-right:1px solid var(--line);min-width:0}
 a.wxc:last-child{border-right:0}
@@ -294,6 +316,8 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
   .greet{font-size:46px}
   .deco{display:none}
   .hero-card{padding:0 20px}
+  .wxstrip{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .wxnow{grid-column:1 / -1;border-right:0;border-bottom:1px solid var(--line)}
   .search{order:5;flex:1 1 100%}
 }
 @media (max-width:640px){
@@ -309,8 +333,9 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
   .apps{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appdesc{display:none}
   .sechead .cap{display:none}
-  .wxstrip{grid-template-columns:repeat(3,minmax(0,1fr))}
-  a.wxc{padding:12px 14px} a.wxc svg{display:none}
+  .wxstrip{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .wxnow{grid-column:1 / -1;border-right:0;border-bottom:1px solid var(--line)}
+  a.wxmain{padding:12px 16px} .wxd{padding:10px 12px} .wxd svg{width:22px;height:22px}
   .endband .since{margin-left:0;flex:1 1 100%}
   .endband .wrap{gap:12px}
   .endband img{height:32px}
@@ -793,54 +818,6 @@ function wxLocations(w){
 /* which location this viewer last looked at - a convenience, never load-bearing */
 function wxRemembered(){ try { return localStorage.getItem("bh.wx") || ""; } catch(_) { return ""; } }
 function wxRemember(v){ try { localStorage.setItem("bh.wx", v); } catch(_) {} }
-
-/* Open-Meteo takes a list of coordinates in one request and answers with a list. */
-async function fetchWeather(){
-  const list = wxAll;
-  if (!list.length) return null;
-  const url = "https://api.open-meteo.com/v1/forecast"
-    + "?latitude="  + list.map(l => encodeURIComponent(l.lat)).join(",")
-    + "&longitude=" + list.map(l => encodeURIComponent(l.lon)).join(",")
-    + "&current=temperature_2m,is_day,weather_code"
-    + "&daily=temperature_2m_max,temperature_2m_min"
-    + "&temperature_unit=fahrenheit"
-    + "&timezone=" + encodeURIComponent(list[0].tz || "auto")
-    + "&forecast_days=1";
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 7000);
-  try {
-    const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer" });
-    if (!r.ok) { log("weather", "HTTP " + r.status); return null; }
-    const j = await r.json();
-    log("weather", "ok, " + list.length + " offices");
-    return Array.isArray(j) ? j : [j];
-  } catch(e) {
-    log("weather", "unavailable");
-    return null;
-  } finally { clearTimeout(timer); }
-}
-
-let wxLast = null;
-/* The weather is decoration. If it cannot be fetched the strip simply never
-   appears; a launcher must not lead with an error nobody can act on. Each
-   office opens its National Weather Service hourly forecast and radar. */
-function renderWeather(data){
-  const el = $("#wx");
-  if (!el) return;
-  if (!data || !data.length){ el.hidden = true; return; }
-  el.innerHTML = wxAll.map((l, i) => {
-    const w = data[i] || {}, c = w.current || {}, d = w.daily || {};
-    const cond = (WXCODE[c.weather_code] || ["cloud", ""])[1];
-    const hi = (d.temperature_2m_max || [])[0], lo = (d.temperature_2m_min || [])[0];
-    const fc = safeUrl(l.forecastUrl || nwsUrl(l));
-    return '<a class="wxc" href="' + esc(fc || "#") + '" target="_blank" rel="noopener noreferrer" title="Hourly forecast and radar for ' + esc(l.label) + '">' +
-      '<span class="txt"><span class="pl">' + esc(l.label) + '</span>' +
-      '<span class="tp">' + degF(c.temperature_2m) + '</span>' +
-      '<span class="cd">' + esc(cond) + (hi != null ? ' &middot; ' + degF(hi) + ' / ' + degF(lo) : '') + '</span></span>' +
-      (c.weather_code != null ? wxSvg("", c.weather_code, c.is_day === 0) : '') + '</a>';
-  }).join("");
-  el.hidden = false;
-}
 
 /* ---------- quick actions ---------- */
 /* Two queue buttons, each shown only when its count is above zero:
@@ -1464,13 +1441,152 @@ let pipelineNewsletter = null;
 let wxAll = wxLocations(FALLBACK_SITE.weather);
 let wxCfg = wxAll[0] || null;
 let wxPromise = null;
+/* ---------- one place: the viewer's own location, else their office ----------
+   The browser asks once for location. Coordinates are rounded to about a
+   kilometre before they leave the page and go only to Open-Meteo (the forecast)
+   and the National Weather Service (the town name and the forecast link).
+   Nothing is stored except which choice the viewer made (bh.wx). If location
+   is refused or unavailable the strip uses the office on their Microsoft
+   profile, then the first office in links.json. */
+const WX = { offices: wxAll.slice(), jobs: [], place: null, data: null, officeHint: "" };
+const r2 = v => Math.round(v * 100) / 100;
+
+function wxOffice(){
+  const pref = wxRemembered();
+  const by = s => WX.offices.find(o => o.label && s && o.label.toLowerCase() === String(s).toLowerCase());
+  const hint = WX.officeHint && WX.offices.find(o => o.label && WX.officeHint.toLowerCase().includes(o.label.toLowerCase()));
+  const o = (pref && pref !== "geo" && by(pref)) || hint || WX.offices[0];
+  return o ? Object.assign({ src: "office" }, o) : null;
+}
+function wxGeo(){
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: r2(p.coords.latitude), lon: r2(p.coords.longitude) }),
+      e => { log("weather", "location " + (e && e.code === 1 ? "refused" : "unavailable")); res(null); },
+      { enableHighAccuracy: false, timeout: 9000, maximumAge: 30 * 60 * 1000 });
+  });
+}
+/* "Opelika, AL" from the National Weather Service; plain "My location" if it cannot say */
+async function wxTown(lat, lon){
+  try {
+    const r = await fetch("https://api.weather.gov/points/" + lat + "," + lon, { referrerPolicy: "no-referrer" });
+    if (!r.ok) return "";
+    const j = await r.json(), rl = j && j.properties && j.properties.relativeLocation && j.properties.relativeLocation.properties;
+    return rl && rl.city ? rl.city + (rl.state ? ", " + rl.state : "") : "";
+  } catch(_) { return ""; }
+}
+async function wxPickPlace(){
+  const pref = wxRemembered();
+  /* a jobsite picked earlier: the job list arrives after sign-in, wxJobsReady() switches to it */
+  if (pref.startsWith("job:")) return WX.jobs.find(j => j.key === pref) || wxOffice();
+  if (pref && pref !== "geo") { const o = wxOffice(); if (o && o.label.toLowerCase() === pref.toLowerCase()) return o; }
+  const g = await wxGeo();
+  if (g) {
+    const near = WX.offices.find(o => Math.abs(o.lat - g.lat) < 0.12 && Math.abs(o.lon - g.lon) < 0.12);
+    return { src: "geo", lat: g.lat, lon: g.lon, label: "My location", town: near ? near.label : "", tz: "auto" };
+  }
+  /* no device location: the person's own jobsite, then their office */
+  return WX.jobs[0] || wxOffice();
+}
+async function fetchWeather(place){
+  const p = place || WX.place; if (!p) return null;
+  const url = "https://api.open-meteo.com/v1/forecast"
+    + "?latitude=" + encodeURIComponent(p.lat) + "&longitude=" + encodeURIComponent(p.lon)
+    + "&current=temperature_2m,is_day,weather_code"
+    + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+    + "&temperature_unit=fahrenheit&timezone=auto&forecast_days=5";
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 7000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer" });
+    if (!r.ok) { log("weather", "HTTP " + r.status); return null; }
+    const j = await r.json(); log("weather", "ok, " + (p.src === "geo" ? "device location" : p.label));
+    return j;
+  } catch(e) { log("weather", "unavailable"); return null; }
+  finally { clearTimeout(timer); }
+}
+/* pick the place, fetch, and keep both; returns the forecast for the boot code */
+async function wxLoad(){
+  WX.place = await wxPickPlace();
+  if (!WX.place) return null;
+  const [d, town] = await Promise.all([fetchWeather(WX.place), WX.place.src === "geo" ? wxTown(WX.place.lat, WX.place.lon) : Promise.resolve("")]);
+  if (town) WX.place.town = town;
+  WX.data = d; return d;
+}
+/* The signed-in person's active jobs, from the same team list My day uses.
+   Construction jobs first, then the soonest completion; only jobs with a
+   geocoded site address (lat/lng in projects_data.json) can be used. */
+function wxJobsReady(){
+  if (!projRows || !myEmail) return;
+  const stg = r => String(r.stage || "").toLowerCase();
+  const mine = projRows.filter(r => (r.group ? r.group === "active" : /construction/.test(stg(r))) && r.lat != null && r.lng != null &&
+    (r.team || []).some(t => String(t.email || "").trim().toLowerCase() === myEmail && !EXTERNAL_ROLE.test(String(t.role || "").trim())));
+  mine.sort((a, b) => ((stg(a) === "construction" ? 0 : 1) - (stg(b) === "construction" ? 0 : 1)) ||
+    String(a.completion_date || "9999").localeCompare(String(b.completion_date || "9999")));
+  WX.jobs = mine.map(r => ({ src: "job", key: "job:" + r.project_number, num: String(r.project_number || ""),
+    label: String(r.project || r.project_number || "Jobsite"), lat: r2(+r.lat), lon: r2(+r.lng), tz: "auto" }));
+  log("weather", WX.jobs.length + " jobsite" + (WX.jobs.length === 1 ? "" : "s") + " for this person");
+  if (!WX.jobs.length || !WX.place) return;
+  const pref = wxRemembered();
+  const chosenOffice = pref && pref !== "geo" && !pref.startsWith("job:");
+  /* only replace an office that was a fallback, never one the person picked, and never their device location */
+  if (WX.place.src === "office" && !chosenOffice){
+    const j = WX.jobs.find(x => x.key === pref) || WX.jobs[0];
+    WX.place = j; fetchWeather(j).then(d => { WX.data = d; wxLast = d; renderWeather(d); });
+  } else renderWeather(wxLast);   /* adds the jobs to the picker */
+}
+function wxSwitch(v){
+  if (v.startsWith("job:")){ const j = WX.jobs.find(x => x.key === v); if (j){ wxRemember(v); WX.place = j; fetchWeather(j).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); return; } }
+  wxRemember(v);
+  wxLoad().then(d => { wxLast = d; renderWeather(d); });
+}
+
+let wxLast = null;
+/* The weather is decoration. If it cannot be fetched the strip simply never
+   appears; a launcher must not lead with an error nobody can act on. */
+function renderWeather(data){
+  const el = $("#wx");
+  if (!el) return;
+  const p = WX.place;
+  if (!data || !p || !data.daily){ el.hidden = true; return; }
+  const c = data.current || {}, d = data.daily || {};
+  const day = i => ({ t: (d.time || [])[i], code: (d.weather_code || [])[i], hi: (d.temperature_2m_max || [])[i],
+                      lo: (d.temperature_2m_min || [])[i], rain: (d.precipitation_probability_max || [])[i] });
+  const t0 = day(0);
+  const cond = (WXCODE[c.weather_code] || ["cloud", ""])[1];
+  const fc = safeUrl(p.forecastUrl || nwsUrl(p));
+  const where = p.src === "geo" ? (p.town || "My location") : p.src === "job" ? (p.num + " \u00b7 " + p.label) : (p.label || "Office");
+  const rainTxt = v => v == null ? "" : '<span class="rn' + (v >= 50 ? ' hi' : '') + '">' + Math.round(v) + '% rain</span>';
+  const opts = '<option value="geo"' + (p.src === "geo" ? " selected" : "") + '>My location</option>' +
+    (WX.jobs.length ? '<optgroup label="My jobsites">' + WX.jobs.map(j => '<option value="' + esc(j.key) + '"' + (p.src === "job" && p.key === j.key ? " selected" : "") + '>' + esc(j.num + " " + (j.label.length > 28 ? j.label.slice(0, 27) + "\u2026" : j.label)) + '</option>').join("") + '</optgroup>' : '') +
+    '<optgroup label="Offices">' + WX.offices.map(o => '<option value="' + esc(o.label) + '"' + (p.src === "office" && p.label === o.label ? " selected" : "") + '>' + esc(o.label) + ' office</option>').join("") + '</optgroup>';
+  let html = '<div class="wxnow">' +
+      '<a class="wxmain" href="' + esc(fc || "#") + '" target="_blank" rel="noopener noreferrer" title="Hourly forecast and radar">' +
+        '<span class="txt"><span class="pl" title="' + esc(where) + '">' + (p.src === "geo" ? '<span class="pin" aria-hidden="true"></span>' : p.src === "job" ? '<span class="pin job" aria-hidden="true"></span>' : '') + esc(where) + '</span>' +
+        '<span class="tp">' + degF(c.temperature_2m) + '</span>' +
+        '<span class="cd">' + esc(cond) + (t0.hi != null ? ' &middot; ' + degF(t0.hi) + ' / ' + degF(t0.lo) : '') + (t0.rain != null ? ' &middot; ' + rainTxt(t0.rain) : '') + '</span></span>' +
+        (c.weather_code != null ? wxSvg("", c.weather_code, c.is_day === 0) : '') + '</a>' +
+      '<label class="wxsel"><span class="sr">Weather for</span><select id="wxpick" aria-label="Weather for">' + opts + '</select></label>' +
+    '</div>';
+  for (let i = 1; i <= 4; i++){
+    const x = day(i); if (!x.t) continue;
+    const dn = new Date(x.t + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
+    html += '<div class="wxd"><span class="dn">' + esc(dn) + '</span>' + wxSvg("", x.code, false) +
+      '<span class="hl"><b>' + degF(x.hi) + '</b> ' + degF(x.lo) + '</span>' + rainTxt(x.rain) + '</div>';
+  }
+  el.innerHTML = html;
+  el.setAttribute("aria-label", "Weather for " + where);
+  const sel = $("#wxpick"); if (sel) sel.addEventListener("change", () => wxSwitch(sel.value));
+  el.hidden = false;
+}
+
 
 async function main(){
   $("#greet").textContent = greeting();
   paintClock();
   setInterval(paintClock, 15000);
   /* fired before sign-in resolves so the panel is ready when the page appears */
-  wxPromise = fetchWeather();
+  wxPromise = wxLoad();
 
   if (typeof msal === "undefined"){
     $("#app").hidden = false;
@@ -1551,6 +1667,10 @@ async function main(){
   if (me.ok && me.body){
     const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
     $("#acctrole").textContent = role;
+    WX.officeHint = me.body.officeLocation || "";
+    if (WX.place && WX.place.src === "office" && !wxRemembered()){
+      const o = wxOffice(); if (o && o.label !== WX.place.label){ WX.place = o; fetchWeather(o).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); }
+    }
     if (me.body.displayName) $("#acctname").textContent = me.body.displayName;
   }
 
@@ -1636,6 +1756,7 @@ async function main(){
   const personal = startMyDay(acct).catch(e => log("my day", "failed " + (e && e.message)));
 
   try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
+  try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
   try {
     await loadApQueues(myEmail, me.body && me.body.department, drives);
   } catch(e){ log("ap review", "failed " + (e && e.message)); }
@@ -1751,10 +1872,13 @@ function applySite(site){
 
   const list = wxLocations(site && site.weather);
   if (!list.length) return;
-  const same = JSON.stringify(list.map(l => [l.label, l.lat, l.lon])) === JSON.stringify(wxAll.map(l => [l.label, l.lat, l.lon]));
-  wxAll = list;
-  if (same) { renderWeather(wxLast); return; }
-  fetchWeather().then(d => { wxLast = d; renderWeather(d); });
+  WX.offices = list; wxAll = list;
+  /* location wins; the office list only matters as the fallback and the picker */
+  if (WX.place && WX.place.src === "office"){
+    const o = wxOffice();
+    if (o && (o.label !== WX.place.label || o.lat !== WX.place.lat)){ WX.place = o; fetchWeather(o).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); return; }
+  }
+  renderWeather(wxLast);
 }
 
 const chip = (k, t) => '<span class="bh-chip is-' + k + '">' + esc(t) + '</span>';
