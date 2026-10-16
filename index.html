@@ -67,9 +67,13 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
 .greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
 .greet .nm{display:block;font-weight:800}
-.hero-card{position:absolute;left:0;bottom:44px;background:#fff;padding:24px 40px 28px;max-width:960px}
+.hero-card{position:absolute;left:0;right:0;bottom:44px;padding:0 40px;max-width:1280px;margin:0 auto}
 .hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
-.hero-card p.eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--maroon,#6b2737);margin:0 0 14px}
+.hero-in p.eyebrow{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff}
+.hero-in p.eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:var(--brand-red);margin-right:9px;vertical-align:0}
+/* quick actions sit on the photo: white buttons, tan (brand cream) on hover */
+.hero-card .acts a,.hero-card .acts a.bh-btn,.hero-card .acts a.bh-btn-outline{background:#fff!important;color:var(--ink)!important;border:1px solid #fff!important;box-shadow:none}
+.hero-card .acts a:hover,.hero-card .acts a:focus-visible{background:var(--cream)!important;border-color:var(--cream)!important;color:var(--ink)!important}
 .acts{display:flex;gap:10px;flex-wrap:wrap}
 .acts a{min-height:44px}
 .deco{position:absolute;right:40px;bottom:112px;display:flex;align-items:flex-start;gap:34px;pointer-events:none}
@@ -289,16 +293,16 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
   .wrap.page{padding-top:32px}
   .greet{font-size:46px}
   .deco{display:none}
-  .hero-card{padding:20px 20px 22px;right:0;max-width:none}
+  .hero-card{padding:0 20px}
   .search{order:5;flex:1 1 100%}
 }
 @media (max-width:640px){
   header.lh{position:static}
   .acct .role{display:none}
   .hero,.hero-in{min-height:0}
-  .hero-in{padding-top:28px;padding-bottom:120px}
+  .hero-in{padding-top:28px;padding-bottom:24px}
   .greet{font-size:32px}
-  .hero-card{position:relative;bottom:auto}
+  .hero-card{position:relative;bottom:auto;padding:0 20px 24px}
   .caption{display:none}
   .hero-card p{font-size:15px}
   .tiles{grid-template-columns:1fr}
@@ -392,12 +396,12 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
       <div class="hero-photo"></div>
       <div class="hero-wash"></div>
       <div class="hero-in">
+        <p id="tagline" class="eyebrow">BH Employee Home</p>
         <div class="today" id="today">&nbsp;</div>
         <h1 class="greet"><span id="greet">Good morning</span><span class="nm" id="greetname"></span></h1>
         <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
       </div>
       <div class="hero-card">
-        <p id="tagline" class="eyebrow">BH Employee Home</p>
         <nav class="acts" id="acts" aria-label="Quick actions"></nav>
       </div>
       <div class="caption" id="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
