@@ -198,7 +198,27 @@ a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2
 .sechead .mdhide{margin-left:auto;font:700 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.1em;text-transform:uppercase;
   background:#fff;border:1px solid var(--line);color:var(--muted);padding:6px 10px;cursor:pointer;border-radius:0}
 .sechead .mdhide:hover{border-color:var(--charcoal);color:var(--ink)}
-.md{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start}
+.md{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));align-items:start}
+.mdc > h2{padding:9px 14px!important;font-size:11.5px!important}
+.mdc .mdr{padding:6px 14px!important;gap:9px!important}
+.mdc .mdr .t{width:56px!important;font-size:11.5px!important}
+.mdc .mdr .sx{font-size:12.5px!important}
+.mdc .mdr .sb{font-size:11px!important}
+.mdc .sub{padding:6px 14px 4px!important;font-size:9.5px!important}
+.mdc .more,.mdc .none{padding:6px 14px!important;font-size:11.5px!important}
+.mdc .all{padding:7px 14px!important;font-size:10.5px!important}
+#sec-myday{margin-bottom:34px}
+/* ---- active jobs: one line under the weather ---- */
+.jobstrip{background:#fff;border-bottom:1px solid var(--line)}
+.jobstrip .wrap{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;padding-top:11px;padding-bottom:11px}
+.jobstrip .jt{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal)}
+.jobstrip .jc{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.jobstrip .jc b{font-size:17px;font-weight:800;color:var(--ink);margin-right:6px}
+.jobstrip .jc.big b{font-size:22px;color:var(--maroon)}
+.jobstrip .jgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+.jobstrip .jgo:hover{color:var(--maroon)}
+.jobstrip .jasof{font-size:11px;color:var(--faint);white-space:nowrap}
+@media (max-width:640px){.jobstrip .wrap{gap:12px}.jobstrip .jgo{margin-left:0}}
 .md > .panel{min-width:0}
 .mdc .mdr{display:flex;align-items:flex-start;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;min-width:0}
 .mdc a.mdr:hover{background:var(--cream)}
@@ -340,6 +360,7 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
     </section>
 
     <nav class="wxstrip" id="wx" aria-label="Weather at the offices" hidden></nav>
+    <nav class="jobstrip" id="jobstrip" aria-label="Active jobs" hidden></nav>
     <div class="safety" id="safety" hidden></div>
 
     <div class="wrap page">
@@ -999,21 +1020,21 @@ async function loadPulse(){
   const counts = STAGE_ROWS.map(([k, label]) => [label, active.filter(r => stg(r) === k).length]);
   const max = Math.max(1, ...counts.map(c => c[1]));
   const when = data.generated_at || data.generated || "";
-  $("#pstats").innerHTML =
-    '<div class="bh-label">Active jobs</div>' +
-    '<div class="ptop"><div class="pbig">' + n0(active.length) + '</div>' +
-    '<div class="pcap">Pre-construction through post-construction, from Procore. ' +
-    '<a href="https://projects.baileyharris.com" rel="noopener">Open Project Information \u2192</a></div></div>' +
-    '<div class="bars" role="list" aria-label="Active jobs by stage">' + counts.map(([label, n]) =>
-      '<div class="bar" role="listitem" title="' + esc(label) + ': ' + n + ' job' + (n === 1 ? '' : 's') + '">' +
-      '<span class="lab">' + esc(label) + '</span>' +
-      '<span class="trk"><span class="fill" style="width:' + (n / max * 100).toFixed(1) + '%"></span></span>' +
-      '<span class="val">' + n0(n) + '</span></div>').join("") + '</div>' +
-    '<div class="pmini"><span><b>' + n0(closing) + '</b>closing this month</span>' +
-    '<span><b>' + n0(warranty) + '</b>in warranty</span></div>' +
-    (when ? '<div class="pasof">As of ' + esc(new Date(when).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + '</div>' : '');
-  $("#pstats").hidden = false;
-  pulseShown = true;
+  /* one line under the weather instead of a side panel: counts only, no money */
+  const js=$("#jobstrip");
+  if (js){
+    const cell=(n,l,strong)=>'<span class="jc'+(strong?' big':'')+'"><b>'+n0(n)+'</b>'+esc(l)+'</span>';
+    js.innerHTML='<div class="wrap">'
+      + '<span class="jt">Active jobs</span>'
+      + cell(active.length,'active',true)
+      + counts.map(([label,n])=>cell(n,label)).join('')
+      + cell(closing,'closing this month') + cell(warranty,'in warranty')
+      + '<a class="jgo" href="https://projects.baileyharris.com" rel="noopener">Project Information &rarr;</a>'
+      + (when ? '<span class="jasof">as of '+esc(new Date(when).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</span>' : '')
+      + '</div>';
+    js.hidden=false;
+  }
+  pulseShown = true;   /* #pstats stays hidden; the strip above carries it */
   log("pulse", active.length + " active, " + closing + " closing, " + warranty + " warranty");
   layoutPulse();
 }
@@ -1124,7 +1145,7 @@ function cardCalendar(){
   allDay.forEach(x => rows.push(
     extLink(x.link, '<span class="t">All day</span><span class="b"><span class="sx">' + esc(x.subject) + '</span>' +
       (x.where ? '<span class="sb">' + esc(x.where) + '</span>' : '') + '</span>', "mdr")));
-  ahead.slice(0, 6).forEach(x => {
+  ahead.slice(0, 4).forEach(x => {
     const live = x.start <= now;
     rows.push('<div class="mdr">' +
       '<span class="t">' + esc(hm(x.start)) + '<small>' + (x.end ? esc(hm(x.end)) : '') + '</small></span>' +
@@ -1136,11 +1157,11 @@ function cardCalendar(){
         (x.join && safeUrl(x.join) ? '<a class="join" href="' + esc(safeUrl(x.join)) + '" target="_blank" rel="noopener noreferrer">Join</a>' : '') +
       '</span></div>');
   });
-  const more = ahead.length > 6 ? '<div class="more">and ' + (ahead.length - 6) + ' more later today</div>' : '';
+  const more = ahead.length > 4 ? '<div class="more">and ' + (ahead.length - 4) + ' more later today</div>' : '';
   const earlier = past.length ? '<div class="more">' + past.length + ' earlier today</div>' : '';
   const body = rows.length ? rows.join("") + more + earlier
     : (earlier || "") + '<div class="none">' + (past.length ? "Nothing else on your calendar today." : "No meetings today.") + '</div>';
-  return '<section class="panel mdc"><h2>Meetings today<span class="n">' + (ahead.length + allDay.length) + '</span></h2>' +
+  return '<section class="panel mdc"><h2>My calendar<span class="n">' + (ahead.length + allDay.length) + '</span></h2>' +
     body + '<a class="all" href="' + OUTLOOK.cal + '" target="_blank" rel="noopener noreferrer">Open calendar</a></section>';
 }
 
@@ -1151,7 +1172,7 @@ async function loadMail(){
   const [f, u, fl] = await Promise.all([
     gMy("/me/mailFolders/inbox?$select=unreadItemCount"),
     gMy("/me/mailFolders/inbox/messages?$filter=" + encodeURIComponent("receivedDateTime ge 2000-01-01T00:00:00Z and isRead eq false") +
-        "&$orderby=receivedDateTime%20desc&$top=5" + sel),
+        "&$orderby=receivedDateTime%20desc&$top=3" + sel),
     gMy("/me/messages?$filter=" + encodeURIComponent("flag/flagStatus eq 'flagged'") + "&$top=50" + sel, MY_TZ)
   ]);
   if (!f.ok && !u.ok && !fl.ok){ log("my day mail", "HTTP " + f.status + "/" + u.status + "/" + fl.status); MD.mail = null; return; }
@@ -1182,8 +1203,8 @@ function cardMail(){
     : '<div class="none">Inbox is read.</div>';
   if (m.flagged.length){
     body += '<div class="sub">Flagged · ' + n0(m.flagged.length) + '</div>';
-    body += m.flagged.slice(0, 4).map(x => mailRow(x, x.due ? dueChip(x.due) : esc(whenMail(x.at)))).join("");
-    if (m.flagged.length > 4) body += '<div class="more">and ' + (m.flagged.length - 4) + ' more flagged</div>';
+    body += m.flagged.slice(0, 3).map(x => mailRow(x, x.due ? dueChip(x.due) : esc(whenMail(x.at)))).join("");
+    if (m.flagged.length > 3) body += '<div class="more">and ' + (m.flagged.length - 3) + ' more flagged</div>';
   }
   return '<section class="panel mdc"><h2>Inbox<span class="n">' + (m.unread != null ? n0(m.unread) + ' unread' : '') + '</span></h2>' +
     body + '<a class="all" href="' + OUTLOOK.mail + '" target="_blank" rel="noopener noreferrer">Open Outlook</a></section>';
@@ -1222,13 +1243,13 @@ function cardTasks(){
   const ts = MD.tasks; if (!ts) return "";
   const t = todayYmd();
   const over = ts.filter(x => x.due && x.due < t).length, today = ts.filter(x => x.due === t).length;
-  const rows = ts.slice(0, 7).map(x => extLink(x.link,
+  const rows = ts.slice(0, 4).map(x => extLink(x.link,
     '<span class="b"><span class="sx">' + esc(x.title) + '</span><span class="sb">' + esc(x.src) + '</span></span>' +
     '<span class="r">' + (x.high ? '<span class="k">Important</span><br>' : '') + dueChip(x.due) + '</span>', "mdr")).join("");
   const sub = (over || today) ? '<div class="sub">' + [over ? over + ' overdue' : '', today ? today + ' due today' : ''].filter(Boolean).join(' · ') + '</div>' : '';
   return '<section class="panel mdc"><h2>Tasks<span class="n">' + n0(ts.length) + ' open</span></h2>' + sub +
     (rows || '<div class="none">No open tasks.</div>') +
-    (ts.length > 7 ? '<div class="more">and ' + (ts.length - 7) + ' more</div>' : '') +
+    (ts.length > 4 ? '<div class="more">and ' + (ts.length - 4) + ' more</div>' : '') +
     '<div class="alls"><a class="all" href="' + OUTLOOK.todo + '" target="_blank" rel="noopener noreferrer">To Do</a>' +
     '<a class="all" href="' + OUTLOOK.procore + '" target="_blank" rel="noopener noreferrer">My Procore open items</a></div></section>';
 }
@@ -1269,11 +1290,11 @@ function cardWaiting(){
   const comp = w.bad.concat(w.soon);
   if (comp.length){
     rows.push('<div class="sub">Trade partner compliance on your jobs</div>');
-    comp.slice(0, 5).forEach(r => rows.push(extLink("https://compliance.baileyharris.com",
+    comp.slice(0, 3).forEach(r => rows.push(extLink("https://compliance.baileyharris.com",
       '<span class="b"><span class="sx">' + esc(r.vendor || "") + '</span><span class="sb">' +
       esc([r.project_number, r.notes || (r.status === "Expiring Soon" ? "Coverage expiring soon" : r.status)].filter(Boolean).join(" · ")) + '</span></span>' +
       '<span class="r">' + (r.status === "Non-Compliant" ? '<span class="k crit">Non-compliant</span>' : '<span class="k warn">Expiring</span>') + '</span>', "mdr")));
-    if (comp.length > 5) rows.push('<div class="more">and ' + (comp.length - 5) + ' more on the Compliance Desk</div>');
+    if (comp.length > 3) rows.push('<div class="more">and ' + (comp.length - 3) + ' more on the Compliance Desk</div>');
   }
   /* someone with jobs or an AP role gets a reassuring empty state; everyone
      else gets no card at all */
