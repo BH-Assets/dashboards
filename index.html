@@ -1076,17 +1076,24 @@ function wireTeam(){
    no contract, cost or profit figures on the launcher. If the read fails (no
    access, or the file is missing) the block simply does not appear. */
 const PROJ_SITE = "/sites/" + SP_HOST + ":/sites/Resources";
-const PROJ_FILE = "Compliance Dashboard/projects_data.json";
+/* jobs_public.json: the project pull's launcher copy - job, stage, site and BH team,
+   no money. projects_data.json (the financial file) is only a fallback until the
+   first pull writes the public copy; once that file is locked down the fallback
+   simply fails and is never needed. */
+const PROJ_FILE = "Compliance Dashboard/jobs_public.json";
+const PROJ_FILE_OLD = "Compliance Dashboard/projects_data.json";
 const STAGE_ROWS = [["pre-construction", "Pre-construction"], ["construction", "Construction"], ["post-construction", "Post-construction"]];
 let pulseShown = false;
 
 async function loadPulse(){
   const s = await graph(PROJ_SITE + "?$select=id");
   if (!(s.ok && s.body && s.body.id)){ log("pulse", "Resources site HTTP " + s.status); return; }
-  const f = await graphRaw("/sites/" + s.body.id + "/drive/root:/" + PROJ_FILE.split("/").map(encodeURIComponent).join("/") + ":/content");
-  if (!f.ok){ log("pulse", "projects_data.json HTTP " + f.status); return; }
+  const path = x => "/sites/" + s.body.id + "/drive/root:/" + x.split("/").map(encodeURIComponent).join("/") + ":/content";
+  let f = await graphRaw(path(PROJ_FILE));
+  if (f.status === 404){ log("pulse", "jobs_public.json not written yet, using projects_data.json"); f = await graphRaw(path(PROJ_FILE_OLD)); }
+  if (!f.ok){ log("pulse", "job list HTTP " + f.status); return; }
   let data;
-  try { data = JSON.parse(f.text); } catch(_) { log("pulse", "projects_data.json parse failed"); return; }
+  try { data = JSON.parse(f.text); } catch(_) { log("pulse", "job list parse failed"); return; }
   projRows = data.projects || []; projSiteId = s.body.id;   /* My day reads the team from the same file */
   /* the dashboard drops its internal FY-tracking projects; so do we */
   const rows = (data.projects || []).filter(r => !/\bFY\s?\d{2,4}\b/i.test((r.project || "") + " " + (r.project_number || "")));
