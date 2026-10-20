@@ -193,6 +193,14 @@ const ACCOUNTING_PEOPLE = ['tiffany.blackmon@baileyharris.com','hdatb@baileyharr
 /* Department heads who approve overhead invoices. Only IT is known so far. */
 const DEPTS = [['tiffany.blackmon@baileyharris.com', 'IT', 'Tiffany Blackmon']];
 const ACCT = 'acct';
+/* Drafts in payables@ (Oct 2026). The desk creates the email as a reply in the shared
+   mailbox's Drafts, acting as the signed-in person (delegated Mail.ReadWrite.Shared: it
+   reaches only mailboxes that person can already open). Drew sends it from Outlook; the
+   desk finds it in Sent Items by its [AP-####] tag and marks it sent. Without the
+   permission it falls back to copying the text. */
+const PAYABLES = 'payables@baileyharris.com';
+const MAIL_SCOPES = ['Mail.ReadWrite.Shared'];
+const MAIL = { ok: null, why: '' };
 
 /* ---- sections: list Status values -> where the item sits ------------------- */
 const SECTIONS = [
@@ -322,7 +330,7 @@ function toItem(row){
   const sec = SECTIONS.find(s => s.st.includes(raw));
   const lastIntake = [...log].reverse().find(e => e.k);
   const i = {
-    id: 'AP-' + row.id, itemId: row.id, f, c, raw, sec: sec ? sec.k : null, hidden: HIDDEN.includes(raw) || !sec,
+    id: 'AP-' + row.id, itemId: row.id, f, c, raw, rev: Number(f.Revision || 1) || 1, group: String(f.OriginalTitle || f.Title || row.id), sec: sec ? sec.k : null, hidden: HIDDEN.includes(raw) || !sec,
     v: f.Vendor || (c && c.vendor) || 'Unknown vendor',
     no: f.PayRequest ? (pay ? 'Pay App ' + f.PayRequest : 'Inv ' + f.PayRequest) : (f.Description || (pay ? 'Pay application' : 'Invoice')),
     desc: f.Description || '',
@@ -332,7 +340,9 @@ function toItem(row){
     log, comments, flags: [], missing: [], checks: {},
     intakeRej: !!(lastIntake && lastIntake.k === 'intake' && raw === 'revise and resubmit'),
     corrBy: lastIntake && lastIntake.k, asNoted: log.some(e => e.asNoted) && raw !== 'approved and entered' ? true : false,
-    mailPending: (() => { const m = [...log].reverse().find(e => e.mail); return !!(m && m.mail === 'pending'); })(),
+    mailPending: (() => { const m = [...log].reverse().find(e => e.mail); return !!(m && (m.mail === 'pending' || m.mail === 'draft')); })(),
+    mailEntry: [...log].reverse().find(e => e.mail && e.mail !== 'sent') || null,
+    draft: (() => { const m = [...log].reverse().find(e => e.mail); return m && m.mail === 'draft' ? m : null; })(),
     pdf: f.PdfPath ? QUEUE_DOCS + f.PdfPath : '', mail: f.MessageLink || '',
     vendorEmail: (c && c.compliance && c.compliance.vendor_email) || '',
     ledger: L,
@@ -388,7 +398,25 @@ function rebuild(){
   const rows = (LIVE.queue && LIVE.queue.items) || [];
   JOBS = { OH: { n:'Overhead · no job', team:[] } };
   for (const k in LIVE.jobs) JOBS[k] = LIVE.jobs[k];
-  INV = rows.map(toItem).filter(i => !i.hidden && !(i.sec === 'done' && i.age > 30));
+  /* Revisions: rows sharing OriginalTitle are one document. The highest revision is
+     the live item; earlier ones become its history (a resubmission after a
+     rejection is filed by the pull as the next revision and lands in Triage). */
+  const all = rows.map(toItem), byGroup = {};
+  for (const i of all) (byGroup[i.group] = byGroup[i.group] || []).push(i);
+  const heads = [];
+  for (const k in byGroup) {
+    const g2 = byGroup[k].sort((a, b) => a.rev - b.rev || a.itemId - b.itemId), head = g2[g2.length - 1];
+    head.prior = g2.slice(0, -1);
+    if (head.prior.length) {
+      const last = head.prior[head.prior.length - 1];
+      const ask = [...last.log].reverse().find(e => e.k && e.note);
+      head.prevAsk = ask ? ask.note : '';
+      if (!lc(head.f.AssignedApprover) && last.approver) head.approver = last.approver;
+      head.act = head.prior.flatMap(p => p.act.map(a => Object.assign({}, a, { t: 'Revision ' + p.rev + ' · ' + a.t }))).concat(head.act.map(a => Object.assign({}, a, { t: 'Revision ' + head.rev + ' · ' + a.t })));
+    }
+    heads.push(head);
+  }
+  INV = heads.filter(i => !i.hidden && !(i.sec === 'done' && i.age > 30));
   for (const i of INV) if (i.job && !JOBS[i.job]) JOBS[i.job] = { n: i.job, team: [] };
   PEOPLE = { [ACCT]: { n:'Accounting', i:'AP' } };
   for (const e in LIVE.pmName) PEOPLE[e] = { n: LIVE.pmName[e], i: initials(LIVE.pmName[e]) };
@@ -411,10 +439,11 @@ function visible(){
     && (!Q || (i.v + ' ' + i.no + ' ' + i.job + ' ' + jobName(i.job) + ' ' + i.id + ' ' + i.po + ' ' + i.desc).toLowerCase().includes(Q)));
 }
 function nextStep(i){
+  if (i.sec === 'triage' && i.rev > 1) return 'Resubmitted — check the fix, then route';
   if (i.sec === 'triage') return i.note ? 'Needs a look, then route' : (i.job === 'OH' || (i.type === 'Invoice' && !i.job)) ? 'Assign an approver' : (i.flags.length ? 'Verify; route with flags' : 'Verify and route');
   if (i.sec === 'pm') return i.flags.length ? 'Resolve flags, then approve' : 'Review and approve';
   if (i.raw === 'PM returned') return 'Fix the accounting record';
-  if (i.sec === 'corr') return i.mailPending ? 'Send the email from payables@' : 'Awaiting resubmission';
+  if (i.sec === 'corr') return i.draft ? 'Draft in payables@ — check and send' : (i.mailPending ? 'Send the email from payables@' : 'Awaiting resubmission');
   if (i.sec === 'ready') return 'Enter in CE';
   return 'Completed';
 }
@@ -427,9 +456,18 @@ function draw(){
   $('#nChg').textContent = INV.filter(i => inScope(i) && i.changed && (!MINE || mine(i))).length;
   let h = '';
   if (LIVE.queue && LIVE.queue.err) h += '<div class="flags" style="margin-top:16px"><b>The queue could not be read</b>' + esc(LIVE.queue.err) + '</div>';
-  const secs = isAcct() ? SECTIONS : SECTIONS.filter(s => s.k !== 'triage');
+  /* Approvers (PM team member, department head or other reviewer) never see Triage, and
+     their approval section is only what is waiting on them. */
+  /* Ready for entry and Entered are Accounting's queues; an approver only needs to
+     know that what they approved was handled - one closed section, a status per row. */
+  const secs = isAcct() ? SECTIONS : [
+    Object.assign({}, SECTIONS[1], { t:'My items to approve', o:'Waiting on you to review and approve' }),
+    SECTIONS[2],
+    { k:'appr', t:'Approved by me', o:'Last 30 days · for your information', closed:true },
+  ];
+  const byMe = i => lc(i.f.ApprovedBy) === WHO && (i.sec === 'ready' || i.sec === 'done');
   secs.forEach(s => {
-    const rows = v.filter(i => i.sec === s.k).sort((a,b) => (Date.parse(a.changedAt||'')||0) - (Date.parse(b.changedAt||'')||0));
+    const rows = v.filter(i => s.k === 'appr' ? byMe(i) : (i.sec === s.k && (isAcct() || s.k !== 'pm' || i.assign === WHO))).sort((a,b) => (Date.parse(a.changedAt||'')||0) - (Date.parse(b.changedAt||'')||0));
     const open = s.k in OPEN ? OPEN[s.k] : !s.closed;
     const tot = rows.reduce((a,i) => a + i.amt, 0);
     h += '<section class="ap-sec"><button class="ap-sec-h" aria-expanded="' + open + '" data-sec="' + s.k + '"><span class="car"></span><span class="t">' + s.t + '</span><span class="c">' + rows.length + '</span><span class="o">' + s.o + '</span><span class="sum">' + (rows.length ? money0(tot) : '') + '</span></button>';
@@ -440,11 +478,13 @@ function draw(){
         if (i.flags.length) chips.push('<span class="bh-chip is-bad sm">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>');
         if (i.missing.length && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm">Missing ' + i.missing.map(esc).join(', ') + '</span>');
         if (i.note && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm">Needs a look</span>');
+        if (s.k === 'appr') chips.push(i.sec === 'ready' ? '<span class="bh-chip is-warn sm">Waiting for entry</span>' : '<span class="bh-chip is-ok sm">Entered in CE' + (i.f.CEReference ? ' · ' + esc(i.f.CEReference) : '') + '</span>');
         if (i.asNoted && i.sec === 'ready') chips.push('<span class="bh-chip sm">As noted</span>');
         if (i.raw === 'PM returned') chips.push('<span class="bh-chip sm">PM returned</span>');
         if (i.intakeRej) chips.push('<span class="bh-chip sm">Rejected at intake</span>');
-        if (i.mailPending && i.sec === 'corr') chips.push('<span class="bh-chip is-warn sm">Email to send</span>');
+        if (i.mailPending && i.sec === 'corr') chips.push('<span class="bh-chip is-warn sm">' + (i.draft ? 'Draft ready' : 'Email to send') + '</span>');
         if (i.sec === 'corr' && i.raw === 'revise and resubmit' && !i.mailPending && i.age >= 7) chips.push('<span class="bh-chip is-warn sm">Awaiting resubmission +7 days</span>');
+        if (i.rev > 1) chips.push('<span class="bh-chip sm">Resubmitted · rev ' + i.rev + '</span>');
         if (i.type === 'Invoice') chips.push('<span class="bh-chip sm">Invoice</span>');
         h += '<div class="ap-row' + (SEL === i.id ? ' is-sel' : '') + '" tabindex="0" data-id="' + i.id + '">'
           + '<span class="selc">' + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
@@ -452,7 +492,7 @@ function draw(){
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : 'No project') + '</span></div>'
           + '<div class="ap-amt">' + money(i.amt) + '</div>'
           + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '" title="Days in this stage">' + i.age + 'd</div>'
-          + '<div class="ap-nx">' + (i.changed && i.upd ? '<span class="upd">' + esc(i.upd) + '</span>' : esc(nextStep(i))) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '') + '</div>'
+          + '<div class="ap-nx">' + (i.changed && i.upd ? '<span class="upd">' + esc(i.upd) + '</span>' : esc(s.k === 'appr' ? 'Approved ' + fmtTime(i.f.ApprovedAt) : nextStep(i))) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '') + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
       });
     }
@@ -484,7 +524,8 @@ function bulkBar(){
 function primary(i){
   if (i.sec === 'pm' && mySeat(i)) return ['approve','Approve'];
   if (i.raw === 'PM returned' && acctSeat()) return ['resend','Fixed — back to approver'];
-  if (i.sec === 'corr' && i.mailPending && acctSeat()) return ['mailsent','Email sent'];
+  if (i.sec === 'corr' && i.draft && acctSeat()) return ['opendraft','Open the draft in payables@'];
+  if (i.sec === 'corr' && i.mailPending && acctSeat()) return MAIL.ok === false ? ['mailsent','Email sent'] : ['mkdraft','Create the email in payables@'];
   if (i.sec === 'ready' && acctSeat()) return ['enter','Mark entered'];
   return null;
 }
@@ -495,7 +536,7 @@ function moreItems(i){
     m.push(['notours', i.type === 'Pay app' ? 'Not a pay app — treat as a regular invoice' : 'Is a pay app — treat as Attachment G']);
     m.push(['dup','Archive as duplicate']); m.push(['emailonly','Not an invoice · email only']);
   }
-  if (acctSeat() && i.sec === 'corr' && i.mailPending) m.push(['copymail','Copy the email text']);
+  if (acctSeat() && i.sec === 'corr' && i.mailPending) { m.push(['copymail','Copy the email text']); if (i.draft || MAIL.ok !== false) m.push(['mailsent','Mark email sent (sent another way)']); if (i.draft) m.push(['mkdraft','Create the draft again']); }
   if (acctSeat() && i.sec === 'corr') m.push(['totriage','Back to Triage (resubmission arrived)']);
   if (acctSeat() && i.sec === 'ready') m.push(['totriage','Back to Triage']);
   return m;
@@ -511,7 +552,7 @@ function pane(){
   const i = INV.find(x => x.id === SEL); if (!i) { closePane(); return; }
   const p = primary(i), more = moreItems(i), s = SECTIONS.find(x => x.k === i.sec);
   let h = '<div class="pn-h"><div class="pn-top"><div><h2>' + esc(i.v) + '</h2><div class="pn-sub">' + esc(i.no) + ' · ' + esc(i.job || 'No project') + (i.job ? ' ' + esc(jobName(i.job)) : '') + ' · ' + i.id + '</div></div><button class="x" onclick="closePane()" aria-label="Close">✕</button></div>'
-    + '<div class="pn-amt"><b>' + money(i.amt) + '</b><span class="bh-chip">' + esc(s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
+    + '<div class="pn-amt"><b>' + money(i.amt) + '</b><span class="bh-chip">' + esc(!isAcct() && i.sec === 'pm' ? (i.assign === WHO ? 'Waiting on you' : 'With ' + P(i.assign).n) : s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
     + '<div class="pn-act">' + (p ? '<button class="bh-btn" data-do="' + p[0] + '"' + (BUSY ? ' disabled' : '') + '>' + esc(p[1]) + '</button>' : '<span class="note" style="margin:0">' + esc(nextStep(i)) + ' · ' + esc(P(i.assign).n) + '</span>')
     + (more.length ? '<button class="bh-btn-outline" data-do="menu" aria-expanded="' + MENU + '">More ▾</button>' : '')
     + (MENU ? '<div class="pn-menu">' + more.map(m => '<button data-do="' + m[0] + '">' + esc(m[1]) + '</button>').join('') + '</div>' : '') + '</div></div>'
@@ -519,13 +560,14 @@ function pane(){
   if (CF) h += corrForm(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage') h += triageBox(i);
   if (TAB === 'review') {
+    if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
     if (i.flags.length) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
     if (i.math) h += payCheck(i);
     else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
     if (i.sec !== 'done') {
       if (isAcct()) h += intakeChecks(i);
-      else h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
+      else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
     h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
@@ -586,7 +628,7 @@ function intakeChecks(i){
 }
 function dupOf(i){
   if (!i.po || !i.f.PayRequest) return null;
-  return INV.find(x => x.id !== i.id && x.po === i.po && digits(x.f.PayRequest) === digits(i.f.PayRequest) && x.sec !== 'triage') || null;
+  return INV.find(x => x.id !== i.id && x.group !== i.group && x.po === i.po && digits(x.f.PayRequest) === digits(i.f.PayRequest) && x.sec !== 'triage') || null;
 }
 const REASONS = ['Adjusted contract amount does not match Procore','Amount of original contract does not match Procore','Less previous payments does not match CE','Not on Attachment G','No project listed','No subcontract number','No cost code','Figures do not add up','Missing signature or notary'];
 const FULL = {'Adjusted contract amount does not match Procore':'The ADJUSTED CONTRACT AMOUNT does not match the subcontract and approved change orders on file.',
@@ -611,7 +653,7 @@ function assignOptions(i, cur){
 }
 function triageBox(i){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
-  const cur = i.pick != null ? i.pick : (i.type === 'Pay app' && i.po && team.length ? team[0] : '');
+  const cur = i.pick != null ? i.pick : (i.rev > 1 && i.approver ? i.approver : (i.type === 'Pay app' && i.po && team.length ? team[0] : ''));
   const miss = i.missing, m = i.math;
   const aDiff = m && dif(m.adj[0], m.adj[1]), ceOff = m && dif(m.adj[1], m.adj[2]), pDiff = m && dif(m.prev[0], m.prev[1]);
   return '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
@@ -671,6 +713,59 @@ function corrForm(i){
     + '<div style="display:flex;gap:8px"><button class="bh-btn" style="min-height:38px" data-do="sendcorr"' + (BUSY ? ' disabled' : '') + '>Send to Accounting</button><button class="bh-btn-outline" style="min-height:38px" data-do="cancelcorr">Cancel</button></div></div>';
 }
 
+/* ---- drafts in payables@ ---------------------------------------------------- */
+async function mailToken(){
+  const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0]; if (!account) return null;
+  try { const t = (await msalApp.acquireTokenSilent({ scopes: MAIL_SCOPES, account })).accessToken; MAIL.ok = true; return t; }
+  catch (e) { MAIL.ok = false; MAIL.why = /consent|AADSTS65001|invalid_grant|interaction_required/i.test(String(e && (e.errorCode || e.message))) ? 'consent' : 'error'; return null; }
+}
+const mailHtml = t => '<div style="font-family:Arial,sans-serif;font-size:10.5pt">' + esc(t).replace(/\n/g, '<br>') + '</div>';
+async function makeDraft(i, m){
+  const tok = await mailToken(); if (!tok) return null;
+  const mid = i.f.MessageId;
+  let orig = null;
+  if (mid) {
+    const r = await g(tok, '/users/' + PAYABLES + "/messages?$filter=internetMessageId eq '" + encodeURIComponent(String(mid).replace(/'/g, "''")) + "'&$select=id,from&$top=1");
+    orig = r.ok && r.body && r.body.value && r.body.value[0];
+  }
+  let d;
+  if (orig) {
+    d = await g(tok, '/users/' + PAYABLES + '/messages/' + orig.id + '/createReply', { method:'POST', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify({ comment: mailHtml(m.body) }) });
+  } else {
+    d = await g(tok, '/users/' + PAYABLES + '/messages', { method:'POST', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify({ subject: m.subject, body: { contentType:'HTML', content: mailHtml(m.body) } }) });
+  }
+  if (!d.ok) { toast('The draft could not be made in payables@ (HTTP ' + d.status + ')' + (d.status === 403 || d.status === 404 ? ' — you need access to the payables@ mailbox.' : '.')); return null; }
+  const patch = { subject: m.subject };
+  const to = (d.body.toRecipients || []).map(x => lc(x.emailAddress && x.emailAddress.address));
+  if (m.to && !to.includes(lc(m.to))) patch.toRecipients = (d.body.toRecipients || []).concat([{ emailAddress: { address: m.to } }]);
+  if (!to.length && !m.to) toast('No address for the trade partner — add one in the draft.');
+  if (m.cc) patch.ccRecipients = [{ emailAddress: { address: m.cc } }];
+  const u = await g(tok, '/users/' + PAYABLES + '/messages/' + d.body.id, { method:'PATCH', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify(patch) });
+  return { id: d.body.id, link: (u.ok && u.body && u.body.webLink) || d.body.webLink || '' };
+}
+/* Sent? The draft is gone from Drafts and a message with the tag is in Sent Items. */
+async function checkSent(){
+  if (!LIVE.me || !LIVE.me.isAccounting) return;
+  const waiting = INV.filter(i => i.draft && i.draft.draftId); if (!waiting.length) return;
+  const tok = await mailToken(); if (!tok) return;
+  for (const i of waiting) {
+    const r = await g(tok, '/users/' + PAYABLES + '/messages/' + encodeURIComponent(i.draft.draftId) + '?$select=isDraft');
+    if (r.ok && r.body && r.body.isDraft) continue;           // still a draft
+    const q = await g(tok, '/users/' + PAYABLES + '/mailFolders/sentitems/messages?$search=' + encodeURIComponent('"' + i.id + '"') + '&$select=subject,sentDateTime&$top=5');
+    const hit = q.ok && q.body && (q.body.value || []).find(x => String(x.subject || '').includes('[' + i.id + ']'));
+    if (hit) await saveRow(i, {}, { mail:'sent', note:'Email sent from payables@ ' + fmtTime(hit.sentDateTime) + ' (found in Sent Items).' });
+    else if (!r.ok) await saveRow(i, {}, { mail:'pending', mailSubject: i.draft.mailSubject, mailBody: i.draft.mailBody, mailTo: i.draft.mailTo, mailCc: i.draft.mailCc, mailText: i.draft.mailText, note:'The draft was deleted without being sent.' });
+  }
+  rebuild(); draw(); if (SEL) pane();
+}
+const mailFields = m => ({ mailSubject: m.subject, mailBody: m.body, mailTo: m.to || '', mailCc: m.cc || '', mailText: mailText(m) });
+async function draftFor(i, entry){
+  const m = { subject: entry.mailSubject, body: entry.mailBody, to: entry.mailTo, cc: entry.mailCc };
+  if (!m.subject) return false;
+  const d = await makeDraft(i, m); if (!d) return false;
+  return saveRow(i, {}, Object.assign({ mail:'draft', draftId: d.id, draftLink: d.link, note:'Draft created in payables@ — open it, check it and send.' }, mailFields(m)));
+}
+
 /* ---- write-back: re-read, merge the log, PATCH with If-Match ------------------ */
 async function saveRow(i, fields, logEntry, comment){
   const q = LIVE.queue;
@@ -707,6 +802,7 @@ async function saveRow(i, fields, logEntry, comment){
   store.set('apseen:' + i.id, got.StatusChangedAt || '');
   return !dropped.length;
 }
+const INVrow = i => { rebuild(); return INV.find(x => x.itemId === i.itemId) || null; };
 async function reloadLive(){
   try { await loadLive(); rebuild(); draw(); if (SEL && INV.some(x => x.id === SEL)) pane(); else if (SEL) closePane(); }
   catch (e) { toast(e.message); }
@@ -743,7 +839,7 @@ function act(k){
   if (k === 'ledger') { i.showLedger = !i.showLedger; pane(); return; }
   if (k === 'corr') { CF = true; TAB = 'review'; pane(); return; }
   if (k === 'cancelcorr') { CF = false; pane(); return; }
-  if (k === 'copymail') { const e = [...i.log].reverse().find(x => x.mailText); copy(e ? e.mailText : ''); pane(); return; }
+  if (k === 'copymail') { const e = i.mailEntry || [...i.log].reverse().find(x => x.mailText); copy(e ? e.mailText : ''); pane(); return; }
 
   if (k === 'routeto') { if (!acctSeat()) return;
     const a = (document.getElementById('tAssign') || {}).value; if (!a) { toast('Choose who it goes to'); return; }
@@ -753,7 +849,10 @@ function act(k){
     return; }
   if (k === 'rejsend') { if (!acctSeat()) return;
     const m = rejMail(i); if (!m.reasons.length && !m.note) { toast('Pick a reason'); return; }
-    run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, { s:'revise and resubmit', k:'intake', mail:'pending', mailText: mailText(m), note: m.reasons.concat(m.note ? [m.note] : []).join('; ') })) { i.rej = false; toast('Rejected — in Corrections, email to send'); } });
+    run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, Object.assign({ s:'revise and resubmit', k:'intake', mail:'pending', note: m.reasons.concat(m.note ? [m.note] : []).join('; ') }, mailFields(m)))) {
+      i.rej = false; const fresh = INVrow(i);
+      if (fresh && await draftFor(fresh, Object.assign({}, mailFields(m)))) toast('Rejected — the email is in payables@ Drafts, ready to send');
+      else toast(MAIL.ok === false ? 'Rejected — copy the email text and send it from payables@' : 'Rejected — in Corrections, email to send'); } });
     return; }
   if (k === 'approve') { if (!mySeat(i)) return;
     if (!['valid','contract','progress','ret'].every(c => i.checks[c])) { toast('Tick the four PM checks first'); return; }
@@ -767,11 +866,15 @@ function act(k){
     return; }
   if (k === 'sendcorr') { if (!mySeat(i)) return; const t = ((document.getElementById('cfr') || {}).value || '').trim(); if (!t) { toast('Say what needs to change'); return; }
     const m = corrMail(i, t);
-    run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, { s:'revise and resubmit', k:'pm', mail:'pending', mailText: mailText(m), note:t }, { kind:'correction', text:t })) { CF = false; toast('Sent to Accounting to email the trade partner'); } });
+    run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, Object.assign({ s:'revise and resubmit', k:'pm', mail:'pending', note:t }, mailFields(m)), { kind:'correction', text:t })) { CF = false; toast('Sent to Accounting to email the trade partner'); } });
     return; }
   if (k === 'resend') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, { Status:'with PM' }, { s:'with PM', note:'Accounting record fixed; back to ' + P(i.approver).n + '.' })) toast('Back with ' + P(i.approver).n); });
     return; }
+  if (k === 'mkdraft') { if (!acctSeat() || !i.mailEntry) return;
+    run(async () => { if (await draftFor(i, i.mailEntry)) toast('Draft created in payables@'); else if (MAIL.ok === false) toast(MAIL.why === 'consent' ? 'Drafts need the Mail.ReadWrite.Shared permission — copy the text for now' : 'The draft could not be made — copy the text for now'); });
+    return; }
+  if (k === 'opendraft') { if (i.draft && i.draft.draftLink) window.open(i.draft.draftLink, '_blank', 'noopener'); return; }
   if (k === 'mailsent') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, {}, { mail:'sent', note:'Email sent to the trade partner from payables@.' })) toast('Marked sent'); });
     return; }
@@ -853,6 +956,7 @@ document.addEventListener('keydown', e => {
     if (!(await loadLive())) return;
     WHO = LIVE.me.isAccounting ? ACCT : LIVE.me.email;
     rebuild(); header(); draw();
+    if (LIVE.me.isAccounting) { await mailToken(); draw(); checkSent().catch(() => {}); }
   } catch (e) {
     $('#list').innerHTML = '<div class="flags" style="margin-top:22px"><b>The AP Desk could not load</b>' + esc(e.message) + '</div>';
   }
