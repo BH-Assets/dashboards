@@ -199,7 +199,7 @@ const ACCT = 'acct';
    desk finds it in Sent Items by its [AP-####] tag and marks it sent. Without the
    permission it falls back to copying the text. */
 const PAYABLES = 'payables@baileyharris.com';
-const MAIL_SCOPES = ['Mail.ReadWrite.Shared'];
+const MAIL_SCOPES = ['Mail.ReadWrite.Shared'], SEND_SCOPES = ['Mail.Send.Shared'];
 const MAIL = { ok: null, why: '' };
 
 /* ---- sections: list Status values -> where the item sits ------------------- */
@@ -215,7 +215,7 @@ const HIDDEN = ['duplicate archived','email only','handled outside desk'];
 /* ---- state ------------------------------------------------------------------ */
 const LIVE = { me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null, byNum:{}, billing:{}, pmName:{}, jobs:{} };
 let INV = [], PEOPLE = {}, JOBS = {};
-let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, BUSY=false;
+let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, RF=false, BUSY=false;
 const BULK = new Set();
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -321,7 +321,7 @@ function toItem(row){
   const f = row.f, raw = String(f.Status||'received');
   const sub = String(f.Subcontract||'').trim().toUpperCase();
   const c = LIVE.byNum[sub] || null, b = LIVE.billing[sub] || null;
-  const pay = f.DocType !== 'invoice';
+  const isMsg = f.DocType === 'message', pay = f.DocType !== 'invoice' && !isMsg;
   const jobNo = f.JobNumber === 'GL' ? 'OH' : ((c && c.project_number) || f.JobNumber || '');
   const log = parseJ(f.StatusLog, []), comments = parseJ(f.Comments, []);
   const note = String(f.ParseNote||'');
@@ -332,9 +332,10 @@ function toItem(row){
   const i = {
     id: 'AP-' + row.id, itemId: row.id, f, c, raw, rev: Number(f.Revision || 1) || 1, group: String(f.OriginalTitle || f.Title || row.id), sec: sec ? sec.k : null, hidden: HIDDEN.includes(raw) || !sec,
     v: f.Vendor || (c && c.vendor) || 'Unknown vendor',
-    no: f.PayRequest ? (pay ? 'Pay App ' + f.PayRequest : 'Inv ' + f.PayRequest) : (f.Description || (pay ? 'Pay application' : 'Invoice')),
+    no: isMsg ? (f.Description || 'Email') : f.PayRequest ? (pay ? 'Pay App ' + f.PayRequest : 'Inv ' + f.PayRequest) : (f.Description || (pay ? 'Pay application' : 'Invoice')),
+    isMsg, msgText: f.MessageText || '',
     desc: f.Description || '',
-    job: jobNo, type: pay ? 'Pay app' : 'Invoice', po: sub,
+    job: jobNo, type: isMsg ? 'Message' : pay ? 'Pay app' : 'Invoice', po: sub,
     amt: Number(f.BalanceDue || 0),
     receivedAt: f.ReceivedAt || null, changedAt: f.StatusChangedAt || f.ReceivedAt || null,
     log, comments, flags: [], missing: [], checks: {},
@@ -348,10 +349,10 @@ function toItem(row){
     ledger: L,
   };
   i.age = Math.max(0, Math.floor((Date.now() - (Date.parse(i.changedAt||'') || Date.now())) / 86400000));
-  if (/no text in the pdf|read by ocr/i.test(note)) i.note = note;
+  if (!isMsg && /no text in the pdf|read by ocr/i.test(note)) i.note = note;
   if (pay && !figs && !i.note && /not on attachment g/i.test(note)) i.note = note;
   /* missing details */
-  if (!jobNo) i.missing.push('project');
+  if (!jobNo && !isMsg) i.missing.push('project');
   if (pay && !sub) i.missing.push('subcontract #');
   if (pay && /not on attachment g/i.test(note)) i.missing.push('Attachment G');
   /* the pay application check */
@@ -380,7 +381,16 @@ function toItem(row){
   const act = [];
   if (!log.length || !log.some(e => e.s === 'received' && !e.by)) act.push({ w:'payables@', t:'Received' + (f.Description ? ' · ' + f.Description : ''), when: fmtTime(f.ReceivedAt), at: f.ReceivedAt, ext:1, email: !!i.mail });
   for (const e of log) act.push({ w: e.by || 'payables@ pull', t: e.s ? statusWords(e.s, e) : (e.mail === 'sent' ? 'Email sent from payables@' : 'Note'), q: e.note || '', when: fmtTime(e.at), at: e.at, ext: !e.by });
-  for (const m of comments) if (!m.kind || m.kind === 'comment') act.push({ w: m.who, t: 'Commented', q: m.text, when: fmtTime(m.at), at: m.at });
+  for (const m of comments) {
+    if (!m.kind || m.kind === 'comment') act.push({ w: m.who, t: 'Commented', q: m.text, when: fmtTime(m.at), at: m.at });
+    else if (m.kind === 'email') act.push({ w: m.who || m.email, t: 'Email · ' + (m.subject || ''), q: m.text, when: fmtTime(m.at), at: m.at, ext: 1, link: m.link });
+  }
+  /* a trade partner's email newer than anything a person has done on the item */
+  const emails = comments.filter(m => m.kind === 'email'), lastEmail = emails.map(m => m.at).sort().pop();
+  const lastHuman = [...log].filter(e => e.by && !e.reply).map(e => e.at).sort().pop();
+  i.replied = !!lastEmail && (!lastHuman || Date.parse(lastEmail) > Date.parse(lastHuman));
+  i.lastEmail = emails.sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).pop() || null;
+  i.replyNew = i.replied && store.get('apreply:' + 'AP-' + row.id) !== lastEmail;   // not opened yet in this browser
   act.sort((a,b) => (Date.parse(a.at||'')||0) - (Date.parse(b.at||'')||0));
   i.act = act;
   const last = [...log].reverse().find(e => e.by);
@@ -439,6 +449,8 @@ function visible(){
     && (!Q || (i.v + ' ' + i.no + ' ' + i.job + ' ' + jobName(i.job) + ' ' + i.id + ' ' + i.po + ' ' + i.desc).toLowerCase().includes(Q)));
 }
 function nextStep(i){
+  if (i.isMsg) return i.draft ? 'Reply drafted in payables@' : 'Email — link, reply or dismiss';
+  if (i.replied && isAcct()) return 'Trade partner replied — read it';
   if (i.sec === 'triage' && i.rev > 1) return 'Resubmitted — check the fix, then route';
   if (i.sec === 'triage') return i.note ? 'Needs a look, then route' : (i.job === 'OH' || (i.type === 'Invoice' && !i.job)) ? 'Assign an approver' : (i.flags.length ? 'Verify; route with flags' : 'Verify and route');
   if (i.sec === 'pm') return i.flags.length ? 'Resolve flags, then approve' : 'Review and approve';
@@ -485,12 +497,14 @@ function draw(){
         if (i.mailPending && i.sec === 'corr') chips.push('<span class="bh-chip is-warn sm">' + (i.draft ? 'Draft ready' : 'Email to send') + '</span>');
         if (i.sec === 'corr' && i.raw === 'revise and resubmit' && !i.mailPending && i.age >= 7) chips.push('<span class="bh-chip is-warn sm">Awaiting resubmission +7 days</span>');
         if (i.rev > 1) chips.push('<span class="bh-chip sm">Resubmitted · rev ' + i.rev + '</span>');
+        if (i.replied) chips.push('<span class="bh-chip ' + (i.replyNew ? 'is-warn ' : '') + 'sm">Trade partner replied</span>');
+        if (i.isMsg) chips.push('<span class="bh-chip sm">Email</span>');
         if (i.type === 'Invoice') chips.push('<span class="bh-chip sm">Invoice</span>');
         h += '<div class="ap-row' + (SEL === i.id ? ' is-sel' : '') + '" tabindex="0" data-id="' + i.id + '">'
-          + '<span class="selc">' + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
+          + '<span class="selc">' + (acctSeat() && s.k === 'triage' && !i.isMsg ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
-          + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : 'No project') + '</span></div>'
-          + '<div class="ap-amt">' + money(i.amt) + '</div>'
+          + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
+          + '<div class="ap-amt">' + (i.isMsg ? '<span class="note" style="margin:0">email</span>' : money(i.amt)) + '</div>'
           + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '" title="Days in this stage">' + i.age + 'd</div>'
           + '<div class="ap-nx">' + (i.changed && i.upd ? '<span class="upd">' + esc(i.upd) + '</span>' : esc(s.k === 'appr' ? 'Approved ' + fmtTime(i.f.ApprovedAt) : nextStep(i))) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '') + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
@@ -522,16 +536,26 @@ function bulkBar(){
 
 /* ---- pane ------------------------------------------------------------------------ */
 function primary(i){
+  if (i.isMsg && acctSeat()) return i.draft ? ['opendraft','Open the draft in Outlook'] : ['reply','Reply'];
   if (i.sec === 'pm' && mySeat(i)) return ['approve','Approve'];
   if (i.raw === 'PM returned' && acctSeat()) return ['resend','Fixed — back to approver'];
-  if (i.sec === 'corr' && i.draft && acctSeat()) return ['opendraft','Open the draft in payables@'];
-  if (i.sec === 'corr' && i.mailPending && acctSeat()) return MAIL.ok === false ? ['mailsent','Email sent'] : ['mkdraft','Create the email in payables@'];
+  if (i.draft && acctSeat()) return ['opendraft','Open the draft in Outlook'];
+  if (i.sec === 'corr' && i.mailPending && acctSeat()) return MAIL.ok === false ? ['mailsent','Email sent'] : ['mailsend','Send the email'];
   if (i.sec === 'ready' && acctSeat()) return ['enter','Mark entered'];
+  return null;
+}
+/* The second button, always visible beside the first - never hidden in More. */
+function secondary(i){
+  if (!acctSeat() || MAIL.ok === false) return null;
+  if (i.draft) return ['senddraft','Send it from here instead'];
+  if (i.sec === 'corr' && i.mailPending && !i.isMsg) return ['mailoutlook','Open in Outlook to add attachments'];
   return null;
 }
 function moreItems(i){
   const m = [];
   if (i.sec === 'pm' && mySeat(i)) { m.push(['corr','Request correction from trade partner']); m.push(['asnoted','Approve as noted']); m.push(['return','Return to Accounting']); }
+  if (acctSeat() && i.isMsg) { m.push(['link','Attach to an item (AP-####)']); m.push(['dismiss','Dismiss — no action needed']); return m; }
+  if (acctSeat() && i.sec !== 'done') m.push(['reply', i.replied ? 'Reply to the trade partner' : 'Email the trade partner']);
   if (acctSeat() && i.sec === 'triage') {
     m.push(['notours', i.type === 'Pay app' ? 'Not a pay app — treat as a regular invoice' : 'Is a pay app — treat as Attachment G']);
     m.push(['dup','Archive as duplicate']); m.push(['emailonly','Not an invoice · email only']);
@@ -542,9 +566,9 @@ function moreItems(i){
   return m;
 }
 function openPane(id){
-  SEL = id; TAB = 'review'; MENU = false; CF = false;
+  SEL = id; TAB = 'review'; MENU = false; CF = false; RF = false;
   const i = INV.find(x => x.id === id);
-  if (i) { store.set('apseen:' + i.id, i.f.StatusChangedAt || ''); i.changed = false; }
+  if (i) { store.set('apseen:' + i.id, i.f.StatusChangedAt || ''); i.changed = false; if (i.lastEmail) { store.set('apreply:' + i.id, i.lastEmail.at); i.replyNew = false; } }
   document.body.classList.remove('no-pane'); draw(); pane();
 }
 function closePane(){ SEL = null; document.body.classList.add('no-pane'); draw(); }
@@ -552,29 +576,37 @@ function pane(){
   const i = INV.find(x => x.id === SEL); if (!i) { closePane(); return; }
   const p = primary(i), more = moreItems(i), s = SECTIONS.find(x => x.k === i.sec);
   let h = '<div class="pn-h"><div class="pn-top"><div><h2>' + esc(i.v) + '</h2><div class="pn-sub">' + esc(i.no) + ' · ' + esc(i.job || 'No project') + (i.job ? ' ' + esc(jobName(i.job)) : '') + ' · ' + i.id + '</div></div><button class="x" onclick="closePane()" aria-label="Close">✕</button></div>'
-    + '<div class="pn-amt"><b>' + money(i.amt) + '</b><span class="bh-chip">' + esc(!isAcct() && i.sec === 'pm' ? (i.assign === WHO ? 'Waiting on you' : 'With ' + P(i.assign).n) : s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
+    + '<div class="pn-amt"><b>' + (i.isMsg ? 'Email' : money(i.amt)) + '</b><span class="bh-chip">' + esc(!isAcct() && i.sec === 'pm' ? (i.assign === WHO ? 'Waiting on you' : 'With ' + P(i.assign).n) : s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
     + '<div class="pn-act">' + (p ? '<button class="bh-btn" data-do="' + p[0] + '"' + (BUSY ? ' disabled' : '') + '>' + esc(p[1]) + '</button>' : '<span class="note" style="margin:0">' + esc(nextStep(i)) + ' · ' + esc(P(i.assign).n) + '</span>')
+    + (secondary(i) ? '<button class="bh-btn-outline" data-do="' + secondary(i)[0] + '"' + (BUSY ? ' disabled' : '') + '>' + esc(secondary(i)[1]) + '</button>' : '')
     + (more.length ? '<button class="bh-btn-outline" data-do="menu" aria-expanded="' + MENU + '">More ▾</button>' : '')
     + (MENU ? '<div class="pn-menu">' + more.map(m => '<button data-do="' + m[0] + '">' + esc(m[1]) + '</button>').join('') + '</div>' : '') + '</div></div>'
     + '<div class="pn-tabs" role="tablist">' + [['review','Review'],['activity','Activity · ' + i.act.length],['details','Details']].map(t => '<button role="tab" data-tab="' + t[0] + '" aria-selected="' + (TAB === t[0]) + '">' + t[1] + '</button>').join('') + '</div><div class="pn-b">';
   if (CF) h += corrForm(i);
-  if (TAB === 'review' && acctSeat() && i.sec === 'triage') h += triageBox(i);
+  if (RF) h += replyForm(i);
+  if (TAB === 'review' && acctSeat() && i.mailPending && i.mailEntry && i.mailEntry.mailSubject && !RF) h += '<div class="bh-label" style="margin-top:4px">' + (i.draft ? 'Draft in payables@' : 'Email to send') + '</div><div class="em" style="font-size:12px;background:var(--bh-surface-muted);padding:10px 12px;margin:6px 0 14px;line-height:1.5">' + mailHTML(entryMail(i.mailEntry)) + '</div>';
+  if (TAB === 'review' && i.isMsg) h += '<div class="dl"><div>From</div><div>' + esc(i.v) + '</div><div>Received</div><div>' + esc(fmtTime(i.receivedAt)) + '</div><div>Subject</div><div>' + esc(i.desc || '—') + '</div></div>'
+    + '<div class="tl"><div class="q" style="margin-top:12px">' + esc(i.msgText || i.f.ParseNote || '(no text)') + '</div></div>'
+    + (i.mail ? '<p class="note"><a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a></p>' : '');
+  if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
+  if (TAB === 'review' && i.draft && !i.isMsg && i.sec !== 'corr' && i.draft.draftLink) h += '<p class="note"><a href="' + esc(i.draft.draftLink) + '" target="_blank" rel="noopener">Open the draft in payables@</a></p>';
+  if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
   if (TAB === 'review') {
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
     if (i.flags.length) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
     if (i.math) h += payCheck(i);
     else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
-    if (i.sec !== 'done') {
+    if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct()) h += intakeChecks(i);
       else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
-    h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
+    if (!i.isMsg) h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
   if (TAB === 'activity') {
     h += '<ul class="tl">' + i.act.map(a => '<li class="' + (a.ext ? 'ext' : '') + '"><div><div class="w">' + esc(a.w) + ' · ' + esc(a.when) + '</div>' + esc(a.t)
-      + (a.q ? '<div class="q">' + esc(a.q) + '</div>' : '') + (a.email && i.mail ? ' <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div></li>').join('') + '</ul>'
+      + (a.q ? '<div class="q">' + esc(a.q) + '</div>' : '') + (a.link ? ' <a href="' + esc(a.link) + '" target="_blank" rel="noopener">Open email</a>' : (a.email && i.mail ? ' <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open email</a>' : '')) + '</div></li>').join('') + '</ul>'
       + '<div class="cmp"><textarea id="cmt" placeholder="Comment for the team (stays on this invoice; the trade partner does not see it)"></textarea></div><button class="bh-btn-outline" style="margin-top:8px;min-height:38px" data-do="comment"' + (BUSY ? ' disabled' : '') + '>Add comment</button>';
   }
   if (TAB === 'details') {
@@ -672,8 +704,9 @@ function triageBox(i){
       + REASONS.map(r => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + esc(r) + '"' + ((i.rr ? i.rr.includes(r) : preTick(i, r)) ? ' checked' : '') + '> ' + esc(r) + '</label>').join('')
       + '<textarea id="rejNote" placeholder="Anything else the trade partner should fix" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:8px;box-sizing:border-box">' + esc(i.rn || '') + '</textarea>'
       + '<div class="bh-label" style="margin-top:12px">Email preview</div><div class="em" id="rejPrev">' + mailHTML(rejMail(i)) + '</div>'
-      + '<button class="bh-btn" style="min-height:38px;margin-top:8px" data-do="rejsend"' + (BUSY ? ' disabled' : '') + '>Reject and ask for resubmission</button>'
-      + '<p class="note">Nothing is sent automatically yet. The item moves to Corrections marked “Email to send”: reply to the original email from payables@ with this text (More → Copy the email text). No PM is involved.</p></div>' : '')
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="bh-btn" style="min-height:38px" data-do="rejsend"' + (BUSY ? ' disabled' : '') + '>Reject and send</button>'
+      + '<button class="bh-btn-outline" style="min-height:38px" data-do="rejoutlook"' + (BUSY ? ' disabled' : '') + '>Reject and open in Outlook to add attachments</button></div>'
+      + '<p class="note">Sent from payables@ as a reply to their email, tagged [' + i.id + ']. The item moves to Corrections; no PM is involved.</p></div>' : '')
     + '</div>';
 }
 function ledger(i){
@@ -705,6 +738,19 @@ function mailHTML(m){
   return '<b>From</b> payables@baileyharris.com<br><b>To</b> ' + (m.to ? esc(m.to) + ' <span style="color:var(--bh-ink-muted)">(billing contact in Billy)</span>' : '<span style="color:var(--bh-ink-muted)">reply to the original email (no billing contact in Billy)</span>')
     + (m.cc ? '<br><b>Cc</b> ' + esc(m.cc) : '') + '<br><b>Subject</b> ' + esc(m.subject) + '<br><br>' + esc(m.body).replace(/\n/g,'<br>');
 }
+function replyMail(i, text){
+  const to = i.lastEmail ? i.lastEmail.email : (i.isMsg ? '' : i.vendorEmail);
+  const subj = (i.lastEmail ? i.lastEmail.subject : (i.isMsg ? i.desc : '')) || (i.no + (i.job ? ' – ' + i.job + ' ' + jobName(i.job) : ''));
+  return { to: to || '', subject: (/^re:/i.test(subj) ? subj : 'RE: ' + subj).replace(/\s*\[AP-\d+\]/g, '') + ' [' + i.id + ']',
+    body: text + '\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Accounting · Bailey-Harris Construction' };
+}
+function replyForm(i){
+  return '<div class="cf"><div class="bh-section-title">' + (i.replied || i.isMsg ? 'Reply' : 'Email the trade partner') + '</div>'
+    + '<p class="note" style="margin-top:6px">Sent from payables@ as a reply, tagged [' + i.id + '] so the answer comes back to this item.</p>'
+    + '<textarea id="rfr" placeholder="Your reply"></textarea>'
+    + '<div class="em">' + mailHTML(replyMail(i, '…')).split('<br><br>')[0] + '</div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="bh-btn" style="min-height:38px" data-do="sendreply"' + (BUSY ? ' disabled' : '') + '>Send</button><button class="bh-btn-outline" style="min-height:38px" data-do="replyoutlook"' + (BUSY ? ' disabled' : '') + '>Open in Outlook to add attachments</button><button class="bh-btn-outline" style="min-height:38px" data-do="cancelreply">Cancel</button></div></div>';
+}
 function corrForm(i){
   return '<div class="cf"><div class="bh-section-title">Request correction</div>'
     + '<p class="note" style="margin-top:6px">Say what needs to change. Accounting sends it to the trade partner from payables@ with you copied, so the reply comes back to this invoice.</p>'
@@ -720,9 +766,9 @@ async function mailToken(){
   catch (e) { MAIL.ok = false; MAIL.why = /consent|AADSTS65001|invalid_grant|interaction_required/i.test(String(e && (e.errorCode || e.message))) ? 'consent' : 'error'; return null; }
 }
 const mailHtml = t => '<div style="font-family:Arial,sans-serif;font-size:10.5pt">' + esc(t).replace(/\n/g, '<br>') + '</div>';
-async function makeDraft(i, m){
+async function makeDraft(i, m, replyTo){
   const tok = await mailToken(); if (!tok) return null;
-  const mid = i.f.MessageId;
+  const mid = replyTo || i.f.MessageId;
   let orig = null;
   if (mid) {
     const r = await g(tok, '/users/' + PAYABLES + "/messages?$filter=internetMessageId eq '" + encodeURIComponent(String(mid).replace(/'/g, "''")) + "'&$select=id,from&$top=1");
@@ -765,6 +811,42 @@ async function draftFor(i, entry){
   const d = await makeDraft(i, m); if (!d) return false;
   return saveRow(i, {}, Object.assign({ mail:'draft', draftId: d.id, draftLink: d.link, note:'Draft created in payables@ — open it, check it and send.' }, mailFields(m)));
 }
+
+/* Send from the desk (delegated Mail.Send.Shared: the signed-in person must have Send As
+   on payables@). The email is made as a draft first, then sent, so it threads as a reply. */
+async function sendDraft(id){
+  const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0]; if (!account) return false;
+  let tok; try { tok = (await msalApp.acquireTokenSilent({ scopes: SEND_SCOPES, account })).accessToken; MAIL.send = true; } catch (e) { MAIL.send = false; return false; }
+  const r = await fetch(GRAPH + '/users/' + PAYABLES + '/messages/' + encodeURIComponent(id) + '/send', { method:'POST', headers:{ Authorization:'Bearer ' + tok } });
+  if (!r.ok) { toast('Not sent (HTTP ' + r.status + ')' + (r.status === 403 ? ' — you need Send As on payables@.' : '.')); return false; }
+  return true;
+}
+/* One way out for every email: 'send' sends it now from payables@; 'outlook' leaves it
+   in payables@ Drafts and opens it, for when an attachment is needed. `win` is a tab
+   opened on the click itself, so the browser does not block it. */
+async function deliver(i, m, replyTo, mode, note, win){
+  const d = await makeDraft(i, m, replyTo);
+  if (!d) {
+    if (win) win.close();
+    await saveRow(i, {}, Object.assign({ mail:'pending', note: note + ' — not created; send it from payables@ by hand.' }, mailFields(m)));
+    toast(MAIL.ok === false ? 'The mail permission is missing — copy the email text (More) and send it from payables@' : 'The email could not be created in payables@');
+    return false;
+  }
+  if (mode === 'send') {
+    if (await sendDraft(d.id)) {
+      await saveRow(i, {}, Object.assign({ mail:'sent', note: note + ' — sent from payables@ by ' + LIVE.me.name + '.' }, mailFields(m)));
+      toast('Sent from payables@'); return true;
+    }
+    if (MAIL.send === false) toast('Sending needs the Mail.Send.Shared permission — the email is in Outlook instead');
+    mode = 'outlook';
+  }
+  await saveRow(i, {}, Object.assign({ mail:'draft', draftId: d.id, draftLink: d.link, note: note + ' — in payables@ Drafts to finish in Outlook.' }, mailFields(m)));
+  if (d.link) { if (win && !win.closed) win.location.href = d.link; else window.open(d.link, '_blank'); } else if (win) win.close();
+  if (mode === 'outlook') toast('Opened in Outlook — add attachments and send; the desk marks it sent');
+  return true;
+}
+const outlookTab = () => { const w = window.open('about:blank', '_blank'); if (w) w.opener = null; return w; };
+const entryMail = e => ({ subject: e.mailSubject, body: e.mailBody, to: e.mailTo, cc: e.mailCc });
 
 /* ---- write-back: re-read, merge the log, PATCH with If-Match ------------------ */
 async function saveRow(i, fields, logEntry, comment){
@@ -847,12 +929,12 @@ function act(k){
     run(async () => { if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:a, DocType: i.type === 'Invoice' ? 'invoice' : 'pay app', BlockingIssues: JSON.stringify(i.flags) }, oh ? { JobNumber:'GL' } : {}),
       { s:'with PM', note:'Verified and routed to ' + P(a).n + (P(a).dept ? ' (' + P(a).dept + ' department head)' : '') + (i.flags.length ? ' with flags: ' + i.flags.join('; ') : '') + '. No CE entry created.' })) toast('Routed to ' + P(a).n); });
     return; }
-  if (k === 'rejsend') { if (!acctSeat()) return;
+  if (k === 'rejsend' || k === 'rejoutlook') { if (!acctSeat()) return;
     const m = rejMail(i); if (!m.reasons.length && !m.note) { toast('Pick a reason'); return; }
+    const win = k === 'rejoutlook' ? outlookTab() : null;
     run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, Object.assign({ s:'revise and resubmit', k:'intake', mail:'pending', note: m.reasons.concat(m.note ? [m.note] : []).join('; ') }, mailFields(m)))) {
       i.rej = false; const fresh = INVrow(i);
-      if (fresh && await draftFor(fresh, Object.assign({}, mailFields(m)))) toast('Rejected — the email is in payables@ Drafts, ready to send');
-      else toast(MAIL.ok === false ? 'Rejected — copy the email text and send it from payables@' : 'Rejected — in Corrections, email to send'); } });
+      if (fresh) await deliver(fresh, m, null, k === 'rejsend' ? 'send' : 'outlook', 'Rejection email', win); else if (win) win.close(); } else if (win) win.close(); });
     return; }
   if (k === 'approve') { if (!mySeat(i)) return;
     if (!['valid','contract','progress','ret'].every(c => i.checks[c])) { toast('Tick the four PM checks first'); return; }
@@ -870,6 +952,31 @@ function act(k){
     return; }
   if (k === 'resend') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, { Status:'with PM' }, { s:'with PM', note:'Accounting record fixed; back to ' + P(i.approver).n + '.' })) toast('Back with ' + P(i.approver).n); });
+    return; }
+  if (k === 'reply') { RF = true; CF = false; TAB = 'review'; pane(); return; }
+  if (k === 'cancelreply') { RF = false; pane(); return; }
+  if (k === 'sendreply' || k === 'replyoutlook') { if (!acctSeat()) return; const t = ((document.getElementById('rfr') || {}).value || '').trim(); if (!t) { toast('Write the reply first'); return; }
+    const m = replyMail(i, t), to = i.lastEmail ? i.lastEmail.msgid : i.f.MessageId;
+    const win = k === 'replyoutlook' ? outlookTab() : null;
+    run(async () => { await deliver(i, m, to, k === 'sendreply' ? 'send' : 'outlook', 'Reply: ' + t, win); RF = false; });
+    return; }
+  if (k === 'mailsend' || k === 'mailoutlook') { if (!acctSeat() || !i.mailEntry) return;
+    const win = k === 'mailoutlook' ? outlookTab() : null;
+    run(async () => { await deliver(i, entryMail(i.mailEntry), null, k === 'mailsend' ? 'send' : 'outlook', i.corrBy === 'pm' ? 'Correction email' : 'Email to the trade partner', win); });
+    return; }
+  if (k === 'senddraft') { if (!acctSeat() || !i.draft) return;
+    run(async () => { if (await sendDraft(i.draft.draftId)) { await saveRow(i, {}, { mail:'sent', note:'Draft sent from payables@ by ' + LIVE.me.name + '.' }); toast('Sent from payables@'); } else if (MAIL.send === false) toast('Sending needs the Mail.Send.Shared permission'); });
+    return; }
+  if (k === 'link') { if (!acctSeat()) return; const v = prompt('Attach this email to which item? (e.g. AP-102)'); if (!v) { pane(); return; }
+    const t = INV.find(x => x.id.toLowerCase() === v.trim().toLowerCase() || String(x.itemId) === v.replace(/\D/g, ''));
+    if (!t || t.isMsg) { toast('No item ' + v + ' on the desk'); return; }
+    run(async () => {
+      const ok = await saveRow(t, {}, { reply:true, note:'Email from ' + i.v + ' attached from the Triage messages.' }, { kind:'email', who: i.v, email: '', at: i.receivedAt, subject: i.desc, text: i.msgText, link: i.mail, msgid: i.f.MessageId || '' });
+      if (ok && await saveRow(i, { Status:'email only' }, { s:'email only', note:'Attached to ' + t.id + '.' })) { toast('Attached to ' + t.id); SEL = null; document.body.classList.add('no-pane'); }
+    });
+    return; }
+  if (k === 'dismiss') { if (!acctSeat()) return;
+    run(async () => { if (await saveRow(i, { Status:'email only' }, { s:'email only', note:'Dismissed — no action needed.' })) { toast('Dismissed'); SEL = null; document.body.classList.add('no-pane'); } });
     return; }
   if (k === 'mkdraft') { if (!acctSeat() || !i.mailEntry) return;
     run(async () => { if (await draftFor(i, i.mailEntry)) toast('Draft created in payables@'); else if (MAIL.ok === false) toast(MAIL.why === 'consent' ? 'Drafts need the Mail.ReadWrite.Shared permission — copy the text for now' : 'The draft could not be made — copy the text for now'); });
