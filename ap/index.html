@@ -215,7 +215,7 @@ const HIDDEN = ['duplicate archived','email only','handled outside desk'];
 /* ---- state ------------------------------------------------------------------ */
 const LIVE = { me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null, byNum:{}, billing:{}, pmName:{}, jobs:{} };
 let INV = [], PEOPLE = {}, JOBS = {};
-let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, RF=false, BUSY=false;
+let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, RF=false, ED=false, BUSY=false;
 const BULK = new Set();
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -320,7 +320,7 @@ function retRule(c){
 function toItem(row){
   const f = row.f, raw = String(f.Status||'received');
   const sub = String(f.Subcontract||'').trim().toUpperCase();
-  const c = LIVE.byNum[sub] || null, b = LIVE.billing[sub] || null;
+  const c = LIVE.byNum[sub] || LIVE.byNum[padSub(sub)] || null, b = LIVE.billing[sub] || LIVE.billing[padSub(sub)] || null;   // 41325AU12 = 41325AU012
   const isMsg = f.DocType === 'message', pay = f.DocType !== 'invoice' && !isMsg;
   const jobNo = f.JobNumber === 'GL' ? 'OH' : ((c && c.project_number) || f.JobNumber || '');
   const log = parseJ(f.StatusLog, []), comments = parseJ(f.Comments, []);
@@ -336,7 +336,7 @@ function toItem(row){
     isMsg, msgText: f.MessageText || '',
     desc: f.Description || '',
     job: jobNo, type: isMsg ? 'Message' : pay ? 'Pay app' : 'Invoice', po: sub,
-    amt: Number(f.BalanceDue || 0),
+    amt: Number(f.BalanceDue || 0), amtKnown: f.BalanceDue != null && f.BalanceDue !== '',
     receivedAt: f.ReceivedAt || null, changedAt: f.StatusChangedAt || f.ReceivedAt || null,
     log, comments, flags: [], missing: [], checks: {},
     intakeRej: !!(lastIntake && lastIntake.k === 'intake' && raw === 'revise and resubmit'),
@@ -504,7 +504,7 @@ function draw(){
           + '<span class="selc">' + (acctSeat() && s.k === 'triage' && !i.isMsg ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
-          + '<div class="ap-amt">' + (i.isMsg ? '<span class="note" style="margin:0">email</span>' : money(i.amt)) + '</div>'
+          + '<div class="ap-amt">' + (i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
           + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '" title="Days in this stage">' + i.age + 'd</div>'
           + '<div class="ap-nx">' + (i.changed && i.upd ? '<span class="upd">' + esc(i.upd) + '</span>' : esc(s.k === 'appr' ? 'Approved ' + fmtTime(i.f.ApprovedAt) : nextStep(i))) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '') + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
@@ -566,7 +566,7 @@ function moreItems(i){
   return m;
 }
 function openPane(id){
-  SEL = id; TAB = 'review'; MENU = false; CF = false; RF = false;
+  SEL = id; TAB = 'review'; MENU = false; CF = false; RF = false; ED = false;
   const i = INV.find(x => x.id === id);
   if (i) { store.set('apseen:' + i.id, i.f.StatusChangedAt || ''); i.changed = false; if (i.lastEmail) { store.set('apreply:' + i.id, i.lastEmail.at); i.replyNew = false; } }
   document.body.classList.remove('no-pane'); draw(); pane();
@@ -576,7 +576,7 @@ function pane(){
   const i = INV.find(x => x.id === SEL); if (!i) { closePane(); return; }
   const p = primary(i), more = moreItems(i), s = SECTIONS.find(x => x.k === i.sec);
   let h = '<div class="pn-h"><div class="pn-top"><div><h2>' + esc(i.v) + '</h2><div class="pn-sub">' + esc(i.no) + ' · ' + esc(i.job || 'No project') + (i.job ? ' ' + esc(jobName(i.job)) : '') + ' · ' + i.id + '</div></div><button class="x" onclick="closePane()" aria-label="Close">✕</button></div>'
-    + '<div class="pn-amt"><b>' + (i.isMsg ? 'Email' : money(i.amt)) + '</b><span class="bh-chip">' + esc(!isAcct() && i.sec === 'pm' ? (i.assign === WHO ? 'Waiting on you' : 'With ' + P(i.assign).n) : s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
+    + '<div class="pn-amt"><b>' + (i.isMsg ? 'Email' : i.amtKnown ? money(i.amt) : 'Amount not read') + '</b><span class="bh-chip">' + esc(!isAcct() && i.sec === 'pm' ? (i.assign === WHO ? 'Waiting on you' : 'With ' + P(i.assign).n) : s.t) + '</span>' + (i.flags.length ? '<span class="bh-chip is-bad">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
     + '<div class="pn-act">' + (p ? '<button class="bh-btn" data-do="' + p[0] + '"' + (BUSY ? ' disabled' : '') + '>' + esc(p[1]) + '</button>' : '<span class="note" style="margin:0">' + esc(nextStep(i)) + ' · ' + esc(P(i.assign).n) + '</span>')
     + (secondary(i) ? '<button class="bh-btn-outline" data-do="' + secondary(i)[0] + '"' + (BUSY ? ' disabled' : '') + '>' + esc(secondary(i)[1]) + '</button>' : '')
     + (more.length ? '<button class="bh-btn-outline" data-do="menu" aria-expanded="' + MENU + '">More ▾</button>' : '')
@@ -609,11 +609,14 @@ function pane(){
       + (a.q ? '<div class="q">' + esc(a.q) + '</div>' : '') + (a.link ? ' <a href="' + esc(a.link) + '" target="_blank" rel="noopener">Open email</a>' : (a.email && i.mail ? ' <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open email</a>' : '')) + '</div></li>').join('') + '</ul>'
       + '<div class="cmp"><textarea id="cmt" placeholder="Comment for the team (stays on this invoice; the trade partner does not see it)"></textarea></div><button class="bh-btn-outline" style="margin-top:8px;min-height:38px" data-do="comment"' + (BUSY ? ' disabled' : '') + '>Add comment</button>';
   }
-  if (TAB === 'details') {
-    const c = i.c;
-    h += '<div class="dl"><div>Type</div><div>' + esc(i.type) + '</div><div>Subcontract #</div><div>' + esc(i.po || '—') + '</div>'
+  if (TAB === 'details' && ED) h += editForm(i);
+  if (TAB === 'details' && !ED) {
+    const c = i.c, canEdit = acctSeat() && i.sec !== 'done' && !i.isMsg;
+    h += (canEdit ? '<div style="display:flex;justify-content:flex-end;margin:-6px 0 6px"><button class="bh-btn-outline" style="min-height:32px;font-size:11px" data-do="edit">Edit</button></div>' : '')
+      + '<div class="dl"><div>Type</div><div>' + esc(i.type) + '</div><div>Subcontract #</div><div>' + esc(i.po || '—') + (i.c ? ' · ' + esc(i.c.vendor) : (i.po ? ' <span class="bh-chip is-warn sm">not on the Procore roster</span>' : '')) + '</div>'
       + '<div>Job</div><div>' + esc(i.job ? i.job + ' · ' + jobName(i.job) : '—') + '</div>'
       + '<div>PM team</div><div>' + esc(((JOBS[i.job] && JOBS[i.job].team) || []).map(e => P(e).n).join(', ') || '—') + '</div>'
+      + '<div>Approver</div><div>' + esc(lc(i.f.AssignedApprover) ? P(lc(i.f.AssignedApprover)).n : '—') + '</div>'
       + '<div>With</div><div>' + esc(P(i.assign).n) + '</div><div>Days in stage</div><div>' + i.age + '</div>'
       + '<div>Received</div><div>' + esc(fmtTime(i.receivedAt)) + '</div><div>Email subject</div><div>' + esc(i.desc || '—') + '</div>'
       + '<div>Compliance</div><div>' + esc(c && c.compliance ? (c.compliance.billy_is_compliant === 'Yes' ? 'Compliant (Billy)' : 'Not compliant (Billy)') : '—') + '</div>'
@@ -685,7 +688,7 @@ function assignOptions(i, cur){
 }
 function triageBox(i){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
-  const cur = i.pick != null ? i.pick : (i.rev > 1 && i.approver ? i.approver : (i.type === 'Pay app' && i.po && team.length ? team[0] : ''));
+  const cur = i.pick != null ? i.pick : lc(i.f.AssignedApprover) ? lc(i.f.AssignedApprover) : (i.rev > 1 && i.approver ? i.approver : (i.type === 'Pay app' && i.po && team.length ? team[0] : ''));
   const miss = i.missing, m = i.math;
   const aDiff = m && dif(m.adj[0], m.adj[1]), ceOff = m && dif(m.adj[1], m.adj[2]), pDiff = m && dif(m.prev[0], m.prev[1]);
   return '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
@@ -751,6 +754,24 @@ function replyForm(i){
     + '<div class="em">' + mailHTML(replyMail(i, '…')).split('<br><br>')[0] + '</div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="bh-btn" style="min-height:38px" data-do="sendreply"' + (BUSY ? ' disabled' : '') + '>Send</button><button class="bh-btn-outline" style="min-height:38px" data-do="replyoutlook"' + (BUSY ? ' disabled' : '') + '>Open in Outlook to add attachments</button><button class="bh-btn-outline" style="min-height:38px" data-do="cancelreply">Cancel</button></div></div>';
 }
+/* Details, corrected by Accounting: subcontract #, job and approver. A subcontract on
+   the Procore roster fills in its job and vendor; the PM team follows the job. */
+function editForm(i){
+  const jobsSorted = Object.keys(LIVE.jobs).sort();
+  const subs = LIVE.commitments.filter(c => !i.job || i.job === 'OH' || c.project_number === i.job);
+  return '<div class="cf" style="margin-top:0"><div class="bh-section-title">Correct the details</div>'
+    + '<label class="bh-label" for="eSub" style="display:block;margin-top:10px">Subcontract #</label>'
+    + '<input class="bh-input" id="eSub" list="eSubs" style="width:100%;margin-top:4px" value="' + esc(i.po || '') + '" placeholder="e.g. 41325AU012">'
+    + '<datalist id="eSubs">' + subs.map(c => '<option value="' + esc(c.number) + '">' + esc(c.vendor + ' · ' + c.project_number) + '</option>').join('') + '</datalist>'
+    + '<div class="note" id="eSubHint" style="margin-top:4px">' + esc(i.c ? i.c.vendor + ' · ' + i.c.project : '') + '</div>'
+    + '<label class="bh-label" for="eJob" style="display:block;margin-top:10px">Job</label>'
+    + '<select class="bh-select" id="eJob" style="width:100%;margin-top:4px"><option value="">—</option><option value="OH"' + (i.job === 'OH' ? ' selected' : '') + '>Overhead · no job</option>'
+    + jobsSorted.map(j => '<option value="' + esc(j) + '"' + (i.job === j ? ' selected' : '') + '>' + esc(j + ' · ' + LIVE.jobs[j].n) + '</option>').join('') + '</select>'
+    + '<label class="bh-label" for="eAppr" style="display:block;margin-top:10px">Approver</label>'
+    + '<select class="bh-select" id="eAppr" style="width:100%;margin-top:4px">' + assignOptions(i, lc(i.f.AssignedApprover) || '') + '</select>'
+    + '<div style="display:flex;gap:8px;margin-top:14px"><button class="bh-btn" style="min-height:38px" data-do="saveedit"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="bh-btn-outline" style="min-height:38px" data-do="canceledit">Cancel</button></div></div>';
+}
+const padSub = v => { const m = String(v || '').trim().toUpperCase().match(/^([0-9]{5}[A-Z]{2})([0-9]{1,2})$/); return m ? m[1] + m[2].padStart(3, '0') : String(v || '').trim().toUpperCase(); };
 function corrForm(i){
   return '<div class="cf"><div class="bh-section-title">Request correction</div>'
     + '<p class="note" style="margin-top:6px">Say what needs to change. Accounting sends it to the trade partner from payables@ with you copied, so the reply comes back to this invoice.</p>'
@@ -953,6 +974,20 @@ function act(k){
   if (k === 'resend') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, { Status:'with PM' }, { s:'with PM', note:'Accounting record fixed; back to ' + P(i.approver).n + '.' })) toast('Back with ' + P(i.approver).n); });
     return; }
+  if (k === 'edit') { ED = true; pane(); return; }
+  if (k === 'canceledit') { ED = false; pane(); return; }
+  if (k === 'saveedit') { if (!acctSeat()) return;
+    const sub = padSub($('#eSub').value), job = $('#eJob').value, appr = $('#eAppr').value;
+    const c = LIVE.byNum[sub] || null, jobNo = c ? c.project_number : job;
+    const f = {}, said = [];
+    if (sub !== (i.po || '')) { f.Subcontract = sub; said.push('subcontract ' + (i.po || '—') + ' → ' + (sub || '—')); }
+    const jobVal = jobNo === 'OH' ? 'GL' : (jobNo || '');
+    if ((jobNo || '') !== (i.job || '')) { f.JobNumber = jobVal; said.push('job ' + (i.job || '—') + ' → ' + (jobNo || '—')); }
+    if (c && c.vendor && c.vendor !== i.f.Vendor) f.Vendor = c.vendor;
+    if (appr !== lc(i.f.AssignedApprover)) { f.AssignedApprover = appr; said.push('approver → ' + (appr ? P(appr).n : '—')); i.pick = appr || null; }
+    if (!said.length) { ED = false; pane(); return; }
+    run(async () => { if (await saveRow(i, f, { note:'Details corrected: ' + said.join('; ') + '.' })) { ED = false; toast('Saved'); } });
+    return; }
   if (k === 'reply') { RF = true; CF = false; TAB = 'review'; pane(); return; }
   if (k === 'cancelreply') { RF = false; pane(); return; }
   if (k === 'sendreply' || k === 'replyoutlook') { if (!acctSeat()) return; const t = ((document.getElementById('rfr') || {}).value || '').trim(); if (!t) { toast('Write the reply first'); return; }
@@ -1033,6 +1068,9 @@ document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t) { TAB = t.dataset.tab; pane(); return; }
   const d = e.target.closest('[data-do]'); if (d) { e.preventDefault(); act(d.dataset.do); return; }
   if (MENU && !e.target.closest('.pn-menu')) { MENU = false; pane(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'eSub') { const c = LIVE.byNum[padSub(e.target.value)]; const h = $('#eSubHint'); if (h) h.textContent = c ? c.vendor + ' · ' + c.project_number + ' ' + c.project : (e.target.value ? 'Not on the Procore roster' : ''); if (c) { const j = $('#eJob'); if (j) j.value = c.project_number; } }
 });
 document.addEventListener('input', e => { if (e.target.id === 'rejNote') { const i = INV.find(x => x.id === SEL); if (i) { i.rn = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } } });
 document.addEventListener('change', e => {
