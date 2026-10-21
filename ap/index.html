@@ -145,6 +145,15 @@ body.no-pane .ap-pane{display:none}
 .xp-ed .bh-btn,.xp-ed .bh-btn-outline{min-height:32px;padding:0 10px;font-size:11px}
 .xp-mini{border:0;background:none;padding:0;margin-left:6px;font:600 11px var(--bh-font);color:var(--bh-ink-muted);text-decoration:underline;cursor:pointer}
 body.v-exp #tMine,body.v-exp #tChg{display:none}
+.sm-box{border:1px solid var(--bh-hairline);border-left:4px solid var(--bh-black);padding:12px 14px;margin:0 0 14px;background:#fff}
+.sm-box.ok{border-left-color:var(--bh-ok-ink,#1e6b34)}.sm-box.warn{border-left-color:var(--bh-warn-ink)}.sm-box.bad{border-left-color:var(--bh-bad-ink)}
+.sm-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+.sm-box ul{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.5}
+.sm-box li{margin:3px 0}
+.pc-more,.led{margin-top:6px}
+.pc-more>summary,.led>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--bh-ink-muted);padding:6px 0}
+.ik{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:16px 0 4px}
+.ik .bh-label{margin-right:4px}
 .xp-jobs{position:relative}
 .xp-jobs>summary{list-style:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;border:1px solid var(--bh-slate);background:#fff;font:600 12px/1 var(--bh-font);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
 .xp-jobs>summary::-webkit-details-marker{display:none}
@@ -857,11 +866,12 @@ function pane(){
     + (i.mail ? '<p class="note"><a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a></p>' : '');
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   if (TAB === 'review' && i.draft && !i.isMsg && i.sec !== 'corr' && i.draft.draftLink) h += '<p class="note"><a href="' + esc(i.draft.draftLink) + '" target="_blank" rel="noopener">Open the draft in payables@</a></p>';
+  if (TAB === 'review' && i.math && !i.isMsg) h += summaryBox(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
   if (TAB === 'review') {
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
-    if (i.note) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
-    if (i.flags.length) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
+    if (i.note && !i.math) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
+    if (i.flags.length && !i.math) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
     if (i.math) h += payCheck(i);
     else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
@@ -903,21 +913,79 @@ function coNote(A, span){
   if (A.proceeding.length) bits.push('Pending · proceeding (not executed, may be billed): ' + A.proceeding.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount)).join('; ') + '.');
   return bits.length ? '<tr><td colspan="' + span + '" style="text-align:left;white-space:normal;font-size:11.5px;color:var(--bh-ink-muted);background:var(--bh-surface-muted)">' + bits.join(' ') + '</td></tr>' : '';
 }
+/* Explained differences (21 Oct 2026). The pane used to show three tables and leave the reader
+   to work out why a figure differed. This turns each difference into a reason where the data
+   allows it, and says plainly when it does not. Contract: find the change orders - approved
+   after this pay app's period, not approved yet, or approved but left off - whose sum is the
+   difference (to $1). Retainage: does the pay app's retainage follow from its own contract
+   figure? Previous payments: how big, and how old the CE ledger is. */
+const CO_WORDS = { pending_review: 'not approved, in review', pending_proceeding: 'pending · proceeding, not executed', pending_not_proceeding: 'pending · not proceeding', draft: 'draft, not approved' };
+function coExplain(i, d){
+  const c = i.c, A = i.math && i.math.A;
+  if (!c || !Array.isArray(c.change_orders) || Math.abs(d) < 1) return null;
+  const asOf = A ? A.asOf : payAsOf(i.f), cand = [];
+  for (const x of c.change_orders) {
+    const amt = Number(x.amount) || 0; if (!amt) continue;
+    if (x.state === 'approved' && x.approved_date && x.approved_date > asOf) cand.push({ x, v: amt, why: 'approved ' + usDate(x.approved_date) + ', after this period' });
+    else if (CO_WORDS[x.state]) cand.push({ x, v: amt, why: CO_WORDS[x.state] });
+    else if (x.state === 'approved') cand.push({ x, v: -amt, why: 'approved, not billed' });
+  }
+  if (!cand.length || cand.length > 16) return null;
+  let best = null;
+  for (let mask = 1; mask < (1 << cand.length); mask++) {
+    let t = 0, n = 0; for (let k = 0; k < cand.length; k++) if (mask & (1 << k)) { t += cand[k].v; n++; }
+    if (Math.abs(t - d) <= 1 && (!best || n < best.n)) best = { mask, n };
+  }
+  if (!best) return null;
+  const pick = cand.filter((_, k) => best.mask & (1 << k));
+  const inc = pick.filter(p => p.v > 0), out = pick.filter(p => p.v < 0);
+  const say = p => 'CO #' + esc(p.x.number) + ' ' + money(Math.abs(p.v)) + ' (' + esc(p.why) + ')';
+  return (inc.length ? 'billed ' + inc.map(say).join(' and ') : '') + (inc.length && out.length ? '; ' : '') + (out.length ? 'left out ' + out.map(say).join(' and ') : '');
+}
+function explainDiffs(i){
+  const m = i.math; if (!m) return null;
+  const out = [];
+  if (dif(m.adj[0], m.adj[1])) { const d = m.adj[0] - m.adj[1], why = coExplain(i, d);
+    out.push({ ok: !!why, t: 'Contract ' + (d > 0 ? '+' : '−') + money(Math.abs(d)), why: why || 'No combination of this commitment’s change orders makes up the difference — check the pay app’s contract lines.' }); }
+  if (dif(m.ret, m.retCalc)) { const d = m.ret - m.retCalc, R = retRule(i.c);
+    const own = R && m.complete != null && m.adj[0] != null ? (R.thru50 ? Math.min(m.complete, m.adj[0] / 2) : m.complete) * R.p / 100 : null;
+    const follows = own != null && !dif(m.ret, own) && dif(m.adj[0], m.adj[1]);
+    out.push({ ok: follows, t: 'Retainage ' + (d > 0 ? '+' : '−') + money(Math.abs(d)), why: follows ? 'follows from the contract difference (' + esc(R.text) + ' on their contract figure)' : 'by the Procore rule (' + esc(m.rule || 'none') + ') it should be ' + money(m.retCalc) }); }
+  if (dif(m.prev[0], m.prev[1])) { const d = m.prev[0] - m.prev[1];
+    out.push({ ok: false, minor: Math.abs(d) < 100, t: 'Previous payments ' + (d > 0 ? '+' : '−') + money(Math.abs(d)), why: Math.abs(d) < 100 ? 'small — usually a retainage rounding or a CO’s retainage; confirm on the CE history' + ledgerAsOf() : 'not in the CE history' + ledgerAsOf() + ' — an invoice entered in CE after that date, or one still on the desk, would explain it' }); }
+  const due = m.complete != null && m.ret != null && m.prev[0] != null ? m.complete - m.ret - m.prev[0] : null;
+  return { items: out, math: due == null || m.due == null ? null : !dif(m.due, due), mathOff: due == null || m.due == null ? 0 : m.due - due };
+}
+function summaryBox(i){
+  const E = explainDiffs(i); if (!E) return '';
+  const n = E.items.length, unex = E.items.filter(x => !x.ok && !x.minor).length;
+  const head = !n ? 'Everything ties to Procore and CE' : n + ' difference' + (n > 1 ? 's' : '') + (unex ? ' · ' + unex + ' to look at' : ' — all explained');
+  const mathChip = E.math == null ? '<span class="bh-chip is-warn sm">Math not read</span>' : E.math ? '<span class="bh-chip is-ok sm">Balance due math ✓</span>' : '<span class="bh-chip is-warn sm">Math ' + money(Math.abs(E.mathOff)) + ' off</span>';
+  return '<div class="sm-box ' + (unex ? 'bad' : n ? 'warn' : 'ok') + '"><div class="sm-h"><b>' + head + '</b>' + mathChip
+    + (i.note ? '<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">Read by OCR — check figures against the PDF</span>' : '') + '</div>'
+    + (n ? '<ul>' + E.items.map(x => '<li><b>' + x.t + '</b> — ' + x.why + (x.ok ? '' : x.minor ? ' <span class="bh-chip sm">minor</span>' : ' <span class="bh-chip is-bad sm">check</span>') + '</li>').join('') + '</ul>' : '')
+    + '</div>';
+}
 function payCheck(i){
   const m = i.math;
   const chip = (f,t) => f ? '<span class="bh-chip is-bad sm">' + (t||'Differs') + '</span>' : '<span class="bh-chip is-ok sm">Match</span>';
   const cell = (a,b) => (a == null || b == null) ? '' : chip(dif(a,b));
   const due = m.complete != null && m.ret != null && m.prev[0] != null ? m.complete - m.ret - m.prev[0] : null;
-  return '<h3>Pay application check <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">· hover a line for its Attachment G name</span></h3><table class="mt"><thead><tr><th></th><th>Pay app</th><th>Procore</th><th>CE</th><th></th></tr></thead><tbody>'
-    + '<tr' + (dif(m.orig[0], m.orig[1]) ? ' class="flag"' : '') + '><td title="AMOUNT OF ORIGINAL CONTRACT">Orig. contract amt</td><td>' + (m.orig[0] == null ? '<span class="note" title="The pull does not read this line yet">not read</span>' : money(m.orig[0])) + '</td><td>' + money(m.orig[1]) + '</td><td></td><td>' + cell(m.orig[0], m.orig[1]) + '</td></tr>'
-    + '<tr><td title="APPROVED CHANGE ORDER(S)">Approved COs</td><td>' + (m.cos[0] == null ? '<span class="note">not read</span>' : money(m.cos[0])) + '</td><td>' + money(m.cos[1]) + '</td><td></td><td>' + cell(m.cos[0], m.cos[1]) + '</td></tr>'
-    + '<tr' + (dif(m.adj[0], m.adj[1]) ? ' class="flag"' : '') + '><td title="ADJUSTED CONTRACT AMOUNT">Adj. contract amt</td><td>' + money(m.adj[0]) + '</td><td>' + money(m.adj[1]) + '</td><td>' + money(m.adj[2]) + '</td><td>' + cell(m.adj[0], m.adj[1]) + '</td></tr>'
-    + coNote(m.A, 5)
-    + '<tr><td title="TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE">Completed &amp; stored to date' + (i.ctdBy ? ' <span class="note">(keyed · ' + esc(i.ctdBy) + ')</span>' : '') + '</td><td>' + money(m.complete) + '</td><td colspan="2" style="text-align:right">' + (m.complete != null && i.c && i.sec !== 'done' && canKey(i.c) && XED !== i.itemId ? '<button class="xp-mini" data-ctde="' + i.itemId + '">Adjust</button>' : '') + '</td><td></td></tr>'
-    + '<tr' + (dif(m.ret, m.retCalc) ? ' class="flag"' : '') + '><td title="LESS RETAINAGE">Less retainage' + (m.rule ? ' <span class="note">(' + esc(m.rule) + ')</span>' : '') + '</td><td>' + money(m.ret) + '</td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (m.retCalc == null ? 'no rule in Procore' : 'by rule ' + money(m.retCalc)) + '</td><td>' + cell(m.ret, m.retCalc) + '</td></tr>'
-    + '<tr' + (dif(m.prev[0], m.prev[1]) ? ' class="flag"' : '') + '><td title="LESS PREVIOUS PAYMENTS">Less prev. payments</td><td>' + money(m.prev[0]) + '</td><td></td><td>' + (m.prev[1] == null ? '<span class="note">no CE history</span>' : money(m.prev[1])) + '</td><td>' + cell(m.prev[0], m.prev[1]) + '</td></tr>'
-    + '<tr><td title="BALANCE DUE THIS PAYMENT ESTIMATE"><b>Balance due this est.</b></td><td><b>' + money(m.due) + '</b></td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (due == null ? '' : 'computed ' + money(due)) + '</td><td>' + (due == null || m.due == null ? '' : dif(m.due, due) ? '<span class="bh-chip is-warn sm">$' + Math.abs(m.due - due).toFixed(2) + ' off</span>' : '<span class="bh-chip is-ok sm">Match</span>') + '</td></tr>'
-    + '</tbody></table>';
+  const L = i.ledger || {}, hist = L.available && L.exists && (L.rows || []).length;
+  const rows = [
+    [dif(m.orig[0], m.orig[1]), '<tr' + (dif(m.orig[0], m.orig[1]) ? ' class="flag"' : '') + '><td title="AMOUNT OF ORIGINAL CONTRACT">Orig. contract amt</td><td>' + (m.orig[0] == null ? '<span class="note" title="Not read off this pay app">not read</span>' : money(m.orig[0])) + '</td><td>' + money(m.orig[1]) + '</td><td></td><td>' + cell(m.orig[0], m.orig[1]) + '</td></tr>'],
+    [dif(m.cos[0], m.cos[1]), '<tr' + (dif(m.cos[0], m.cos[1]) ? ' class="flag"' : '') + '><td title="APPROVED CHANGE ORDER(S)">Approved COs</td><td>' + (m.cos[0] == null ? '<span class="note">not read</span>' : money(m.cos[0])) + '</td><td>' + money(m.cos[1]) + '</td><td></td><td>' + cell(m.cos[0], m.cos[1]) + '</td></tr>'],
+    [dif(m.adj[0], m.adj[1]), '<tr' + (dif(m.adj[0], m.adj[1]) ? ' class="flag"' : '') + '><td title="ADJUSTED CONTRACT AMOUNT">Adj. contract amt</td><td>' + money(m.adj[0]) + '</td><td>' + money(m.adj[1]) + '</td><td title="CE subcontract amount' + (dif(m.adj[1], m.adj[2]) ? ' - out of step with Procore; fix in CE, not a reason to reject' : '') + '">' + money(m.adj[2]) + (m.adj[2] != null && dif(m.adj[1], m.adj[2]) ? ' <span class="bh-chip is-warn sm">CE out of step</span>' : '') + '</td><td>' + cell(m.adj[0], m.adj[1]) + '</td></tr>' + (dif(m.adj[0], m.adj[1]) ? coNote(m.A, 5) : '')],
+    [false, '<tr><td title="TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE">Completed &amp; stored to date' + (i.ctdBy ? ' <span class="note">(keyed · ' + esc(i.ctdBy) + ')</span>' : '') + '</td><td>' + money(m.complete) + '</td><td colspan="2" style="text-align:right">' + (m.complete != null && i.c && i.sec !== 'done' && canKey(i.c) && XED !== i.itemId ? '<button class="xp-mini" data-ctde="' + i.itemId + '">Adjust</button>' : '') + '</td><td></td></tr>'],
+    [dif(m.ret, m.retCalc), '<tr' + (dif(m.ret, m.retCalc) ? ' class="flag"' : '') + '><td title="LESS RETAINAGE">Less retainage' + (m.rule ? ' <span class="note">(' + esc(m.rule) + ')</span>' : '') + '</td><td>' + money(m.ret) + '</td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (m.retCalc == null ? 'no rule in Procore' : 'by rule ' + money(m.retCalc)) + '</td><td>' + cell(m.ret, m.retCalc) + '</td></tr>'],
+    [dif(m.prev[0], m.prev[1]), '<tr' + (dif(m.prev[0], m.prev[1]) ? ' class="flag"' : '') + '><td title="LESS PREVIOUS PAYMENTS">Less prev. payments</td><td>' + money(m.prev[0]) + '</td><td></td><td>' + (m.prev[1] == null ? '<span class="note">no CE history</span>' : money(m.prev[1])) + '</td><td>' + cell(m.prev[0], m.prev[1]) + '</td></tr>'
+      + (hist ? '<tr><td colspan="5" style="text-align:left;padding:0 0 6px"><details class="led"' + (i.showLedger ? ' open' : '') + '><summary>CE payment history · ' + L.rows.length + ' invoice' + (L.rows.length > 1 ? 's' : '') + ledgerAsOf() + '</summary>' + ledger(i) + '</details></td></tr>' : '')],
+    [true, '<tr><td title="BALANCE DUE THIS PAYMENT ESTIMATE"><b>Balance due this est.</b></td><td><b>' + money(m.due) + '</b></td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (due == null ? '' : 'computed ' + money(due)) + '</td><td>' + (due == null || m.due == null ? '' : dif(m.due, due) ? '<span class="bh-chip is-warn sm">$' + Math.abs(m.due - due).toFixed(2) + ' off</span>' : '<span class="bh-chip is-ok sm">Match</span>') + '</td></tr>'],
+  ];
+  const shown = rows.filter(r => r[0]), quiet = rows.filter(r => !r[0]);
+  const head = '<thead><tr><th></th><th>Pay app</th><th>Procore</th><th>CE</th><th></th></tr></thead>';
+  return '<h3>Pay application check</h3><table class="mt">' + head + '<tbody>' + shown.map(r => r[1]).join('') + '</tbody></table>'
+    + (quiet.length ? '<details class="pc-more"><summary>' + quiet.length + ' more line' + (quiet.length > 1 ? 's' : '') + ' — match or not read</summary><table class="mt">' + head + '<tbody>' + quiet.map(r => r[1]).join('') + '</tbody></table></details>' : '');
 }
 /* Intake checks: read-only, worked out from the document and the data */
 function intakeChecks(i){
@@ -937,7 +1005,8 @@ function intakeChecks(i){
     rows.push(['Pay application math checks out', pay ? ['warn','Not read yet'] : na()]);
   }
   const cls = { ok:'is-ok', bad:'is-bad', warn:'is-warn', na:'' };
-  return '<h3>Intake checks</h3>' + rows.map(r => '<div class="ck ckro"><span>' + esc(r[0]) + '</span><span class="bh-chip sm ' + cls[r[1][0]] + '">' + esc(r[1][1]) + '</span></div>').join('');
+  const short = { 'Invoice is valid and not a duplicate':'Valid · not a duplicate', 'Less previous payments checked against ComputerEase':'Previous payments vs CE', 'Job, commitment and coding verified':'Job & commitment', 'Pay application math checks out':'Math' };
+  return '<div class="ik"><span class="bh-label">Intake checks</span>' + rows.map(r => '<span class="bh-chip sm ' + cls[r[1][0]] + '" title="' + esc(r[0] + ': ' + r[1][1]) + '">' + esc(short[r[0]] || r[0]) + (r[1][0] === 'ok' ? ' ✓' : ' · ' + esc(r[1][1])) + '</span>').join('') + '</div>';
 }
 function dupOf(i){
   if (!i.po || !i.f.PayRequest) return null;
@@ -971,13 +1040,6 @@ function triageBox(i){
   const aDiff = m && dif(m.adj[0], m.adj[1]), ceOff = m && dif(m.adj[1], m.adj[2]), pDiff = m && dif(m.prev[0], m.prev[1]);
   return '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
     + (miss.length ? '<p class="note">Missing from the document: ' + miss.map(x => '<span class="bh-chip is-warn sm">' + esc(x) + '</span>').join(' ') + '</p>' : '<p class="note">Nothing missing found on the document.</p>')
-    + (m ? '<table class="mt" style="margin-top:10px"><tbody>'
-      + '<tr' + (aDiff ? ' class="flag"' : '') + '><td title="ADJUSTED CONTRACT AMOUNT">Adj. contract amt</td><td>' + money(m.adj[0]) + '</td><td style="color:var(--bh-ink-muted)">Procore ' + money(m.adj[1]) + '</td><td>' + (m.adj[1] == null ? '' : aDiff ? '<span class="bh-chip is-bad sm">Differs</span>' : '<span class="bh-chip is-ok sm">Match</span>') + '</td></tr>'
-      + '<tr><td style="color:var(--bh-ink-muted);padding-left:12px">CE contract</td><td></td><td style="color:var(--bh-ink-muted)">CE ' + money(m.adj[2]) + '</td><td>' + (m.adj[2] == null || m.adj[1] == null ? '' : ceOff ? '<span class="bh-chip is-warn sm" title="CE does not agree with Procore - fix it in CE; not a reason to reject the trade partner">CE out of step</span>' : '<span class="bh-chip is-ok sm">CE agrees</span>') + '</td></tr>'
-      + '<tr' + (pDiff ? ' class="flag"' : '') + '><td title="LESS PREVIOUS PAYMENTS">Less prev. payments</td><td>' + money(m.prev[0]) + '</td><td style="color:var(--bh-ink-muted)">CE ' + (m.prev[1] == null ? 'no history' : money(m.prev[1])) + '</td><td>' + (m.prev[1] == null ? '' : pDiff ? '<span class="bh-chip is-bad sm">Differs</span>' : '<span class="bh-chip is-ok sm">Match</span>') + '</td></tr>'
-      + '</tbody></table>'
-      + (i.ledger.available && i.ledger.exists ? ((pDiff || i.showLedger) ? ledger(i) : '<a href="#" data-do="ledger" style="font-size:12px;font-weight:600;display:inline-block;margin-top:6px">Show CE payment history</a>') : '')
-      : '<p class="note">No pay application figures to check on this document.</p>')
     + '<label class="bh-label" style="display:block;margin-top:12px" for="tAssign">Assign to</label>'
     + '<select class="bh-select" id="tAssign" style="width:100%;margin-top:4px">' + assignOptions(i, cur) + '</select>'
     + '<div style="display:flex;gap:8px;margin-top:12px"><button class="bh-btn" style="min-height:38px" data-do="routeto"' + (BUSY ? ' disabled' : '') + '>Route</button><button class="bh-btn-outline" style="min-height:38px" data-do="rejshow">Reject to trade partner</button></div>'
@@ -993,11 +1055,11 @@ function triageBox(i){
 function ledger(i){
   const L = i.ledger.rows || []; if (!L.length) return '<p class="note">No earlier CE invoices on this subcontract.</p>';
   const tot = L.reduce((a,x) => a + x.pay, 0), m = i.math;
-  return '<div style="margin-top:10px"><div class="bh-label">CE payment history (previous payments) · ' + esc(i.po) + ledgerAsOf() + '</div><table class="mt" style="margin-top:4px"><thead><tr><th>CE invoice</th><th>Date</th><th>Certified payable</th></tr></thead><tbody>'
+  return '<div style="margin-top:6px"><table class="mt" style="margin-top:4px"><thead><tr><th>CE invoice</th><th>Date</th><th>Certified payable</th></tr></thead><tbody>'
     + L.map(x => '<tr><td>' + esc(x.inv) + '</td><td>' + esc(x.per) + '</td><td>' + money(x.pay) + '</td></tr>').join('')
     + '<tr><td><b>Total prev. payments (CE)</b></td><td></td><td><b>' + money(tot) + '</b></td></tr>'
     + (m && m.prev[0] != null && Math.abs(m.prev[0] - tot) > 0.5 ? '<tr class="flag"><td>Pay app: less prev. payments</td><td></td><td>' + money(m.prev[0]) + ' <span class="bh-chip is-bad sm">' + money(Math.abs(m.prev[0] - tot)) + (m.prev[0] > tot ? ' over' : ' under') + '</span></td></tr>' : '')
-    + '</tbody></table>' + (i.showLedger && !(m && dif(m.prev[0], m.prev[1])) ? '<a href="#" data-do="ledger" style="font-size:12px;font-weight:600">Hide</a>' : '') + '</div>';
+    + '</tbody></table></div>';
 }
 /* the email: full Attachment G wording, built from the ticked reasons */
 function rejMail(i){
