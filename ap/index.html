@@ -145,6 +145,16 @@ body.no-pane .ap-pane{display:none}
 .xp-ed .bh-btn,.xp-ed .bh-btn-outline{min-height:32px;padding:0 10px;font-size:11px}
 .xp-mini{border:0;background:none;padding:0;margin-left:6px;font:600 11px var(--bh-font);color:var(--bh-ink-muted);text-decoration:underline;cursor:pointer}
 body.v-exp #tMine,body.v-exp #tChg{display:none}
+.ac-per{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:14px}
+.ac-per input{min-height:30px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font)}
+.mt.ac td:first-child{min-width:230px;white-space:normal}
+.mt.ac .ag{display:inline-block;min-width:16px;font-weight:700;color:var(--bh-ink-muted)}
+.mt.ac .ce,.mt.ac .nt{display:block;font-size:11px;color:var(--bh-ink-muted);margin-left:16px}
+.mt.ac .nt{color:var(--bh-ink)}
+.mt.ac .ck2{display:block;margin-top:3px}
+.mt.ac .ck2:empty{display:none}
+.ac-links{margin-left:auto;display:flex;gap:12px;font-size:12px;font-weight:600}
+.ac-notes{font-size:12px;line-height:1.55;background:var(--bh-surface-muted);padding:8px 10px;margin-top:8px}
 .sm-box{border:1px solid var(--bh-hairline);border-left:4px solid var(--bh-black);padding:12px 14px;margin:0 0 14px;background:#fff}
 .sm-box.ok{border-left-color:var(--bh-ok-ink,#1e6b34)}.sm-box.warn{border-left-color:var(--bh-warn-ink)}.sm-box.bad{border-left-color:var(--bh-bad-ink)}
 .sm-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
@@ -866,17 +876,19 @@ function pane(){
     + (i.mail ? '<p class="note"><a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a></p>' : '');
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   if (TAB === 'review' && i.draft && !i.isMsg && i.sec !== 'corr' && i.draft.draftLink) h += '<p class="note"><a href="' + esc(i.draft.draftLink) + '" target="_blank" rel="noopener">Open the draft in payables@</a></p>';
-  if (TAB === 'review' && i.math && !i.isMsg) h += summaryBox(i);
+  const acctView = isAcct() && i.math && !i.isMsg;
+  if (TAB === 'review' && acctView) h += acctCheck(i);
+  if (TAB === 'review' && i.math && !i.isMsg && (!acctView || i.showPc)) h += summaryBox(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
   if (TAB === 'review') {
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note && !i.math) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
     if (i.flags.length && !i.math) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
-    if (i.math) h += payCheck(i);
+    if (i.math && (!acctView || i.showPc)) h += payCheck(i);
     else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
-      if (isAcct()) h += intakeChecks(i);
+      if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
       else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
@@ -955,6 +967,74 @@ function explainDiffs(i){
     out.push({ ok: false, minor: Math.abs(d) < 100, t: 'Previous payments ' + (d > 0 ? '+' : '−') + money(Math.abs(d)), why: Math.abs(d) < 100 ? 'small — usually a retainage rounding or a CO’s retainage; confirm on the CE history' + ledgerAsOf() : 'not in the CE history' + ledgerAsOf() + ' — an invoice entered in CE after that date, or one still on the desk, would explain it' }); }
   const due = m.complete != null && m.ret != null && m.prev[0] != null ? m.complete - m.ret - m.prev[0] : null;
   return { items: out, math: due == null || m.due == null ? null : !dif(m.due, due), mathOff: due == null || m.due == null ? 0 : m.due - due };
+}
+/* ---- Accounting's check (22 Oct 2026) --------------------------------------------------
+   What Drew actually does at triage: put the pay app beside CE's Subcontractor Detail report.
+   So the Accounting seat sees ONE table - pay app vs CE - for the period the pay app is
+   submitted for. Change orders count only if CE approved them on or before that period end;
+   CE-pending/denied RFCs and Procore-pending COs are listed underneath as "not counted".
+   The Procore comparison is one click away, not on the page. */
+function cePeriod(i){
+  const L = i.ledger || {}, led = L.led; if (!led) return null;
+  const per = payAsOf(i.f), cos = led.change_orders || [];
+  const sum = a => Math.round(a.reduce((t, c) => t + (Number(c.amount) || 0), 0) * 100) / 100;
+  const hasDates = cos.some(c => 'date_approved' in c);
+  const inP = [], after = [], notAppr = [];
+  for (const c of cos) {
+    if (c.status && !/approv/i.test(c.status)) notAppr.push(c);
+    else if (hasDates && c.date_approved && c.date_approved > per) after.push(c);
+    else inP.push(c);
+  }
+  const base = led.base_amount != null ? Number(led.base_amount) : Math.round(((Number(led.amount) || 0) - sum(cos)) * 100) / 100;
+  return { per, base, cos: sum(inP), adj: Math.round((base + sum(inP)) * 100) / 100, after, notAppr, hasDates };
+}
+function acctCheck(i){
+  const m = i.math, f = i.f, L = i.ledger || {}, P = cePeriod(i), R = retRule(i.c);
+  const per = payAsOf(f), perSrc = f.PeriodEnding ? '' : ' (date received — no period read)';
+  const ok = (a, b) => a == null || b == null ? '' : dif(a, b) ? '<span class="bh-chip is-bad sm">' + money(Math.abs(a - b)) + ' off</span>' : '<span class="bh-chip is-ok sm">✓</span>';
+  const v = x => x == null ? '<span class="note" style="margin:0">not read</span>' : money(x);
+  const retCe = R && P && m.complete != null ? Math.round((R.thru50 ? Math.min(m.complete, P.adj / 2) : m.complete) * R.p) / 100 : null;
+  const due = m.complete != null && m.ret != null && m.prev[0] != null ? Math.round((m.complete - m.ret - m.prev[0]) * 100) / 100 : null;
+  const row = (t, a, b, note, c) => '<tr' + (a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td>' + t + (note ? '<span style="display:block;font-size:11px;color:var(--bh-ink-muted)">' + note + '</span>' : '') + '</td><td>' + v(a) + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '</td><td>' + (c != null ? c : ok(a, b)) + '</td></tr>';
+  let h = '<div class="ac-per"><span class="bh-label">Period ending</span> ';
+  if (acctSeat() && i.sec !== 'done' && i.editPer) h += '<input type="date" id="perIn" value="' + esc(per) + '"> <button class="bh-btn" style="min-height:30px;font-size:11px" data-do="persave">Save</button> <button class="xp-mini" data-do="perx">Cancel</button>';
+  else h += '<b>' + esc(usDate(per)) + '</b>' + esc(perSrc) + (acctSeat() && i.sec !== 'done' ? ' <button class="xp-mini" data-do="peredit">Change</button>' : '');
+  h += (i.note ? ' <span class="bh-chip is-warn sm" title="' + esc(i.note) + '">Read by OCR — check figures against the PDF</span>' : '')
+    + '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (acctSeat() && i.sec !== 'done' ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
+  if (!P) return h + '<p class="note">No CE Subcontractor Detail for ' + esc(i.po || 'this subcontract') + ' in the ledger' + ledgerAsOf() + '.</p>';
+  /* Attachment G lines in form order, each beside the Subcontractor Detail column it is read
+     against. "Earlier invoices" = every CE invoice on this subcontract except this pay request. */
+  const thisSet = new Set(L.thisApp || []), prior = ((L.led && L.led.invoices) || []).filter(x => !thisSet.has(x));
+  const sumOf = k => Math.round(prior.reduce((t, x) => t + (Number(x[k]) || 0), 0) * 100) / 100;
+  const ceTot = sumOf('total'), ceRet = sumOf('retention');
+  const earned = m.complete != null && m.ret != null ? Math.round((m.complete - m.ret) * 100) / 100 : null;
+  const inCe = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.payable) || 0), 0) * 100) / 100 : null;
+  const line = (n, g, ce, a, b, note, chk) => '<tr' + (chk !== '' && a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td><span class="ag">' + n + '</span>' + g + '<span class="ce">' + ce + '</span>' + (note ? '<span class="nt">' + note + '</span>' : '') + '</td><td>' + v(a) + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '<span class="ck2">' + (chk != null ? chk : ok(a, b)) + '</span></td></tr>';
+  /* Labels as Tiffany set them (22 Oct): short Attachment G name | CE Subcontractor Detail column. */
+  const thisTot = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.total) || 0), 0) * 100) / 100 : null;
+  const thisRet = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.retention) || 0), 0) * 100) / 100 : null;
+  const ce4 = thisTot != null ? Math.round((ceTot + thisTot) * 100) / 100 : null;
+  const ce5 = thisRet != null ? Math.round((ceRet + thisRet) * 100) / 100 : retCe;
+  h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app</th><th>CE</th></tr></thead><tbody>'
+    + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P.base)
+    + line(2, 'Approved COs', 'RFCs approved by ' + usDate(per) + (P.hasDates ? '' : ' (approval dates arrive with the next ledger)'), num(f.ChangeOrders), P.cos)
+    + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P.adj)
+    + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total (prev. invoices ' + money(ceTot) + (thisTot != null ? ' + this invoice ' + money(thisTot) : '') + ')', m.complete, ce4,
+        thisTot == null && m.complete != null ? 'not in CE yet · this period on the pay app ' + money(m.complete - ceTot) + (i.ctdBy ? ' · keyed by ' + esc(i.ctdBy) : '') : (i.ctdBy ? 'keyed by ' + esc(i.ctdBy) : ''), thisTot == null ? '' : undefined)
+    + line(5, 'Retainage', thisRet != null ? 'Invoiced Retention (prev. ' + money(ceRet) + ' + this invoice ' + money(thisRet) + ')' : 'Invoiced Retention (prev. ' + money(ceRet) + ', plus ' + (R ? esc(R.text) : 'no') + ' rule)', m.ret, ce5)
+    + line(6, 'Earned less retainage', 'Invoiced Payable (to date)', earned, L.exists ? Math.round((L.prior + (inCe != null ? inCe : (m.due || 0))) * 100) / 100 : null)
+    + line(7, 'Less Prev. Pmts.', 'Invoiced Payable (prev. invoices)', m.prev[0], L.exists ? L.prior : null)
+    + line(8, '<b>Balance Due</b>', inCe != null ? 'Invoiced Payable (on this invoice, in CE)' : 'Not in CE yet — pay app worked through', m.due, inCe != null ? inCe : due)
+    + '</tbody></table>';
+  const notes = [];
+  if (P.after.length) notes.push('<b>Not counted — CE approved after ' + esc(usDate(per)) + ':</b> ' + P.after.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(usDate(c.date_approved)) + ')').join('; '));
+  if (P.notAppr.length) notes.push('<b>Not counted — not approved in CE:</b> ' + P.notAppr.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(c.status) + ')').join('; '));
+  const pp = (i.c && Array.isArray(i.c.change_orders) ? i.c.change_orders : []).filter(x => /^pending|^draft/.test(x.state || ''));
+  if (pp.length) notes.push('<b>Pending in Procore — should not be billed:</b> ' + pp.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount) + ' (' + esc(x.status) + ')').join('; '));
+  if (notes.length) h += '<div class="ac-notes">' + notes.join('<br>') + '</div>';
+  if (L.exists && (L.rows || []).length) h += '<details class="led"' + (i.showLedger ? ' open' : '') + '><summary>CE invoice history · ' + L.rows.length + ' earlier invoice' + (L.rows.length > 1 ? 's' : '') + '</summary>' + ledger(i) + '</details>';
+  h += '<p class="note" style="margin-top:6px"><a href="#" data-do="pcshow">' + (i.showPc ? 'Hide' : 'Show') + ' the Procore comparison</a></p>';
+  return h;
 }
 function summaryBox(i){
   const E = explainDiffs(i); if (!E) return '';
@@ -1288,6 +1368,14 @@ function act(k){
   MENU = false;
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k === 'ledger') { i.showLedger = !i.showLedger; pane(); return; }
+  if (k === 'acedit') { TAB = 'details'; ED = true; pane(); return; }
+  if (k === 'pcshow') { i.showPc = !i.showPc; pane(); return; }
+  if (k === 'peredit') { i.editPer = true; pane(); return; }
+  if (k === 'perx') { i.editPer = false; pane(); return; }
+  if (k === 'persave') { if (!acctSeat()) return; const v = ((document.getElementById('perIn') || {}).value || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast('Pick the period-ending date'); return; }
+    const old = i.f.PeriodEnding ? String(i.f.PeriodEnding).slice(0, 10) : '';
+    run(async () => { if (await saveRow(i, { PeriodEnding: v }, { note: 'Period ending ' + (old ? 'changed from ' + usDate(old) + ' to ' : 'set to ') + usDate(v) })) { toast('Period saved'); } });
+    return; }
   if (k === 'corr') { CF = true; TAB = 'review'; pane(); return; }
   if (k === 'cancelcorr') { CF = false; pane(); return; }
   if (k === 'copymail') { const e = i.mailEntry || [...i.log].reverse().find(x => x.mailText); copy(e ? e.mailText : ''); pane(); return; }
