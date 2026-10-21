@@ -125,6 +125,36 @@ body.no-pane .ap-pane{display:none}
 .kbd{font-size:11px;color:var(--bh-ink-muted)}
 .kbd kbd{border:1px solid var(--bh-hairline);padding:1px 5px;font:600 11px var(--bh-font);background:#fff}
 
+/* expected billings view */
+.ap-view{display:inline-flex}
+.ap-view .ap-tog+.ap-tog{border-left:0}
+.xp-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:20px}
+.xp-top select{min-height:38px;font-size:13px}
+.xp-k{margin-top:14px}
+.xp-f{display:flex;flex-wrap:wrap;gap:0;margin-top:16px}
+.xp-f .ap-tog+.ap-tog{border-left:0}
+.xp-row{display:grid;grid-template-columns:minmax(180px,1.6fr) 120px 150px 120px minmax(170px,1.2fr) minmax(150px,1fr);align-items:center;gap:14px;padding:10px 8px;border-bottom:1px solid var(--bh-hairline);font-size:13px}
+.xp-row.hd{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--bh-ink-muted);border-bottom:1px solid var(--bh-slate);padding-top:16px}
+.xp-row .r{text-align:right}
+.xp-row .s{display:block;font-size:12px;color:var(--bh-ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-row .v b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-row.done{color:var(--bh-ink-muted)}
+.xp-link{border:0;background:none;padding:0;font:600 13px var(--bh-font);color:var(--bh-ink);text-decoration:underline;cursor:pointer}
+.xp-ed{display:flex;gap:6px;align-items:center}
+.xp-ed input{width:120px;min-height:32px;border:1px solid var(--bh-slate);padding:0 8px;font:13px var(--bh-font);text-align:right;border-radius:0}
+.xp-ed .bh-btn,.xp-ed .bh-btn-outline{min-height:32px;padding:0 10px;font-size:11px}
+.xp-mini{border:0;background:none;padding:0;margin-left:6px;font:600 11px var(--bh-font);color:var(--bh-ink-muted);text-decoration:underline;cursor:pointer}
+body.v-exp #tMine,body.v-exp #tChg{display:none}
+@media (max-width:960px){
+  .xp-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"v st" "b c" "l x";row-gap:6px}
+  .xp-row>*{min-width:0}.xp-row .bh-chip{white-space:normal}
+  .xp-ed input{width:100%;min-width:0}.xp-ed{flex-wrap:wrap}
+  .xp-k{flex-wrap:wrap}
+  .xp-row.hd{display:none}
+  .xp-row>:nth-child(1){grid-area:v}.xp-row>:nth-child(2){display:none}.xp-row>:nth-child(3){grid-area:b;text-align:left}
+  .xp-row>:nth-child(4){grid-area:l;text-align:left}.xp-row>:nth-child(5){grid-area:c}.xp-row>:nth-child(6){grid-area:st;text-align:right}
+}
+
 @media (max-width:1200px){
   .ap-pane{position:fixed;top:0;right:0;bottom:0;height:auto;width:min(580px,100vw);z-index:60;box-shadow:none;border-left:1px solid var(--bh-slate)}
   body:not(.no-pane) .ap-scrim{display:block;position:fixed;inset:0;background:rgba(33,30,30,.45);z-index:55}
@@ -158,6 +188,7 @@ body.no-pane .ap-pane{display:none}
 </header>
 
 <div class="ap-bar">
+  <span class="ap-view"><button class="ap-tog" id="vQ" aria-pressed="true">Queue</button><button class="ap-tog" id="vE" aria-pressed="false">Expected billings</button></span>
   <input class="bh-input" id="q" type="search" placeholder="Search vendor, job, invoice #" aria-label="Search">
   <button class="ap-tog" id="tMine" aria-pressed="false">Waiting on me <span class="n" id="nMine"></span></button>
   <button class="ap-tog" id="tChg" aria-pressed="false">Changed <span class="n" id="nChg"></span></button>
@@ -213,10 +244,17 @@ const SECTIONS = [
 const HIDDEN = ['duplicate archived','email only','handled outside desk'];
 
 /* ---- state ------------------------------------------------------------------ */
-const LIVE = { me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null, byNum:{}, billing:{}, pmName:{}, jobs:{} };
+const LIVE = { byKey:{}, me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null, byNum:{}, billing:{}, pmName:{}, jobs:{} };
 let INV = [], PEOPLE = {}, JOBS = {};
 let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, RF=false, ED=false, BUSY=false;
 const BULK = new Set();
+/* Expected billings (21 Oct 2026). Every Approved + executed Procore commitment, one row
+   each, for the pay-app period chosen. Pay apps are due on the commitment's billing day
+   (Procore "billing_day"; the 20th on almost every contract, and the default). The period
+   due on day D of month M collects pay apps whose period-ending date (or, when none was
+   read, the date received) falls after D of the month before and on or before D of M. */
+let VIEW = 'queue', XF = 'all', XPER = '', XED = '', ALLH = [];
+const DEF_DAY = 20, FULL_TOL = 10;
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money = n => n==null||isNaN(n) ? '—' : '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -266,9 +304,10 @@ async function loadLive(){
   LIVE.cMeta = cm; LIVE.commitments = cm.commitments || [];
   LIVE.expected = await file('ap_payapp_expected.json');
   LIVE.ceInv = await file('ap_ce_invoices.json');
-  LIVE.byNum = {}; LIVE.pmName = {}; LIVE.jobs = {};
+  LIVE.byNum = {}; LIVE.byKey = {}; LIVE.pmName = {}; LIVE.jobs = {};
   for (const c of LIVE.commitments) {
     LIVE.byNum[String(c.number||'').trim().toUpperCase()] = c;
+    LIVE.byKey[subKey(c.number)] = c;
     (c.pm_team||[]).forEach((e,k) => { if ((c.pm_team_names||[])[k]) LIVE.pmName[lc(e)] = c.pm_team_names[k]; });
     const pn = String(c.project_number||'').trim();
     if (pn && !LIVE.jobs[pn]) LIVE.jobs[pn] = { n: c.project || pn, team: (c.pm_team||[]).map(lc) };
@@ -320,13 +359,13 @@ function retRule(c){
 function toItem(row){
   const f = row.f, raw = String(f.Status||'received');
   const sub = String(f.Subcontract||'').trim().toUpperCase();
-  const c = LIVE.byNum[sub] || LIVE.byNum[padSub(sub)] || null, b = LIVE.billing[sub] || LIVE.billing[padSub(sub)] || null;   // 41325AU12 = 41325AU012
+  const c = rosterFor(sub), b = (c && LIVE.billing[String(c.number).toUpperCase()]) || LIVE.billing[sub] || null;
   const isMsg = f.DocType === 'message', pay = f.DocType !== 'invoice' && !isMsg;
   const jobNo = f.JobNumber === 'GL' ? 'OH' : ((c && c.project_number) || f.JobNumber || '');
   const log = parseJ(f.StatusLog, []), comments = parseJ(f.Comments, []);
   const note = String(f.ParseNote||'');
   const figs = [f.AdjustedContract, f.CompletedToDate, f.RetainageHeld, f.PreviousPayments].some(v => v != null && v !== '');
-  const L = pay && sub ? ledgerFor(sub, f.PayRequest) : { available:false };
+  const L = pay && sub ? ledgerFor(c ? c.number : sub, f.PayRequest) : { available:false };
   const sec = SECTIONS.find(s => s.st.includes(raw));
   const lastIntake = [...log].reverse().find(e => e.k);
   const i = {
@@ -348,6 +387,7 @@ function toItem(row){
     vendorEmail: (c && c.compliance && c.compliance.vendor_email) || '',
     ledger: L,
   };
+  { const kl = [...log].reverse().find(e => e.ctd); i.ctdBy = kl ? kl.by : ''; }
   i.age = Math.max(0, Math.floor((Date.now() - (Date.parse(i.changedAt||'') || Date.now())) / 86400000));
   if (!isMsg && /no text in the pdf|read by ocr/i.test(note)) i.note = note;
   if (pay && !figs && !i.note && /not on attachment g/i.test(note)) i.note = note;
@@ -426,6 +466,7 @@ function rebuild(){
     }
     heads.push(head);
   }
+  ALLH = heads;
   INV = heads.filter(i => !i.hidden && !(i.sec === 'done' && i.age > 30));
   for (const i of INV) if (i.job && !JOBS[i.job]) JOBS[i.job] = { n: i.job, team: [] };
   PEOPLE = { [ACCT]: { n:'Accounting', i:'AP' } };
@@ -463,6 +504,8 @@ function nextStep(i){
 /* ---- list --------------------------------------------------------------------- */
 function draw(){
   if (!LIVE.me) return;
+  document.body.classList.toggle('v-exp', VIEW === 'exp');
+  if (VIEW === 'exp') { drawExp(); return; }
   const v = visible();
   $('#nMine').textContent = INV.filter(i => inScope(i) && mine(i)).length;
   $('#nChg').textContent = INV.filter(i => inScope(i) && i.changed && (!MINE || mine(i))).length;
@@ -514,6 +557,123 @@ function draw(){
   });
   h += bulkBar();
   h += '<p class="kbd" style="margin-top:22px"><kbd>j</kbd> <kbd>k</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close · <kbd>/</kbd> search</p>';
+  $('#list').innerHTML = h;
+}
+
+/* ---- expected billings ------------------------------------------------------------ */
+function dueDay(c){ const m = String((c && c.billing_day) || '').match(/\d{1,2}/); const d = m ? Number(m[0]) : DEF_DAY; return d >= 1 && d <= 28 ? d : DEF_DAY; }
+const ymd = (y, m0, d) => new Date(Date.UTC(y, m0, d)).toISOString().slice(0, 10);
+function curPeriod(){ const t = new Date(); const d = new Date(Date.UTC(t.getFullYear(), t.getMonth() + (t.getDate() > DEF_DAY ? 1 : 0), 1)); return d.toISOString().slice(0, 7); }
+function perWin(per, day){ const [y, m] = per.split('-').map(Number); return { from: ymd(y, m - 2, day), to: ymd(y, m - 1, day) }; }
+function shiftPer(per, n){ const [y, m] = per.split('-').map(Number); return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7); }
+const dLabel = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' });
+/* Who may key "completed & stored": Accounting, or a PM on that job's team, in their own seat. */
+function canKey(c){ return acctSeat() || (!!LIVE.me && WHO === LIVE.me.email && ((c && c.pm_team) || []).map(lc).includes(WHO)); }
+/* Retainage on a cumulative billed amount, by the Procore rule. "5% thru 50%": withheld on
+   billings up to half the revised contract, nothing after; what is held stays until closeout. */
+function retOn(c, amt){
+  const R = retRule(c); if (!R || amt == null) return null;
+  const rev = num(c.revised_contract);
+  return Math.round((R.thru50 && rev ? Math.min(amt, rev / 2) : amt) * R.p) / 100;
+}
+function expData(){
+  const per = XPER || curPeriod(), today = new Date().toISOString().slice(0, 10);
+  const got = {};
+  for (const i of ALLH) {
+    if (i.isMsg || i.type !== 'Pay app' || !i.c || ['duplicate archived','email only'].includes(i.raw)) continue;
+    const w = perWin(per, dueDay(i.c)), dt = String(i.f.PeriodEnding || i.receivedAt || '').slice(0, 10);
+    if (!(dt > w.from && dt <= w.to)) continue;
+    const k = String(i.c.number).toUpperCase(), prev = got[k];
+    if (!prev || (Date.parse(i.receivedAt || '') || 0) > (Date.parse(prev.receivedAt || '') || 0)) got[k] = i;
+  }
+  const rows = [];
+  for (const c of LIVE.commitments) {
+    if (lc(c.status) !== 'approved' || c.executed !== 'Yes') continue;
+    if (!isAcct() && !(c.pm_team || []).map(lc).includes(WHO)) continue;
+    const k = String(c.number).toUpperCase(), b = LIVE.billing[k] || null, i = got[k] || null;
+    const rev = num(c.revised_contract), billed = b && b.ce_billed != null ? Number(b.ce_billed) : null;
+    const bal = b && b.ce_balance != null ? Number(b.ce_balance) : (rev != null && billed != null ? rev - billed : null);
+    const day = dueDay(c), due = perWin(per, day).to;
+    rows.push({ c, b, i, k, rev, billed, bal, day, due, late: !i && today > due,
+      done: !i && (bal != null ? bal <= FULL_TOL : lc(c.stage) === 'warranty'), ctd: i ? num(i.f.CompletedToDate) : null });
+    const r = rows[rows.length - 1], R = retRule(c), half = rev ? rev / 2 : null;
+    r.R = R; r.retHeld = retOn(c, billed);
+    r.past50 = !!(R && R.thru50 && R.p > 0 && half != null && billed != null && billed >= half);
+    r.cross50 = !!(R && R.thru50 && R.p > 0 && half != null && billed != null && billed < half && r.ctd != null && r.ctd > half);
+    /* What the pay app should ask for: earned to date less retainage, less what was earned
+       before (CE billed to date, gross, less its retainage). Only before entry - once the
+       pay app is in CE its own billing is already inside the CE figure. */
+    if (i && i.sec !== 'done' && r.ctd != null && billed != null && R) {
+      r.retThis = Math.round((retOn(c, r.ctd) - r.retHeld) * 100) / 100;
+      r.expDue = Math.round(((r.ctd - billed) - r.retThis) * 100) / 100;
+    }
+  }
+  return { per, rows };
+}
+function ctdCell(i, inPane){
+  const k = i.itemId, v = num(i.f.CompletedToDate), can = canKey(i.c) && i.sec !== 'done' && !i.hidden;
+  if (can && (v == null || XED === k)) return '<div class="xp-ed"><input id="ctd-' + k + '" inputmode="decimal" aria-label="Completed and stored to date" placeholder="$0.00" value="' + (v == null ? '' : v.toFixed(2)) + '">'
+    + '<button class="bh-btn" data-ctd="' + i.id + '"' + (BUSY ? ' disabled' : '') + '>Save</button>' + (v != null ? '<button class="bh-btn-outline" data-ctdx="1">Cancel</button>' : '') + '</div>'
+    + (inPane ? '<p class="note">Line 4 of the pay app, Total completed &amp; stored to date. ' + (v == null ? 'It was not read off the document, so key it from the SOV.' : '') + '</p>' : '');
+  if (v == null) return '<span class="note" style="margin:0">not read</span>';
+  const pct = i.c && num(i.c.revised_contract) ? ' · ' + (v / num(i.c.revised_contract) * 100).toFixed(1) + '%' : '';
+  return '<span' + (inPane ? ' style="font-size:15px;font-weight:600"' : '') + '>' + money(v) + '</span>' + (can ? '<button class="xp-mini" data-ctde="' + k + '">Adjust</button>' : '')
+    + '<span class="s">' + (i.ctdBy ? 'keyed · ' + esc(i.ctdBy) : 'read from pay app') + pct + '</span>';
+}
+function drawExp(){
+  const { per, rows } = expData();
+  const match = r => !Q || (r.c.vendor + ' ' + r.c.number + ' ' + r.c.project_number + ' ' + r.c.project + ' ' + (r.c.title || '')).toLowerCase().includes(Q);
+  const live = rows.filter(r => !r.done), shown = rows.filter(match);
+  const rec = live.filter(r => r.i), out = live.filter(r => !r.i), needKey = rec.filter(r => r.ctd == null);
+  const sum = (a, f) => a.reduce((t, r) => t + (f(r) || 0), 0);
+  const kpi = (l, v, t) => '<div class="bh-kpi"' + (t ? ' title="' + esc(t) + '"' : '') + '><div class="bh-label">' + l + '</div><div class="bh-kpi-value">' + v + '</div></div>';
+  let h = '<div class="xp-top"><label class="ap-as"><span class="bh-label">Pay apps due</span><select class="bh-select" id="xPer">'
+    + [-2, -1, 0, 1].map(n => shiftPer(curPeriod(), n)).map(p => '<option value="' + p + '"' + (p === per ? ' selected' : '') + '>' + dLabel(perWin(p, DEF_DAY).to) + (p === curPeriod() ? ' · next' : '') + '</option>').join('') + '</select></label>'
+    + '<span class="note" style="margin:0">Every approved and executed commitment in Procore' + (isAcct() ? '' : ' on your jobs') + '. Due on the 20th unless the subcontract says otherwise.</span></div>'
+    + '<div class="bh-kpis xp-k">' + kpi('Expected', live.length) + kpi('Received', rec.length) + kpi('Not received', out.length)
+    + kpi('Left to bill', money0(sum(live, r => r.bal)), 'Sum of the CE balance (committed but not yet billed) on every expected commitment')
+    + kpi('Due this period', money0(sum(rec, r => num(r.i.f.BalanceDue))), 'Balance due this estimate, from the pay apps received')
+    + kpi('Retainage held', money0(sum(live, r => r.retHeld)), 'Retainage on CE billed to date by each commitment\'s Procore rule (5% thru 50% stops at half the revised contract)') + '</div>'
+    + '<div class="xp-f">' + [['all','All'],['out','Not received · ' + out.length],['in','Received · ' + rec.length],['key','Needs completed & stored · ' + needKey.length]]
+      .map(f => '<button class="ap-tog" data-xf="' + f[0] + '" aria-pressed="' + (XF === f[0]) + '">' + esc(f[1]) + '</button>').join('') + '</div>';
+  const keep = r => XF === 'all' ? true : XF === 'out' ? !r.i && !r.done : XF === 'in' ? !!r.i : !!r.i && r.ctd == null;
+  const hd = '<div class="xp-row hd"><div>Trade partner · commitment</div><div class="r">Revised contract</div><div class="r">Billed to date (CE)</div><div class="r">Left to bill</div><div>Completed &amp; stored to date</div><div>This period</div></div>';
+  const rowH = r => {
+    const c = r.c, i = r.i, pct = r.billed != null && r.rev ? ' · ' + (r.billed / r.rev * 100).toFixed(1) + '%' : '';
+    let st;
+    if (i) { const s = SECTIONS.find(x => x.k === i.sec), inQ = INV.some(x => x.id === i.id);
+      st = (inQ ? '<button class="xp-link" data-open="' + i.id + '">' + i.id + '</button>' : '<b>' + i.id + '</b>') + ' <span class="bh-chip sm' + (i.sec === 'done' ? ' is-ok' : '') + '">' + esc(s ? s.t : statusWords(i.raw)) + '</span>'
+        + '<span class="s">' + (i.amtKnown ? 'Due ' + money(i.amt) : 'Amount not read') + (i.f.PayRequest ? ' · PR ' + esc(i.f.PayRequest) : '') + '</span>'
+        + (r.expDue != null ? '<span class="s" title="Completed &amp; stored to date less retainage by rule, less CE billed to date less its retainage. Retainage this period ' + esc(money(r.retThis)) + '">Expected ' + money(r.expDue) + (i.amtKnown ? (dif(i.amt, r.expDue) ? ' <span class="bh-chip is-bad sm">' + money(Math.abs(i.amt - r.expDue)) + ' off</span>' : ' <span class="bh-chip is-ok sm">Match</span>') : '') + '</span>' : ''); }
+    else if (r.done) st = '<span class="bh-chip sm">Fully billed</span>';
+    else st = '<span class="bh-chip ' + (r.late ? 'is-bad' : 'is-warn') + ' sm">Not received' + (r.late ? ' · past due' : '') + '</span>' + (r.day !== DEF_DAY ? '<span class="s">Due ' + dLabel(r.due) + '</span>' : '');
+    return '<div class="xp-row' + (r.done ? ' done' : '') + '"><div class="v"><b>' + esc(c.vendor) + '</b><span class="s">' + esc(c.number) + (c.title ? ' · ' + esc(c.title) : '') + '</span></div>'
+      + '<div class="r">' + money(r.rev) + '</div>'
+      + '<div class="r">' + (r.billed == null ? '<span class="note" style="margin:0" title="' + esc((r.b && r.b.billed_source) || 'No CE billing figure') + '">no CE data</span>' : money(r.billed) + '<span class="s">' + pct.replace(' · ', '') + (r.retHeld ? ' · ' + money(r.retHeld) + ' held' : '') + '</span>') + '</div>'
+      + '<div class="r">' + money(r.bal) + '<span class="s" title="Retainage rule on the Procore commitment">' + (r.R ? (r.R.p ? esc(r.R.text) : 'no retainage') : 'no rule in Procore') + '</span>'
+      + (r.past50 ? '<span class="bh-chip sm" title="Billed past half the revised contract: no further retainage is withheld">Past 50% · none withheld</span>' : r.cross50 ? '<span class="bh-chip is-warn sm" title="This pay app takes billing past half the revised contract: retainage is withheld only on the part up to 50%">Crosses 50% this period</span>' : '') + '</div>'
+      + '<div>' + (i ? ctdCell(i, false) : '<span class="note" style="margin:0">—</span>') + '</div>'
+      + '<div>' + st + '</div></div>';
+  };
+  const jobs = {};
+  for (const r of shown.filter(r => !r.done && keep(r))) (jobs[r.c.project_number] = jobs[r.c.project_number] || []).push(r);
+  const keys = Object.keys(jobs).sort();
+  if (!keys.length) h += '<div class="ap-empty" style="margin-top:16px">Nothing matches.</div>';
+  for (const j of keys) {
+    const rs = jobs[j].sort((a, b) => (a.i ? 1 : 0) - (b.i ? 1 : 0) || String(a.c.number).localeCompare(String(b.c.number)));
+    const all = live.filter(r => r.c.project_number === j), got = all.filter(r => r.i).length, sk = 'x:' + j, open = sk in OPEN ? OPEN[sk] : true;
+    h += '<section class="ap-sec"><button class="ap-sec-h" aria-expanded="' + open + '" data-sec="' + esc(sk) + '"><span class="car"></span><span class="t">' + esc(j) + '</span><span class="c">' + got + ' of ' + all.length + '</span><span class="o">' + esc(rs[0].c.project) + '</span><span class="sum">' + money0(sum(all, r => r.bal)) + ' left</span></button>';
+    if (open) h += hd + rs.map(rowH).join('');
+    h += '</section>';
+  }
+  const done = shown.filter(r => r.done);
+  if (XF === 'all' && done.length) {
+    const open = OPEN['x:done'] === true;
+    h += '<section class="ap-sec"><button class="ap-sec-h" aria-expanded="' + open + '" data-sec="x:done"><span class="car"></span><span class="t">Fully billed</span><span class="c">' + done.length + '</span><span class="o">Nothing left to bill in CE, or a warranty job CE has no figure for · nothing received this period</span></button>';
+    if (open) h += hd + done.sort((a, b) => String(a.c.number).localeCompare(String(b.c.number))).map(rowH).join('');
+    h += '</section>';
+  }
+  h += '<p class="note" style="margin-top:22px">Billed to date and left to bill are ComputerEase committed billed / balance (gross of retainage), as of ' + esc(LIVE.expected && LIVE.expected.generated_at ? fmtTime(LIVE.expected.generated_at) : '—') + '. Retainage held is worked out from the Procore rule, not read from CE. A pay app counts for this period by its period-ending date, or the date received when none was read.</p>';
   $('#list').innerHTML = h;
 }
 
@@ -597,6 +757,7 @@ function pane(){
     if (i.flags.length) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
     if (i.math) h += payCheck(i);
     else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
+    if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct()) h += intakeChecks(i);
       else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
@@ -635,7 +796,7 @@ function payCheck(i){
     + '<tr' + (dif(m.orig[0], m.orig[1]) ? ' class="flag"' : '') + '><td title="AMOUNT OF ORIGINAL CONTRACT">Orig. contract amt</td><td>' + (m.orig[0] == null ? '<span class="note" title="The pull does not read this line yet">not read</span>' : money(m.orig[0])) + '</td><td>' + money(m.orig[1]) + '</td><td></td><td>' + cell(m.orig[0], m.orig[1]) + '</td></tr>'
     + '<tr><td title="APPROVED CHANGE ORDER(S)">Approved COs</td><td>' + (m.cos[0] == null ? '<span class="note">not read</span>' : money(m.cos[0])) + '</td><td>' + money(m.cos[1]) + '</td><td></td><td>' + cell(m.cos[0], m.cos[1]) + '</td></tr>'
     + '<tr' + (dif(m.adj[0], m.adj[1]) ? ' class="flag"' : '') + '><td title="ADJUSTED CONTRACT AMOUNT">Adj. contract amt</td><td>' + money(m.adj[0]) + '</td><td>' + money(m.adj[1]) + '</td><td>' + money(m.adj[2]) + '</td><td>' + cell(m.adj[0], m.adj[1]) + '</td></tr>'
-    + '<tr><td title="TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE">Completed &amp; stored to date</td><td>' + money(m.complete) + '</td><td></td><td></td><td></td></tr>'
+    + '<tr><td title="TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE">Completed &amp; stored to date' + (i.ctdBy ? ' <span class="note">(keyed · ' + esc(i.ctdBy) + ')</span>' : '') + '</td><td>' + money(m.complete) + '</td><td colspan="2" style="text-align:right">' + (m.complete != null && i.c && i.sec !== 'done' && canKey(i.c) && XED !== i.itemId ? '<button class="xp-mini" data-ctde="' + i.itemId + '">Adjust</button>' : '') + '</td><td></td></tr>'
     + '<tr' + (dif(m.ret, m.retCalc) ? ' class="flag"' : '') + '><td title="LESS RETAINAGE">Less retainage' + (m.rule ? ' <span class="note">(' + esc(m.rule) + ')</span>' : '') + '</td><td>' + money(m.ret) + '</td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (m.retCalc == null ? 'no rule in Procore' : 'by rule ' + money(m.retCalc)) + '</td><td>' + cell(m.ret, m.retCalc) + '</td></tr>'
     + '<tr' + (dif(m.prev[0], m.prev[1]) ? ' class="flag"' : '') + '><td title="LESS PREVIOUS PAYMENTS">Less prev. payments</td><td>' + money(m.prev[0]) + '</td><td></td><td>' + (m.prev[1] == null ? '<span class="note">no CE history</span>' : money(m.prev[1])) + '</td><td>' + cell(m.prev[0], m.prev[1]) + '</td></tr>'
     + '<tr><td title="BALANCE DUE THIS PAYMENT ESTIMATE"><b>Balance due this est.</b></td><td><b>' + money(m.due) + '</b></td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (due == null ? '' : 'computed ' + money(due)) + '</td><td>' + (due == null || m.due == null ? '' : dif(m.due, due) ? '<span class="bh-chip is-warn sm">$' + Math.abs(m.due - due).toFixed(2) + ' off</span>' : '<span class="bh-chip is-ok sm">Match</span>') + '</td></tr>'
@@ -772,6 +933,14 @@ function editForm(i){
     + '<div style="display:flex;gap:8px;margin-top:14px"><button class="bh-btn" style="min-height:38px" data-do="saveedit"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="bh-btn-outline" style="min-height:38px" data-do="canceledit">Cancel</button></div></div>';
 }
 const padSub = v => { const m = String(v || '').trim().toUpperCase().match(/^([0-9]{5}[A-Z]{2})([0-9]{1,2})$/); return m ? m[1] + m[2].padStart(3, '0') : String(v || '').trim().toUpperCase(); };
+/* A subcontract number as the trade partner wrote it -> the roster's commitment.
+   Punctuation never counts (2504-00-410 = 2504-00410) and a dropped zero is restored
+   (41325AU12 = 41325AU012). */
+const subKey = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function rosterFor(v){
+  if (!v) return null;
+  return LIVE.byNum[String(v).trim().toUpperCase()] || LIVE.byNum[padSub(v)] || LIVE.byKey[subKey(v)] || LIVE.byKey[subKey(padSub(v))] || null;
+}
 function corrForm(i){
   return '<div class="cf"><div class="bh-section-title">Request correction</div>'
     + '<p class="note" style="margin-top:6px">Say what needs to change. Accounting sends it to the trade partner from payables@ with you copied, so the reply comes back to this invoice.</p>'
@@ -977,8 +1146,8 @@ function act(k){
   if (k === 'edit') { ED = true; pane(); return; }
   if (k === 'canceledit') { ED = false; pane(); return; }
   if (k === 'saveedit') { if (!acctSeat()) return;
-    const sub = padSub($('#eSub').value), job = $('#eJob').value, appr = $('#eAppr').value;
-    const c = LIVE.byNum[sub] || null, jobNo = c ? c.project_number : job;
+    const typed = $('#eSub').value, c = rosterFor(typed), sub = c ? String(c.number).toUpperCase() : padSub(typed), job = $('#eJob').value, appr = $('#eAppr').value;
+    const jobNo = c ? c.project_number : job;
     const f = {}, said = [];
     if (sub !== (i.po || '')) { f.Subcontract = sub; said.push('subcontract ' + (i.po || '—') + ' → ' + (sub || '—')); }
     const jobVal = jobNo === 'OH' ? 'GL' : (jobNo || '');
@@ -1064,13 +1233,18 @@ document.addEventListener('click', e => {
     if (e.shiftKey && LASTB) { const ids = [...document.querySelectorAll('.bsel')].map(x => x.dataset.bid), a = ids.indexOf(LASTB), b = ids.indexOf(id); ids.slice(Math.min(a,b), Math.max(a,b) + 1).forEach(x => BULK.add(x)); }
     else if (cb.checked) BULK.add(id); else BULK.delete(id);
     LASTB = id; draw(); return; }
+  const xf = e.target.closest('[data-xf]'); if (xf) { XF = xf.dataset.xf; draw(); return; }
+  const xo = e.target.closest('[data-open]'); if (xo) { openPane(xo.dataset.open); return; }
+  const xe = e.target.closest('[data-ctde]'); if (xe) { XED = xe.dataset.ctde; draw(); if (SEL) pane(); const f = document.getElementById('ctd-' + XED); if (f) f.focus(); return; }
+  if (e.target.closest('[data-ctdx]')) { XED = ''; draw(); if (SEL) pane(); return; }
+  const xs = e.target.closest('[data-ctd]'); if (xs) { saveCtd(xs.dataset.ctd); return; }
   const r = e.target.closest('.ap-row'); if (r) { openPane(r.dataset.id); return; }
   const t = e.target.closest('[data-tab]'); if (t) { TAB = t.dataset.tab; pane(); return; }
   const d = e.target.closest('[data-do]'); if (d) { e.preventDefault(); act(d.dataset.do); return; }
   if (MENU && !e.target.closest('.pn-menu')) { MENU = false; pane(); }
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'eSub') { const c = LIVE.byNum[padSub(e.target.value)]; const h = $('#eSubHint'); if (h) h.textContent = c ? c.vendor + ' · ' + c.project_number + ' ' + c.project : (e.target.value ? 'Not on the Procore roster' : ''); if (c) { const j = $('#eJob'); if (j) j.value = c.project_number; } }
+  if (e.target.id === 'eSub') { const c = rosterFor(e.target.value); const h = $('#eSubHint'); if (h) h.textContent = c ? c.vendor + ' · ' + c.project_number + ' ' + c.project : (e.target.value ? 'Not on the Procore roster' : ''); if (c) { const j = $('#eJob'); if (j) j.value = c.project_number; } }
 });
 document.addEventListener('input', e => { if (e.target.id === 'rejNote') { const i = INV.find(x => x.id === SEL); if (i) { i.rn = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } } });
 document.addEventListener('change', e => {
@@ -1080,6 +1254,20 @@ document.addEventListener('change', e => {
   const c = e.target.closest('[data-ck]'); if (c && i) i.checks[c.dataset.ck] = c.checked;
 });
 $('#q').addEventListener('input', e => { Q = e.target.value.trim().toLowerCase(); draw(); });
+function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('aria-pressed', v === 'queue'); $('#vE').setAttribute('aria-pressed', v === 'exp');
+  $('#q').placeholder = v === 'exp' ? 'Search vendor, job, commitment #' : 'Search vendor, job, invoice #'; draw(); }
+$('#vQ').addEventListener('click', () => setView('queue'));
+$('#vE').addEventListener('click', () => setView('exp'));
+document.addEventListener('change', e => { if (e.target.id === 'xPer') { XPER = e.target.value === curPeriod() ? '' : e.target.value; draw(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('ctd-')) { const b = e.target.parentNode.querySelector('[data-ctd]'); if (b) b.click(); } });
+function saveCtd(id){
+  const i = ALLH.find(x => x.id === id); if (!i || !canKey(i.c)) return;
+  const inp = document.getElementById('ctd-' + i.itemId), raw = String((inp && inp.value) || '').replace(/[$,\s]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(raw)) { toast('Enter the dollar amount, e.g. 125000.00'); return; }
+  const v = Number(raw), old = num(i.f.CompletedToDate), rev = i.c ? num(i.c.revised_contract) : null;
+  if (rev && v > rev * 1.1 && !confirm('That is more than the revised contract (' + money(rev) + '). Save anyway?')) return;
+  run(async () => { if (await saveRow(i, { CompletedToDate: v }, { ctd: true, note: 'Completed & stored to date ' + (old == null ? 'keyed' : 'changed from ' + money(old)) + ': ' + money(v) })) { XED = ''; toast('Completed & stored saved'); } });
+}
 $('#tMine').addEventListener('click', () => { MINE = !MINE; $('#tMine').setAttribute('aria-pressed', MINE); draw(); });
 $('#tChg').addEventListener('click', () => { CHG = !CHG; $('#tChg').setAttribute('aria-pressed', CHG); draw(); });
 $('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); }));
@@ -1100,7 +1288,8 @@ document.addEventListener('keydown', e => {
   try {
     if (!(await loadLive())) return;
     WHO = LIVE.me.isAccounting ? ACCT : LIVE.me.email;
-    rebuild(); header(); draw();
+    VIEW = store.get('apview') === 'exp' ? 'exp' : 'queue';
+    rebuild(); header(); setView(VIEW);
     if (LIVE.me.isAccounting) { await mailToken(); draw(); checkSent().catch(() => {}); }
   } catch (e) {
     $('#list').innerHTML = '<div class="flags" style="margin-top:22px"><b>The AP Desk could not load</b>' + esc(e.message) + '</div>';
