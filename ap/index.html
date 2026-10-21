@@ -20,7 +20,11 @@
 
 .ap-work{display:flex;align-items:stretch;min-height:calc(100vh - 170px)}
 .ap-list{flex:1 1 auto;min-width:0;padding:8px 40px 60px}
-.ap-pane{flex:0 0 580px;border-left:1px solid var(--bh-hairline);background:#fff;position:sticky;top:67px;align-self:flex-start;height:calc(100vh - 67px);overflow:auto}
+/* 22 Oct: the detail opens as a wide drawer OVER the list (it used to sit beside it at 580px) */
+.ap-pane{position:fixed;top:0;right:0;bottom:0;width:min(960px,94vw);z-index:60;background:#fff;border-left:1px solid var(--bh-slate);box-shadow:-12px 0 32px rgba(33,30,30,.18);overflow:auto;animation:pnIn .16s ease-out}
+@keyframes pnIn{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+body:not(.no-pane) .ap-scrim{display:block;position:fixed;inset:0;background:rgba(33,30,30,.35);z-index:55;border:0;cursor:pointer}
+body:not(.no-pane){overflow:hidden}
 body.no-pane .ap-pane{display:none}
 
 /* sections */
@@ -145,6 +149,10 @@ body.no-pane .ap-pane{display:none}
 .xp-ed .bh-btn,.xp-ed .bh-btn-outline{min-height:32px;padding:0 10px;font-size:11px}
 .xp-mini{border:0;background:none;padding:0;margin-left:6px;font:600 11px var(--bh-font);color:var(--bh-ink-muted);text-decoration:underline;cursor:pointer}
 body.v-exp #tMine,body.v-exp #tChg{display:none}
+.mt.ac .ky{display:block;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--bh-ink-muted)}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px;margin-top:8px}
+.fg label{display:flex;flex-direction:column;gap:4px}
+.fg .bh-input{min-height:36px;font-size:13px;width:100%;box-sizing:border-box}
 .ac-per{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:14px}
 .ac-per input{min-height:30px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font)}
 .mt.ac td:first-child{min-width:230px;white-space:normal}
@@ -192,10 +200,9 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
 }
 
 @media (max-width:1200px){
-  .ap-pane{position:fixed;top:0;right:0;bottom:0;height:auto;width:min(580px,100vw);z-index:60;box-shadow:none;border-left:1px solid var(--bh-slate)}
-  body:not(.no-pane) .ap-scrim{display:block;position:fixed;inset:0;background:rgba(33,30,30,.45);z-index:55}
 }
 .ap-scrim{display:none}
+@media (max-width:700px){.ap-pane{width:100vw}}
 @media (max-width:960px){
   .ap-bar,.ap-list{padding-left:20px;padding-right:20px}
   .ap-bar .bh-input{width:100%}
@@ -993,6 +1000,7 @@ function acctCheck(i){
   const per = payAsOf(f), perSrc = f.PeriodEnding ? '' : ' (date received — no period read)';
   const ok = (a, b) => a == null || b == null ? '' : dif(a, b) ? '<span class="bh-chip is-bad sm">' + money(Math.abs(a - b)) + ' off</span>' : '<span class="bh-chip is-ok sm">✓</span>';
   const v = x => x == null ? '<span class="note" style="margin:0">not read</span>' : money(x);
+  const keyedF = new Set((i.log || []).flatMap(e => e.keyed || []));
   const retCe = R && P && m.complete != null ? Math.round((R.thru50 ? Math.min(m.complete, P.adj / 2) : m.complete) * R.p) / 100 : null;
   const due = m.complete != null && m.ret != null && m.prev[0] != null ? Math.round((m.complete - m.ret - m.prev[0]) * 100) / 100 : null;
   const row = (t, a, b, note, c) => '<tr' + (a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td>' + t + (note ? '<span style="display:block;font-size:11px;color:var(--bh-ink-muted)">' + note + '</span>' : '') + '</td><td>' + v(a) + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '</td><td>' + (c != null ? c : ok(a, b)) + '</td></tr>';
@@ -1009,23 +1017,23 @@ function acctCheck(i){
   const ceTot = sumOf('total'), ceRet = sumOf('retention');
   const earned = m.complete != null && m.ret != null ? Math.round((m.complete - m.ret) * 100) / 100 : null;
   const inCe = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.payable) || 0), 0) * 100) / 100 : null;
-  const line = (n, g, ce, a, b, note, chk) => '<tr' + (chk !== '' && a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td><span class="ag">' + n + '</span>' + g + '<span class="ce">' + ce + '</span>' + (note ? '<span class="nt">' + note + '</span>' : '') + '</td><td>' + v(a) + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '<span class="ck2">' + (chk != null ? chk : ok(a, b)) + '</span></td></tr>';
+  const line = (n, g, ce, a, b, note, chk, fk) => '<tr' + (chk !== '' && a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td><span class="ag">' + n + '</span>' + g + '<span class="ce">' + ce + '</span>' + (note ? '<span class="nt">' + note + '</span>' : '') + '</td><td>' + v(a) + (fk && keyedF.has(fk) ? '<span class="ky">keyed</span>' : '') + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '<span class="ck2">' + (chk != null ? chk : ok(a, b)) + '</span></td></tr>';
   /* Labels as Tiffany set them (22 Oct): short Attachment G name | CE Subcontractor Detail column. */
   const thisTot = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.total) || 0), 0) * 100) / 100 : null;
   const thisRet = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.retention) || 0), 0) * 100) / 100 : null;
   const ce4 = thisTot != null ? Math.round((ceTot + thisTot) * 100) / 100 : null;
   const ce5 = thisRet != null ? Math.round((ceRet + thisRet) * 100) / 100 : retCe;
   h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app</th><th>CE</th></tr></thead><tbody>'
-    + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P.base)
-    + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P.cos, 'approved in CE by ' + usDate(per) + (P.hasDates ? '' : ' — approval dates arrive with the next ledger'))
-    + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P.adj)
+    + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P.base, '', undefined, 'OriginalContract')
+    + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P.cos, 'approved in CE by ' + usDate(per) + (P.hasDates ? '' : ' — approval dates arrive with the next ledger'), undefined, 'ChangeOrders')
+    + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P.adj, '', undefined, 'AdjustedContract')
     + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total (prev. invoices plus this period)', m.complete, ce4,
         'prev. ' + money(ceTot) + (thisTot != null ? ' + this invoice ' + money(thisTot) : ' · not in CE yet · this period on the pay app ' + (m.complete != null ? money(m.complete - ceTot) : '—')) + (i.ctdBy ? ' · keyed by ' + esc(i.ctdBy) : ''), thisTot == null ? '' : undefined)
     + line(5, 'Retainage', 'Invoiced Retention (prev. invoices, plus retainage rule)', m.ret, ce5,
         'prev. ' + money(ceRet) + (thisRet != null ? ' + this invoice ' + money(thisRet) : ' + ' + (R ? esc(R.text) : 'no') + ' rule'))
     + line(6, 'Earned less retainage', 'Invoiced Payable to Date', earned, L.exists ? Math.round((L.prior + (inCe != null ? inCe : (m.due || 0))) * 100) / 100 : null)
-    + line(7, 'Less Prev. Pmts.', 'Previous Invoiced Payable', m.prev[0], L.exists ? L.prior : null)
-    + line(8, '<b>Balance Due</b>', 'Invoiced Payable' + (inCe != null ? ' (this invoice, in CE)' : ''), m.due, inCe != null ? inCe : due, inCe != null ? '' : 'not in CE yet — pay app worked through')
+    + line(7, 'Less Prev. Pmts.', 'Previous Invoiced Payable', m.prev[0], L.exists ? L.prior : null, '', undefined, 'PreviousPayments')
+    + line(8, '<b>Balance Due</b>', 'Invoiced Payable' + (inCe != null ? ' (this invoice, in CE)' : ''), m.due, inCe != null ? inCe : due, inCe != null ? '' : 'not in CE yet — pay app worked through', undefined, 'BalanceDue')
     + '</tbody></table>';
   const notes = [];
   if (P.after.length) notes.push('<b>Not counted — CE approved after ' + esc(usDate(per)) + ':</b> ' + P.after.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(usDate(c.date_approved)) + ')').join('; '));
@@ -1190,7 +1198,19 @@ function editForm(i){
     + jobsSorted.map(j => '<option value="' + esc(j) + '"' + (i.job === j ? ' selected' : '') + '>' + esc(j + ' · ' + LIVE.jobs[j].n) + '</option>').join('') + '</select>'
     + '<label class="bh-label" for="eAppr" style="display:block;margin-top:10px">Approver</label>'
     + '<select class="bh-select" id="eAppr" style="width:100%;margin-top:4px">' + assignOptions(i, lc(i.f.AssignedApprover) || '') + '</select>'
+    + (i.type === 'Pay app' ? figFields(i) : '')
     + '<div style="display:flex;gap:8px;margin-top:14px"><button class="bh-btn" style="min-height:38px" data-do="saveedit"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="bh-btn-outline" style="min-height:38px" data-do="canceledit">Cancel</button></div></div>';
+}
+/* Pay app figures Accounting can key or correct (22 Oct 2026) - for lines the pull could not
+   read (e.g. Org Contract) or read wrong. Attachment G order, same short names as the check. */
+const FIGS = [['OriginalContract','1 Org Contract'],['ChangeOrders','2 Approved COs'],['AdjustedContract','3 Adj Contract'],['CompletedToDate','4 Completed & Stored (to date)'],
+              ['RetainageHeld','5 Retainage'],['PreviousPayments','7 Less Prev. Pmts.'],['BalanceDue','8 Balance Due']];
+function figFields(i){
+  const f = i.f, val = k => f[k] == null || f[k] === '' ? '' : Number(f[k]).toFixed(2);
+  return '<div class="bh-section-title" style="margin-top:18px">Pay app figures</div><p class="note" style="margin-top:2px">Blank = not read off the document. Key it from the PDF.</p>'
+    + '<div class="fg"><label><span class="bh-label">Pay request #</span><input class="bh-input" id="fPR" value="' + esc(f.PayRequest || '') + '"></label>'
+    + '<label><span class="bh-label">Period ending</span><input class="bh-input" type="date" id="fPer" value="' + esc(String(f.PeriodEnding || '').slice(0, 10)) + '"></label>'
+    + FIGS.map(([k, l]) => '<label><span class="bh-label">' + esc(l) + '</span><input class="bh-input" inputmode="decimal" data-fig="' + k + '" value="' + val(k) + '" placeholder="not read"></label>').join('') + '</div>';
 }
 const padSub = v => { const m = String(v || '').trim().toUpperCase().match(/^([0-9]{5}[A-Z]{2})([0-9]{1,2})$/); return m ? m[1] + m[2].padStart(3, '0') : String(v || '').trim().toUpperCase(); };
 /* A subcontract number as the trade partner wrote it -> the roster's commitment.
@@ -1422,8 +1442,19 @@ function act(k){
     if ((jobNo || '') !== (i.job || '')) { f.JobNumber = jobVal; said.push('job ' + (i.job || '—') + ' → ' + (jobNo || '—')); }
     if (c && c.vendor && c.vendor !== i.f.Vendor) f.Vendor = c.vendor;
     if (appr !== lc(i.f.AssignedApprover)) { f.AssignedApprover = appr; said.push('approver → ' + (appr ? P(appr).n : '—')); i.pick = appr || null; }
+    /* pay app figures */
+    const keyed = [];
+    if ($('#fPR')) { const v = $('#fPR').value.trim(); if (v !== String(i.f.PayRequest || '')) { f.PayRequest = v; said.push('pay request ' + (i.f.PayRequest || '—') + ' → ' + (v || '—')); } }
+    if ($('#fPer')) { const v = $('#fPer').value, old = String(i.f.PeriodEnding || '').slice(0, 10); if (v !== old) { f.PeriodEnding = v || null; said.push('period ending ' + (old ? usDate(old) : '—') + ' → ' + (v ? usDate(v) : '—')); } }
+    for (const el of document.querySelectorAll('[data-fig]')) {
+      const k = el.dataset.fig, raw = el.value.replace(/[$,\s]/g, ''), old = num(i.f[k]);
+      if (raw !== '' && !/^-?\d+(\.\d{1,2})?$/.test(raw)) { toast('Check ' + FIGS.find(x => x[0] === k)[1] + ' - dollars only'); return; }
+      const nv = raw === '' ? null : Number(raw);
+      if (nv === old || (nv != null && old != null && !dif(nv, old) && Math.abs(nv - old) < 0.005)) continue;
+      f[k] = nv; keyed.push(k); said.push(FIGS.find(x => x[0] === k)[1].replace(/^\d+ /, '') + ' ' + (old == null ? 'not read' : money(old)) + ' → ' + (nv == null ? 'blank' : money(nv)));
+    }
     if (!said.length) { ED = false; pane(); return; }
-    run(async () => { if (await saveRow(i, f, { note:'Details corrected: ' + said.join('; ') + '.' })) { ED = false; toast('Saved'); } });
+    run(async () => { if (await saveRow(i, f, Object.assign({ note:'Details corrected: ' + said.join('; ') + '.' }, keyed.length ? { keyed } : {}, keyed.includes('CompletedToDate') ? { ctd: true } : {}))) { ED = false; TAB = 'review'; toast('Saved'); } });
     return; }
   if (k === 'reply') { RF = true; CF = false; TAB = 'review'; pane(); return; }
   if (k === 'cancelreply') { RF = false; pane(); return; }
