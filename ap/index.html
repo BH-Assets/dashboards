@@ -373,6 +373,26 @@ function ledgerFor(sub, payReq){
 }
 
 /* ---- list row -> desk item ---------------------------------------------------- */
+/* Contract as of a date (21 Oct 2026). A pay app for September should be checked against the
+   contract as it stood at the end of September: a CO approved in October belongs on the October
+   app, not the September one, or every older unpaid app reads "off" by that CO. Needs
+   ap_commitments_pull.js to have recorded approved_date on each change order (key that answered
+   in approved_basis). Undated approved COs are counted in, and said so. Returns null when the
+   change orders were not pulled. */
+function coAsOf(c, asOf){
+  if (!c || !Array.isArray(c.change_orders) || !asOf) return null;
+  const rev = num(c.revised_contract), orig = num(c.contract_value);
+  if (rev == null) return null;
+  const ap = c.change_orders.filter(x => x.state === 'approved');
+  const after = ap.filter(x => x.approved_date && x.approved_date > asOf).sort((a, b) => String(a.approved_date).localeCompare(String(b.approved_date)));
+  const undated = ap.filter(x => !x.approved_date);
+  const later = Math.round(after.reduce((t, x) => t + (Number(x.amount) || 0), 0) * 100) / 100;
+  const revAt = Math.round((rev - later) * 100) / 100;
+  return { asOf, rev: revAt, cos: orig != null ? Math.round((revAt - orig) * 100) / 100 : null, after, later, undated, fullRev: rev,
+           dated: ap.length - undated.length, proceeding: c.change_orders.filter(x => x.state === 'pending_proceeding') };
+}
+const usDate = iso => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { month:'numeric', day:'numeric', year:'numeric', timeZone:'UTC' }) : '';
+const payAsOf = f => String(f.PeriodEnding || f.ReceivedAt || '').slice(0, 10);
 function retRule(c){
   if (!c || c.retainage_percent == null) return null;
   const p = Number(c.retainage_percent), thru50 = /50/.test(c.retainage_duration||'') && /thru|through/i.test(c.retainage_duration||'');
@@ -419,7 +439,8 @@ function toItem(row){
   if (pay && /not on attachment g/i.test(note)) i.missing.push('Attachment G');
   /* the pay application check */
   if (pay && figs) {
-    const procRev = c ? num(c.revised_contract) : null, procOrig = c ? num(c.contract_value) : null;
+    const A = coAsOf(c, payAsOf(f));
+    const procRev = A ? A.rev : (c ? num(c.revised_contract) : null), procOrig = c ? num(c.contract_value) : null;
     const ceSov = b && b.ce_sov != null ? Number(b.ce_sov) : (L.led && L.led.amount != null ? Number(L.led.amount) + (L.led.change_orders||[]).reduce((t,x)=>t+Number(x.amount||0),0) : null);
     const R = retRule(c);
     const complete = num(f.CompletedToDate);
@@ -427,9 +448,10 @@ function toItem(row){
     i.math = { adj: [num(f.AdjustedContract), procRev, ceSov], orig: [num(f.OriginalContract), procOrig, null],
                cos: [num(f.ChangeOrders), procRev != null && procOrig != null ? procRev - procOrig : null],
                complete, ret: num(f.RetainageHeld), retCalc, rule: R ? R.text : null,
-               prev: [num(f.PreviousPayments), L.available && L.exists ? L.prior : null], due: num(f.BalanceDue) };
+               prev: [num(f.PreviousPayments), L.available && L.exists ? L.prior : null], due: num(f.BalanceDue), A };
     const m = i.math;
-    if (dif(m.adj[0], m.adj[1])) i.flags.push('Adjusted contract amount: pay app ' + money(m.adj[0]) + ' vs Procore ' + money(m.adj[1]));
+    if (dif(m.adj[0], m.adj[1])) i.flags.push('Adjusted contract amount: pay app ' + money(m.adj[0]) + ' vs Procore ' + money(m.adj[1]) + (A && A.after.length ? ' as of ' + usDate(A.asOf) : '')
+      + (A && A.after.length && !dif(m.adj[0], A.fullRev) ? ' — the pay app includes change orders approved after its period (' + A.after.map(x => 'CO #' + x.number).join(', ') + ')' : ''));
     if (dif(m.orig[0], m.orig[1])) i.flags.push('Amount of original contract: pay app ' + money(m.orig[0]) + ' vs Procore ' + money(m.orig[1]));
     if (dif(m.prev[0], m.prev[1])) i.flags.push('Less previous payments: pay app ' + money(m.prev[0]) + ' vs CE ' + money(m.prev[1]));
   }
@@ -657,7 +679,8 @@ function ctdCell(i, inPane){
    that is the saved CompletedToDate; before one arrives it is a what-if kept in this browser. */
 function attachG(r, per){
   const c = r.c, i = r.i, f = i ? i.f : {}, k = r.k, wk = 'apwhatif:' + per + ':' + k;
-  const orig = num(c.contract_value), adj = r.rev, cos = num(c.approved_change_orders) != null ? num(c.approved_change_orders) : (adj != null && orig != null ? adj - orig : null);
+  const A = coAsOf(c, i ? payAsOf(f) : r.due);
+  const orig = num(c.contract_value), adj = A ? A.rev : r.rev, cos = A && A.cos != null ? A.cos : (num(c.approved_change_orders) != null ? num(c.approved_change_orders) : (adj != null && orig != null ? adj - orig : null));
   let ctd = null, src = '';
   if (i && num(f.CompletedToDate) != null) { ctd = num(f.CompletedToDate); src = i.ctdBy ? 'keyed · ' + i.ctdBy : 'from the pay app'; }
   else if (!i) { const w = num(store.get(wk)); if (w != null) { ctd = w; src = 'what-if, this browser only'; } }
@@ -674,7 +697,8 @@ function attachG(r, per){
   return '<div class="xp-g"><table class="mt"><thead><tr><th>Attachment G</th><th>' + (i ? 'Pay app ' + esc(i.f.PayRequest || '') + ' · ' + i.id : 'Pay app') + '</th><th>Procore / CE / worked out</th><th></th></tr></thead><tbody>'
     + line('Amount of original contract', 'AMOUNT OF ORIGINAL CONTRACT', pv('OriginalContract'), orig, 'Procore')
     + line('Approved change order(s)', 'APPROVED CHANGE ORDER(S)', pv('ChangeOrders'), cos, 'Procore')
-    + line('Adjusted contract amount', 'ADJUSTED CONTRACT AMOUNT', pv('AdjustedContract'), adj, 'Procore revised contract')
+    + line('Adjusted contract amount', 'ADJUSTED CONTRACT AMOUNT', pv('AdjustedContract'), adj, A && A.after.length ? 'Procore, as of ' + usDate(A.asOf) : 'Procore revised contract')
+    + coNote(A, 4)
     + line('Total completed work &amp; stored materials to date', 'TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE', i ? pv('CompletedToDate') : null, ctdIn, src || (i ? 'not read off the pay app - key it on the row' : 'from the trade partner’s SOV - blank until a pay app arrives'))
     + line('Less retainage', 'LESS RETAINAGE', pv('RetainageHeld'), ret, r.R ? (r.R.p ? r.R.text + ' on the line above' : 'no retainage') : 'no rule in Procore')
     + line('Total earned less retainage', 'TOTAL EARNED LESS RETAINAGE', pEarned, earned, '')
@@ -861,6 +885,15 @@ function pane(){
   h += '</div>';
   $('#pane').innerHTML = h;
 }
+function coNote(A, span){
+  if (!A) return '';
+  const bits = [];
+  if (A.after.length) bits.push('Procore here is the contract as of ' + usDate(A.asOf) + ' (this pay app’s period). Left out, approved later: '
+    + A.after.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount) + ' on ' + usDate(x.approved_date)).join('; ') + ' — expect ' + (A.after.length > 1 ? 'them' : 'it') + ' on a later pay app.');
+  if (A.undated.length && (A.after.length || A.dated === 0)) bits.push(A.undated.length + ' approved CO' + (A.undated.length > 1 ? 's have' : ' has') + ' no approval date in Procore and ' + (A.undated.length > 1 ? 'are' : 'is') + ' counted in.');
+  if (A.proceeding.length) bits.push('Pending · proceeding (not executed, may be billed): ' + A.proceeding.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount)).join('; ') + '.');
+  return bits.length ? '<tr><td colspan="' + span + '" style="text-align:left;white-space:normal;font-size:11.5px;color:var(--bh-ink-muted);background:var(--bh-surface-muted)">' + bits.join(' ') + '</td></tr>' : '';
+}
 function payCheck(i){
   const m = i.math;
   const chip = (f,t) => f ? '<span class="bh-chip is-bad sm">' + (t||'Differs') + '</span>' : '<span class="bh-chip is-ok sm">Match</span>';
@@ -870,6 +903,7 @@ function payCheck(i){
     + '<tr' + (dif(m.orig[0], m.orig[1]) ? ' class="flag"' : '') + '><td title="AMOUNT OF ORIGINAL CONTRACT">Orig. contract amt</td><td>' + (m.orig[0] == null ? '<span class="note" title="The pull does not read this line yet">not read</span>' : money(m.orig[0])) + '</td><td>' + money(m.orig[1]) + '</td><td></td><td>' + cell(m.orig[0], m.orig[1]) + '</td></tr>'
     + '<tr><td title="APPROVED CHANGE ORDER(S)">Approved COs</td><td>' + (m.cos[0] == null ? '<span class="note">not read</span>' : money(m.cos[0])) + '</td><td>' + money(m.cos[1]) + '</td><td></td><td>' + cell(m.cos[0], m.cos[1]) + '</td></tr>'
     + '<tr' + (dif(m.adj[0], m.adj[1]) ? ' class="flag"' : '') + '><td title="ADJUSTED CONTRACT AMOUNT">Adj. contract amt</td><td>' + money(m.adj[0]) + '</td><td>' + money(m.adj[1]) + '</td><td>' + money(m.adj[2]) + '</td><td>' + cell(m.adj[0], m.adj[1]) + '</td></tr>'
+    + coNote(m.A, 5)
     + '<tr><td title="TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE">Completed &amp; stored to date' + (i.ctdBy ? ' <span class="note">(keyed · ' + esc(i.ctdBy) + ')</span>' : '') + '</td><td>' + money(m.complete) + '</td><td colspan="2" style="text-align:right">' + (m.complete != null && i.c && i.sec !== 'done' && canKey(i.c) && XED !== i.itemId ? '<button class="xp-mini" data-ctde="' + i.itemId + '">Adjust</button>' : '') + '</td><td></td></tr>'
     + '<tr' + (dif(m.ret, m.retCalc) ? ' class="flag"' : '') + '><td title="LESS RETAINAGE">Less retainage' + (m.rule ? ' <span class="note">(' + esc(m.rule) + ')</span>' : '') + '</td><td>' + money(m.ret) + '</td><td colspan="2" style="text-align:right;color:var(--bh-ink-muted)">' + (m.retCalc == null ? 'no rule in Procore' : 'by rule ' + money(m.retCalc)) + '</td><td>' + cell(m.ret, m.retCalc) + '</td></tr>'
     + '<tr' + (dif(m.prev[0], m.prev[1]) ? ' class="flag"' : '') + '><td title="LESS PREVIOUS PAYMENTS">Less prev. payments</td><td>' + money(m.prev[0]) + '</td><td></td><td>' + (m.prev[1] == null ? '<span class="note">no CE history</span>' : money(m.prev[1])) + '</td><td>' + cell(m.prev[0], m.prev[1]) + '</td></tr>'
