@@ -358,6 +358,13 @@ async function loadQueue(tok){
 /* ---- the CE ledger: previous CERTIFIED (Invoiced -> Payable), full history only */
 const ledgerFull = () => !!(LIVE.ceInv && LIVE.ceInv.subcontracts && LIVE.ceInv.has_payment_data !== false && !(LIVE.ceInv.filters && LIVE.ceInv.filters.since));
 const digits = v => String(v==null?'':v).replace(/[^0-9]/g,'');
+/* " · CE ledger as of Oct 21" - so a stale ledger is visible on the line that uses it */
+function ledgerAsOf(){
+  const d = LIVE.ceInv && (LIVE.ceInv.as_of || String(LIVE.ceInv.generated_at || '').slice(0, 10));
+  if (!d) return '';
+  const days = Math.floor((Date.now() - Date.parse(d + 'T12:00:00Z')) / 864e5);
+  return ' · CE ledger as of ' + new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month:'short', day:'numeric', timeZone:'UTC' }) + (days > 2 ? ' (' + days + ' days old)' : '');
+}
 function ledgerFor(sub, payReq){
   if (!ledgerFull()) return { available:false };
   const led = LIVE.ceInv.subcontracts[String(sub||'').trim().toUpperCase()];
@@ -366,7 +373,9 @@ function ledgerFor(sub, payReq){
   const thisApp = want ? inv.filter(x => digits(x.number) === want) : [];
   const prior = inv.filter(x => !thisApp.includes(x));
   const n = v => Number(v||0);
-  const cert = x => n(x.payable) + Math.max(0, n(x.paid) - n(x.payable));
+  /* A credit line (negative payable, e.g. 40925AU010 PR10 -4,534.40) is never "paid", so the
+     retention-release top-up must not apply to it - it read the credit as +4,534.40. */
+  const cert = x => n(x.payable) < 0 ? n(x.payable) : n(x.payable) + Math.max(0, n(x.paid) - n(x.payable));
   return { available:true, exists:!!led, led, prior: Math.round(prior.reduce((t,x)=>t+cert(x),0)*100)/100,
            rows: prior.map(x => ({ inv: x.raw_reference || x.number, per: x.date ? new Date(x.date+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'}) : '', pay: cert(x) })),
            thisApp };
@@ -453,7 +462,7 @@ function toItem(row){
     if (dif(m.adj[0], m.adj[1])) i.flags.push('Adjusted contract amount: pay app ' + money(m.adj[0]) + ' vs Procore ' + money(m.adj[1]) + (A && A.after.length ? ' as of ' + usDate(A.asOf) : '')
       + (A && A.after.length && !dif(m.adj[0], A.fullRev) ? ' — the pay app includes change orders approved after its period (' + A.after.map(x => 'CO #' + x.number).join(', ') + ')' : ''));
     if (dif(m.orig[0], m.orig[1])) i.flags.push('Amount of original contract: pay app ' + money(m.orig[0]) + ' vs Procore ' + money(m.orig[1]));
-    if (dif(m.prev[0], m.prev[1])) i.flags.push('Less previous payments: pay app ' + money(m.prev[0]) + ' vs CE ' + money(m.prev[1]));
+    if (dif(m.prev[0], m.prev[1])) i.flags.push('Less previous payments: pay app ' + money(m.prev[0]) + ' vs CE ' + money(m.prev[1]) + ledgerAsOf());
   }
   /* who holds it now */
   const appr = lc(f.AssignedApprover);
@@ -984,7 +993,7 @@ function triageBox(i){
 function ledger(i){
   const L = i.ledger.rows || []; if (!L.length) return '<p class="note">No earlier CE invoices on this subcontract.</p>';
   const tot = L.reduce((a,x) => a + x.pay, 0), m = i.math;
-  return '<div style="margin-top:10px"><div class="bh-label">CE payment history (previous payments) · ' + esc(i.po) + '</div><table class="mt" style="margin-top:4px"><thead><tr><th>CE invoice</th><th>Date</th><th>Certified payable</th></tr></thead><tbody>'
+  return '<div style="margin-top:10px"><div class="bh-label">CE payment history (previous payments) · ' + esc(i.po) + ledgerAsOf() + '</div><table class="mt" style="margin-top:4px"><thead><tr><th>CE invoice</th><th>Date</th><th>Certified payable</th></tr></thead><tbody>'
     + L.map(x => '<tr><td>' + esc(x.inv) + '</td><td>' + esc(x.per) + '</td><td>' + money(x.pay) + '</td></tr>').join('')
     + '<tr><td><b>Total prev. payments (CE)</b></td><td></td><td><b>' + money(tot) + '</b></td></tr>'
     + (m && m.prev[0] != null && Math.abs(m.prev[0] - tot) > 0.5 ? '<tr class="flag"><td>Pay app: less prev. payments</td><td></td><td>' + money(m.prev[0]) + ' <span class="bh-chip is-bad sm">' + money(Math.abs(m.prev[0] - tot)) + (m.prev[0] > tot ? ' over' : ' under') + '</span></td></tr>' : '')
