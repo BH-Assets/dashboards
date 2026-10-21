@@ -145,6 +145,23 @@ body.no-pane .ap-pane{display:none}
 .xp-ed .bh-btn,.xp-ed .bh-btn-outline{min-height:32px;padding:0 10px;font-size:11px}
 .xp-mini{border:0;background:none;padding:0;margin-left:6px;font:600 11px var(--bh-font);color:var(--bh-ink-muted);text-decoration:underline;cursor:pointer}
 body.v-exp #tMine,body.v-exp #tChg{display:none}
+.xp-jobs{position:relative}
+.xp-jobs>summary{list-style:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;border:1px solid var(--bh-slate);background:#fff;font:600 12px/1 var(--bh-font);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.xp-jobs>summary::-webkit-details-marker{display:none}
+.xp-jobs>summary::after{content:'▾';color:var(--bh-ink-muted)}
+.xp-jp{position:absolute;z-index:30;top:42px;left:0;width:min(420px,calc(100vw - 40px));max-height:420px;overflow:auto;background:#fff;border:1px solid var(--bh-slate);padding:10px 12px}
+.xp-jp .bh-input{width:100%;min-height:34px;font-size:13px;box-sizing:border-box}
+.xp-jp label{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--bh-hairline);font-size:13px;cursor:pointer}
+.xp-jp label input{margin-top:2px;accent-color:var(--bh-black)}
+.xp-jp label span{color:var(--bh-ink-muted);font-size:12px;margin-left:auto;white-space:nowrap}
+.xp-jp .act{display:flex;gap:12px;margin:8px 0 4px}
+.xp-row:not(.hd){cursor:pointer}
+.xp-row.op{background:var(--bh-cream)}
+.xp-g{padding:10px 8px 16px 28px;border-bottom:1px solid var(--bh-hairline);background:#fbfaf7;overflow-x:auto}
+@media (max-width:960px){.xp-g{padding-left:8px}.xp-g .mt td:first-child{min-width:150px}}
+.xp-g .mt{max-width:760px}
+.xp-g .mt td:first-child{min-width:230px}
+.xp-g .xp-ed input{width:130px}
 @media (max-width:960px){
   .xp-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"v st" "b c" "l x";row-gap:6px}
   .xp-row>*{min-width:0}.xp-row .bh-chip{white-space:normal}
@@ -254,6 +271,11 @@ const BULK = new Set();
    due on day D of month M collects pay apps whose period-ending date (or, when none was
    read, the date received) falls after D of the month before and on or before D of M. */
 let VIEW = 'queue', XF = 'all', XPER = '', XED = '', ALLH = [];
+/* Expected billings: which jobs (null = all; remembered in this browser) and which rows
+   are expanded to their Attachment G lines. */
+let XJOBS = (() => { try { const v = JSON.parse(localStorage.getItem('apxjobs') || 'null'); return Array.isArray(v) ? new Set(v) : null; } catch(_) { return null; } })();
+let XJOPEN = false, XJQ = '';
+const XOPEN = new Set();
 const DEF_DAY = 20, FULL_TOL = 10;
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -603,9 +625,17 @@ function expData(){
     /* What the pay app should ask for: earned to date less retainage, less what was earned
        before (CE billed to date, gross, less its retainage). Only before entry - once the
        pay app is in CE its own billing is already inside the CE figure. */
-    if (i && i.sec !== 'done' && r.ctd != null && billed != null && R) {
-      r.retThis = Math.round((retOn(c, r.ctd) - r.retHeld) * 100) / 100;
-      r.expDue = Math.round(((r.ctd - billed) - r.retThis) * 100) / 100;
+    /* Previous payments: the CE invoice ledger, which leaves out THIS pay app by its pay
+       request number, is the right basis. CE's committed_billed is not: once the pay app has
+       been keyed into CE it already includes it (AP-394, 21 Oct: CE billed $66,500 = the whole
+       contract, so the "expected" read $0). Without the ledger, committed_billed is used only
+       while it is still below what the pay app claims; otherwise no expected is shown. */
+    if (i && i.sec !== 'done' && r.ctd != null && R) {
+      const L = ledgerFor(c.number, i.f.PayRequest), earned = r.ctd - retOn(c, r.ctd);
+      if (L.available && L.exists) { r.prevBasis = 'CE ledger (previous invoices, this one left out)'; r.expDue = Math.round((earned - L.prior) * 100) / 100; }
+      else if (billed != null && billed < r.ctd - FULL_TOL) { r.prevBasis = 'CE billed to date less retainage by rule (estimate)'; r.expDue = Math.round((earned - (billed - r.retHeld)) * 100) / 100; }
+      else if (billed != null) r.ceIncl = true;
+      if (r.expDue != null) r.retThis = Math.round((retOn(c, r.ctd) - (billed != null ? retOn(c, Math.min(billed, r.ctd)) : 0)) * 100) / 100;
     }
   }
   return { per, rows };
@@ -620,8 +650,51 @@ function ctdCell(i, inPane){
   return '<span' + (inPane ? ' style="font-size:15px;font-weight:600"' : '') + '>' + money(v) + '</span>' + (can ? '<button class="xp-mini" data-ctde="' + k + '">Adjust</button>' : '')
     + '<span class="s">' + (i.ctdBy ? 'keyed · ' + esc(i.ctdBy) : 'read from pay app') + pct + '</span>';
 }
+/* Attachment G lines for one commitment (21 Oct). Contract lines come from Procore and the
+   previous payments from CE, so they are filled whether or not a pay app has arrived. The lines
+   that follow the trade partner's SOV (completed & stored, and everything worked out from it)
+   stay blank until a matched pay app supplies them, or a figure is keyed: on a received pay app
+   that is the saved CompletedToDate; before one arrives it is a what-if kept in this browser. */
+function attachG(r, per){
+  const c = r.c, i = r.i, f = i ? i.f : {}, k = r.k, wk = 'apwhatif:' + per + ':' + k;
+  const orig = num(c.contract_value), adj = r.rev, cos = num(c.approved_change_orders) != null ? num(c.approved_change_orders) : (adj != null && orig != null ? adj - orig : null);
+  let ctd = null, src = '';
+  if (i && num(f.CompletedToDate) != null) { ctd = num(f.CompletedToDate); src = i.ctdBy ? 'keyed · ' + i.ctdBy : 'from the pay app'; }
+  else if (!i) { const w = num(store.get(wk)); if (w != null) { ctd = w; src = 'what-if, this browser only'; } }
+  const ret = ctd != null ? retOn(c, ctd) : null, earned = ctd != null && ret != null ? ctd - ret : (ctd != null && !r.R ? null : null);
+  const L = ledgerFor(c.number, i ? f.PayRequest : '');
+  let prev = null, prevSrc = '';
+  if (L.available && L.exists) { prev = L.prior; prevSrc = 'CE ledger'; }
+  else if (r.billed != null && !(i && i.sec === 'done')) { prev = Math.round((r.billed - (r.retHeld || 0)) * 100) / 100; prevSrc = 'CE billed less retainage by rule (estimate)'; }
+  const due = earned != null && prev != null ? Math.round((earned - prev) * 100) / 100 : null;
+  const pv = k2 => i ? num(f[k2]) : null;
+  const pEarned = pv('CompletedToDate') != null && pv('RetainageHeld') != null ? pv('CompletedToDate') - pv('RetainageHeld') : null;
+  const line = (t, title, a, b, note, flag) => '<tr' + (flag ? ' class="flag"' : '') + '><td title="' + title + '">' + t + (note ? '<span class="s" style="display:block;font-size:11px;color:var(--bh-ink-muted)">' + note + '</span>' : '') + '</td><td>' + (a == null ? '' : money(a)) + '</td><td>' + (typeof b === 'string' ? b : (b == null ? '' : money(b))) + '</td><td>' + (a != null && typeof b === 'number' && b != null ? (dif(a, b) ? '<span class="bh-chip is-bad sm">' + money(Math.abs(a - b)) + ' off</span>' : '<span class="bh-chip is-ok sm">Match</span>') : '') + '</td></tr>';
+  const ctdIn = !i ? '<div class="xp-ed"><input id="wi-' + esc(k) + '" inputmode="decimal" placeholder="Key to work it out" value="' + (ctd == null ? '' : ctd.toFixed(2)) + '" aria-label="Completed and stored to date (what-if)"><button class="bh-btn-outline" data-wi="' + esc(k) + '">Work out</button>' + (ctd != null ? '<button class="xp-mini" data-wix="' + esc(k) + '">Clear</button>' : '') + '</div>' : (ctd != null ? ctd : '');
+  return '<div class="xp-g"><table class="mt"><thead><tr><th>Attachment G</th><th>' + (i ? 'Pay app ' + esc(i.f.PayRequest || '') + ' · ' + i.id : 'Pay app') + '</th><th>Procore / CE / worked out</th><th></th></tr></thead><tbody>'
+    + line('Amount of original contract', 'AMOUNT OF ORIGINAL CONTRACT', pv('OriginalContract'), orig, 'Procore')
+    + line('Approved change order(s)', 'APPROVED CHANGE ORDER(S)', pv('ChangeOrders'), cos, 'Procore')
+    + line('Adjusted contract amount', 'ADJUSTED CONTRACT AMOUNT', pv('AdjustedContract'), adj, 'Procore revised contract')
+    + line('Total completed work &amp; stored materials to date', 'TOTAL COMPLETED WORK &amp; STORED MATERIALS TO DATE', i ? pv('CompletedToDate') : null, ctdIn, src || (i ? 'not read off the pay app - key it on the row' : 'from the trade partner’s SOV - blank until a pay app arrives'))
+    + line('Less retainage', 'LESS RETAINAGE', pv('RetainageHeld'), ret, r.R ? (r.R.p ? r.R.text + ' on the line above' : 'no retainage') : 'no rule in Procore')
+    + line('Total earned less retainage', 'TOTAL EARNED LESS RETAINAGE', pEarned, earned, '')
+    + line('Less previous payments', 'LESS PREVIOUS PAYMENTS', pv('PreviousPayments'), prev, prevSrc || 'no CE figure')
+    + line('<b>Balance due this estimate</b>', 'BALANCE DUE THIS PAYMENT ESTIMATE', pv('BalanceDue'), due, '')
+    + line('Balance to finish incl. retainage', 'BALANCE TO FINISH INCLUDING RETAINAGE', i && adj != null && pEarned != null ? adj - pEarned : null, adj != null && earned != null ? adj - earned : null, '')
+    + '</tbody></table></div>';
+}
 function drawExp(){
-  const { per, rows } = expData();
+  const { per, rows: scoped } = expData();
+  const jobList = {};
+  for (const r of scoped) { const j = r.c.project_number; (jobList[j] = jobList[j] || { n: r.c.project, k: 0 }); if (!r.done) jobList[j].k++; }
+  const jks = Object.keys(jobList).sort();
+  if (XJOBS) for (const j of [...XJOBS]) if (!jobList[j]) XJOBS.delete(j);
+  const rows = XJOBS && XJOBS.size ? scoped.filter(r => XJOBS.has(r.c.project_number)) : scoped;
+  const jq = XJQ.toLowerCase(), pick = XJOBS && XJOBS.size;
+  const jobsH = '<details class="xp-jobs"' + (XJOPEN ? ' open' : '') + '><summary id="xJobsS">Jobs: ' + (pick ? XJOBS.size + ' of ' + jks.length : 'All (' + jks.length + ')') + '</summary><div class="xp-jp">'
+    + '<input class="bh-input" id="xJq" type="search" placeholder="Find a job" value="' + esc(XJQ) + '"><div class="act"><button class="xp-mini" style="margin:0" data-xj="all">All jobs</button><button class="xp-mini" style="margin:0" data-xj="none">Clear</button></div>'
+    + jks.filter(j => !jq || (j + ' ' + jobList[j].n).toLowerCase().includes(jq)).map(j => '<label><input type="checkbox" data-xjob="' + esc(j) + '"' + (pick && XJOBS.has(j) ? ' checked' : '') + '><b>' + esc(j) + '</b> ' + esc(jobList[j].n) + '<span>' + jobList[j].k + ' expected</span></label>').join('')
+    + '</div></details>';
   const match = r => !Q || (r.c.vendor + ' ' + r.c.number + ' ' + r.c.project_number + ' ' + r.c.project + ' ' + (r.c.title || '')).toLowerCase().includes(Q);
   const live = rows.filter(r => !r.done), shown = rows.filter(match);
   const rec = live.filter(r => r.i), out = live.filter(r => !r.i), needKey = rec.filter(r => r.ctd == null);
@@ -629,7 +702,7 @@ function drawExp(){
   const kpi = (l, v, t) => '<div class="bh-kpi"' + (t ? ' title="' + esc(t) + '"' : '') + '><div class="bh-label">' + l + '</div><div class="bh-kpi-value">' + v + '</div></div>';
   let h = '<div class="xp-top"><label class="ap-as"><span class="bh-label">Pay apps due</span><select class="bh-select" id="xPer">'
     + [-2, -1, 0, 1].map(n => shiftPer(curPeriod(), n)).map(p => '<option value="' + p + '"' + (p === per ? ' selected' : '') + '>' + dLabel(perWin(p, DEF_DAY).to) + (p === curPeriod() ? ' · next' : '') + '</option>').join('') + '</select></label>'
-    + '<span class="note" style="margin:0">Every approved and executed commitment in Procore' + (isAcct() ? '' : ' on your jobs') + '. Due on the 20th unless the subcontract says otherwise.</span></div>'
+    + jobsH + '<span class="note" style="margin:0">Every approved and executed commitment in Procore' + (isAcct() ? '' : ' on your jobs') + '. Due on the 20th unless the subcontract says otherwise.</span></div>'
     + '<div class="bh-kpis xp-k">' + kpi('Expected', live.length) + kpi('Received', rec.length) + kpi('Not received', out.length)
     + kpi('Left to bill', money0(sum(live, r => r.bal)), 'Sum of the CE balance (committed but not yet billed) on every expected commitment')
     + kpi('Due this period', money0(sum(rec, r => num(r.i.f.BalanceDue))), 'Balance due this estimate, from the pay apps received')
@@ -644,16 +717,17 @@ function drawExp(){
     if (i) { const s = SECTIONS.find(x => x.k === i.sec), inQ = INV.some(x => x.id === i.id);
       st = (inQ ? '<button class="xp-link" data-open="' + i.id + '">' + i.id + '</button>' : '<b>' + i.id + '</b>') + ' <span class="bh-chip sm' + (i.sec === 'done' ? ' is-ok' : '') + '">' + esc(s ? s.t : statusWords(i.raw)) + '</span>'
         + '<span class="s">' + (i.amtKnown ? 'Due ' + money(i.amt) : 'Amount not read') + (i.f.PayRequest ? ' · PR ' + esc(i.f.PayRequest) : '') + '</span>'
-        + (r.expDue != null ? '<span class="s" title="Completed &amp; stored to date less retainage by rule, less CE billed to date less its retainage. Retainage this period ' + esc(money(r.retThis)) + '">Expected ' + money(r.expDue) + (i.amtKnown ? (dif(i.amt, r.expDue) ? ' <span class="bh-chip is-bad sm">' + money(Math.abs(i.amt - r.expDue)) + ' off</span>' : ' <span class="bh-chip is-ok sm">Match</span>') : '') + '</span>' : ''); }
+        + (r.ceIncl ? '<span class="s" title="CE billed to date (' + esc(money(r.billed)) + ') is already at or above this pay app\'s completed &amp; stored, so CE seems to include this billing already. Previous payments cannot be worked out without the CE invoice ledger.">CE already includes this billing</span>' : '')
+        + (r.expDue != null ? '<span class="s" title="Completed &amp; stored to date less retainage by rule, less previous payments from the ' + esc(r.prevBasis) + '. Retainage this period about ' + esc(money(r.retThis)) + '">Expected ' + money(r.expDue) + (i.amtKnown ? (dif(i.amt, r.expDue) ? ' <span class="bh-chip is-bad sm">' + money(Math.abs(i.amt - r.expDue)) + ' off</span>' : ' <span class="bh-chip is-ok sm">Match</span>') : '') + '</span>' : ''); }
     else if (r.done) st = '<span class="bh-chip sm">Fully billed</span>';
     else st = '<span class="bh-chip ' + (r.late ? 'is-bad' : 'is-warn') + ' sm">Not received' + (r.late ? ' · past due' : '') + '</span>' + (r.day !== DEF_DAY ? '<span class="s">Due ' + dLabel(r.due) + '</span>' : '');
-    return '<div class="xp-row' + (r.done ? ' done' : '') + '"><div class="v"><b>' + esc(c.vendor) + '</b><span class="s">' + esc(c.number) + (c.title ? ' · ' + esc(c.title) : '') + '</span></div>'
+    return '<div class="xp-row' + (r.done ? ' done' : '') + (XOPEN.has(r.k) ? ' op' : '') + '" data-xk="' + esc(r.k) + '" title="Click for the Attachment G lines"><div class="v"><b>' + esc(c.vendor) + '</b><span class="s">' + esc(c.number) + (c.title ? ' · ' + esc(c.title) : '') + '</span></div>'
       + '<div class="r">' + money(r.rev) + '</div>'
       + '<div class="r">' + (r.billed == null ? '<span class="note" style="margin:0" title="' + esc((r.b && r.b.billed_source) || 'No CE billing figure') + '">no CE data</span>' : money(r.billed) + '<span class="s">' + pct.replace(' · ', '') + (r.retHeld ? ' · ' + money(r.retHeld) + ' held' : '') + '</span>') + '</div>'
       + '<div class="r">' + money(r.bal) + '<span class="s" title="Retainage rule on the Procore commitment">' + (r.R ? (r.R.p ? esc(r.R.text) : 'no retainage') : 'no rule in Procore') + '</span>'
       + (r.past50 ? '<span class="bh-chip sm" title="Billed past half the revised contract: no further retainage is withheld">Past 50% · none withheld</span>' : r.cross50 ? '<span class="bh-chip is-warn sm" title="This pay app takes billing past half the revised contract: retainage is withheld only on the part up to 50%">Crosses 50% this period</span>' : '') + '</div>'
       + '<div>' + (i ? ctdCell(i, false) : '<span class="note" style="margin:0">—</span>') + '</div>'
-      + '<div>' + st + '</div></div>';
+      + '<div>' + st + '</div></div>' + (XOPEN.has(r.k) ? attachG(r, per) : '');
   };
   const jobs = {};
   for (const r of shown.filter(r => !r.done && keep(r))) (jobs[r.c.project_number] = jobs[r.c.project_number] || []).push(r);
@@ -1238,6 +1312,12 @@ document.addEventListener('click', e => {
   const xe = e.target.closest('[data-ctde]'); if (xe) { XED = xe.dataset.ctde; draw(); if (SEL) pane(); const f = document.getElementById('ctd-' + XED); if (f) f.focus(); return; }
   if (e.target.closest('[data-ctdx]')) { XED = ''; draw(); if (SEL) pane(); return; }
   const xs = e.target.closest('[data-ctd]'); if (xs) { saveCtd(xs.dataset.ctd); return; }
+  const xj = e.target.closest('[data-xj]'); if (xj) { XJOBS = xj.dataset.xj === 'all' ? null : new Set(); saveXJ(); draw(); return; }
+  if (e.target.closest('#xJobsS')) { e.preventDefault(); XJOPEN = !XJOPEN; draw(); if (XJOPEN) { const q = $('#xJq'); if (q) q.focus(); } return; }
+  if (XJOPEN && !e.target.closest('.xp-jobs')) { XJOPEN = false; draw(); }
+  const wi = e.target.closest('[data-wi]'); if (wi) { whatIf(wi.dataset.wi); return; }
+  const wx = e.target.closest('[data-wix]'); if (wx) { store.set('apwhatif:' + (XPER || curPeriod()) + ':' + wx.dataset.wix, ''); draw(); return; }
+  const xr = e.target.closest('.xp-row:not(.hd)'); if (xr && !e.target.closest('input,button,a,label')) { const k = xr.dataset.xk; if (XOPEN.has(k)) XOPEN.delete(k); else XOPEN.add(k); draw(); return; }
   const r = e.target.closest('.ap-row'); if (r) { openPane(r.dataset.id); return; }
   const t = e.target.closest('[data-tab]'); if (t) { TAB = t.dataset.tab; pane(); return; }
   const d = e.target.closest('[data-do]'); if (d) { e.preventDefault(); act(d.dataset.do); return; }
@@ -1259,7 +1339,18 @@ function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('ar
 $('#vQ').addEventListener('click', () => setView('queue'));
 $('#vE').addEventListener('click', () => setView('exp'));
 document.addEventListener('change', e => { if (e.target.id === 'xPer') { XPER = e.target.value === curPeriod() ? '' : e.target.value; draw(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('ctd-')) { const b = e.target.parentNode.querySelector('[data-ctd]'); if (b) b.click(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('wi-')) { const b = e.target.parentNode.querySelector('[data-wi]'); if (b) b.click(); return; }
+  if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('ctd-')) { const b = e.target.parentNode.querySelector('[data-ctd]'); if (b) b.click(); } });
+function saveXJ(){ try { localStorage.setItem('apxjobs', XJOBS ? JSON.stringify([...XJOBS]) : 'null'); } catch(_) {} }
+function whatIf(k){
+  const inp = document.getElementById('wi-' + k), raw = String((inp && inp.value) || '').replace(/[$,\s]/g, '');
+  if (raw === '') { store.set('apwhatif:' + (XPER || curPeriod()) + ':' + k, ''); draw(); return; }
+  if (!/^\d+(\.\d{1,2})?$/.test(raw)) { toast('Enter the dollar amount, e.g. 125000.00'); return; }
+  store.set('apwhatif:' + (XPER || curPeriod()) + ':' + k, raw); draw();
+}
+document.addEventListener('change', e => { const j = e.target.dataset && e.target.dataset.xjob; if (j === undefined) return;
+  if (!XJOBS) XJOBS = new Set(); if (e.target.checked) XJOBS.add(j); else XJOBS.delete(j); if (!XJOBS.size) XJOBS = null; saveXJ(); XJOPEN = true; draw(); });
+document.addEventListener('input', e => { if (e.target.id === 'xJq') { XJQ = e.target.value; const pos = e.target.selectionStart; draw(); const q = $('#xJq'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } } });
 function saveCtd(id){
   const i = ALLH.find(x => x.id === id); if (!i || !canKey(i.c)) return;
   const inp = document.getElementById('ctd-' + i.itemId), raw = String((inp && inp.value) || '').replace(/[$,\s]/g, '');
