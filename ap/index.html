@@ -1017,14 +1017,15 @@ function acctCheck(i){
   const ce5 = thisRet != null ? Math.round((ceRet + thisRet) * 100) / 100 : retCe;
   h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app</th><th>CE</th></tr></thead><tbody>'
     + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P.base)
-    + line(2, 'Approved COs', 'RFCs approved by ' + usDate(per) + (P.hasDates ? '' : ' (approval dates arrive with the next ledger)'), num(f.ChangeOrders), P.cos)
+    + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P.cos, 'approved in CE by ' + usDate(per) + (P.hasDates ? '' : ' — approval dates arrive with the next ledger'))
     + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P.adj)
-    + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total (prev. invoices ' + money(ceTot) + (thisTot != null ? ' + this invoice ' + money(thisTot) : '') + ')', m.complete, ce4,
-        thisTot == null && m.complete != null ? 'not in CE yet · this period on the pay app ' + money(m.complete - ceTot) + (i.ctdBy ? ' · keyed by ' + esc(i.ctdBy) : '') : (i.ctdBy ? 'keyed by ' + esc(i.ctdBy) : ''), thisTot == null ? '' : undefined)
-    + line(5, 'Retainage', thisRet != null ? 'Invoiced Retention (prev. ' + money(ceRet) + ' + this invoice ' + money(thisRet) + ')' : 'Invoiced Retention (prev. ' + money(ceRet) + ', plus ' + (R ? esc(R.text) : 'no') + ' rule)', m.ret, ce5)
-    + line(6, 'Earned less retainage', 'Invoiced Payable (to date)', earned, L.exists ? Math.round((L.prior + (inCe != null ? inCe : (m.due || 0))) * 100) / 100 : null)
-    + line(7, 'Less Prev. Pmts.', 'Invoiced Payable (prev. invoices)', m.prev[0], L.exists ? L.prior : null)
-    + line(8, '<b>Balance Due</b>', inCe != null ? 'Invoiced Payable (on this invoice, in CE)' : 'Not in CE yet — pay app worked through', m.due, inCe != null ? inCe : due)
+    + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total (prev. invoices plus this period)', m.complete, ce4,
+        'prev. ' + money(ceTot) + (thisTot != null ? ' + this invoice ' + money(thisTot) : ' · not in CE yet · this period on the pay app ' + (m.complete != null ? money(m.complete - ceTot) : '—')) + (i.ctdBy ? ' · keyed by ' + esc(i.ctdBy) : ''), thisTot == null ? '' : undefined)
+    + line(5, 'Retainage', 'Invoiced Retention (prev. invoices, plus retainage rule)', m.ret, ce5,
+        'prev. ' + money(ceRet) + (thisRet != null ? ' + this invoice ' + money(thisRet) : ' + ' + (R ? esc(R.text) : 'no') + ' rule'))
+    + line(6, 'Earned less retainage', 'Invoiced Payable to Date', earned, L.exists ? Math.round((L.prior + (inCe != null ? inCe : (m.due || 0))) * 100) / 100 : null)
+    + line(7, 'Less Prev. Pmts.', 'Previous Invoiced Payable', m.prev[0], L.exists ? L.prior : null)
+    + line(8, '<b>Balance Due</b>', 'Invoiced Payable' + (inCe != null ? ' (this invoice, in CE)' : ''), m.due, inCe != null ? inCe : due, inCe != null ? '' : 'not in CE yet — pay app worked through')
     + '</tbody></table>';
   const notes = [];
   if (P.after.length) notes.push('<b>Not counted — CE approved after ' + esc(usDate(per)) + ':</b> ' + P.after.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(usDate(c.date_approved)) + ')').join('; '));
