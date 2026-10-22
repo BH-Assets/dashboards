@@ -21,6 +21,10 @@
 .ap-work{display:flex;align-items:stretch;min-height:calc(100vh - 170px)}
 .ap-list{flex:1 1 auto;min-width:0;padding:8px 40px 60px}
 /* 22 Oct: the detail opens as a wide drawer OVER the list (it used to sit beside it at 580px) */
+.ap-pane.wide{width:min(1680px,98vw)}
+.sp{display:grid;grid-template-columns:minmax(0,1fr) minmax(620px,760px);gap:20px;align-items:start}
+.sp-l{position:sticky;top:12px}
+.sp-l .iv-pdf{height:calc(100vh - 60px);min-height:480px}
 .ap-pane{position:fixed;top:0;right:0;bottom:0;width:min(960px,94vw);z-index:60;background:#fff;border-left:1px solid var(--bh-slate);box-shadow:-12px 0 32px rgba(33,30,30,.18);overflow:auto;animation:pnIn .16s ease-out}
 @keyframes pnIn{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
 body:not(.no-pane) .ap-scrim{display:block;position:fixed;inset:0;background:rgba(33,30,30,.35);z-index:55;border:0;cursor:pointer}
@@ -902,6 +906,7 @@ function pane(){
     + (more.length ? '<button class="bh-btn-outline" data-do="menu" aria-expanded="' + MENU + '">More ▾</button>' : '')
     + (MENU ? '<div class="pn-menu">' + more.map(m => '<button data-do="' + m[0] + '">' + esc(m[1]) + '</button>').join('') + '</div>' : '') + '</div></div>'
     + '<div class="pn-tabs" role="tablist">' + [['review','Review'],['activity','Activity · ' + i.act.length],['details','Details']].map(t => '<button role="tab" data-tab="' + t[0] + '" aria-selected="' + (TAB === t[0]) + '">' + t[1] + '</button>').join('') + '</div><div class="pn-b">';
+  const bodyAt = h.length;
   if (CF) h += corrForm(i);
   if (RF) h += replyForm(i);
   if (TAB === 'review' && acctSeat() && i.mailPending && i.mailEntry && i.mailEntry.mailSubject && !RF) h += '<div class="bh-label" style="margin-top:4px">' + (i.draft ? 'Draft in payables@' : 'Email to send') + '</div><div class="em" style="font-size:12px;background:var(--bh-surface-muted);padding:10px 12px;margin:6px 0 14px;line-height:1.5">' + mailHTML(entryMail(i.mailEntry)) + '</div>';
@@ -927,7 +932,7 @@ function pane(){
       else if (i.sec === 'pm') h += '<h3>' + (isInv(i) ? 'Approver checks' : 'PM checks') + '</h3>' + CHECKS(i)
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
-    if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
+    if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (!(isAcct() && i.math) && canSplit(i) ? splitLink(i) + ' · ' : '') + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
   if (TAB === 'activity') {
     h += '<ul class="tl">' + i.act.map(a => '<li class="' + (a.ext ? 'ext' : '') + '"><div><div class="w">' + esc(a.w) + ' · ' + esc(a.when) + '</div>' + esc(a.t)
@@ -948,7 +953,9 @@ function pane(){
       + '<div>Read by the pull</div><div>' + esc(i.f.ParseNote || 'Read off the form') + ' · matched by ' + esc(i.f.MatchBasis || '—') + '</div>'
       + '<div>Files</div><div>' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">' + esc(String(i.f.PdfPath).split('/').pop()) + '</a>' : '—') + ((i.files || []).length ? '<br>' + moreFiles(i, '<br>') : '') + '</div></div>';
   }
+  if (splitOn(i)) h = h.slice(0, bodyAt) + '<div class="sp"><div class="sp-l">' + pdfBox(i) + '</div><div class="sp-r">' + h.slice(bodyAt) + '</div></div>';
   h += '</div>';
+  $('#pane').classList.toggle('wide', splitOn(i));
   $('#pane').innerHTML = h;
 }
 function coNote(A, span){
@@ -1010,6 +1017,21 @@ function explainDiffs(i){
    APDesk site) and shown from a blob URL - SharePoint refuses to be framed directly.
    Accounting edits every field in place; the approver can set cost code and description. */
 const PDFS = {};
+function pdfBox(i){
+  const P0 = PDFS[i.id];
+  if (i.f.PdfPath && !P0) loadPdf(i);
+  return !i.f.PdfPath ? '<div class="iv-none">No PDF filed</div>'
+    : P0 === 'loading' || !P0 ? '<div class="iv-none">Loading the PDF…</div>'
+    : P0 === 'error' ? '<div class="iv-none">The PDF could not be shown here. ' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>'
+    : '<iframe class="iv-pdf" src="' + P0 + '#view=FitH" title="' + esc(i.type) + ' PDF"></iframe>';
+}
+/* Pay app beside its PDF (22 Oct 2026): off by default so the pane stays as it is; on, the
+   drawer widens and the PDF sits to the left of the check. Wide screens only - below 1280px
+   there is not room for both, and the PDF opens in a tab instead. Remembered per browser. */
+let SPLIT = store.get('apsplit') === '1';
+const canSplit = i => i && i.type === 'Pay app' && !!i.f.PdfPath && window.innerWidth >= 1280;
+const splitOn = i => SPLIT && TAB === 'review' && canSplit(i);
+const splitLink = i => canSplit(i) ? '<a href="#" data-do="split">' + (splitOn(i) ? 'Hide the PDF' : 'PDF side by side') + '</a>' : '';
 const moreFiles = (i, sep) => (i.files || []).map(x => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Also attached to the email">' + esc(x.name) + '</a>').join(sep);
 async function loadPdf(i){
   if (!i.f.PdfPath || PDFS[i.id]) return;
@@ -1029,12 +1051,7 @@ function invView(i){
   const f = i.f, all = acctSeat() && i.sec !== 'done', appr = mySeat(i) && i.sec !== 'done';
   const can = k => all || (appr && (k === 'CostCode' || k === 'InvoiceDescription'));
   const ed = i.editInv && (all || appr);
-  const P0 = PDFS[i.id];
-  if (f.PdfPath && !P0) loadPdf(i);
-  const pv = !f.PdfPath ? '<div class="iv-none">No PDF filed</div>'
-    : P0 === 'loading' || !P0 ? '<div class="iv-none">Loading the PDF…</div>'
-    : P0 === 'error' ? '<div class="iv-none">The PDF could not be shown here. ' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>'
-    : '<iframe class="iv-pdf" src="' + P0 + '#view=FitH" title="Invoice PDF"></iframe>';
+  const pv = pdfBox(i);
   const show = k => {
     if (k === 'job') return i.job ? '<b>' + esc(i.job === 'GL' || i.job === 'OH' ? 'Overhead' : i.job) + '</b>' + (i.job !== 'GL' && i.job !== 'OH' ? '<span>' + esc(jobName(i.job)) + '</span>' + (((JOBS[i.job] || {}).team || []).length ? '<span>PM ' + esc(JOBS[i.job].team.map(e => P(e).n).join(', ')) + '</span>' : '') : '') : '<span class="miss">not set</span>';
     const v = f[k];
@@ -1112,7 +1129,7 @@ function acctCheck(i){
     + ' <button class="bh-btn" style="min-height:30px;font-size:11px" data-do="persave">Save</button> <button class="xp-mini" data-do="perx">Cancel</button>';
   else h += '<span class="bh-label">Period ending</span> <b>' + (f.PeriodEnding ? esc(usDate(per)) : 'not read') + '</b>' + (f.PeriodEnding ? '' : ' <span class="note" style="margin:0">(using received ' + esc(usDate(per)) + ')</span>')
     + '<span class="bh-label pr">PR #</span> <b>' + esc(f.PayRequest || '—') + '</b>' + (canEd ? ' <button class="xp-mini" data-do="peredit">Change</button>' : '');
-  h += '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + moreFiles(i, '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (canEd ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
+  h += '<span class="ac-links">' + splitLink(i) + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + moreFiles(i, '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (canEd ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
   const thisSet = new Set(L.thisApp || []), prior = ((L.led && L.led.invoices) || []).filter(x => !thisSet.has(x));
   const sumOf = k => Math.round(prior.reduce((t, x) => t + (Number(x[k]) || 0), 0) * 100) / 100;
   const ceTot = sumOf('total'), ceRet = sumOf('retention');
@@ -1574,6 +1591,7 @@ function act(k){
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
   if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k === 'split') { SPLIT = !splitOn(i); store.set('apsplit', SPLIT ? '1' : '0'); pane(); return; }
   if (k === 'invedit') { i.editInv = true; pane(); return; }
   if (k === 'invx') { i.editInv = false; pane(); return; }
   if (k === 'invsave') { if (!acctSeat() && !mySeat(i)) return;
