@@ -170,14 +170,16 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
 .fg .bh-input{min-height:36px;font-size:13px;width:100%;box-sizing:border-box}
 .ac-per{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:14px}
 .ac-per input{min-height:30px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font)}
-.mt.ac td:first-child{min-width:230px;white-space:normal}
+.mt.ac td:first-child{width:250px;min-width:200px;white-space:normal}
+.mt.ac th,.mt.ac td{text-align:left}
+.mt.ac th:not(:first-child),.mt.ac td:not(:first-child){padding-left:14px}
 .mt.ac .ag{display:inline-block;min-width:16px;font-weight:700;color:var(--bh-ink-muted)}
 .mt.ac .ce,.mt.ac .nt{display:block;font-size:11px;color:var(--bh-ink-muted);margin-left:16px}
 .mt.ac .nt{color:var(--bh-ink)}
 .mt.ac .ck2{display:block;margin-top:3px}
 .mt.ac .ck2:empty{display:none}
 .ac-links{margin-left:auto;display:flex;gap:12px;font-size:12px;font-weight:600}
-.mt.ac .ac-in{width:118px;min-height:28px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font);text-align:right;box-sizing:border-box}
+.mt.ac .ac-in{width:118px;min-height:28px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font);text-align:left;box-sizing:border-box}
 .mt.ac th .xp-mini{margin-left:6px}
 .ac-ed{display:flex;gap:8px;align-items:center;margin-top:8px}
 .ac-per .pr{margin-left:12px}
@@ -482,6 +484,8 @@ function toItem(row){
     mailEntry: [...log].reverse().find(e => e.mail && e.mail !== 'sent') || null,
     draft: (() => { const m = [...log].reverse().find(e => e.mail); return m && m.mail === 'draft' ? m : null; })(),
     pdf: f.PdfPath ? QUEUE_DOCS + f.PdfPath : '', mail: f.MessageLink || '',
+    /* other PDFs from the same email, attached by the pull (22 Oct 2026) */
+    files: log.flatMap(e => Array.isArray(e.files) ? e.files : []).filter(x => x && x.path).map(x => ({ name: String(x.name || x.path.split('/').pop()), url: QUEUE_DOCS + x.path })),
     vendorEmail: (c && c.compliance && c.compliance.vendor_email) || '',
     ledger: L,
   };
@@ -920,10 +924,10 @@ function pane(){
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
-      else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
+      else if (i.sec === 'pm') h += '<h3>' + (isInv(i) ? 'Approver checks' : 'PM checks') + '</h3>' + CHECKS(i)
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
-    if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
+    if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
   if (TAB === 'activity') {
     h += '<ul class="tl">' + i.act.map(a => '<li class="' + (a.ext ? 'ext' : '') + '"><div><div class="w">' + esc(a.w) + ' · ' + esc(a.when) + '</div>' + esc(a.t)
@@ -942,7 +946,7 @@ function pane(){
       + '<div>Received</div><div>' + esc(fmtTime(i.receivedAt)) + '</div><div>Email subject</div><div>' + esc(i.desc || '—') + '</div>'
       + '<div>Compliance</div><div>' + esc(c && c.compliance ? (c.compliance.billy_is_compliant === 'Yes' ? 'Compliant (Billy)' : 'Not compliant (Billy)') : '—') + '</div>'
       + '<div>Read by the pull</div><div>' + esc(i.f.ParseNote || 'Read off the form') + ' · matched by ' + esc(i.f.MatchBasis || '—') + '</div>'
-      + '<div>Files</div><div>' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">' + esc(String(i.f.PdfPath).split('/').pop()) + '</a>' : '—') + '</div></div>';
+      + '<div>Files</div><div>' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">' + esc(String(i.f.PdfPath).split('/').pop()) + '</a>' : '—') + ((i.files || []).length ? '<br>' + moreFiles(i, '<br>') : '') + '</div></div>';
   }
   h += '</div>';
   $('#pane').innerHTML = h;
@@ -1006,6 +1010,7 @@ function explainDiffs(i){
    APDesk site) and shown from a blob URL - SharePoint refuses to be framed directly.
    Accounting edits every field in place; the approver can set cost code and description. */
 const PDFS = {};
+const moreFiles = (i, sep) => (i.files || []).map(x => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Also attached to the email">' + esc(x.name) + '</a>').join(sep);
 async function loadPdf(i){
   if (!i.f.PdfPath || PDFS[i.id]) return;
   PDFS[i.id] = 'loading';
@@ -1051,7 +1056,7 @@ function invView(i){
     + INV_F.map(([k, t]) => '<dt>' + t + '</dt><dd>' + (ed && can(k) ? input(k) : show(k)) + '</dd>').join('') + '</dl>'
     + (ed ? '<div class="ac-ed"><button class="bh-btn" style="min-height:32px;font-size:11px" data-do="invsave"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="xp-mini" data-do="invx">Cancel</button></div>' : '')
     + (i.note ? '<p class="note" style="margin-top:8px">' + esc(i.note) + '</p>' : '')
-    + '<p class="note" style="margin-top:10px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? (i.pdf ? ' · ' : '') + '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>'
+    + '<p class="note" style="margin-top:10px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? (i.pdf ? ' · ' : '') + '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>'
     + '</div></div>';
 }
 function invSave(i){
@@ -1107,8 +1112,7 @@ function acctCheck(i){
     + ' <button class="bh-btn" style="min-height:30px;font-size:11px" data-do="persave">Save</button> <button class="xp-mini" data-do="perx">Cancel</button>';
   else h += '<span class="bh-label">Period ending</span> <b>' + (f.PeriodEnding ? esc(usDate(per)) : 'not read') + '</b>' + (f.PeriodEnding ? '' : ' <span class="note" style="margin:0">(using received ' + esc(usDate(per)) + ')</span>')
     + '<span class="bh-label pr">PR #</span> <b>' + esc(f.PayRequest || '—') + '</b>' + (canEd ? ' <button class="xp-mini" data-do="peredit">Change</button>' : '');
-  h += (i.note ? ' <span class="bh-chip is-warn sm" title="' + esc(i.note) + '">Read by OCR — check against the PDF</span>' : '')
-    + '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (canEd ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
+  h += '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + moreFiles(i, '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (canEd ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
   const thisSet = new Set(L.thisApp || []), prior = ((L.led && L.led.invoices) || []).filter(x => !thisSet.has(x));
   const sumOf = k => Math.round(prior.reduce((t, x) => t + (Number(x[k]) || 0), 0) * 100) / 100;
   const ceTot = sumOf('total'), ceRet = sumOf('retention');
@@ -1128,7 +1132,7 @@ function acctCheck(i){
   const n4 = thisTot != null ? money(ceTot) + ' + ' + money(thisTot) : (L.exists ? money(ceTot) + ' · this period not in CE yet' : '');
   const n5 = L.exists || R ? money(ceRet) + ' + ' + (thisRet != null ? money(thisRet) : (R ? esc(R.text) : 'no retainage')) : '';
   const n8 = (inCe != null ? '' : 'not in CE yet') + (due != null && m.due != null && dif(m.due, due) ? (inCe != null ? '' : ' · ') + 'lines 4 − 5 − 7 = ' + money(due) : '');
-  h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app' + (canEd && !ed ? '<button class="xp-mini" data-do="figedit">Change</button>' : '') + '</th><th>CE</th><th>Procore</th></tr></thead><tbody>'
+  h += '<table class="mt ac"><thead><tr><th>Attachment G</th><th>Pay app' + (canEd && !ed ? '<button class="xp-mini" data-do="figedit">Change</button>' : '') + '</th><th>CE</th><th>Procore</th></tr></thead><tbody>'
     + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P ? P.base : null, m.orig[1], '', 'OriginalContract')
     + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P ? P.cos : null, m.cos[1], '', 'ChangeOrders')
     + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P ? P.adj : null, m.adj[1], '', 'AdjustedContract')
@@ -1220,9 +1224,22 @@ function preTick(i, k){
   const calc = { orig: !!(m && dif(m.orig[0], m.orig[1])), adj: !!(m && dif(m.adj[0], m.adj[1])), prev: !!(m && dif(m.prev[0], m.prev[1])), math: !!(m && due != null && m.due != null && dif(m.due, due)) };
   if (k in calc) return calc[k];
   if (k === 'calc') return Object.values(calc).some(Boolean);
+  if (k === 'dup') return !!dupOf(i);
+  if (k === 'invno') return !i.f.PayRequest || !i.f.InvoiceDate;
   return (k === 'attg' && miss.includes('Attachment G')) || (k === 'ids' && (miss.includes('project') || miss.includes('subcontract #'))) || (k === 'per' && miss.includes('period ending'));
 }
 const rrOn = (i, k) => i.rr ? i.rr.includes(k) : preTick(i, k);
+/* Invoices (22 Oct 2026): reject to the VENDOR, for reasons that fit an invoice. */
+const REJ_INV = [['notours','Not addressed to Bailey-Harris','The invoice is not addressed to Bailey-Harris Construction.'],
+  ['dup','Duplicate of an invoice already received','This invoice duplicates one we have already received.'],
+  ['invno','Missing invoice number or date','The invoice number or invoice date is missing.'],
+  ['ref','Missing job, PO or who ordered it','The invoice does not say which job or purchase order it is for, or who ordered it.'],
+  ['amt','Amount is incorrect','The amount does not match what was ordered or quoted.']];
+const isInv = i => i.type === 'Invoice';
+/* the approver's checks before approving - an invoice is coded by the approver */
+const CHECKS = i => isInv(i)
+  ? [['recv','Goods or services were received'],['amt','Amount and invoice are correct']]
+  : [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']];
 function assignOptions(i, cur){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
   const sug = i.type === 'Pay app' && i.po && team.length ? team[0] : '';
@@ -1239,34 +1256,40 @@ function triageBox(i){
   const cur = i.pick != null ? i.pick : lc(i.f.AssignedApprover) ? lc(i.f.AssignedApprover) : (i.rev > 1 && i.approver ? i.approver : (i.type === 'Pay app' && i.po && team.length ? team[0] : ''));
   const miss = i.missing, dec = i.dec || '';
   const B = (k, t) => '<button class="ap-tog" data-do="dec:' + k + '" aria-pressed="' + (dec === k) + '">' + t + '</button>';
+  const inv = isInv(i), who = inv ? 'approver' : 'PM', tp = inv ? 'vendor' : 'trade partner';
   let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
     + (miss.length ? '<p class="note">Missing: ' + miss.map(x => '<span class="bh-chip is-warn sm">' + esc(x) + '</span>').join(' ') + '</p>' : '')
-    + '<div class="dec">' + B('reject', 'Reject to trade partner') + B('notes', 'Route to PM with notes') + B('approve', 'Route to PM for approval') + '</div>';
+    + '<div class="dec">' + (inv ? B('approve', 'Route to approver') + B('notes', 'Route to approver with notes') + B('reject', 'Reject to vendor')
+      : B('reject', 'Reject to trade partner') + B('notes', 'Route to PM with notes') + B('approve', 'Route to PM for approval')) + '</div>';
   if (dec === 'notes' || dec === 'approve') {
-    h += '<label class="bh-label" style="display:block;margin-top:12px" for="tAssign">PM</label>'
+    h += '<label class="bh-label" style="display:block;margin-top:12px" for="tAssign">' + (inv ? 'Approver' : 'PM') + '</label>'
       + '<select class="bh-select" id="tAssign" style="width:100%;margin-top:4px">' + assignOptions(i, cur) + '</select>';
-    if (dec === 'notes') h += '<label class="bh-label" style="display:block;margin-top:12px" for="pmNote">Notes for the PM (emailed from payables@)</label>'
-      + '<textarea id="pmNote" placeholder="e.g. Line 12 billed at 80% — is that what’s in place? CO #6 billed before it was approved." style="width:100%;min-height:70px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box">' + esc(i.pmn || '') + '</textarea>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="bh-btn" style="min-height:38px" data-do="routenotes"' + (BUSY ? ' disabled' : '') + '>Route and email the PM</button>'
+    if (dec === 'notes') h += '<label class="bh-label" style="display:block;margin-top:12px" for="pmNote">Notes for the ' + who + ' (emailed from payables@)</label>'
+      + '<textarea id="pmNote" placeholder="' + (inv ? 'e.g. Is this for the Auburn office or a job? Who ordered it?' : 'e.g. Line 12 billed at 80% — is that what’s in place? CO #6 billed before it was approved.') + '" style="width:100%;min-height:70px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box">' + esc(i.pmn || '') + '</textarea>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="bh-btn" style="min-height:38px" data-do="routenotes"' + (BUSY ? ' disabled' : '') + '>Route and email the ' + who + '</button>'
       + '<button class="bh-btn-outline" style="min-height:38px" data-do="routenotesoutlook"' + (BUSY ? ' disabled' : '') + '>Route and open the email in Outlook</button></div>';
     else h += '<div style="margin-top:10px"><button class="bh-btn" style="min-height:38px" data-do="routeto"' + (BUSY ? ' disabled' : '') + '>Route for approval</button></div>';
+    if (inv) h += '<p class="note">The approver codes the invoice (cost code or GL) when they approve it.</p>';
   }
   if (dec === 'reject') {
     const calcOn = rrOn(i, 'calc');
     h += '<div style="margin-top:12px"><div class="bh-label">Due to</div>'
-      + REJ.map(([k, t]) => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + k + '"' + (rrOn(i, k) ? ' checked' : '') + '> ' + esc(t) + '</label>'
+      + (inv ? REJ_INV : REJ).map(([k, t]) => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + k + '"' + (rrOn(i, k) ? ' checked' : '') + '> ' + esc(t) + '</label>'
         + (k === 'calc' && calcOn ? '<div style="margin-left:24px">' + CALC.map(([c, ct]) => '<label class="ck" style="padding:4px 0;font-size:12.5px"><input type="checkbox" data-rr="' + c + '"' + (rrOn(i, c) ? ' checked' : '') + '> ' + esc(ct) + '</label>').join('') + '</div>' : '')).join('')
-      + '<textarea id="rejNote" placeholder="Anything else the trade partner should fix" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:8px;box-sizing:border-box">' + esc(i.rn || '') + '</textarea>'
+      + '<textarea id="rejNote" placeholder="Anything else the ' + tp + ' should fix" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:8px;box-sizing:border-box">' + esc(i.rn || '') + '</textarea>'
       + '<div class="bh-label" style="margin-top:12px">Email preview</div><div class="em" id="rejPrev">' + mailHTML(rejMail(i)) + '</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="bh-btn" style="min-height:38px" data-do="rejsend"' + (BUSY ? ' disabled' : '') + '>Reject and send</button>'
       + '<button class="bh-btn-outline" style="min-height:38px" data-do="rejoutlook"' + (BUSY ? ' disabled' : '') + '>Reject and open in Outlook to add attachments</button></div>'
-      + '<p class="note">Sent from payables@ as a reply to their email, tagged [' + i.id + ']. Moves to Corrections; no PM involved.</p></div>';
+      + '<p class="note">Sent from payables@ as a reply to their email, tagged [' + i.id + ']. Moves to Corrections; no ' + who + ' involved.</p></div>';
   }
   return h + '</div>';
 }
 /* the PM email for "Route to PM with notes" - a NEW message from payables@, never a reply
    on the trade partner's thread */
 function pmMail(i, to, text){
+  if (isInv(i)) return { to, subject: 'Invoice to review: ' + i.no + ' – ' + i.v + ' [' + i.id + ']',
+    body: 'Hi ' + P(to).n.split(' ')[0] + ',\n\n' + i.v + ' · ' + i.no + (i.amtKnown ? ' · ' + money(i.amt) : '') + (i.f.DueDate ? ' · due ' + usDate(String(i.f.DueDate).slice(0, 10)) : '') + '\n\n' + text
+      + '\n\nPlease code it (cost code or GL) when you approve it in the AP Desk: ' + location.origin + '/ap/  (' + i.id + ')\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Accounting · Bailey-Harris Construction' };
   return { to, subject: 'Pay app review: ' + i.no + ' – ' + (i.job ? i.job + ' ' + jobName(i.job) : i.v) + ' [' + i.id + ']',
     body: 'Hi ' + P(to).n.split(' ')[0] + ',\n\n' + i.v + ' · ' + i.no + (i.f.PeriodEnding ? ' · period ending ' + usDate(String(i.f.PeriodEnding).slice(0, 10)) : '') + (i.amtKnown ? ' · balance due ' + money(i.amt) : '') + '\n\n' + text
       + '\n\nIt is waiting for you in the AP Desk: ' + location.origin + '/ap/  (' + i.id + ')\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Accounting · Bailey-Harris Construction' };
@@ -1282,6 +1305,7 @@ function ledger(i){
 }
 /* the email: full Attachment G wording, built from the ticked reasons */
 function rejMail(i){
+  if (isInv(i)) return rejMailInv(i);
   const box = document.querySelectorAll('[data-rr]');
   const keys = box.length ? [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr) : (i.rr || REJ.concat(CALC).map(x => x[0]).filter(k => preTick(i, k)));
   const subs = keys.includes('calc') ? CALC.filter(c => keys.includes(c[0])) : [];
@@ -1293,6 +1317,17 @@ function rejMail(i){
       + REJ.filter(r => keys.includes(r[0])).map(r => '• ' + r[2] + (r[0] === 'calc' ? subs.map(c => '\n   – ' + c[2]).join('') : '')).join('\n') + (note ? '\n• ' + note : '')
       + '\n\nPlease correct it and resubmit to payables@baileyharris.com on Attachment G, keeping [' + i.id + '] in the subject so it is matched to this application.\n\nThank you,\nAccounting · Bailey-Harris Construction',
     reasons: rs, note };
+}
+function rejMailInv(i){
+  const box = document.querySelectorAll('[data-rr]');
+  const keys = box.length ? [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr) : (i.rr || REJ_INV.map(x => x[0]).filter(k => preTick(i, k)));
+  const pick = REJ_INV.filter(r => keys.includes(r[0]));
+  const note = (((document.getElementById('rejNote') || {}).value) ?? i.rn ?? '').trim();
+  return { to: '', subject: 'Corrected invoice needed: ' + i.no + ' – ' + i.v + ' [' + i.id + ']',
+    body: 'Hello ' + i.v + ',\n\nWe can’t process ' + i.no + (i.amtKnown ? ' (' + money(i.amt) + ')' : '') + ' as submitted:\n'
+      + pick.map(r => '• ' + r[2]).join('\n') + (note ? '\n• ' + note : '')
+      + '\n\nPlease send a corrected invoice to payables@baileyharris.com, keeping [' + i.id + '] in the subject.\n\nThank you,\nAccounting · Bailey-Harris Construction',
+    reasons: pick.map(r => r[1]), note };
 }
 function corrMail(i, text){
   return { to: i.vendorEmail || '', cc: LIVE.me ? LIVE.me.email : '', subject: 'Correction needed: ' + i.no + ' – ' + (i.job ? i.job + ' ' + jobName(i.job) : i.v) + ' [' + i.id + ']',
@@ -1557,7 +1592,8 @@ function act(k){
     const a = (document.getElementById('tAssign') || {}).value; if (!a) { toast('Choose the PM'); return; }
     const t = ((document.getElementById('pmNote') || {}).value || '').trim(); if (!t) { toast('Write the notes for the PM'); return; }
     i.pmn = t; const m = pmMail(i, a, t), win = k === 'routenotesoutlook' ? outlookTab() : null;
-    run(async () => { if (await saveRow(i, { Status:'with PM', AssignedApprover:a, DocType: 'pay app', BlockingIssues: JSON.stringify(i.flags) },
+    const ohN = !i.job && DEPTS.some(d => d[0] === a);
+    run(async () => { if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:a, DocType: isInv(i) ? 'invoice' : 'pay app', BlockingIssues: JSON.stringify(i.flags) }, ohN ? { JobNumber:'GL' } : {}),
         { s:'with PM', note:'Routed to ' + P(a).n + ' with notes: ' + t })) {
         const fresh = INVrow(i); i.pmn = ''; i.dec = '';
         if (fresh) await deliver(fresh, m, false, k === 'routenotes' ? 'send' : 'outlook', 'Notes emailed to ' + P(a).n, win); else if (win) win.close();
@@ -1595,10 +1631,13 @@ function act(k){
       if (fresh) await deliver(fresh, m, null, k === 'rejsend' ? 'send' : 'outlook', 'Rejection email', win); else if (win) win.close(); } else if (win) win.close(); });
     return; }
   if (k === 'approve') { if (!mySeat(i)) return;
-    if (!['valid','contract','progress','ret'].every(c => i.checks[c])) { toast('Tick the four PM checks first'); return; }
+    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the checks first'); return; }
+    if (isInv(i) && !String(i.f.CostCode || '').trim()) { toast('Code the invoice first — Change on the invoice, then Cost Code'); return; }
     run(async () => { if (await saveRow(i, { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() }, { s:'ready for entry', note:'Approved ' + money(i.amt) + '.' })) toast('Approved — Ready for entry'); });
     return; }
-  if (k === 'asnoted') { if (!mySeat(i)) return; const n = prompt('Note to carry with the approval'); if (!n) { pane(); return; }
+  if (k === 'asnoted') { if (!mySeat(i)) return;
+    if (isInv(i) && !String(i.f.CostCode || '').trim()) { toast('Code the invoice first — Change on the invoice, then Cost Code'); return; }
+    const n = prompt('Note to carry with the approval'); if (!n) { pane(); return; }
     run(async () => { if (await saveRow(i, { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() }, { s:'ready for entry', asNoted:true, note:n })) toast('Approved as noted'); });
     return; }
   if (k === 'return') { if (!mySeat(i)) return; const n = prompt('What should Accounting fix?'); if (!n) { pane(); return; }
