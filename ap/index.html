@@ -379,6 +379,8 @@ async function loadLive(){
   LIVE.cMeta = cm; LIVE.commitments = cm.commitments || [];
   LIVE.expected = await file('ap_payapp_expected.json');
   LIVE.ceInv = await file('ap_ce_invoices.json');
+  LIVE.gl = await glAccounts(tok, drive.id);
+  LIVE.cc = await file('ap_cost_codes.json');
   LIVE.byNum = {}; LIVE.byKey = {}; LIVE.pmName = {}; LIVE.jobs = {};
   for (const c of LIVE.commitments) {
     LIVE.byNum[String(c.number||'').trim().toUpperCase()] = c;
@@ -654,7 +656,8 @@ function draw(){
         if (i.isMsg) chips.push('<span class="bh-chip sm">Email</span>');
         if (i.type === 'Invoice') chips.push('<span class="bh-chip sm">Invoice</span>');
         h += '<div class="ap-row' + (SEL === i.id ? ' is-sel' : '') + '" tabindex="0" data-id="' + i.id + '">'
-          + '<span class="selc">' + (acctSeat() && s.k === 'triage' && !i.isMsg ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
+          + '<span class="selc">' + (acctSeat() && s.k === 'triage' && !i.isMsg ? (bulkReady(i) ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">'
+            : '<input type="checkbox" disabled title="Pay apps with flags or missing details are routed one at a time — open it and use the Triage decision" aria-label="Route ' + esc(i.v) + ' on its own">') : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
           + '<div class="ap-amt">' + (i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
@@ -929,8 +932,10 @@ function pane(){
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
-      else if (i.sec === 'pm') h += '<h3>' + (isInv(i) ? 'Approver checks' : 'PM checks') + '</h3>' + CHECKS(i)
-        .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
+      else if (i.sec === 'pm' && mySeat(i)) h += '<h3>' + (isInv(i) ? 'Approver checks' : 'PM checks') + '</h3>' + CHECKS(i)
+        .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('');
+      else if (i.sec === 'pm') h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>With ' + esc(P(i.assign).n) + ' to approve</b>'
+        + (LIVE.me && i.assign === LIVE.me.email ? 'It is assigned to you. <a href="#" data-do="asme">Review it as the approver</a> to tick the checks and approve.' : 'Only ' + esc(P(i.assign).n) + ' can tick the checks and approve it.') + '</div>';
     }
     if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (!(isAcct() && i.math) && canSplit(i) ? splitLink(i) + ' · ' : '') + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
@@ -1016,6 +1021,49 @@ function explainDiffs(i){
    The PDF is fetched through Graph with the desk's own sign-in (Sites.Selected on the
    APDesk site) and shown from a blob URL - SharePoint refuses to be framed directly.
    Accounting edits every field in place; the approver can set cost code and description. */
+/* ---- GL accounts (22 Oct 2026) -------------------------------------------------------
+   The chart of accounts as exported from CE, saved once as gl_accounts.csv in APData
+   (columns Account, Name, Status, Type). Re-export and overwrite the file when it changes;
+   the desk reads it on every load. Inactive accounts are left out of the pick list. */
+function csvRows(t){
+  const out = []; let row = [], cur = '', q = false;
+  for (let k = 0; k < t.length; k++) { const ch = t[k];
+    if (q) { if (ch === '"') { if (t[k + 1] === '"') { cur += '"'; k++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true; else if (ch === ',') { row.push(cur); cur = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && t[k + 1] === '\n') k++; row.push(cur); out.push(row); row = []; cur = ''; }
+    else cur += ch; }
+  if (cur !== '' || row.length) { row.push(cur); out.push(row); }
+  return out.filter(r => r.some(x => String(x).trim()));
+}
+async function glAccounts(tok, driveId){
+  try {
+    const r = await fetch(GRAPH + '/drives/' + driveId + '/root:/gl_accounts.csv:/content', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return [];
+    const rows = csvRows((await r.text()).replace(/^\uFEFF/, '')); if (!rows.length) return [];
+    const hd = rows[0].map(x => String(x).trim().toLowerCase()), ix = n => hd.indexOf(n);
+    const a = ix('account'), nm = ix('name'), st = ix('status'), ty = ix('type');
+    if (a < 0 || nm < 0) return [];
+    const order = { 'operating expenses': 0, 'cost of sales': 1, 'asset': 2, 'liability': 3 };
+    return rows.slice(1).map(r => ({ no: String(r[a] || '').trim(), name: String(r[nm] || '').trim(), active: st < 0 || /^active$/i.test(String(r[st] || '').trim()), type: ty < 0 ? '' : String(r[ty] || '').trim() }))
+      .filter(x => x.no).sort((x, y) => ((order[x.type.toLowerCase()] ?? 9) - (order[y.type.toLowerCase()] ?? 9)) || x.no.localeCompare(y.no));
+  } catch (e) { return []; }
+}
+const glName = code => { const c = String(code || '').trim().replace(/^gl\s*/i, ''); const x = (LIVE.gl || []).find(g => g.no === c || g.no === c + '.00' || g.no.replace(/\.00$/, '') === c); return x ? x.name + (x.active ? '' : ' (inactive in CE)') : ''; };
+const glList = () => '<datalist id="glList">' + (LIVE.gl || []).filter(x => x.active).map(x => '<option value="' + esc(x.no) + '">' + esc(x.name + ' · ' + x.type) + '</option>').join('') + '</datalist>';
+/* ---- Job cost codes (22 Oct 2026) ----------------------------------------------------
+   Every phase / category / cost type on the job's CE budget (ap_cost_codes.json, written by
+   the pay app position run). Stored as "01-403 O". Invoices never take Labor, Overtime,
+   Burden, Fringes (payroll) or Subcontract (pay apps): those lines are left out of the list
+   and refused if typed - the S-instead-of-O mistake. */
+const CTYPE = { 1:['L','Labor'], 2:['P','Overtime'], 3:['B','Burden'], 4:['F','Fringes'], 5:['M','Material'], 6:['S','Subcontract'], 7:['O','Other'], 8:['E','Equipment'], 10:['X','Tax Exempt Materials'], 12:['T','Temporary Labor'] };
+const CT_INV = new Set(['M','O','E','X','T']);
+const ctRef = t => (CTYPE[t] || [String(t)])[0];
+const isJobInv = i => !!i.job && i.job !== 'GL' && i.job !== 'OH';
+const jobCodes = job => (((LIVE.cc || {}).jobs || {})[job] || []);
+const ccKey = x => x.p + '-' + x.c + ' ' + ctRef(x.t);
+const ccFind = (job, code) => { const v = String(code || '').trim().toUpperCase().replace(/\s+/g, ' '); return jobCodes(job).find(x => ccKey(x).toUpperCase() === v); };
+const ccLabel = x => [x.pd, x.cd].filter(Boolean).join(' / ') + ((x.pd || x.cd) ? ' · ' : '') + (CTYPE[x.t] ? CTYPE[x.t][1] : 'type ' + x.t);
+const ccList = job => '<datalist id="ccList">' + jobCodes(job).filter(x => CT_INV.has(ctRef(x.t))).map(x => '<option value="' + esc(ccKey(x)) + '">' + esc(ccLabel(x)) + '</option>').join('') + '</datalist>';
 const PDFS = {};
 function pdfBox(i){
   const P0 = PDFS[i.id];
@@ -1025,10 +1073,10 @@ function pdfBox(i){
     : P0 === 'error' ? '<div class="iv-none">The PDF could not be shown here. ' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>'
     : '<iframe class="iv-pdf" src="' + P0 + '#view=FitH" title="' + esc(i.type) + ' PDF"></iframe>';
 }
-/* Pay app beside its PDF (22 Oct 2026): off by default so the pane stays as it is; on, the
+/* Pay app beside its PDF (22 Oct 2026): on by default; the
    drawer widens and the PDF sits to the left of the check. Wide screens only - below 1280px
    there is not room for both, and the PDF opens in a tab instead. Remembered per browser. */
-let SPLIT = store.get('apsplit') === '1';
+let SPLIT = store.get('apsplit') !== '0';   // on by default (22 Oct 2026); "Hide the PDF" turns it off for this browser
 const canSplit = i => i && i.type === 'Pay app' && !!i.f.PdfPath && window.innerWidth >= 1280;
 const splitOn = i => SPLIT && TAB === 'review' && canSplit(i);
 const splitLink = i => canSplit(i) ? '<a href="#" data-do="split">' + (splitOn(i) ? 'Hide the PDF' : 'PDF side by side') + '</a>' : '';
@@ -1057,6 +1105,8 @@ function invView(i){
     const v = f[k];
     if (v == null || v === '') return '<span class="miss">' + (k === 'CostCode' ? 'not coded' : 'not read') + '</span>';
     if (k === 'BalanceDue') return '<b>' + money(Number(v)) + '</b>';
+    if (k === 'CostCode' && glName(v)) return esc(String(v)) + '<span>' + esc(glName(v)) + '</span>';
+    if (k === 'CostCode' && isJobInv(i) && jobCodes(i.job).length) { const x = ccFind(i.job, v); return esc(String(v)) + (x ? '<span>' + esc(ccLabel(x)) + '</span>' : ' <span class="bh-chip is-warn sm">not on ' + esc(i.job) + '’s CE budget</span>'); }
     if (k === 'InvoiceDate' || k === 'DueDate') return esc(usDate(v)) + (k === 'DueDate' && String(v).slice(0, 10) < new Date().toISOString().slice(0, 10) && i.sec !== 'done' ? ' <span class="bh-chip is-bad sm">past due</span>' : '');
     return esc(String(v));
   };
@@ -1066,6 +1116,9 @@ function invView(i){
     const v = f[k] == null ? '' : f[k];
     if (k === 'InvoiceDate' || k === 'DueDate') return '<input class="bh-input" type="date" data-iv="' + k + '" value="' + esc(String(v).slice(0, 10)) + '">';
     if (k === 'BalanceDue') return '<input class="bh-input" inputmode="decimal" data-iv="' + k + '" value="' + (v === '' ? '' : Number(v).toFixed(2)) + '">';
+    const oh = !i.job || i.job === 'GL' || i.job === 'OH';
+    if (k === 'CostCode' && !oh && jobCodes(i.job).length) return '<input class="bh-input" data-iv="CostCode" list="ccList" value="' + esc(String(v)) + '" placeholder="' + esc(i.job) + ' cost code — e.g. 01-403 O">' + ccList(i.job);
+    if (k === 'CostCode' && oh && (LIVE.gl || []).length) return '<input class="bh-input" data-iv="CostCode" list="glList" value="' + esc(String(v)) + '" placeholder="GL account — type a number or name">' + glList();
     return '<input class="bh-input" data-iv="' + k + '" value="' + esc(String(v)) + '"' + (k === 'CostCode' ? ' placeholder="e.g. 25AU018.01.402 or GL"' : k === 'ServicePeriod' ? ' placeholder="e.g. 9/1/2026 – 9/30/2026"' : '') + '>';
   };
   return '<div class="iv"><div class="iv-l">' + pv + '</div><div class="iv-r"><div class="iv-h"><span class="bh-label">Invoice</span>'
@@ -1088,6 +1141,13 @@ function invSave(i){
       if (nv === ov || (nv != null && ov != null && Math.abs(nv - ov) < 0.005)) continue;
       f[k] = nv; said.push('amount ' + (ov == null ? 'not read' : money(ov)) + ' → ' + (nv == null ? 'blank' : money(nv))); continue; }
     if (k === 'InvoiceDate' || k === 'DueDate') { if (raw !== old.slice(0, 10)) { f[k] = raw || null; said.push(INV_F.find(x => x[0] === k)[1] + ' → ' + (raw ? usDate(raw) : 'blank')); } continue; }
+    if (k === 'CostCode' && raw && raw !== old) {
+      const jobNow = f.JobNumber !== undefined ? f.JobNumber : i.job;
+      const m = raw.toUpperCase().match(/\s([A-Z])$/);
+      if (jobNow && jobNow !== 'GL' && jobNow !== 'OH' && m && !CT_INV.has(m[1])) {
+        const nm = Object.values(CTYPE).find(c => c[0] === m[1]);
+        toast((nm ? m[1] + ' (' + nm[1] + ')' : m[1]) + ' isn’t used on invoices — pick the M, O, E, X or T line for this code'); return null; }
+    }
     if (raw !== old) { f[k] = raw; said.push(INV_F.find(x => x[0] === k)[1] + ' → ' + (raw || 'blank')); }
   }
   return { f, said };
@@ -1579,6 +1639,7 @@ function act(k){
     if (!acctSeat()) return;
     const a = (document.getElementById('bAssign') || {}).value; if (!a) { toast('Choose who they go to'); return; }
     const ok = INV.filter(i => BULK.has(i.id) && bulkReady(i));
+    if (!ok.length) { toast('None of these can be bulk-routed — pay apps with flags or missing details are routed one at a time from their Triage decision'); return; }
     run(async () => { let n = 0;
       for (const i of ok) { const oh = !i.job && DEPTS.some(d => d[0] === a);
         if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:a }, oh ? { JobNumber:'GL' } : {}), { s:'with PM', note:'Routed to ' + P(a).n + (P(a).dept ? ' (' + P(a).dept + ' department head)' : '') + ' — bulk, ' + ok.length + ' invoices. No CE entry created.' })) { n++; BULK.delete(i.id); } }
@@ -1591,6 +1652,7 @@ function act(k){
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
   if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k === 'asme') { if (!LIVE.me) return; WHO = LIVE.me.email; const w = $('#who'); if (w) w.value = WHO; MINE = false; BULK.clear(); draw(); pane(); return; }
   if (k === 'split') { SPLIT = !splitOn(i); store.set('apsplit', SPLIT ? '1' : '0'); pane(); return; }
   if (k === 'invedit') { i.editInv = true; pane(); return; }
   if (k === 'invx') { i.editInv = false; pane(); return; }
