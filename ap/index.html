@@ -55,6 +55,16 @@ body.no-pane .ap-pane{display:none}
 .iv-dl dd span.miss{display:inline;color:var(--bh-warn-ink,#8a6d00)}
 .iv-dl .bh-input,.iv-dl .bh-select{width:100%;min-height:30px;box-sizing:border-box;font-size:13px}
 @media (max-width:760px){.iv{grid-template-columns:1fr}.iv-pdf{height:60vh;min-height:320px}}
+.rv-act{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:12px;font-weight:600}
+.rv-act .bh-btn{min-height:30px;font-size:11px;padding:0 16px}
+.iv-r .cf{margin:0 0 18px;padding:16px 18px;border:0;background:var(--bh-surface-muted)}
+.iv-r .cf .bh-section-title{font-size:12px;margin-bottom:2px}
+.iv-r .cf textarea{min-height:44px !important;background:#fff}
+.iv-r .cf .bh-input{background:#fff}
+.iv-r .cf .ck{border:0}
+.ap-pane.wide .iv{grid-template-columns:minmax(0,1fr) 440px;gap:24px}
+.ap-pane.wide .iv-pdf{height:calc(100vh - 210px);min-height:520px}
+.ap-pane.wide .iv-r{position:sticky;top:12px;align-self:start}
 .sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
 .sp-row .bh-input{flex:1 1 auto;width:auto;min-width:0;min-height:34px;box-sizing:border-box}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
@@ -929,7 +939,7 @@ function pane(){
   if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
   if (TAB === 'review' && i.math && !i.isMsg && (!acctView || i.showPc)) h += summaryBox(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
-  if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF) h += reviewBox(i);
+  if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF && !isInv(i)) h += reviewBox(i);
   if (TAB === 'review') {
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note && !i.math) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
@@ -965,7 +975,7 @@ function pane(){
   }
   if (splitOn(i)) h = h.slice(0, bodyAt) + '<div class="sp"><div class="sp-l">' + pdfBox(i) + '</div><div class="sp-r">' + h.slice(bodyAt) + '</div></div>';
   h += '</div>';
-  $('#pane').classList.toggle('wide', splitOn(i));
+  $('#pane').classList.toggle('wide', splitOn(i) || invWide(i));
   $('#pane').innerHTML = h;
 }
 function coNote(A, span){
@@ -1084,6 +1094,8 @@ function pdfBox(i){
 let SPLIT = store.get('apsplit') !== '0';   // on by default (22 Oct 2026); "Hide the PDF" turns it off for this browser
 const canSplit = i => i && i.type === 'Pay app' && !!i.f.PdfPath && window.innerWidth >= 1280;
 const splitOn = i => SPLIT && TAB === 'review' && canSplit(i);
+/* invoices open wide on a wide screen (22 Oct 2026): the PDF needs the room */
+const invWide = i => i && i.type === 'Invoice' && TAB === 'review' && window.innerWidth >= 1280;
 const splitLink = i => canSplit(i) ? '<a href="#" data-do="split">' + (splitOn(i) ? 'Hide the PDF' : 'PDF side by side') + '</a>' : '';
 const moreFiles = (i, sep) => (i.files || []).map(x => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Also attached to the email">' + esc(x.name) + '</a>').join(sep);
 async function loadPdf(i){
@@ -1098,7 +1110,7 @@ async function loadPdf(i){
   } catch (e) { PDFS[i.id] = 'error'; }
   if (SEL === i.id) pane();
 }
-const INV_F = [['job','Job Info'],['Vendor','Vendor'],['InvoiceDate','Inv Date'],['PayRequest','Inv #'],['BalanceDue','Amt'],
+const INV_F = [['job','Job Info'],['Vendor','Vendor'],['InvoiceDate','Inv Date'],['PayRequest','Inv #'],['Subcontract','PO #'],['BalanceDue','Amt'],
                ['CostCode','Cost Code'],['InvoiceDescription','Description'],['ServicePeriod','Period'],['DueDate','Due Date']];
 function invView(i){
   const f = i.f, all = acctSeat() && i.sec !== 'done', appr = mySeat(i) && i.sec !== 'done';
@@ -1108,8 +1120,9 @@ function invView(i){
   const show = k => {
     if (k === 'job') return i.job ? '<b>' + esc(i.job === 'GL' || i.job === 'OH' ? 'Overhead' : i.job) + '</b>' + (i.job !== 'GL' && i.job !== 'OH' ? '<span>' + esc(jobName(i.job)) + '</span>' + (((JOBS[i.job] || {}).team || []).length ? '<span>PM ' + esc(JOBS[i.job].team.map(e => P(e).n).join(', ')) + '</span>' : '') : '') : '<span class="miss">not set</span>';
     const v = f[k];
-    if (v == null || v === '') return '<span class="miss">' + (k === 'CostCode' ? 'not coded' : 'not read') + '</span>';
+    if (v == null || v === '') return '<span class="miss">' + (k === 'CostCode' ? 'not coded' : k === 'Subcontract' ? 'none' : 'not read') + '</span>';
     if (k === 'BalanceDue') return '<b>' + money(Number(v)) + '</b>';
+    if (k === 'Subcontract') { const c = (LIVE.commitments || []).find(x => String(x.number).toUpperCase() === String(v).toUpperCase()); return esc(String(v)) + (c ? '<span>' + esc([c.vendor, c.title].filter(Boolean).join(' · ')) + '</span>' : ''); }
     if (k === 'CostCode' && /;/.test(String(v))) return String(v).split(/\s*;\s*/).map(x => esc(x)).join('<br>');
     if (k === 'CostCode' && glName(v)) return esc(String(v)) + '<span>' + esc(glName(v)) + '</span>';
     if (k === 'CostCode' && isJobInv(i) && jobCodes(i.job).length) { const x = ccFind(i.job, v); return esc(String(v)) + (x ? '<span>' + esc(ccLabel(x)) + '</span>' : ' <span class="bh-chip is-warn sm">not on ' + esc(i.job) + '’s CE budget</span>'); }
@@ -1127,9 +1140,9 @@ function invView(i){
     if (k === 'CostCode' && oh && (LIVE.gl || []).length) return '<input class="bh-input" data-iv="CostCode" list="glList" value="' + esc(String(v)) + '" placeholder="GL account — type a number or name">' + glList();
     return '<input class="bh-input" data-iv="' + k + '" value="' + esc(String(v)) + '"' + (k === 'CostCode' ? ' placeholder="e.g. 25AU018.01.402 or GL"' : k === 'ServicePeriod' ? ' placeholder="e.g. 9/1/2026 – 9/30/2026"' : '') + '>';
   };
-  return '<div class="iv"><div class="iv-l">' + pv + '</div><div class="iv-r"><div class="iv-h"><span class="bh-label">Invoice</span>'
+  return '<div class="iv"><div class="iv-l">' + pv + '</div><div class="iv-r">' + (i.sec === 'pm' && mySeat(i) && !CF ? reviewBox(i) : '') + '<div class="iv-h"><span class="bh-label">Invoice</span>'
     + ((all || appr) && !ed ? '<button class="xp-mini" data-do="invedit">Change</button>' : '') + '</div><dl class="iv-dl">'
-    + INV_F.map(([k, t]) => '<dt>' + t + '</dt><dd>' + (ed && can(k) ? input(k) : show(k)) + '</dd>').join('') + '</dl>'
+    + INV_F.filter(([k]) => !(i.sec === 'pm' && mySeat(i) && (k === 'CostCode' || k === 'Subcontract'))).map(([k, t]) => '<dt>' + t + '</dt><dd>' + (ed && can(k) ? input(k) : show(k)) + '</dd>').join('') + '</dl>'
     + (ed ? '<div class="ac-ed"><button class="bh-btn" style="min-height:32px;font-size:11px" data-do="invsave"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="xp-mini" data-do="invx">Cancel</button></div>' : '')
     + (i.note ? '<p class="note" style="margin-top:8px">' + esc(i.note) + '</p>' : '')
     + '<p class="note" style="margin-top:10px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? (i.pdf ? ' · ' : '') + '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>'
@@ -1168,7 +1181,20 @@ const splitOf = v => { const s = String(v || '').trim(); if (!s) return [{ code:
   const parts = s.split(/\s*;\s*/).filter(Boolean);
   if (parts.length < 2) return [{ code: s, amt: '' }];
   return parts.map(p => { const m = p.match(/^(.*?)\s+\$?(-?[\d,]+(?:\.\d{1,2})?)$/); return m ? { code: m[1].trim(), amt: m[2].replace(/,/g, '') } : { code: p, amt: '' }; }); };
+/* POs (22 Oct 2026): an invoice billed against a purchase order has to be entered in CE
+   against that PO. The PO # comes from the invoice when the pull read one (Subcontract), or
+   the approver ticks "Tied to a PO" and picks from the job's POs (Procore 300-series). */
+const jobPOs = job => (LIVE.commitments || []).filter(c => c.project_number === job && /^3/.test(String(c.number || '')));
+const poList = job => '<datalist id="poList">' + jobPOs(job).map(c => '<option value="' + esc(c.number) + '">' + esc([c.vendor, c.title].filter(Boolean).join(' · ') + (c.remaining_balance != null ? ' · ' + money(Number(c.remaining_balance)) + ' left' : '')) + '</option>').join('') + '</datalist>';
+function poGuess(i){
+  if (i.po) return i.po;
+  const v = String(i.v || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2)[0] || '';
+  const hits = v ? jobPOs(i.job).filter(c => String(c.vendor || '').toLowerCase().includes(v)) : [];
+  return hits.length === 1 ? String(hits[0].number) : '';
+}
 function keepReview(i){
+  const po = document.getElementById('poOn'); if (po) i.poOn = po.checked;
+  const pp = document.getElementById('poPick'); if (pp) i.poSel = pp.value.trim();
   const rows = [...document.querySelectorAll('[data-sp-code]')];
   if (rows.length) i.split = rows.map(el => ({ code: el.value.trim(), amt: ((document.querySelector('[data-sp-amt="' + el.dataset.spCode + '"]') || {}).value || '').trim() }));
   const n = document.getElementById('revNote'); if (n) i.revNote = n.value;
@@ -1186,14 +1212,22 @@ function reviewBox(i){
       + (oh ? glList() : ccList(i.job))
       + '<p class="note" style="margin:4px 0 0">' + (many ? 'Lines total ' + money(sum) + (i.amtKnown ? (Math.abs(left) < 0.005 ? ' <span class="bh-chip is-ok sm">= invoice</span>' : ' <span class="bh-chip is-bad sm">' + (left > 0 ? money(left) + ' left' : money(-left) + ' over') + '</span>') : '') + ' · ' : '')
       + '<a href="#" data-do="spadd">' + (many ? 'Add a line' : 'Split across codes') + '</a></p>';
+    if (!oh) {
+      if (i.poOn == null) i.poOn = !!i.po;
+      if (i.poSel == null) i.poSel = poGuess(i);
+      h += '<label class="ck" style="padding:8px 0 0;border:0"><input type="checkbox" id="poOn"' + (i.poOn ? ' checked' : '') + '> Tied to a PO' + (i.po ? ' <span class="note" style="margin:0">(read off the invoice)</span>' : '') + '</label>'
+        + (i.poOn ? '<input class="bh-input" id="poPick" list="poList" style="width:100%;min-height:34px;box-sizing:border-box;margin-top:4px" value="' + esc(i.poSel || '') + '" placeholder="PO # — ' + jobPOs(i.job).length + ' on ' + esc(i.job) + '">' + poList(i.job) : '');
+    }
   }
-  h += '<div class="bh-label" style="margin-top:14px">Checks</div>' + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('')
-    + '<label class="bh-label" style="display:block;margin-top:12px" for="revNote">Note to Accounting <span style="text-transform:none;font-weight:400">(optional for approval, required to return)</span></label>'
+  if (CHECKS(i).length) h += '<div class="bh-label" style="margin-top:14px">Checks</div>' + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('');
+  h += '<label class="bh-label" style="display:block;margin-top:12px" for="revNote">Note to Accounting <span style="text-transform:none;font-weight:400">(' + (inv ? 'optional; needed to return' : 'optional for approval, required to return') + ')</span></label>'
     + '<textarea id="revNote" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="' + (inv ? 'e.g. Half of this is for 25AU010 — split as shown.' : 'e.g. Pay as submitted; CO #6 will be on next month’s app.') + '">' + esc(i.revNote || '') + '</textarea>'
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="bh-btn" style="min-height:38px" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
-    + (inv ? '<button class="bh-btn-outline" style="min-height:38px" data-do="askvendor">Ask the vendor</button>' : '<button class="bh-btn-outline" style="min-height:38px" data-do="corr">Request correction from trade partner</button>')
-    + '<button class="bh-btn-outline" style="min-height:38px" data-do="revreturn"' + (BUSY ? ' disabled' : '') + '>Return to Accounting</button></div>'
-    + (inv ? '<p class="note">Ask the vendor opens an email in your own Outlook with payables@ copied, so their reply lands on this invoice.</p>' : '')
+    + (inv ? '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+        + '<a href="#" data-do="askvendor" title="Opens an email in your own Outlook with payables@ copied, so the reply lands on this invoice">Ask the vendor</a>'
+        + '<a href="#" data-do="revreturn">Return to Accounting</a></div>'
+      : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="bh-btn" style="min-height:38px" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+        + '<button class="bh-btn-outline" style="min-height:38px" data-do="corr">Request correction from trade partner</button>'
+        + '<button class="bh-btn-outline" style="min-height:38px" data-do="revreturn"' + (BUSY ? ' disabled' : '') + '>Return to Accounting</button></div>')
     + '</div>';
   return h;
 }
@@ -1377,8 +1411,8 @@ const REJ_INV = [['notours','Not addressed to Bailey-Harris','The invoice is not
   ['amt','Amount is incorrect','The amount does not match what was ordered or quoted.']];
 const isInv = i => i.type === 'Invoice';
 /* the approver's checks before approving - an invoice is coded by the approver */
-const CHECKS = i => isInv(i)
-  ? [['recv','Goods or services were received'],['amt','Amount is correct']]
+ const CHECKS = i => isInv(i)
+  ? []   // 22 Oct 2026: no checks on invoices - coding is the review
   : [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']];
 function assignOptions(i, cur){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
@@ -1723,9 +1757,12 @@ function act(k){
     keepReview(i);
     if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the checks first'); return; }
     const f = { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() };
-    if (isInv(i)) { const code = revCoding(i); if (!code) return; f.CostCode = code; }
+    if (isInv(i)) { const code = revCoding(i); if (!code) return; f.CostCode = code;
+      if (isJobInv(i)) { const po = i.poOn ? (i.poSel || '').toUpperCase() : '';
+        if (i.poOn && !po) { toast('Pick the PO, or untick Tied to a PO'); return; }
+        if (po !== String(i.po || '').toUpperCase()) f.Subcontract = po; } }
     const note = (i.revNote || '').trim();
-    run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + '.' }, note ? { asNoted:true } : {}))) { i.revNote = ''; toast('Approved — Ready for entry'); } });
+    run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + (isInv(i) && i.poOn && i.poSel ? ', PO ' + i.poSel.toUpperCase() : '') + '.' }, note ? { asNoted:true } : {}))) { i.revNote = ''; toast('Approved — Ready for entry'); } });
     return; }
   if (k === 'revreturn') { if (!mySeat(i)) return; keepReview(i); const n = (i.revNote || '').trim();
     if (!n) { toast('Say why in the note to Accounting — not yours, or your question'); const t = $('#revNote'); if (t) t.focus(); return; }
@@ -1942,6 +1979,7 @@ function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('ar
   $('#q').placeholder = v === 'exp' ? 'Search vendor, job, commitment #' : 'Search vendor, job, invoice #'; draw(); }
 $('#vQ').addEventListener('click', () => setView('queue'));
 $('#vE').addEventListener('click', () => setView('exp'));
+document.addEventListener('change', e => { if (e.target.id === 'poOn') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
 document.addEventListener('change', e => { if (e.target.id === 'xPer') { XPER = e.target.value === curPeriod() ? '' : e.target.value; draw(); } });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('wi-')) { const b = e.target.parentNode.querySelector('[data-wi]'); if (b) b.click(); return; }
   if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('ctd-')) { const b = e.target.parentNode.querySelector('[data-ctd]'); if (b) b.click(); } });
