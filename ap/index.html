@@ -162,6 +162,12 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
 .mt.ac .ck2{display:block;margin-top:3px}
 .mt.ac .ck2:empty{display:none}
 .ac-links{margin-left:auto;display:flex;gap:12px;font-size:12px;font-weight:600}
+.mt.ac .ac-in{width:118px;min-height:28px;border:1px solid var(--bh-slate);padding:0 6px;font:13px var(--bh-font);text-align:right;box-sizing:border-box}
+.mt.ac th .xp-mini{margin-left:6px}
+.ac-ed{display:flex;gap:8px;align-items:center;margin-top:8px}
+.ac-per .pr{margin-left:12px}
+.dec{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dec .ap-tog{flex:1 1 150px;min-height:38px}
 .ac-notes{font-size:12px;line-height:1.55;background:var(--bh-surface-muted);padding:8px 10px;margin-top:8px}
 .sm-box{border:1px solid var(--bh-hairline);border-left:4px solid var(--bh-black);padding:12px 14px;margin:0 0 14px;background:#fff}
 .sm-box.ok{border-left-color:var(--bh-ok-ink,#1e6b34)}.sm-box.warn{border-left-color:var(--bh-warn-ink)}.sm-box.bad{border-left-color:var(--bh-bad-ink)}
@@ -472,6 +478,7 @@ function toItem(row){
   if (!jobNo && !isMsg) i.missing.push('project');
   if (pay && !sub) i.missing.push('subcontract #');
   if (pay && /not on attachment g/i.test(note)) i.missing.push('Attachment G');
+  if (pay && !f.PeriodEnding) i.missing.push('period ending');
   /* the pay application check */
   if (pay && figs) {
     const A = coAsOf(c, payAsOf(f));
@@ -891,8 +898,8 @@ function pane(){
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note && !i.math) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
     if (i.flags.length && !i.math) h += '<div class="flags"><b>Flags</b>' + i.flags.map(esc).join('<br>') + '</div>';
-    if (i.math && (!acctView || i.showPc)) h += payCheck(i);
-    else if (i.type === 'Pay app') h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
+    if (i.math && !acctView) h += payCheck(i);
+    else if (i.type === 'Pay app' && !i.math) h += '<p class="note">No pay application figures were read off this document. Open the PDF to check it.</p>';
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
@@ -996,53 +1003,63 @@ function cePeriod(i){
   return { per, base, cos: sum(inP), adj: Math.round((base + sum(inP)) * 100) / 100, after, notAppr, hasDates };
 }
 function acctCheck(i){
+  /* 22 Oct 2026 (2nd pass): three columns - pay app, CE, Procore - with the difference as a
+     signed amount (pay app minus that figure). Period ending + PR # and the pay app figures
+     are edited in place, not on the Details tab. */
   const m = i.math, f = i.f, L = i.ledger || {}, P = cePeriod(i), R = retRule(i.c);
-  const per = payAsOf(f), perSrc = f.PeriodEnding ? '' : ' (date received — no period read)';
-  const ok = (a, b) => a == null || b == null ? '' : dif(a, b) ? '<span class="bh-chip is-bad sm">' + money(Math.abs(a - b)) + ' off</span>' : '<span class="bh-chip is-ok sm">✓</span>';
+  const per = payAsOf(f), canEd = acctSeat() && i.sec !== 'done';
   const v = x => x == null ? '<span class="note" style="margin:0">not read</span>' : money(x);
+  const dash = '<span class="note" style="margin:0">—</span>';
+  const sd = (a, b) => { if (a == null || b == null) return ''; if (!dif(a, b)) return '<span class="bh-chip is-ok sm">✓</span>';
+    const d = Math.round((a - b) * 100) / 100; return '<span class="bh-chip is-bad sm" title="Pay app minus this figure">' + (d > 0 ? '+' : '−') + money(Math.abs(d)) + '</span>'; };
   const keyedF = new Set((i.log || []).flatMap(e => e.keyed || []));
-  const retCe = R && P && m.complete != null ? Math.round((R.thru50 ? Math.min(m.complete, P.adj / 2) : m.complete) * R.p) / 100 : null;
-  const due = m.complete != null && m.ret != null && m.prev[0] != null ? Math.round((m.complete - m.ret - m.prev[0]) * 100) / 100 : null;
-  const row = (t, a, b, note, c) => '<tr' + (a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td>' + t + (note ? '<span style="display:block;font-size:11px;color:var(--bh-ink-muted)">' + note + '</span>' : '') + '</td><td>' + v(a) + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '</td><td>' + (c != null ? c : ok(a, b)) + '</td></tr>';
-  let h = '<div class="ac-per"><span class="bh-label">Period ending</span> ';
-  if (acctSeat() && i.sec !== 'done' && i.editPer) h += '<input type="date" id="perIn" value="' + esc(per) + '"> <button class="bh-btn" style="min-height:30px;font-size:11px" data-do="persave">Save</button> <button class="xp-mini" data-do="perx">Cancel</button>';
-  else h += '<b>' + esc(usDate(per)) + '</b>' + esc(perSrc) + (acctSeat() && i.sec !== 'done' ? ' <button class="xp-mini" data-do="peredit">Change</button>' : '');
-  h += (i.note ? ' <span class="bh-chip is-warn sm" title="' + esc(i.note) + '">Read by OCR — check figures against the PDF</span>' : '')
-    + '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (acctSeat() && i.sec !== 'done' ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
-  if (!P) return h + '<p class="note">No CE Subcontractor Detail for ' + esc(i.po || 'this subcontract') + ' in the ledger' + ledgerAsOf() + '.</p>';
-  /* Attachment G lines in form order, each beside the Subcontractor Detail column it is read
-     against. "Earlier invoices" = every CE invoice on this subcontract except this pay request. */
+  let h = '<div class="ac-per">';
+  if (canEd && i.editPer) h += '<span class="bh-label">Period ending</span> <input type="date" id="perIn" value="' + esc(f.PeriodEnding ? String(f.PeriodEnding).slice(0, 10) : '') + '">'
+    + '<span class="bh-label pr">PR #</span> <input id="prIn" value="' + esc(f.PayRequest || '') + '" style="width:70px">'
+    + ' <button class="bh-btn" style="min-height:30px;font-size:11px" data-do="persave">Save</button> <button class="xp-mini" data-do="perx">Cancel</button>';
+  else h += '<span class="bh-label">Period ending</span> <b>' + (f.PeriodEnding ? esc(usDate(per)) : 'not read') + '</b>' + (f.PeriodEnding ? '' : ' <span class="note" style="margin:0">(using received ' + esc(usDate(per)) + ')</span>')
+    + '<span class="bh-label pr">PR #</span> <b>' + esc(f.PayRequest || '—') + '</b>' + (canEd ? ' <button class="xp-mini" data-do="peredit">Change</button>' : '');
+  h += (i.note ? ' <span class="bh-chip is-warn sm" title="' + esc(i.note) + '">Read by OCR — check against the PDF</span>' : '')
+    + '<span class="ac-links">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + (canEd ? '<a href="#" data-do="acedit">Edit details</a>' : '') + '</span></div>';
   const thisSet = new Set(L.thisApp || []), prior = ((L.led && L.led.invoices) || []).filter(x => !thisSet.has(x));
   const sumOf = k => Math.round(prior.reduce((t, x) => t + (Number(x[k]) || 0), 0) * 100) / 100;
   const ceTot = sumOf('total'), ceRet = sumOf('retention');
+  const sumThis = k => (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x[k]) || 0), 0) * 100) / 100 : null;
+  const thisTot = sumThis('total'), thisRet = sumThis('retention'), inCe = sumThis('payable');
+  const retCe = R && P && m.complete != null ? Math.round((R.thru50 ? Math.min(m.complete, P.adj / 2) : m.complete) * R.p) / 100 : null;
+  const due = m.complete != null && m.ret != null && m.prev[0] != null ? Math.round((m.complete - m.ret - m.prev[0]) * 100) / 100 : null;
   const earned = m.complete != null && m.ret != null ? Math.round((m.complete - m.ret) * 100) / 100 : null;
-  const inCe = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.payable) || 0), 0) * 100) / 100 : null;
-  const line = (n, g, ce, a, b, note, chk, fk) => '<tr' + (chk !== '' && a != null && b != null && dif(a, b) ? ' class="flag"' : '') + '><td><span class="ag">' + n + '</span>' + g + '<span class="ce">' + ce + '</span>' + (note ? '<span class="nt">' + note + '</span>' : '') + '</td><td>' + v(a) + (fk && keyedF.has(fk) ? '<span class="ky">keyed</span>' : '') + '</td><td>' + (b == null ? '<span class="note" style="margin:0">—</span>' : money(b)) + '<span class="ck2">' + (chk != null ? chk : ok(a, b)) + '</span></td></tr>';
-  /* Labels as Tiffany set them (22 Oct): short Attachment G name | CE Subcontractor Detail column. */
-  const thisTot = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.total) || 0), 0) * 100) / 100 : null;
-  const thisRet = (L.thisApp || []).length ? Math.round(L.thisApp.reduce((t, x) => t + (Number(x.retention) || 0), 0) * 100) / 100 : null;
-  const ce4 = thisTot != null ? Math.round((ceTot + thisTot) * 100) / 100 : null;
-  const ce5 = thisRet != null ? Math.round((ceRet + thisRet) * 100) / 100 : retCe;
-  h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app</th><th>CE</th></tr></thead><tbody>'
-    + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P.base, '', undefined, 'OriginalContract')
-    + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P.cos, 'approved in CE by ' + usDate(per) + (P.hasDates ? '' : ' — approval dates arrive with the next ledger'), undefined, 'ChangeOrders')
-    + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P.adj, '', undefined, 'AdjustedContract')
-    + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total (prev. invoices plus this period)', m.complete, ce4,
-        'prev. ' + money(ceTot) + (thisTot != null ? ' + this invoice ' + money(thisTot) : ' · not in CE yet · this period on the pay app ' + (m.complete != null ? money(m.complete - ceTot) : '—')) + (i.ctdBy ? ' · keyed by ' + esc(i.ctdBy) : ''), thisTot == null ? '' : undefined)
-    + line(5, 'Retainage', 'Invoiced Retention (prev. invoices, plus retainage rule)', m.ret, ce5,
-        'prev. ' + money(ceRet) + (thisRet != null ? ' + this invoice ' + money(thisRet) : ' + ' + (R ? esc(R.text) : 'no') + ' rule'))
-    + line(6, 'Earned less retainage', 'Invoiced Payable to Date', earned, L.exists ? Math.round((L.prior + (inCe != null ? inCe : (m.due || 0))) * 100) / 100 : null)
-    + line(7, 'Less Prev. Pmts.', 'Previous Invoiced Payable', m.prev[0], L.exists ? L.prior : null, '', undefined, 'PreviousPayments')
-    + line(8, '<b>Balance Due</b>', 'Invoiced Payable' + (inCe != null ? ' (this invoice, in CE)' : ''), m.due, inCe != null ? inCe : due, inCe != null ? '' : 'not in CE yet — pay app worked through', undefined, 'BalanceDue')
-    + '</tbody></table>';
+  const ed = canEd && i.editFig;
+  const line = (n, g, ceL, a, b, c, note, fk) => {
+    const bad = (a != null && b != null && dif(a, b)) || (a != null && c != null && dif(a, c));
+    const pay = ed && fk ? '<input class="ac-in" inputmode="decimal" data-fig="' + fk + '" value="' + (f[fk] == null || f[fk] === '' ? '' : Number(f[fk]).toFixed(2)) + '" placeholder="not read">'
+      : (fk || a != null ? v(a) : dash) + (fk && keyedF.has(fk) ? '<span class="ky">keyed</span>' : '');
+    return '<tr' + (bad ? ' class="flag"' : '') + '><td><span class="ag">' + n + '</span>' + g + '<span class="ce">' + ceL + '</span>' + (note ? '<span class="nt">' + note + '</span>' : '') + '</td>'
+      + '<td>' + pay + '</td><td>' + (b == null ? dash : money(b)) + '<span class="ck2">' + sd(a, b) + '</span></td><td>' + (c == null ? dash : money(c)) + '<span class="ck2">' + sd(a, c) + '</span></td></tr>';
+  };
+  const n4 = thisTot != null ? money(ceTot) + ' + ' + money(thisTot) : (L.exists ? money(ceTot) + ' · this period not in CE yet' : '');
+  const n5 = L.exists || R ? money(ceRet) + ' + ' + (thisRet != null ? money(thisRet) : (R ? esc(R.text) : 'no retainage')) : '';
+  const n8 = (inCe != null ? '' : 'not in CE yet') + (due != null && m.due != null && dif(m.due, due) ? (inCe != null ? '' : ' · ') + 'lines 4 − 5 − 7 = ' + money(due) : '');
+  h += '<table class="mt ac"><thead><tr><th>Attachment G <span class="ce" style="display:inline">| CE Subcontractor Detail</span></th><th>Pay app' + (canEd && !ed ? '<button class="xp-mini" data-do="figedit">Change</button>' : '') + '</th><th>CE</th><th>Procore</th></tr></thead><tbody>'
+    + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P ? P.base : null, m.orig[1], '', 'OriginalContract')
+    + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P ? P.cos : null, m.cos[1], '', 'ChangeOrders')
+    + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P ? P.adj : null, m.adj[1], '', 'AdjustedContract')
+    + line(4, 'Completed &amp; Stored (to date)', 'Invoiced Total', m.complete, thisTot != null ? Math.round((ceTot + thisTot) * 100) / 100 : null, null, n4 + (i.ctdBy ? (n4 ? ' · ' : '') + 'keyed by ' + esc(i.ctdBy) : ''), 'CompletedToDate')
+    + line(5, 'Retainage', 'Invoiced Retention', m.ret, thisRet != null ? Math.round((ceRet + thisRet) * 100) / 100 : retCe, m.retCalc, n5, 'RetainageHeld')
+    + line(6, 'Earned less retainage', 'Invoiced Payable to Date', earned, L.exists && inCe != null ? Math.round((L.prior + inCe) * 100) / 100 : null, null, '', '')
+    + line(7, 'Less Prev. Pmts.', 'Previous Invoiced Payable', m.prev[0], L.exists ? L.prior : null, null, '', 'PreviousPayments')
+    + line(8, '<b>Balance Due</b>', 'Invoiced Payable', m.due, inCe, null, n8, 'BalanceDue')
+    + '</tbody></table>'
+    + (ed ? '<div class="ac-ed"><button class="bh-btn" style="min-height:32px;font-size:11px" data-do="figsave"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="xp-mini" data-do="figx">Cancel</button><span class="note" style="margin:0">Blank = not read</span></div>' : '');
   const notes = [];
-  if (P.after.length) notes.push('<b>Not counted — CE approved after ' + esc(usDate(per)) + ':</b> ' + P.after.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(usDate(c.date_approved)) + ')').join('; '));
-  if (P.notAppr.length) notes.push('<b>Not counted — not approved in CE:</b> ' + P.notAppr.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(c.status) + ')').join('; '));
+  if (!P) notes.push('No CE Subcontractor Detail for ' + esc(i.po || 'this subcontract') + ledgerAsOf() + '.');
+  if (P && P.after.length) notes.push('<b>Not counted — CE approved after ' + esc(usDate(per)) + ':</b> ' + P.after.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(usDate(c.date_approved)) + ')').join('; '));
+  if (P && P.notAppr.length) notes.push('<b>Not counted — not approved in CE:</b> ' + P.notAppr.map(c => 'RFC ' + esc(c.rfc) + ' ' + money(c.amount) + ' (' + esc(c.status) + ')').join('; '));
   const pp = (i.c && Array.isArray(i.c.change_orders) ? i.c.change_orders : []).filter(x => /^pending|^draft/.test(x.state || ''));
-  if (pp.length) notes.push('<b>Pending in Procore — should not be billed:</b> ' + pp.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount) + ' (' + esc(x.status) + ')').join('; '));
+  if (pp.length) notes.push('<b>Pending in Procore — not billable yet:</b> ' + pp.map(x => 'CO #' + esc(x.number) + ' ' + money(x.amount)).join('; '));
   if (notes.length) h += '<div class="ac-notes">' + notes.join('<br>') + '</div>';
   if (L.exists && (L.rows || []).length) h += '<details class="led"' + (i.showLedger ? ' open' : '') + '><summary>CE invoice history · ' + L.rows.length + ' earlier invoice' + (L.rows.length > 1 ? 's' : '') + '</summary>' + ledger(i) + '</details>';
-  h += '<p class="note" style="margin-top:6px"><a href="#" data-do="pcshow">' + (i.showPc ? 'Hide' : 'Show') + ' the Procore comparison</a></p>';
+  h += '<p class="note" style="margin-top:6px"><a href="#" data-do="pcshow">' + (i.showPc ? 'Hide' : 'Show') + ' Procore comparison notes/flags</a></p>';
   return h;
 }
 function summaryBox(i){
@@ -1101,18 +1118,23 @@ function dupOf(i){
   if (!i.po || !i.f.PayRequest) return null;
   return INV.find(x => x.id !== i.id && x.group !== i.group && x.po === i.po && digits(x.f.PayRequest) === digits(i.f.PayRequest) && x.sec !== 'triage') || null;
 }
-const REASONS = ['Adjusted contract amount does not match Procore','Amount of original contract does not match Procore','Less previous payments does not match CE','Not on Attachment G','No project listed','No subcontract number','No cost code','Figures do not add up','Missing signature or notary'];
-const FULL = {'Adjusted contract amount does not match Procore':'The ADJUSTED CONTRACT AMOUNT does not match the subcontract and approved change orders on file.',
-  'Amount of original contract does not match Procore':'The AMOUNT OF ORIGINAL CONTRACT does not match the subcontract on file.',
-  'Less previous payments does not match CE':'LESS PREVIOUS PAYMENTS does not match what Bailey-Harris has previously certified.',
-  'Not on Attachment G':'The application is not on our Attachment G form.', 'No project listed':'The project is not listed.',
-  'No subcontract number':'The subcontract number is not listed.', 'No cost code':'The cost code is not listed.',
-  'Figures do not add up':'The figures do not add up to the BALANCE DUE THIS PAYMENT ESTIMATE.', 'Missing signature or notary':'The signature or notary is missing.'};
-function preTick(i, r){
-  const m = i.math, miss = i.missing;
-  return (r === REASONS[0] && m && dif(m.adj[0], m.adj[1])) || (r === REASONS[1] && m && dif(m.orig[0], m.orig[1])) || (r === REASONS[2] && m && dif(m.prev[0], m.prev[1]))
-    || (r === 'Not on Attachment G' && miss.includes('Attachment G')) || (r === 'No project listed' && miss.includes('project')) || (r === 'No subcontract number' && miss.includes('subcontract #'));
+/* Rejection reasons (22 Oct 2026, Tiffany's list). Calculation problems are sub-reasons. */
+const REJ = [['attg','Not on Attachment G','The application is not on our Attachment G form.'],
+  ['ids','Missing subcontract number or project number','The subcontract number or project number is missing.'],
+  ['per','Missing period ending date','The PERIOD ENDING date is missing.'],
+  ['calc','Incorrect calculations','The calculations are incorrect:']];
+const CALC = [['orig','Org Contract amount is wrong','AMOUNT OF ORIGINAL CONTRACT does not match the subcontract on file.'],
+  ['adj','Approved COs / Adj Contract is wrong','APPROVED CHANGE ORDER(S) / ADJUSTED CONTRACT AMOUNT do not match the change orders approved as of the period ending date.'],
+  ['prev','Less Prev. Pmts. is wrong','LESS PREVIOUS PAYMENTS does not match what Bailey-Harris has previously certified.'],
+  ['math','Figures don’t add up','The figures do not add up to the BALANCE DUE THIS PAYMENT ESTIMATE.']];
+function preTick(i, k){
+  const m = i.math, miss = i.missing, due = m && m.complete != null && m.ret != null && m.prev[0] != null ? m.complete - m.ret - m.prev[0] : null;
+  const calc = { orig: !!(m && dif(m.orig[0], m.orig[1])), adj: !!(m && dif(m.adj[0], m.adj[1])), prev: !!(m && dif(m.prev[0], m.prev[1])), math: !!(m && due != null && m.due != null && dif(m.due, due)) };
+  if (k in calc) return calc[k];
+  if (k === 'calc') return Object.values(calc).some(Boolean);
+  return (k === 'attg' && miss.includes('Attachment G')) || (k === 'ids' && (miss.includes('project') || miss.includes('subcontract #'))) || (k === 'per' && miss.includes('period ending'));
 }
+const rrOn = (i, k) => i.rr ? i.rr.includes(k) : preTick(i, k);
 function assignOptions(i, cur){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
   const sug = i.type === 'Pay app' && i.po && team.length ? team[0] : '';
@@ -1123,23 +1145,43 @@ function assignOptions(i, cur){
     + (others.length ? '<optgroup label="Other approvers">' + others.map(k => '<option value="' + esc(k) + '"' + (cur === k ? ' selected' : '') + '>' + esc(P(k).n) + '</option>').join('') + '</optgroup>' : '');
 }
 function triageBox(i){
+  /* Three decisions (22 Oct 2026): reject to the trade partner, route to the PM with notes
+     (emailed to the PM from payables@), or route to the PM for approval. */
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
   const cur = i.pick != null ? i.pick : lc(i.f.AssignedApprover) ? lc(i.f.AssignedApprover) : (i.rev > 1 && i.approver ? i.approver : (i.type === 'Pay app' && i.po && team.length ? team[0] : ''));
-  const miss = i.missing, m = i.math;
-  const aDiff = m && dif(m.adj[0], m.adj[1]), ceOff = m && dif(m.adj[1], m.adj[2]), pDiff = m && dif(m.prev[0], m.prev[1]);
-  return '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
-    + (miss.length ? '<p class="note">Missing from the document: ' + miss.map(x => '<span class="bh-chip is-warn sm">' + esc(x) + '</span>').join(' ') + '</p>' : '<p class="note">Nothing missing found on the document.</p>')
-    + '<label class="bh-label" style="display:block;margin-top:12px" for="tAssign">Assign to</label>'
-    + '<select class="bh-select" id="tAssign" style="width:100%;margin-top:4px">' + assignOptions(i, cur) + '</select>'
-    + '<div style="display:flex;gap:8px;margin-top:12px"><button class="bh-btn" style="min-height:38px" data-do="routeto"' + (BUSY ? ' disabled' : '') + '>Route</button><button class="bh-btn-outline" style="min-height:38px" data-do="rejshow">Reject to trade partner</button></div>'
-    + (i.rej ? '<div style="margin-top:14px;border-top:1px solid var(--bh-hairline);padding-top:12px"><div class="bh-label">Reason (goes in the email)</div>'
-      + REASONS.map(r => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + esc(r) + '"' + ((i.rr ? i.rr.includes(r) : preTick(i, r)) ? ' checked' : '') + '> ' + esc(r) + '</label>').join('')
+  const miss = i.missing, dec = i.dec || '';
+  const B = (k, t) => '<button class="ap-tog" data-do="dec:' + k + '" aria-pressed="' + (dec === k) + '">' + t + '</button>';
+  let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">Triage decision</div>'
+    + (miss.length ? '<p class="note">Missing: ' + miss.map(x => '<span class="bh-chip is-warn sm">' + esc(x) + '</span>').join(' ') + '</p>' : '')
+    + '<div class="dec">' + B('reject', 'Reject to trade partner') + B('notes', 'Route to PM with notes') + B('approve', 'Route to PM for approval') + '</div>';
+  if (dec === 'notes' || dec === 'approve') {
+    h += '<label class="bh-label" style="display:block;margin-top:12px" for="tAssign">PM</label>'
+      + '<select class="bh-select" id="tAssign" style="width:100%;margin-top:4px">' + assignOptions(i, cur) + '</select>';
+    if (dec === 'notes') h += '<label class="bh-label" style="display:block;margin-top:12px" for="pmNote">Notes for the PM (emailed from payables@)</label>'
+      + '<textarea id="pmNote" placeholder="e.g. Line 12 billed at 80% — is that what’s in place? CO #6 billed before it was approved." style="width:100%;min-height:70px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box">' + esc(i.pmn || '') + '</textarea>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="bh-btn" style="min-height:38px" data-do="routenotes"' + (BUSY ? ' disabled' : '') + '>Route and email the PM</button>'
+      + '<button class="bh-btn-outline" style="min-height:38px" data-do="routenotesoutlook"' + (BUSY ? ' disabled' : '') + '>Route and open the email in Outlook</button></div>';
+    else h += '<div style="margin-top:10px"><button class="bh-btn" style="min-height:38px" data-do="routeto"' + (BUSY ? ' disabled' : '') + '>Route for approval</button></div>';
+  }
+  if (dec === 'reject') {
+    const calcOn = rrOn(i, 'calc');
+    h += '<div style="margin-top:12px"><div class="bh-label">Due to</div>'
+      + REJ.map(([k, t]) => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + k + '"' + (rrOn(i, k) ? ' checked' : '') + '> ' + esc(t) + '</label>'
+        + (k === 'calc' && calcOn ? '<div style="margin-left:24px">' + CALC.map(([c, ct]) => '<label class="ck" style="padding:4px 0;font-size:12.5px"><input type="checkbox" data-rr="' + c + '"' + (rrOn(i, c) ? ' checked' : '') + '> ' + esc(ct) + '</label>').join('') + '</div>' : '')).join('')
       + '<textarea id="rejNote" placeholder="Anything else the trade partner should fix" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:8px;box-sizing:border-box">' + esc(i.rn || '') + '</textarea>'
       + '<div class="bh-label" style="margin-top:12px">Email preview</div><div class="em" id="rejPrev">' + mailHTML(rejMail(i)) + '</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="bh-btn" style="min-height:38px" data-do="rejsend"' + (BUSY ? ' disabled' : '') + '>Reject and send</button>'
       + '<button class="bh-btn-outline" style="min-height:38px" data-do="rejoutlook"' + (BUSY ? ' disabled' : '') + '>Reject and open in Outlook to add attachments</button></div>'
-      + '<p class="note">Sent from payables@ as a reply to their email, tagged [' + i.id + ']. The item moves to Corrections; no PM is involved.</p></div>' : '')
-    + '</div>';
+      + '<p class="note">Sent from payables@ as a reply to their email, tagged [' + i.id + ']. Moves to Corrections; no PM involved.</p></div>';
+  }
+  return h + '</div>';
+}
+/* the PM email for "Route to PM with notes" - a NEW message from payables@, never a reply
+   on the trade partner's thread */
+function pmMail(i, to, text){
+  return { to, subject: 'Pay app review: ' + i.no + ' – ' + (i.job ? i.job + ' ' + jobName(i.job) : i.v) + ' [' + i.id + ']',
+    body: 'Hi ' + P(to).n.split(' ')[0] + ',\n\n' + i.v + ' · ' + i.no + (i.f.PeriodEnding ? ' · period ending ' + usDate(String(i.f.PeriodEnding).slice(0, 10)) : '') + (i.amtKnown ? ' · balance due ' + money(i.amt) : '') + '\n\n' + text
+      + '\n\nIt is waiting for you in the AP Desk: ' + location.origin + '/ap/  (' + i.id + ')\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Accounting · Bailey-Harris Construction' };
 }
 function ledger(i){
   const L = i.ledger.rows || []; if (!L.length) return '<p class="note">No earlier CE invoices on this subcontract.</p>';
@@ -1153,12 +1195,14 @@ function ledger(i){
 /* the email: full Attachment G wording, built from the ticked reasons */
 function rejMail(i){
   const box = document.querySelectorAll('[data-rr]');
-  const rs = box.length ? [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr) : (i.rr || REASONS.filter(r => preTick(i, r)));
+  const keys = box.length ? [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr) : (i.rr || REJ.concat(CALC).map(x => x[0]).filter(k => preTick(i, k)));
+  const subs = keys.includes('calc') ? CALC.filter(c => keys.includes(c[0])) : [];
+  const rs = REJ.filter(r => keys.includes(r[0])).map(r => r[1] + (r[0] === 'calc' && subs.length ? ' (' + subs.map(c => c[1]).join('; ') + ')' : ''));
   const note = (((document.getElementById('rejNote') || {}).value) ?? i.rn ?? '').trim();
   const jn = i.job ? jobName(i.job) + ' (' + i.job + ')' : 'your project';
   return { to: i.vendorEmail || '', subject: 'Resubmission needed: ' + i.no + ' – ' + (i.job ? i.job + ' ' + jobName(i.job) : i.v) + ' [' + i.id + ']',
     body: 'Hello ' + i.v + ',\n\nWe can’t process ' + i.no + ' for ' + jn + ' as submitted:\n'
-      + rs.map(r => '• ' + (FULL[r] || r)).join('\n') + (note ? '\n• ' + note : '')
+      + REJ.filter(r => keys.includes(r[0])).map(r => '• ' + r[2] + (r[0] === 'calc' ? subs.map(c => '\n   – ' + c[2]).join('') : '')).join('\n') + (note ? '\n• ' + note : '')
       + '\n\nPlease correct it and resubmit to payables@baileyharris.com on Attachment G, keeping [' + i.id + '] in the subject so it is matched to this application.\n\nThank you,\nAccounting · Bailey-Harris Construction',
     reasons: rs, note };
 }
@@ -1198,13 +1242,30 @@ function editForm(i){
     + jobsSorted.map(j => '<option value="' + esc(j) + '"' + (i.job === j ? ' selected' : '') + '>' + esc(j + ' · ' + LIVE.jobs[j].n) + '</option>').join('') + '</select>'
     + '<label class="bh-label" for="eAppr" style="display:block;margin-top:10px">Approver</label>'
     + '<select class="bh-select" id="eAppr" style="width:100%;margin-top:4px">' + assignOptions(i, lc(i.f.AssignedApprover) || '') + '</select>'
-    + (i.type === 'Pay app' ? figFields(i) : '')
     + '<div style="display:flex;gap:8px;margin-top:14px"><button class="bh-btn" style="min-height:38px" data-do="saveedit"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="bh-btn-outline" style="min-height:38px" data-do="canceledit">Cancel</button></div></div>';
 }
 /* Pay app figures Accounting can key or correct (22 Oct 2026) - for lines the pull could not
    read (e.g. Org Contract) or read wrong. Attachment G order, same short names as the check. */
 const FIGS = [['OriginalContract','1 Org Contract'],['ChangeOrders','2 Approved COs'],['AdjustedContract','3 Adj Contract'],['CompletedToDate','4 Completed & Stored (to date)'],
               ['RetainageHeld','5 Retainage'],['PreviousPayments','7 Less Prev. Pmts.'],['BalanceDue','8 Balance Due']];
+/* read the [data-fig] inputs into f; false (with a toast) if one is not a dollar amount */
+function readFigs(i, f, said, keyed){
+  for (const el of document.querySelectorAll('[data-fig]')) {
+    const k = el.dataset.fig, raw = el.value.replace(/[$,\s]/g, ''), old = num(i.f[k]);
+    if (raw !== '' && !/^-?\d+(\.\d{1,2})?$/.test(raw)) { toast('Check ' + FIGS.find(x => x[0] === k)[1] + ' - dollars only'); return false; }
+    const nv = raw === '' ? null : Number(raw);
+    if (nv === old || (nv != null && old != null && Math.abs(nv - old) < 0.005)) continue;
+    f[k] = nv; keyed.push(k); said.push(FIGS.find(x => x[0] === k)[1].replace(/^\d+ /, '') + ' ' + (old == null ? 'not read' : money(old)) + ' → ' + (nv == null ? 'blank' : money(nv)));
+  }
+  return true;
+}
+/* keep what was typed in the triage box across a re-render */
+function keepTriage(i){
+  const n = document.getElementById('pmNote'); if (n) i.pmn = n.value;
+  const r = document.getElementById('rejNote'); if (r) i.rn = r.value;
+  const a = document.getElementById('tAssign'); if (a && a.value) i.pick = a.value;
+  const box = document.querySelectorAll('[data-rr]'); if (box.length) i.rr = [...box].filter(x => x.checked).map(x => x.dataset.rr);
+}
 function figFields(i){
   const f = i.f, val = k => f[k] == null || f[k] === '' ? '' : Number(f[k]).toFixed(2);
   return '<div class="bh-section-title" style="margin-top:18px">Pay app figures</div><p class="note" style="margin-top:2px">Blank = not read off the document. Key it from the PDF.</p>'
@@ -1238,7 +1299,7 @@ async function mailToken(){
 const mailHtml = t => '<div style="font-family:Arial,sans-serif;font-size:10.5pt">' + esc(t).replace(/\n/g, '<br>') + '</div>';
 async function makeDraft(i, m, replyTo){
   const tok = await mailToken(); if (!tok) return null;
-  const mid = replyTo || i.f.MessageId;
+  const mid = replyTo === false ? null : (replyTo || i.f.MessageId);
   let orig = null;
   if (mid) {
     const r = await g(tok, '/users/' + PAYABLES + "/messages?$filter=internetMessageId eq '" + encodeURIComponent(String(mid).replace(/'/g, "''")) + "'&$select=id,from&$top=1");
@@ -1254,7 +1315,7 @@ async function makeDraft(i, m, replyTo){
   const patch = { subject: m.subject };
   const to = (d.body.toRecipients || []).map(x => lc(x.emailAddress && x.emailAddress.address));
   if (m.to && !to.includes(lc(m.to))) patch.toRecipients = (d.body.toRecipients || []).concat([{ emailAddress: { address: m.to } }]);
-  if (!to.length && !m.to) toast('No address for the trade partner — add one in the draft.');
+  if (!to.length && !m.to) toast('No address on this email — add one in the draft.');
   if (m.cc) patch.ccRecipients = [{ emailAddress: { address: m.cc } }];
   const u = await g(tok, '/users/' + PAYABLES + '/messages/' + d.body.id, { method:'PATCH', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify(patch) });
   return { id: d.body.id, link: (u.ok && u.body && u.body.webLink) || d.body.webLink || '' };
@@ -1388,14 +1449,38 @@ function act(k){
   if (k === 'menu') { MENU = !MENU; pane(); return; }
   MENU = false;
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
+  if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
+  if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k === 'figx') { i.editFig = false; pane(); return; }
+  if (k === 'figsave') { if (!acctSeat()) return;
+    const f = {}, said = [], keyed = [];
+    if (!readFigs(i, f, said, keyed)) return;
+    if (!said.length) { i.editFig = false; pane(); return; }
+    run(async () => { if (await saveRow(i, f, Object.assign({ note:'Pay app figures corrected: ' + said.join('; ') + '.', keyed }, keyed.includes('CompletedToDate') ? { ctd: true } : {}))) { i.editFig = false; toast('Saved'); } });
+    return; }
+  if (k === 'routenotes' || k === 'routenotesoutlook') { if (!acctSeat()) return;
+    const a = (document.getElementById('tAssign') || {}).value; if (!a) { toast('Choose the PM'); return; }
+    const t = ((document.getElementById('pmNote') || {}).value || '').trim(); if (!t) { toast('Write the notes for the PM'); return; }
+    i.pmn = t; const m = pmMail(i, a, t), win = k === 'routenotesoutlook' ? outlookTab() : null;
+    run(async () => { if (await saveRow(i, { Status:'with PM', AssignedApprover:a, DocType: 'pay app', BlockingIssues: JSON.stringify(i.flags) },
+        { s:'with PM', note:'Routed to ' + P(a).n + ' with notes: ' + t })) {
+        const fresh = INVrow(i); i.pmn = ''; i.dec = '';
+        if (fresh) await deliver(fresh, m, false, k === 'routenotes' ? 'send' : 'outlook', 'Notes emailed to ' + P(a).n, win); else if (win) win.close();
+        toast('Routed to ' + P(a).n); } else if (win) win.close(); });
+    return; }
   if (k === 'ledger') { i.showLedger = !i.showLedger; pane(); return; }
   if (k === 'acedit') { TAB = 'details'; ED = true; pane(); return; }
   if (k === 'pcshow') { i.showPc = !i.showPc; pane(); return; }
   if (k === 'peredit') { i.editPer = true; pane(); return; }
   if (k === 'perx') { i.editPer = false; pane(); return; }
   if (k === 'persave') { if (!acctSeat()) return; const v = ((document.getElementById('perIn') || {}).value || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast('Pick the period-ending date'); return; }
-    const old = i.f.PeriodEnding ? String(i.f.PeriodEnding).slice(0, 10) : '';
-    run(async () => { if (await saveRow(i, { PeriodEnding: v }, { note: 'Period ending ' + (old ? 'changed from ' + usDate(old) + ' to ' : 'set to ') + usDate(v) })) { toast('Period saved'); } });
+    const pr = ((document.getElementById('prIn') || {}).value || '').trim();
+    const old = i.f.PeriodEnding ? String(i.f.PeriodEnding).slice(0, 10) : '', oldPr = String(i.f.PayRequest || '');
+    const f = {}, said = [];
+    if (v !== old) { f.PeriodEnding = v; said.push('period ending ' + (old ? usDate(old) : 'not read') + ' → ' + usDate(v)); }
+    if (pr !== oldPr) { f.PayRequest = pr; said.push('PR # ' + (oldPr || '—') + ' → ' + (pr || '—')); }
+    if (!said.length) { i.editPer = false; pane(); return; }
+    run(async () => { if (await saveRow(i, f, { note: 'Changed ' + said.join('; ') + '.' })) { i.editPer = false; toast('Saved'); } });
     return; }
   if (k === 'corr') { CF = true; TAB = 'review'; pane(); return; }
   if (k === 'cancelcorr') { CF = false; pane(); return; }
@@ -1446,13 +1531,7 @@ function act(k){
     const keyed = [];
     if ($('#fPR')) { const v = $('#fPR').value.trim(); if (v !== String(i.f.PayRequest || '')) { f.PayRequest = v; said.push('pay request ' + (i.f.PayRequest || '—') + ' → ' + (v || '—')); } }
     if ($('#fPer')) { const v = $('#fPer').value, old = String(i.f.PeriodEnding || '').slice(0, 10); if (v !== old) { f.PeriodEnding = v || null; said.push('period ending ' + (old ? usDate(old) : '—') + ' → ' + (v ? usDate(v) : '—')); } }
-    for (const el of document.querySelectorAll('[data-fig]')) {
-      const k = el.dataset.fig, raw = el.value.replace(/[$,\s]/g, ''), old = num(i.f[k]);
-      if (raw !== '' && !/^-?\d+(\.\d{1,2})?$/.test(raw)) { toast('Check ' + FIGS.find(x => x[0] === k)[1] + ' - dollars only'); return; }
-      const nv = raw === '' ? null : Number(raw);
-      if (nv === old || (nv != null && old != null && !dif(nv, old) && Math.abs(nv - old) < 0.005)) continue;
-      f[k] = nv; keyed.push(k); said.push(FIGS.find(x => x[0] === k)[1].replace(/^\d+ /, '') + ' ' + (old == null ? 'not read' : money(old)) + ' → ' + (nv == null ? 'blank' : money(nv)));
-    }
+    if (!readFigs(i, f, said, keyed)) return;
     if (!said.length) { ED = false; pane(); return; }
     run(async () => { if (await saveRow(i, f, Object.assign({ note:'Details corrected: ' + said.join('; ') + '.' }, keyed.length ? { keyed } : {}, keyed.includes('CompletedToDate') ? { ctd: true } : {}))) { ED = false; TAB = 'review'; toast('Saved'); } });
     return; }
@@ -1554,7 +1633,10 @@ document.addEventListener('input', e => {
 document.addEventListener('input', e => { if (e.target.id === 'rejNote') { const i = INV.find(x => x.id === SEL); if (i) { i.rn = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } } });
 document.addEventListener('change', e => {
   const i = INV.find(x => x.id === SEL);
-  if (e.target.dataset && e.target.dataset.rr !== undefined && i) { i.rr = [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr); const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); }
+  if (e.target.dataset && e.target.dataset.rr !== undefined && i) { i.rr = [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr);
+    /* ticking "Incorrect calculations" opens its sub-reasons, pre-ticked from the check */
+    if (e.target.dataset.rr === 'calc') { keepTriage(i); if (e.target.checked && !CALC.some(c => i.rr.includes(c[0]))) i.rr.push(...CALC.map(c => c[0]).filter(c => preTick(i, c))); pane(); return; }
+    const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); }
   if (e.target.id === 'tAssign' && i) i.pick = e.target.value;
   const c = e.target.closest('[data-ck]'); if (c && i) i.checks[c.dataset.ck] = c.checked;
 });
