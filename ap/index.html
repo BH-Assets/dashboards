@@ -55,6 +55,9 @@ body.no-pane .ap-pane{display:none}
 .iv-dl dd span.miss{display:inline;color:var(--bh-warn-ink,#8a6d00)}
 .iv-dl .bh-input,.iv-dl .bh-select{width:100%;min-height:30px;box-sizing:border-box;font-size:13px}
 @media (max-width:760px){.iv{grid-template-columns:1fr}.iv-pdf{height:60vh;min-height:320px}}
+.sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.sp-row .bh-input{flex:1 1 auto;width:auto;min-width:0;min-height:34px;box-sizing:border-box}
+.sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
 .ap-colh{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;gap:14px;padding:14px 8px 0;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted)}
 .ap-colh .r{text-align:right}
 @media (max-width:960px){.ap-colh{display:none}}
@@ -541,6 +544,8 @@ function toItem(row){
   const lastHuman = [...log].filter(e => e.by && !e.reply).map(e => e.at).sort().pop();
   i.replied = !!lastEmail && (!lastHuman || Date.parse(lastEmail) > Date.parse(lastHuman));
   i.lastEmail = emails.sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).pop() || null;
+  { const ask = [...(i.log || [])].reverse().find(e => e && e.askedVendor);
+    i.waitVendor = !!ask && i.sec === 'pm' && !(lastEmail && Date.parse(lastEmail) > Date.parse(ask.at || '')); }
   i.replyNew = i.replied && store.get('apreply:' + 'AP-' + row.id) !== lastEmail;   // not opened yet in this browser
   act.sort((a,b) => (Date.parse(a.at||'')||0) - (Date.parse(b.at||'')||0));
   i.act = act;
@@ -652,6 +657,7 @@ function draw(){
         if (i.mailPending && i.sec === 'corr') chips.push('<span class="bh-chip is-warn sm">' + (i.draft ? 'Draft ready' : 'Email to send') + '</span>');
         if (i.sec === 'corr' && i.raw === 'revise and resubmit' && !i.mailPending && i.age >= 7) chips.push('<span class="bh-chip is-warn sm">Awaiting resubmission +7 days</span>');
         if (i.rev > 1) chips.push('<span class="bh-chip sm">Resubmitted · rev ' + i.rev + '</span>');
+        if (i.waitVendor) chips.push('<span class="bh-chip is-warn sm">Waiting on vendor</span>');
         if (i.replied) chips.push('<span class="bh-chip ' + (i.replyNew ? 'is-warn ' : '') + 'sm">Trade partner replied</span>');
         if (i.isMsg) chips.push('<span class="bh-chip sm">Email</span>');
         if (i.type === 'Invoice') chips.push('<span class="bh-chip sm">Invoice</span>');
@@ -864,7 +870,7 @@ function bulkBar(){
 /* ---- pane ------------------------------------------------------------------------ */
 function primary(i){
   if (i.isMsg && acctSeat()) return i.draft ? ['opendraft','Open the draft in Outlook'] : ['reply','Reply'];
-  if (i.sec === 'pm' && mySeat(i)) return ['approve','Approve'];
+  if (i.sec === 'pm' && mySeat(i)) return null;   // actions are in the review box
   if (i.raw === 'PM returned' && acctSeat()) return ['resend','Fixed — back to approver'];
   if (i.draft && acctSeat()) return ['opendraft','Open the draft in Outlook'];
   if (i.sec === 'corr' && i.mailPending && acctSeat()) return MAIL.ok === false ? ['mailsent','Email sent'] : ['mailsend','Send the email'];
@@ -880,7 +886,7 @@ function secondary(i){
 }
 function moreItems(i){
   const m = [];
-  if (i.sec === 'pm' && mySeat(i)) { m.push(['corr','Request correction from trade partner']); m.push(['asnoted','Approve as noted']); m.push(['return','Return to Accounting']); }
+
   if (acctSeat() && i.isMsg) { m.push(['link','Attach to an item (AP-####)']); m.push(['dismiss','Dismiss — no action needed']); return m; }
   if (acctSeat() && i.sec !== 'done') m.push(['reply', i.replied ? 'Reply to the trade partner' : 'Email the trade partner']);
   if (acctSeat() && i.sec === 'triage') {
@@ -912,17 +918,18 @@ function pane(){
   const bodyAt = h.length;
   if (CF) h += corrForm(i);
   if (RF) h += replyForm(i);
-  if (TAB === 'review' && acctSeat() && i.mailPending && i.mailEntry && i.mailEntry.mailSubject && !RF) h += '<div class="bh-label" style="margin-top:4px">' + (i.draft ? 'Draft in payables@' : 'Email to send') + '</div><div class="em" style="font-size:12px;background:var(--bh-surface-muted);padding:10px 12px;margin:6px 0 14px;line-height:1.5">' + mailHTML(entryMail(i.mailEntry)) + '</div>';
+  /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
   if (TAB === 'review' && i.isMsg) h += '<div class="dl"><div>From</div><div>' + esc(i.v) + '</div><div>Received</div><div>' + esc(fmtTime(i.receivedAt)) + '</div><div>Subject</div><div>' + esc(i.desc || '—') + '</div></div>'
     + '<div class="tl"><div class="q" style="margin-top:12px">' + esc(i.msgText || i.f.ParseNote || '(no text)') + '</div></div>'
     + (i.mail ? '<p class="note"><a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a></p>' : '');
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
-  if (TAB === 'review' && i.draft && !i.isMsg && i.sec !== 'corr' && i.draft.draftLink) h += '<p class="note"><a href="' + esc(i.draft.draftLink) + '" target="_blank" rel="noopener">Open the draft in payables@</a></p>';
+  /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
   const acctView = isAcct() && i.math && !i.isMsg;
   if (TAB === 'review' && acctView) h += acctCheck(i);
   if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
   if (TAB === 'review' && i.math && !i.isMsg && (!acctView || i.showPc)) h += summaryBox(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
+  if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF) h += reviewBox(i);
   if (TAB === 'review') {
     if (i.rev > 1) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>Resubmission · revision ' + i.rev + '</b>' + (i.prevAsk ? 'Asked for last time: ' + esc(i.prevAsk) : 'Sent back by the trade partner after a correction request.') + '</div>';
     if (i.note && !i.math) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Needs a look</b>' + esc(i.note) + '</div>';
@@ -932,9 +939,7 @@ function pane(){
     if (i.type === 'Pay app' && i.c && i.sec !== 'done' && canKey(i.c) && (num(i.f.CompletedToDate) == null || XED === i.itemId)) h += '<h3>Completed &amp; stored to date</h3>' + ctdCell(i, true);
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
-      else if (i.sec === 'pm' && mySeat(i)) h += '<h3>' + (isInv(i) ? 'Approver checks' : 'PM checks') + '</h3>' + CHECKS(i)
-        .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('');
-      else if (i.sec === 'pm') h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>With ' + esc(P(i.assign).n) + ' to approve</b>'
+      else if (i.sec === 'pm' && !mySeat(i)) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>With ' + esc(P(i.assign).n) + ' to approve</b>'
         + (LIVE.me && i.assign === LIVE.me.email ? 'It is assigned to you. <a href="#" data-do="asme">Review it as the approver</a> to tick the checks and approve.' : 'Only ' + esc(P(i.assign).n) + ' can tick the checks and approve it.') + '</div>';
     }
     if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (!(isAcct() && i.math) && canSplit(i) ? splitLink(i) + ' · ' : '') + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
@@ -1097,7 +1102,7 @@ const INV_F = [['job','Job Info'],['Vendor','Vendor'],['InvoiceDate','Inv Date']
                ['CostCode','Cost Code'],['InvoiceDescription','Description'],['ServicePeriod','Period'],['DueDate','Due Date']];
 function invView(i){
   const f = i.f, all = acctSeat() && i.sec !== 'done', appr = mySeat(i) && i.sec !== 'done';
-  const can = k => all || (appr && (k === 'CostCode' || k === 'InvoiceDescription'));
+  const can = k => all || (appr && k === 'InvoiceDescription');   // the approver codes in the review box below
   const ed = i.editInv && (all || appr);
   const pv = pdfBox(i);
   const show = k => {
@@ -1105,6 +1110,7 @@ function invView(i){
     const v = f[k];
     if (v == null || v === '') return '<span class="miss">' + (k === 'CostCode' ? 'not coded' : 'not read') + '</span>';
     if (k === 'BalanceDue') return '<b>' + money(Number(v)) + '</b>';
+    if (k === 'CostCode' && /;/.test(String(v))) return String(v).split(/\s*;\s*/).map(x => esc(x)).join('<br>');
     if (k === 'CostCode' && glName(v)) return esc(String(v)) + '<span>' + esc(glName(v)) + '</span>';
     if (k === 'CostCode' && isJobInv(i) && jobCodes(i.job).length) { const x = ccFind(i.job, v); return esc(String(v)) + (x ? '<span>' + esc(ccLabel(x)) + '</span>' : ' <span class="bh-chip is-warn sm">not on ' + esc(i.job) + '’s CE budget</span>'); }
     if (k === 'InvoiceDate' || k === 'DueDate') return esc(usDate(v)) + (k === 'DueDate' && String(v).slice(0, 10) < new Date().toISOString().slice(0, 10) && i.sec !== 'done' ? ' <span class="bh-chip is-bad sm">past due</span>' : '');
@@ -1151,6 +1157,63 @@ function invSave(i){
     if (raw !== old) { f[k] = raw; said.push(INV_F.find(x => x[0] === k)[1] + ' → ' + (raw || 'blank')); }
   }
   return { f, said };
+}
+/* ---- The approver's decision (22 Oct 2026) ----------------------------------------------
+   In the same place as Accounting's Triage decision, one box: coding (invoices - required,
+   can be split across codes), the checks, a note to Accounting, and the three actions.
+   Approve -> Ready for entry. Ask the vendor -> a new email from the approver's OWN Outlook,
+   payables@ copied and [AP-###] in the subject, so the reply comes back to this item.
+   Return to Accounting -> "not mine" or a question for AP. */
+const splitOf = v => { const s = String(v || '').trim(); if (!s) return [{ code:'', amt:'' }];
+  const parts = s.split(/\s*;\s*/).filter(Boolean);
+  if (parts.length < 2) return [{ code: s, amt: '' }];
+  return parts.map(p => { const m = p.match(/^(.*?)\s+\$?(-?[\d,]+(?:\.\d{1,2})?)$/); return m ? { code: m[1].trim(), amt: m[2].replace(/,/g, '') } : { code: p, amt: '' }; }); };
+function keepReview(i){
+  const rows = [...document.querySelectorAll('[data-sp-code]')];
+  if (rows.length) i.split = rows.map(el => ({ code: el.value.trim(), amt: ((document.querySelector('[data-sp-amt="' + el.dataset.spCode + '"]') || {}).value || '').trim() }));
+  const n = document.getElementById('revNote'); if (n) i.revNote = n.value;
+}
+function reviewBox(i){
+  const inv = isInv(i), oh = !isJobInv(i);
+  if (inv && !i.split) i.split = splitOf(i.f.CostCode);
+  const rows = i.split || [], many = rows.length > 1;
+  const sum = rows.reduce((a, r) => a + (Number(r.amt) || 0), 0), left = Math.round(((i.amtKnown ? i.amt : 0) - sum) * 100) / 100;
+  let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">' + (inv ? 'Code and approve' : 'Your review') + '</div>';
+  if (inv) {
+    h += '<div class="bh-label" style="margin-top:10px">' + (oh ? 'GL account' : 'Cost code · ' + esc(i.job)) + ' <span style="color:var(--bh-bad-ink,#b00020)">required</span></div>'
+      + rows.map((r, k) => '<div class="sp-row"><input class="bh-input" data-sp-code="' + k + '" list="' + (oh ? 'glList' : 'ccList') + '" value="' + esc(r.code) + '" placeholder="' + (oh ? 'GL account — type a number or name' : 'e.g. 01-403 O') + '">'
+        + (many ? '<input class="bh-input sp-amt" inputmode="decimal" data-sp-amt="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount"><button class="xp-mini" data-do="sprm:' + k + '" aria-label="Remove line">✕</button>' : '') + '</div>').join('')
+      + (oh ? glList() : ccList(i.job))
+      + '<p class="note" style="margin:4px 0 0">' + (many ? 'Lines total ' + money(sum) + (i.amtKnown ? (Math.abs(left) < 0.005 ? ' <span class="bh-chip is-ok sm">= invoice</span>' : ' <span class="bh-chip is-bad sm">' + (left > 0 ? money(left) + ' left' : money(-left) + ' over') + '</span>') : '') + ' · ' : '')
+      + '<a href="#" data-do="spadd">' + (many ? 'Add a line' : 'Split across codes') + '</a></p>';
+  }
+  h += '<div class="bh-label" style="margin-top:14px">Checks</div>' + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('')
+    + '<label class="bh-label" style="display:block;margin-top:12px" for="revNote">Note to Accounting <span style="text-transform:none;font-weight:400">(optional for approval, required to return)</span></label>'
+    + '<textarea id="revNote" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="' + (inv ? 'e.g. Half of this is for 25AU010 — split as shown.' : 'e.g. Pay as submitted; CO #6 will be on next month’s app.') + '">' + esc(i.revNote || '') + '</textarea>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="bh-btn" style="min-height:38px" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+    + (inv ? '<button class="bh-btn-outline" style="min-height:38px" data-do="askvendor">Ask the vendor</button>' : '<button class="bh-btn-outline" style="min-height:38px" data-do="corr">Request correction from trade partner</button>')
+    + '<button class="bh-btn-outline" style="min-height:38px" data-do="revreturn"' + (BUSY ? ' disabled' : '') + '>Return to Accounting</button></div>'
+    + (inv ? '<p class="note">Ask the vendor opens an email in your own Outlook with payables@ copied, so their reply lands on this invoice.</p>' : '')
+    + '</div>';
+  return h;
+}
+function revCoding(i){
+  keepReview(i);
+  const rows = (i.split || []).filter(r => r.code || r.amt);
+  if (!rows.length || rows.some(r => !r.code)) { toast(isJobInv(i) ? 'Pick the cost code first' : 'Pick the GL account first'); return null; }
+  if (isJobInv(i)) for (const r of rows) { const m = r.code.toUpperCase().match(/\s([A-Z])$/);
+    if (m && !CT_INV.has(m[1])) { const nm = Object.values(CTYPE).find(c => c[0] === m[1]); toast((nm ? m[1] + ' (' + nm[1] + ')' : m[1]) + ' isn’t used on invoices — pick the M, O, E, X or T line'); return null; } }
+  if (rows.length === 1) return rows[0].code;
+  if (rows.some(r => !/^-?\d+(\.\d{1,2})?$/.test(String(r.amt).replace(/[$,\s]/g, '')))) { toast('Give every line an amount'); return null; }
+  const sum = rows.reduce((a, r) => a + Number(String(r.amt).replace(/[$,\s]/g, '')), 0);
+  if (i.amtKnown && Math.abs(sum - i.amt) > 0.005) { toast('The lines total ' + money(sum) + ' — they need to add up to ' + money(i.amt)); return null; }
+  return rows.map(r => r.code + ' ' + money(Number(String(r.amt).replace(/[$,\s]/g, '')))).join('; ');
+}
+function vendorAsk(i){
+  const to = i.vendorEmail || (i.lastEmail && i.lastEmail.email) || '';
+  const subj = 'Question on ' + i.no + ' – ' + i.v + ' [' + i.id + ']';
+  const body = 'Hello ' + i.v + ',\n\n' + ((i.revNote || '').trim() || 'We have a question about ' + i.no + (i.amtKnown ? ' (' + money(i.amt) + ')' : '') + ':\n\n') + '\n\nPlease reply all so payables@ stays on the thread.\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Bailey-Harris Construction';
+  return 'https://outlook.office.com/mail/deeplink/compose?' + new URLSearchParams({ to, cc: PAYABLES, subject: subj, body }).toString().replace(/\+/g, '%20');
 }
 /* ---- Accounting's check (22 Oct 2026) --------------------------------------------------
    What Drew actually does at triage: put the pay app beside CE's Subcontractor Detail report.
@@ -1315,7 +1378,7 @@ const REJ_INV = [['notours','Not addressed to Bailey-Harris','The invoice is not
 const isInv = i => i.type === 'Invoice';
 /* the approver's checks before approving - an invoice is coded by the approver */
 const CHECKS = i => isInv(i)
-  ? [['recv','Goods or services were received'],['amt','Amount and invoice are correct']]
+  ? [['recv','Goods or services were received'],['amt','Amount is correct']]
   : [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']];
 function assignOptions(i, cur){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
@@ -1652,6 +1715,26 @@ function act(k){
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
   if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k === 'spadd') { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
+    if (i.split.length === 1 && i.amtKnown && !i.split[0].amt) i.split[0].amt = i.amt.toFixed(2);
+    i.split.push({ code:'', amt:'' }); pane(); return; }
+  if (k.startsWith('sprm:')) { keepReview(i); i.split.splice(Number(k.slice(5)), 1); if (!i.split.length) i.split = [{ code:'', amt:'' }]; if (i.split.length === 1) i.split[0].amt = ''; pane(); return; }
+  if (k === 'revapprove') { if (!mySeat(i)) return;
+    keepReview(i);
+    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the checks first'); return; }
+    const f = { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() };
+    if (isInv(i)) { const code = revCoding(i); if (!code) return; f.CostCode = code; }
+    const note = (i.revNote || '').trim();
+    run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + '.' }, note ? { asNoted:true } : {}))) { i.revNote = ''; toast('Approved — Ready for entry'); } });
+    return; }
+  if (k === 'revreturn') { if (!mySeat(i)) return; keepReview(i); const n = (i.revNote || '').trim();
+    if (!n) { toast('Say why in the note to Accounting — not yours, or your question'); const t = $('#revNote'); if (t) t.focus(); return; }
+    run(async () => { if (await saveRow(i, { Status:'PM returned' }, { s:'PM returned', k:'system', note:n })) { i.revNote = ''; toast('Returned to Accounting'); } });
+    return; }
+  if (k === 'askvendor') { if (!mySeat(i)) return; keepReview(i);
+    window.open(vendorAsk(i), '_blank', 'noopener');
+    run(async () => { await saveRow(i, {}, { askedVendor:true, note:'Asked the vendor from ' + LIVE.me.name + '’s Outlook (payables@ copied)' + ((i.revNote || '').trim() ? ': ' + i.revNote.trim() : '.') }); });
+    return; }
   if (k === 'asme') { if (!LIVE.me) return; WHO = LIVE.me.email; const w = $('#who'); if (w) w.value = WHO; MINE = false; BULK.clear(); draw(); pane(); return; }
   if (k === 'split') { SPLIT = !splitOn(i); store.set('apsplit', SPLIT ? '1' : '0'); pane(); return; }
   if (k === 'invedit') { i.editInv = true; pane(); return; }
