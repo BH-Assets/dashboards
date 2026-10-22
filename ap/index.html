@@ -1109,7 +1109,10 @@ const ccNames = (job, x) => { const N = LIVE.ccn || {}, k = nz(x.p) + '-' + nz(x
   const c = (N.by_code || {})[k]; if (c) return c;
   const ph = (N.by_phase || {})[nz(x.p)]; return ph ? [ph, ''] : [x.pd || '', x.cd || '']; };
 const ccLabel = (x, job) => { const [pd, cd] = (job ? ccNames(job, x) : [x.pd, x.cd]); return [pd, cd].filter(Boolean).join(' / ') + ((pd || cd) ? ' · ' : '') + (CTYPE[x.t] ? CTYPE[x.t][1] : 'type ' + x.t); };
-const ccList = job => '<datalist id="ccList">' + jobCodes(job).filter(x => CT_INV.has(ctRef(x.t))).map(x => '<option value="' + esc(ccKey(x)) + '">' + esc(ccLabel(x, job)) + '</option>').join('') + '</datalist>';
+/* withPO: an invoice billed against a PO is coded like the PO itself, which can be a
+   Subcontract (S) line on the budget (Fox Run 03-391 is S only) - so S is offered then. */
+const CT_PO = new Set([...CT_INV, 'S']);
+const ccList = (job, withPO) => '<datalist id="ccList">' + jobCodes(job).filter(x => (withPO ? CT_PO : CT_INV).has(ctRef(x.t))).map(x => '<option value="' + esc(ccKey(x)) + '">' + esc(ccLabel(x, job)) + '</option>').join('') + '</datalist>';
 const PDFS = {};
 function pdfBox(i){
   const P0 = PDFS[i.id];
@@ -1167,7 +1170,7 @@ function invView(i){
     if (k === 'InvoiceDate' || k === 'DueDate') return '<input class="bh-input" type="date" data-iv="' + k + '" value="' + esc(String(v).slice(0, 10)) + '">';
     if (k === 'BalanceDue') return '<input class="bh-input" inputmode="decimal" data-iv="' + k + '" value="' + (v === '' ? '' : Number(v).toFixed(2)) + '">';
     const oh = !i.job || i.job === 'GL' || i.job === 'OH';
-    if (k === 'CostCode' && !oh && jobCodes(i.job).length) return '<input class="bh-input" data-iv="CostCode" list="ccList" value="' + esc(String(v)) + '" placeholder="' + esc(i.job) + ' cost code — e.g. 01-403 O">' + ccList(i.job);
+    if (k === 'CostCode' && !oh && jobCodes(i.job).length) return '<input class="bh-input" data-iv="CostCode" list="ccList" value="' + esc(String(v)) + '" data-po="' + (i.f.Subcontract ? 1 : '') + '" placeholder="' + esc(i.job) + ' cost code — e.g. 01-403 O">' + ccList(i.job, !!i.f.Subcontract);
     if (k === 'CostCode' && oh && (LIVE.gl || []).length) return '<input class="bh-input" data-iv="CostCode" list="glList" value="' + esc(String(v)) + '" placeholder="GL account — type a number or name">' + glList();
     return '<input class="bh-input" data-iv="' + k + '" value="' + esc(String(v)) + '"' + (k === 'CostCode' ? ' placeholder="e.g. 25AU018.01.402 or GL"' : k === 'ServicePeriod' ? ' placeholder="e.g. 9/1/2026 – 9/30/2026"' : '') + '>';
   };
@@ -1194,7 +1197,8 @@ function invSave(i){
     if (k === 'CostCode' && raw && raw !== old) {
       const jobNow = f.JobNumber !== undefined ? f.JobNumber : i.job;
       const m = raw.toUpperCase().match(/\s([A-Z])$/);
-      if (jobNow && jobNow !== 'GL' && jobNow !== 'OH' && m && !CT_INV.has(m[1])) {
+      const poNow = f.Subcontract !== undefined ? f.Subcontract : i.f.Subcontract;
+      if (jobNow && jobNow !== 'GL' && jobNow !== 'OH' && m && !(poNow ? CT_PO : CT_INV).has(m[1])) {
         const nm = Object.values(CTYPE).find(c => c[0] === m[1]);
         toast((nm ? m[1] + ' (' + nm[1] + ')' : m[1]) + ' isn’t used on invoices — pick the M, O, E, X or T line for this code'); return null; }
     }
@@ -1256,6 +1260,14 @@ function routedBanner(i){
 const cSeries = n => { n = String(n || '').trim(); const m = n.match(/^\d{4}-\d{2}-?(\d)\d{2}$/); return m ? m[1] : n.charAt(0); };
 const jobPOs = job => (LIVE.commitments || []).filter(c => c.project_number === job && cSeries(c.number) === '3');
 const poList = job => '<datalist id="poList">' + jobPOs(job).map(c => '<option value="' + esc(c.number) + '">' + esc([c.vendor, c.title].filter(Boolean).join(' · ') + (c.remaining_balance != null ? ' · ' + money(Number(c.remaining_balance)) + ' left' : '')) + '</option>').join('') + '</datalist>';
+/* the cost code(s) a PO is written against (codes on ap_commitments.json, from Procore's line
+   items) -> "03-391 S"; used to prefill an invoice's coding when its PO is picked */
+function poCodes(po){
+  const c = (LIVE.commitments || []).find(x => String(x.number || '').toUpperCase() === String(po || '').trim().toUpperCase());
+  return ((c && c.codes) || []).filter(x => x.code).map(x => { const t = String(x.type || '').trim();
+    const ref = /^\d+$/.test(t) ? ctRef(t) : t.length === 1 ? t.toUpperCase() : ((Object.values(CTYPE).find(c2 => c2[1].toLowerCase() === t.toLowerCase()) || [t.charAt(0).toUpperCase()])[0]);
+    return { key: x.code + (ref ? ' ' + ref : ''), name: x.name || '', amount: x.amount }; });
+}
 function poGuess(i){
   if (i.po) return i.po;
   const v = String(i.v || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2)[0] || '';
@@ -1296,20 +1308,30 @@ function reviewBox(i){
   const inv = isInv(i), oh = !isJobInv(i);
   if (inv && !i.split) i.split = splitOf(i.f.CostCode);
   const rows = i.split || [], many = rows.length > 1;
+  if (inv && isJobInv(i)) {   /* prefill the coding from the PO when nothing is coded yet */
+    if (i.poOn == null) i.poOn = !!i.po;
+    if (i.poSel == null) i.poSel = poGuess(i);
+    const pc0 = i.poOn ? poCodes(i.poSel) : [];
+    /* a code we filled from an earlier PO is replaced when the PO changes; a typed one is kept */
+    if (i.poOn && rows.length === 1 && i.prefillFor !== i.poSel && (!rows[0].code || rows[0].code === i.prefillCode)) {
+      rows[0].code = pc0.length === 1 ? pc0[0].key : ''; i.prefillFor = i.poSel; i.prefillCode = rows[0].code; }
+  }
   const sum = rows.reduce((a, r) => a + (Number(r.amt) || 0), 0), left = Math.round(((i.amtKnown ? i.amt : 0) - sum) * 100) / 100;
   let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">' + (inv ? 'Code and approve' : 'Your review') + '</div>';
   if (inv) {
     h += '<div class="bh-label" style="margin-top:10px">' + (oh ? 'GL account' : 'Cost code · ' + esc(i.job)) + ' <span style="color:var(--bh-bad-ink,#b00020)">required</span></div>'
       + rows.map((r, k) => '<div class="sp-row"><input class="bh-input" data-sp-code="' + k + '" list="' + (oh ? 'glList' : 'ccList') + '" value="' + esc(r.code) + '" placeholder="' + (oh ? 'GL account — type a number or name' : 'e.g. 01-403 O') + '">'
         + (many ? '<input class="bh-input sp-amt" inputmode="decimal" data-sp-amt="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount"><button class="xp-mini" data-do="sprm:' + k + '" aria-label="Remove line">✕</button>' : '') + '</div>').join('')
-      + (oh ? glList() : ccList(i.job))
+      + (oh ? glList() : ccList(i.job, !!i.poOn))
       + '<p class="note" style="margin:4px 0 0">' + (many ? 'Lines total ' + money(sum) + (i.amtKnown ? (Math.abs(left) < 0.005 ? ' <span class="bh-chip is-ok sm">= invoice</span>' : ' <span class="bh-chip is-bad sm">' + (left > 0 ? money(left) + ' left' : money(-left) + ' over') + '</span>') : '') + ' · ' : '')
       + '<a href="#" data-do="spadd">' + (many ? 'Add a line' : 'Split across codes') + '</a></p>';
     if (!oh) {
       if (i.poOn == null) i.poOn = !!i.po;
       if (i.poSel == null) i.poSel = poGuess(i);
+      const pc = i.poOn ? poCodes(i.poSel) : [];
       h += '<label class="ck" style="padding:8px 0 0;border:0"><input type="checkbox" id="poOn"' + (i.poOn ? ' checked' : '') + '> Tied to a PO' + (i.po ? ' <span class="note" style="margin:0">(read off the invoice)</span>' : '') + '</label>'
-        + (i.poOn ? '<input class="bh-input" id="poPick" list="poList" style="width:100%;min-height:34px;box-sizing:border-box;margin-top:4px" value="' + esc(i.poSel || '') + '" placeholder="PO # — ' + jobPOs(i.job).length + ' on ' + esc(i.job) + '">' + poList(i.job) : '');
+        + (i.poOn ? '<input class="bh-input" id="poPick" list="poList" style="width:100%;min-height:34px;box-sizing:border-box;margin-top:4px" value="' + esc(i.poSel || '') + '" placeholder="PO # — ' + jobPOs(i.job).length + ' on ' + esc(i.job) + '">' + poList(i.job)
+          + (pc.length ? '<p class="note" style="margin:4px 0 0">PO ' + esc(i.poSel) + ' is coded to ' + pc.map(x => '<a href="#" data-do="pocode:' + esc(x.key) + '" title="' + esc(x.name) + '">' + esc(x.key) + '</a>').join(', ') + (pc.length > 1 ? ' — pick one, or split' : '') + '</p>' : '') : '');
     }
   }
   if (CHECKS(i).length) h += '<div class="bh-label" style="margin-top:14px">Checks</div>' + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('');
@@ -1328,7 +1350,7 @@ function revCoding(i){
   const rows = (i.split || []).filter(r => r.code || r.amt);
   if (!rows.length || rows.some(r => !r.code)) { toast(isJobInv(i) ? 'Pick the cost code first' : 'Pick the GL account first'); return null; }
   if (isJobInv(i)) for (const r of rows) { const m = r.code.toUpperCase().match(/\s([A-Z])$/);
-    if (m && !CT_INV.has(m[1])) { const nm = Object.values(CTYPE).find(c => c[0] === m[1]); toast((nm ? m[1] + ' (' + nm[1] + ')' : m[1]) + ' isn’t used on invoices — pick the M, O, E, X or T line'); return null; } }
+    if (m && !(i.poOn ? CT_PO : CT_INV).has(m[1])) { const nm = Object.values(CTYPE).find(c => c[0] === m[1]); toast((nm ? m[1] + ' (' + nm[1] + ')' : m[1]) + ' isn’t used on invoices — pick the M, O, E, X or T line'); return null; } }
   if (rows.length === 1) return rows[0].code;
   if (rows.some(r => !/^-?\d+(\.\d{1,2})?$/.test(String(r.amt).replace(/[$,\s]/g, '')))) { toast('Give every line an amount'); return null; }
   const sum = rows.reduce((a, r) => a + Number(String(r.amt).replace(/[$,\s]/g, '')), 0);
@@ -1844,6 +1866,8 @@ function act(k){
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
   if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k.startsWith('pocode:')) { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
+    const e = i.split.find(r => !r.code) || i.split[0]; e.code = k.slice(7); pane(); return; }
   if (k === 'spadd') { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
     if (i.split.length === 1 && i.amtKnown && !i.split[0].amt) i.split[0].amt = i.amt.toFixed(2);
     i.split.push({ code:'', amt:'' }); pane(); return; }
@@ -2085,6 +2109,7 @@ function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('ar
   $('#q').placeholder = v === 'exp' ? 'Search vendor, job, commitment #' : 'Search vendor, job, invoice #'; draw(); }
 $('#vQ').addEventListener('click', () => setView('queue'));
 $('#vE').addEventListener('click', () => setView('exp'));
+document.addEventListener('change', e => { if (e.target.id === 'poPick') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
 document.addEventListener('change', e => { if (e.target.id === 'poOn') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
 document.addEventListener('change', e => { if (e.target.id === 'xPer') { XPER = e.target.value === curPeriod() ? '' : e.target.value; draw(); } });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('wi-')) { const b = e.target.parentNode.querySelector('[data-wi]'); if (b) b.click(); return; }
