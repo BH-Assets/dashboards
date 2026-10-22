@@ -39,6 +39,21 @@ body.no-pane .ap-pane{display:none}
 .ap-empty{padding:14px 0;font-size:13px;color:var(--bh-ink-muted);border-bottom:1px solid var(--bh-hairline)}
 
 /* rows */
+.iv{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(250px,1fr);gap:18px;margin-bottom:14px}
+.iv-pdf{width:100%;height:72vh;min-height:420px;border:1px solid var(--bh-hairline);background:var(--bh-surface-muted)}
+.iv-none{height:240px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--bh-slate);font-size:13px;color:var(--bh-ink-muted);text-align:center;padding:12px}
+.iv-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.iv-dl{display:grid;grid-template-columns:96px minmax(0,1fr);margin:0;font-size:13px}
+.iv-dl dt{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--bh-ink-muted);padding:9px 0;border-bottom:1px solid var(--bh-hairline)}
+.iv-dl dd{margin:0;padding:8px 0;border-bottom:1px solid var(--bh-hairline);min-width:0;overflow-wrap:anywhere}
+.iv-dl dd span{display:block;font-size:12px;color:var(--bh-ink-muted)}
+.iv-dl dd span.bh-chip{display:inline-block;color:inherit}
+.iv-dl dd span.miss{display:inline;color:var(--bh-warn-ink,#8a6d00)}
+.iv-dl .bh-input,.iv-dl .bh-select{width:100%;min-height:30px;box-sizing:border-box;font-size:13px}
+@media (max-width:760px){.iv{grid-template-columns:1fr}.iv-pdf{height:60vh;min-height:320px}}
+.ap-colh{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;gap:14px;padding:14px 8px 0;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted)}
+.ap-colh .r{text-align:right}
+@media (max-width:960px){.ap-colh{display:none}}
 .ap-row{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;align-items:center;gap:14px;padding:11px 8px;border-bottom:1px solid var(--bh-hairline);cursor:pointer;font-size:13px}
 .ap-row:hover{background:#faf8f4}
 .ap-row.is-sel{background:var(--bh-cream)}
@@ -607,6 +622,7 @@ function draw(){
     { k:'appr', t:'Approved by me', o:'Last 30 days · for your information', closed:true },
   ];
   const byMe = i => lc(i.f.ApprovedBy) === WHO && (i.sec === 'ready' || i.sec === 'done');
+  h += '<div class="ap-colh" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">Balance due</span><span class="r" title="Days in this stage">Days</span><span>Next step</span><span title="Who it is with">With</span></div>';
   secs.forEach(s => {
     const rows = v.filter(i => s.k === 'appr' ? byMe(i) : (i.sec === s.k && (isAcct() || s.k !== 'pm' || i.assign === WHO))).sort((a,b) => (Date.parse(a.changedAt||'')||0) - (Date.parse(b.changedAt||'')||0));
     const open = s.k in OPEN ? OPEN[s.k] : !s.closed;
@@ -618,7 +634,7 @@ function draw(){
         const who = P(i.assign), chips = [];
         if (i.flags.length) chips.push('<span class="bh-chip is-bad sm">' + i.flags.length + ' flag' + (i.flags.length > 1 ? 's' : '') + '</span>');
         if (i.missing.length && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm">Missing ' + i.missing.map(esc).join(', ') + '</span>');
-        if (i.note && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm">Needs a look</span>');
+        if (i.note && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">' + (/ocr|scan/i.test(i.note) ? 'Scanned · check figures' : 'Needs a look') + '</span>');
         if (s.k === 'appr') chips.push(i.sec === 'ready' ? '<span class="bh-chip is-warn sm">Waiting for entry</span>' : '<span class="bh-chip is-ok sm">Entered in CE' + (i.f.CEReference ? ' · ' + esc(i.f.CEReference) : '') + '</span>');
         if (i.asNoted && i.sec === 'ready') chips.push('<span class="bh-chip sm">As noted</span>');
         if (i.raw === 'PM returned') chips.push('<span class="bh-chip sm">PM returned</span>');
@@ -892,6 +908,7 @@ function pane(){
   if (TAB === 'review' && i.draft && !i.isMsg && i.sec !== 'corr' && i.draft.draftLink) h += '<p class="note"><a href="' + esc(i.draft.draftLink) + '" target="_blank" rel="noopener">Open the draft in payables@</a></p>';
   const acctView = isAcct() && i.math && !i.isMsg;
   if (TAB === 'review' && acctView) h += acctCheck(i);
+  if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
   if (TAB === 'review' && i.math && !i.isMsg && (!acctView || i.showPc)) h += summaryBox(i);
   if (TAB === 'review' && acctSeat() && i.sec === 'triage' && !i.isMsg) h += triageBox(i);
   if (TAB === 'review') {
@@ -906,7 +923,7 @@ function pane(){
       else if (i.sec === 'pm') h += '<h3>PM checks</h3>' + [['valid','Billing is valid for this period'],['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite'],['ret','Retainage is correct']]
         .map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + (mySeat(i) ? '' : ' disabled') + '> ' + c[1] + '</label>').join('');
     }
-    if (!i.isMsg) h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
+    if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
   if (TAB === 'activity') {
     h += '<ul class="tl">' + i.act.map(a => '<li class="' + (a.ext ? 'ext' : '') + '"><div><div class="w">' + esc(a.w) + ' · ' + esc(a.when) + '</div>' + esc(a.t)
@@ -981,6 +998,77 @@ function explainDiffs(i){
     out.push({ ok: false, minor: Math.abs(d) < 100, t: 'Previous payments ' + (d > 0 ? '+' : '−') + money(Math.abs(d)), why: Math.abs(d) < 100 ? 'small — usually a retainage rounding or a CO’s retainage; confirm on the CE history' + ledgerAsOf() : 'not in the CE history' + ledgerAsOf() + ' — an invoice entered in CE after that date, or one still on the desk, would explain it' }); }
   const due = m.complete != null && m.ret != null && m.prev[0] != null ? m.complete - m.ret - m.prev[0] : null;
   return { items: out, math: due == null || m.due == null ? null : !dif(m.due, due), mathOff: due == null || m.due == null ? 0 : m.due - due };
+}
+/* ---- Invoice view (22 Oct 2026) -------------------------------------------------
+   The PDF itself on the left, the invoice's details spelled out on the right:
+   Job Info | Vendor | Inv Date | Inv # | Amt | Cost Code | Description | Period | Due Date.
+   The PDF is fetched through Graph with the desk's own sign-in (Sites.Selected on the
+   APDesk site) and shown from a blob URL - SharePoint refuses to be framed directly.
+   Accounting edits every field in place; the approver can set cost code and description. */
+const PDFS = {};
+async function loadPdf(i){
+  if (!i.f.PdfPath || PDFS[i.id]) return;
+  PDFS[i.id] = 'loading';
+  try {
+    const tok = await token(); const q = LIVE.queue;
+    if (!tok || !q || !q.siteId) throw 0;
+    const r = await fetch(GRAPH + '/sites/' + q.siteId + '/drive/root:/' + encodeURI(i.f.PdfPath) + ':/content', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) throw r.status;
+    PDFS[i.id] = URL.createObjectURL(new Blob([await r.arrayBuffer()], { type: 'application/pdf' }));
+  } catch (e) { PDFS[i.id] = 'error'; }
+  if (SEL === i.id) pane();
+}
+const INV_F = [['job','Job Info'],['Vendor','Vendor'],['InvoiceDate','Inv Date'],['PayRequest','Inv #'],['BalanceDue','Amt'],
+               ['CostCode','Cost Code'],['InvoiceDescription','Description'],['ServicePeriod','Period'],['DueDate','Due Date']];
+function invView(i){
+  const f = i.f, all = acctSeat() && i.sec !== 'done', appr = mySeat(i) && i.sec !== 'done';
+  const can = k => all || (appr && (k === 'CostCode' || k === 'InvoiceDescription'));
+  const ed = i.editInv && (all || appr);
+  const P0 = PDFS[i.id];
+  if (f.PdfPath && !P0) loadPdf(i);
+  const pv = !f.PdfPath ? '<div class="iv-none">No PDF filed</div>'
+    : P0 === 'loading' || !P0 ? '<div class="iv-none">Loading the PDF…</div>'
+    : P0 === 'error' ? '<div class="iv-none">The PDF could not be shown here. ' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>'
+    : '<iframe class="iv-pdf" src="' + P0 + '#view=FitH" title="Invoice PDF"></iframe>';
+  const show = k => {
+    if (k === 'job') return i.job ? '<b>' + esc(i.job === 'GL' || i.job === 'OH' ? 'Overhead' : i.job) + '</b>' + (i.job !== 'GL' && i.job !== 'OH' ? '<span>' + esc(jobName(i.job)) + '</span>' + (((JOBS[i.job] || {}).team || []).length ? '<span>PM ' + esc(JOBS[i.job].team.map(e => P(e).n).join(', ')) + '</span>' : '') : '') : '<span class="miss">not set</span>';
+    const v = f[k];
+    if (v == null || v === '') return '<span class="miss">' + (k === 'CostCode' ? 'not coded' : 'not read') + '</span>';
+    if (k === 'BalanceDue') return '<b>' + money(Number(v)) + '</b>';
+    if (k === 'InvoiceDate' || k === 'DueDate') return esc(usDate(v)) + (k === 'DueDate' && String(v).slice(0, 10) < new Date().toISOString().slice(0, 10) && i.sec !== 'done' ? ' <span class="bh-chip is-bad sm">past due</span>' : '');
+    return esc(String(v));
+  };
+  const input = k => {
+    if (k === 'job') return '<select class="bh-select" data-iv="job"><option value="">—</option><option value="OH"' + (i.job === 'OH' || i.job === 'GL' ? ' selected' : '') + '>Overhead · no job</option>'
+      + Object.keys(LIVE.jobs).sort().map(j => '<option value="' + esc(j) + '"' + (i.job === j ? ' selected' : '') + '>' + esc(j + ' · ' + LIVE.jobs[j].n) + '</option>').join('') + '</select>';
+    const v = f[k] == null ? '' : f[k];
+    if (k === 'InvoiceDate' || k === 'DueDate') return '<input class="bh-input" type="date" data-iv="' + k + '" value="' + esc(String(v).slice(0, 10)) + '">';
+    if (k === 'BalanceDue') return '<input class="bh-input" inputmode="decimal" data-iv="' + k + '" value="' + (v === '' ? '' : Number(v).toFixed(2)) + '">';
+    return '<input class="bh-input" data-iv="' + k + '" value="' + esc(String(v)) + '"' + (k === 'CostCode' ? ' placeholder="e.g. 25AU018.01.402 or GL"' : k === 'ServicePeriod' ? ' placeholder="e.g. 9/1/2026 – 9/30/2026"' : '') + '>';
+  };
+  return '<div class="iv"><div class="iv-l">' + pv + '</div><div class="iv-r"><div class="iv-h"><span class="bh-label">Invoice</span>'
+    + ((all || appr) && !ed ? '<button class="xp-mini" data-do="invedit">Change</button>' : '') + '</div><dl class="iv-dl">'
+    + INV_F.map(([k, t]) => '<dt>' + t + '</dt><dd>' + (ed && can(k) ? input(k) : show(k)) + '</dd>').join('') + '</dl>'
+    + (ed ? '<div class="ac-ed"><button class="bh-btn" style="min-height:32px;font-size:11px" data-do="invsave"' + (BUSY ? ' disabled' : '') + '>Save</button><button class="xp-mini" data-do="invx">Cancel</button></div>' : '')
+    + (i.note ? '<p class="note" style="margin-top:8px">' + esc(i.note) + '</p>' : '')
+    + '<p class="note" style="margin-top:10px">' + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + (i.mail ? (i.pdf ? ' · ' : '') + '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>'
+    + '</div></div>';
+}
+function invSave(i){
+  const f = {}, said = [];
+  for (const el of document.querySelectorAll('[data-iv]')) {
+    const k = el.dataset.iv, raw = el.value.trim();
+    if (k === 'job') { const old = i.job === 'GL' ? 'OH' : (i.job || ''); if (raw !== old) { f.JobNumber = raw === 'OH' ? 'GL' : raw; said.push('job ' + (old || '—') + ' → ' + (raw || '—')); } continue; }
+    const old = i.f[k] == null ? '' : String(i.f[k]);
+    if (k === 'BalanceDue') {
+      const r = raw.replace(/[$,\s]/g, ''); if (r !== '' && !/^-?\d+(\.\d{1,2})?$/.test(r)) { toast('Amt - dollars only'); return null; }
+      const nv = r === '' ? null : Number(r), ov = old === '' ? null : Number(old);
+      if (nv === ov || (nv != null && ov != null && Math.abs(nv - ov) < 0.005)) continue;
+      f[k] = nv; said.push('amount ' + (ov == null ? 'not read' : money(ov)) + ' → ' + (nv == null ? 'blank' : money(nv))); continue; }
+    if (k === 'InvoiceDate' || k === 'DueDate') { if (raw !== old.slice(0, 10)) { f[k] = raw || null; said.push(INV_F.find(x => x[0] === k)[1] + ' → ' + (raw ? usDate(raw) : 'blank')); } continue; }
+    if (raw !== old) { f[k] = raw; said.push(INV_F.find(x => x[0] === k)[1] + ' → ' + (raw || 'blank')); }
+  }
+  return { f, said };
 }
 /* ---- Accounting's check (22 Oct 2026) --------------------------------------------------
    What Drew actually does at triage: put the pay app beside CE's Subcontractor Detail report.
@@ -1451,6 +1539,13 @@ function act(k){
   if (k === 'rejshow') { i.rej = !i.rej; pane(); return; }
   if (k.startsWith('dec:')) { keepTriage(i); i.dec = i.dec === k.slice(4) ? '' : k.slice(4); i.rej = i.dec === 'reject'; pane(); return; }
   if (k === 'figedit') { i.editFig = true; pane(); return; }
+  if (k === 'invedit') { i.editInv = true; pane(); return; }
+  if (k === 'invx') { i.editInv = false; pane(); return; }
+  if (k === 'invsave') { if (!acctSeat() && !mySeat(i)) return;
+    const r = invSave(i); if (!r) return;
+    if (!r.said.length) { i.editInv = false; pane(); return; }
+    run(async () => { if (await saveRow(i, r.f, { note: 'Invoice details: ' + r.said.join('; ') + '.' })) { i.editInv = false; toast('Saved'); } });
+    return; }
   if (k === 'figx') { i.editFig = false; pane(); return; }
   if (k === 'figsave') { if (!acctSeat()) return;
     const f = {}, said = [], keyed = [];
