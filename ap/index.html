@@ -1251,7 +1251,10 @@ function routedBanner(i){
 /* POs (22 Oct 2026): an invoice billed against a purchase order has to be entered in CE
    against that PO. The PO # comes from the invoice when the pull read one (Subcontract), or
    the approver ticks "Tied to a PO" and picks from the job's POs (Procore 300-series). */
-const jobPOs = job => (LIVE.commitments || []).filter(c => c.project_number === job && /^3/.test(String(c.number || '')));
+/* the commitment's series digit: 30125AU008 -> 3, but 2504-00307 -> 3 (the digit after the
+   job number), 301-05-668 -> 3. A PO is the 300 series. */
+const cSeries = n => { n = String(n || '').trim(); const m = n.match(/^\d{4}-\d{2}-?(\d)\d{2}$/); return m ? m[1] : n.charAt(0); };
+const jobPOs = job => (LIVE.commitments || []).filter(c => c.project_number === job && cSeries(c.number) === '3');
 const poList = job => '<datalist id="poList">' + jobPOs(job).map(c => '<option value="' + esc(c.number) + '">' + esc([c.vendor, c.title].filter(Boolean).join(' · ') + (c.remaining_balance != null ? ' · ' + money(Number(c.remaining_balance)) + ' left' : '')) + '</option>').join('') + '</datalist>';
 function poGuess(i){
   if (i.po) return i.po;
