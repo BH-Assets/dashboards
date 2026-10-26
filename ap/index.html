@@ -975,7 +975,7 @@ function pane(){
     if (i.sec !== 'done' && !i.isMsg) {
       if (isAcct() && (!acctView || i.showPc)) h += intakeChecks(i);
       else if (i.sec === 'pm' && !mySeat(i)) h += '<div class="flags" style="border-left-color:var(--bh-black);background:var(--bh-surface-muted)"><b>With ' + esc(P(i.assign).n) + ' to approve</b>'
-        + (LIVE.me && i.assign === LIVE.me.email ? 'It is assigned to you. <a href="#" data-do="asme">Review it as the approver</a> to tick the checks and approve.' : 'Only ' + esc(P(i.assign).n) + ' can tick the checks and approve it.') + '</div>';
+        + (LIVE.me && i.assign === LIVE.me.email ? 'It is assigned to you. <a href="#" data-do="asme">Review it as the approver</a> to approve it.' : 'Only ' + esc(P(i.assign).n) + ' can approve it.') + '</div>';
     }
     if (!i.isMsg && i.type !== 'Invoice') h += '<p class="note" style="margin-top:16px">' + (!(isAcct() && i.math) && canSplit(i) ? splitLink(i) + ' · ' : '') + (i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : 'No PDF filed') + ((i.files || []).length ? ' · Also attached: ' + moreFiles(i, ', ') : '') + (i.mail ? ' · <a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : '') + '</p>';
   }
@@ -1530,7 +1530,7 @@ const isInv = i => i.type === 'Invoice';
 /* the approver's checks before approving - an invoice is coded by the approver */
  const CHECKS = i => isInv(i)
   ? []   // 22 Oct 2026: no checks on invoices - coding is the review
-  : [['contract','Contract and approved changes agree'],['progress','Work completed matches the jobsite']];
+  : [['sov','SOV and work completed match work in place']];   // 26 Oct 2026: one check for pay apps
 function assignOptions(i, cur){
   const team = (JOBS[i.job] && JOBS[i.job].team) || [];
   const sug = i.type === 'Pay app' && i.po && team.length ? team[0] : '';
@@ -1874,7 +1874,7 @@ function act(k){
   if (k.startsWith('sprm:')) { keepReview(i); i.split.splice(Number(k.slice(5)), 1); if (!i.split.length) i.split = [{ code:'', amt:'' }]; if (i.split.length === 1) i.split[0].amt = ''; pane(); return; }
   if (k === 'revapprove') { if (!mySeat(i)) return;
     keepReview(i);
-    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the checks first'); return; }
+    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the check first'); return; }
     const f = { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() };
     if (isInv(i)) { const code = revCoding(i); if (!code) return; f.CostCode = code;
       if (isJobInv(i)) { const po = i.poOn ? (i.poSel || '').toUpperCase() : '';
@@ -1961,7 +1961,7 @@ function act(k){
       if (fresh) await deliver(fresh, m, null, k === 'rejsend' ? 'send' : 'outlook', 'Rejection email', win); else if (win) win.close(); } else if (win) win.close(); });
     return; }
   if (k === 'approve') { if (!mySeat(i)) return;
-    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the checks first'); return; }
+    if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the check first'); return; }
     if (isInv(i) && !String(i.f.CostCode || '').trim()) { toast('Code the invoice first — Change on the invoice, then Cost Code'); return; }
     run(async () => { if (await saveRow(i, { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() }, { s:'ready for entry', note:'Approved ' + money(i.amt) + '.' })) toast('Approved — Ready for entry'); });
     return; }
