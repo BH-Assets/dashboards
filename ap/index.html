@@ -90,6 +90,25 @@ body.no-pane .ap-pane{display:none}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
 .ap-colh{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;gap:14px;padding:7px 8px 6px;border-bottom:1px solid var(--bh-hairline);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted)}
 .ap-colh .r{text-align:right}
+.ap-row.ce,.ap-colh.ce,.ap-sec-h.ce{grid-template-columns:36px minmax(170px,1.4fr) minmax(120px,1fr) 110px 56px minmax(190px,1.2fr) minmax(140px,1fr) 34px}
+.ap-ce{min-width:0;font-size:12px}
+.ap-ce .l{display:flex;justify-content:space-between;gap:10px}
+.ap-ce .l b{font-weight:700;color:var(--bh-ink);white-space:nowrap}
+.ap-ce .l .a{font-weight:600;color:var(--bh-ink);white-space:nowrap}
+.ap-ce .po{color:var(--bh-ink-muted)}
+.ap-ce .miss{color:var(--bh-warn-ink);font-weight:600}
+.ap-row.ce .ap-amt{position:relative;cursor:help}
+.ap-row.ce .ap-amt>span.m{border-bottom:1px dotted currentColor}
+.amt-pop{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:330px;background:#fff;border:1px solid var(--bh-slate);box-shadow:0 6px 18px rgba(0,0,0,.14);padding:10px 12px;text-align:left;font-size:12px;font-weight:400;color:var(--bh-ink);cursor:default}
+.ap-row.ce .ap-amt:hover .amt-pop,.ap-row.ce .ap-amt:focus-within .amt-pop{display:block}
+.amt-pop .ah{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted);margin-bottom:6px}
+.amt-pop dl{display:grid;grid-template-columns:92px minmax(0,1fr);gap:4px 10px;margin:0}
+.amt-pop dt{color:var(--bh-ink-muted)}
+.amt-pop dd{margin:0;min-width:0}
+.amt-pop .cl{display:flex;justify-content:space-between;gap:8px}
+.amt-pop .cl b{font-weight:700}
+.amt-pop .cn{color:var(--bh-ink-muted);margin-bottom:3px}
+.bulk .bh-input{width:200px;background:#fff}
 @media (max-width:960px){.ap-colh{display:none}.ap-sec-h{display:flex;gap:12px}.ap-sec-h .sum{margin-left:auto}}
 .ap-row{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;align-items:center;gap:14px;padding:11px 8px;border-bottom:1px solid var(--bh-hairline);cursor:pointer;font-size:13px}
 .ap-row:hover{background:#faf8f4}
@@ -127,6 +146,8 @@ body.no-pane .ap-pane{display:none}
 .ap-nx{min-width:0;font-size:12px;color:var(--bh-ink-muted)}
 .ap-nx .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
 .ap-nx .upd{color:var(--bh-ink);font-weight:600}
+.ap-nx .nt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--bh-ink)}
+.ap-nx .nt b{font-weight:600}
 .ap-av{width:30px;height:30px;background:var(--bh-slate);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
 .ap-av.none{background:#fff;border:1px dashed var(--bh-slate);color:var(--bh-ink-muted)}
 .bh-chip.sm{font-size:10px;padding:2px 6px}
@@ -281,7 +302,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   .ap-row{grid-template-columns:10px 1fr 90px;grid-template-areas:"d v a" "d j n";row-gap:4px}
   .ap-row .ap-dot,.ap-row .dsp{grid-area:d}
   .ap-row .ap-v{grid-area:v}.ap-row .ap-amt{grid-area:a}.ap-row .ap-j{grid-area:j}.ap-row .ap-nx{grid-area:n;text-align:right}
-  .ap-row .ap-age,.ap-row .ap-av{display:none}
+  .ap-row .ap-age,.ap-row .ap-av,.ap-row .ap-ce{display:none}
   .ap-nx .chips{justify-content:flex-end}
   .ap-nx .bh-chip{white-space:normal;text-align:left}
   .ap-row{grid-template-columns:18px minmax(0,1fr) minmax(90px,45%)}
@@ -362,7 +383,7 @@ const HIDDEN = ['duplicate archived','email only','handled outside desk'];
 const LIVE = { byKey:{}, me:null, commitments:[], cMeta:null, expected:null, ceInv:null, queue:null, byNum:{}, billing:{}, pmName:{}, jobs:{} };
 let INV = [], PEOPLE = {}, JOBS = {};
 let LASTB=null, WHO=ACCT, MINE=false, CHG=false, Q='', SEL=null, TAB='review', OPEN={done:false}, MENU=false, CF=false, RF=false, ED=false, BUSY=false;
-const BULK = new Set();
+const BULK = new Set(), ENT = new Set();
 /* Expected billings (21 Oct 2026). Every Approved + executed Procore commitment, one row
    each, for the pay-app period chosen. Pay apps are due on the commitment's billing day
    (Procore "billing_day"; the 20th on almost every contract, and the default). The period
@@ -676,6 +697,61 @@ function agePop(i){
       + '<span class="w">' + fmtTime(g.from) + (g.t === 'With approver' && appr(g) ? ' · ' + esc(appr(g)) : '') + '</span></div>').join('')
     + '<div class="tot"><span>' + (seg[seg.length - 1].ms == null ? 'Received to ' + esc(seg[seg.length - 1].t.toLowerCase()) : 'Since received') + '</span><span>' + dur(total) + '</span></div></div>';
 }
+/* List column (26 Oct 2026): Triage shows a short check - flags or Match, plus an OCR
+   warning; every other section shows the latest note or comment on the item. */
+function lastNote(i){
+  const fromLog = (i.log || []).filter(e => e && e.note && e.at && !(e.mail && !e.s) && !e.reply && !e.askedVendor)
+    .map(e => ({ at: e.at, by: e.by || '', text: e.note }));
+  const fromCm = (i.comments || []).filter(c => c && c.text && c.at && (c.kind === 'comment' || c.kind === 'correction' || c.kind === 'email'))
+    .map(c => ({ at: c.at, by: c.who || '', text: c.text }));
+  return fromLog.concat(fromCm).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).pop() || null;
+}
+function triageCheck(i){
+  const c = [];
+  if (i.isMsg) return '<span class="bh-chip sm">Email</span>';
+  const issues = i.flags.concat(i.missing.map(m => 'Missing ' + m));
+  if (issues.length) c.push('<span class="bh-chip is-bad sm" title="' + esc(issues.join('\n')) + '">' + issues.length + ' flag' + (issues.length > 1 ? 's' : '') + '</span>');
+  else if (i.type !== 'Invoice') c.push('<span class="bh-chip is-ok sm" title="Pay app figures agree with Procore and CE">✓ Match</span>');
+  if (i.note) c.push('<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">' + (/ocr|scan/i.test(i.note) ? 'OCR · check accuracy' : 'Needs a look') + '</span>');
+  if (i.type === 'Invoice') c.push('<span class="bh-chip sm">Invoice</span>');
+  if (i.rev > 1) c.push('<span class="bh-chip sm">Rev ' + i.rev + '</span>');
+  if (i.replied) c.push('<span class="bh-chip ' + (i.replyNew ? 'is-warn ' : '') + 'sm">Trade partner replied</span>');
+  return '<div class="chips" style="margin-top:0">' + c.join('') + '</div>';
+}
+function noteCell(i){
+  const n = lastNote(i);
+  if (!n) return '<span>' + esc(nextStep(i)) + '</span>';
+  const first = String(n.by || '').split(' ')[0];
+  return '<span class="nt" title="' + esc((n.by ? n.by + ' · ' : '') + fmtTime(n.at) + '\n' + n.text) + '">' + (first ? '<b>' + esc(first) + ':</b> ' : '') + esc(n.text) + '</span>';
+}
+/* Ready for entry (26 Oct 2026): what Drew keys into CE. The column has each code and
+   its amount; hovering the balance due shows the names, PO, document and approval. */
+function ceLines(i){
+  const f = i.f;
+  if (i.type === 'Pay app') return [{ code: 'Sub ' + (i.po || '—'), amt: i.amtKnown ? i.amt : null, nm: 'Net due' + (f.RetainageHeld != null && f.RetainageHeld !== '' ? ' · retainage held ' + money(Number(f.RetainageHeld)) : '') }];
+  const parts = String(f.CostCode || '').split(/\s*;\s*/).filter(Boolean);
+  return parts.map(p => { const m = p.match(/\s+\$([\d,.-]+)$/), code = p.replace(/\s+\$[\d,.-]+$/, '');
+    const x = isJobInv(i) ? ccFind(i.job, code) : null;
+    return { code, amt: m ? Number(m[1].replace(/,/g, '')) : (parts.length === 1 && i.amtKnown ? i.amt : null), nm: x ? ccLabel(x, i.job) : (!isJobInv(i) ? glName(code) : '') }; });
+}
+function ceCell(i){
+  const L = ceLines(i);
+  if (!L.length) return '<span class="miss">Not coded</span>';
+  return L.map(l => '<div class="l" title="' + esc(l.nm || '') + '"><b>' + esc(l.code) + '</b><span class="a">' + (l.amt != null ? money(l.amt) : '') + '</span></div>').join('')
+    + (i.type === 'Invoice' && i.f.Subcontract ? '<div class="po">PO ' + esc(String(i.f.Subcontract).toUpperCase()) + '</div>' : '');
+}
+function amtPop(i){
+  const f = i.f, L = ceLines(i), rows = [];
+  const ent = [...(i.log || [])].reverse().find(e => e && e.s === 'ready for entry');
+  rows.push([i.type === 'Pay app' ? 'Subcontract' : isJobInv(i) ? 'Cost code' : 'GL account', L.length ? L.map(l => '<div class="cl"><b>' + esc(l.code) + '</b><span>' + (l.amt != null ? money(l.amt) : '') + '</span></div>' + (l.nm ? '<div class="cn">' + esc(l.nm) + '</div>' : '')).join('') : '<span class="miss">Not coded</span>']);
+  if (i.type === 'Invoice' && f.Subcontract) rows.push(['PO #', esc(String(f.Subcontract).toUpperCase())]);
+  rows.push(['Job', esc(i.job || '—') + (i.job ? ' · ' + esc(jobName(i.job)) : '')]);
+  rows.push([i.type === 'Pay app' ? 'Pay app' : 'Invoice', esc(String(f.PayRequest || '—')) + (f.InvoiceDate ? ' · ' + esc(usDate(f.InvoiceDate)) : '') + (f.PeriodEnding ? ' · period ' + esc(usDate(f.PeriodEnding)) : '')]);
+  if (f.DueDate) rows.push(['Due', esc(usDate(f.DueDate))]);
+  if (f.ApprovedBy) rows.push(['Approved', esc(P(lc(f.ApprovedBy)).n) + (f.ApprovedAt ? ' · ' + esc(fmtTime(f.ApprovedAt)) : '')]);
+  if (ent && ent.asNoted) rows.push(['Note', esc(String(ent.note || '').split(' — Approved')[0])]);
+  return '<div class="amt-pop" role="tooltip"><div class="ah">Enter in CE · ' + (i.amtKnown ? money(i.amt) : '') + '</div><dl>' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl></div>';
+}
 function nextStep(i){
   if (i.isMsg) return i.draft ? 'Reply drafted in payables@' : 'Email — link, reply or dismiss';
   if (i.replied && isAcct()) return 'Trade partner replied — read it';
@@ -712,9 +788,10 @@ function draw(){
     const rows = v.filter(i => s.k === 'appr' ? byMe(i) : (i.sec === s.k && (isAcct() || s.k !== 'pm' || i.assign === WHO))).sort((a,b) => (Date.parse(a.changedAt||'')||0) - (Date.parse(b.changedAt||'')||0));
     const open = s.k in OPEN ? OPEN[s.k] : !s.closed;
     const tot = rows.reduce((a,i) => a + i.amt, 0);
-    h += '<section class="ap-sec"><button class="ap-sec-h" aria-expanded="' + open + '" data-sec="' + s.k + '"><span class="car"></span><span class="tt"><span class="t">' + s.t + '</span><span class="c">' + rows.length + '</span><span class="o">' + s.o + '</span></span><span class="sum" title="Total balance due in this section">' + (rows.length ? money0(tot) : '') + '</span></button>';
+    const ceK = s.k === 'ready' && isAcct();
+    h += '<section class="ap-sec"><button class="ap-sec-h' + (ceK ? ' ce' : '') + '" aria-expanded="' + open + '" data-sec="' + s.k + '"><span class="car"></span><span class="tt"><span class="t">' + s.t + '</span><span class="c">' + rows.length + '</span><span class="o">' + s.o + '</span></span><span class="sum" title="Total balance due in this section">' + (rows.length ? money0(tot) : '') + '</span></button>';
     if (open) {
-      if (rows.length) h += '<div class="ap-colh" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">Balance due</span><span class="r" title="Days in this stage">Days</span><span>Next step</span><span title="Who it is with">With</span></div>';
+      if (rows.length) h += '<div class="ap-colh' + (ceK ? ' ce' : '') + '" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">Balance due</span><span class="r" title="Days in this stage">Days</span>' + (ceK ? '<span>Enter in CE</span>' : '') + '<span>' + (s.k === 'triage' ? 'Check' : 'Notes') + '</span><span title="Who it is with">With</span></div>';
       if (!rows.length) h += '<div class="ap-empty">' + (s.k === 'triage' ? 'Nothing waiting. New mail from payables@ lands here.' : 'Nothing here.') + '</div>';
       rows.forEach(i => {
         const who = P(i.assign), chips = [];
@@ -734,21 +811,23 @@ function draw(){
         if (i.type === 'Invoice') chips.push('<span class="bh-chip sm">Invoice</span>');
         if (i.sec === 'ready' && s.k === 'ready') { const ab = i.f.ApprovedBy ? P(lc(i.f.ApprovedBy)).n : '';
           chips.unshift('<span class="bh-chip is-ok sm"' + (ab ? ' title="Approved by ' + esc(ab) + '"' : '') + '>✓ Approved</span>');
-          if (i.type === 'Invoice' && i.f.CostCode) chips.push('<span class="bh-chip sm" title="' + esc(i.f.CostCode) + '">' + esc(String(i.f.CostCode).split(';')[0].replace(/\s+\$[\d,.-]+$/, '')) + (/;/.test(i.f.CostCode) ? ' +' + (String(i.f.CostCode).split(';').length - 1) : '') + '</span>'); }
-        h += '<div class="ap-row' + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
-          + '<span class="selc">' + (acctSeat() && s.k === 'triage' && !i.isMsg ? (bulkReady(i) ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">'
+          if (!ceK && i.type === 'Invoice' && i.f.CostCode) chips.push('<span class="bh-chip sm" title="' + esc(i.f.CostCode) + '">' + esc(String(i.f.CostCode).split(';')[0].replace(/\s+\$[\d,.-]+$/, '')) + (/;/.test(i.f.CostCode) ? ' +' + (String(i.f.CostCode).split(';').length - 1) : '') + '</span>'); }
+        h += '<div class="ap-row' + (ceK ? ' ce' : '') + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
+          + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' && !i.isMsg ? (bulkReady(i) ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">'
             : '<input type="checkbox" disabled title="Pay apps with flags or missing details are routed one at a time — open it and use the Triage decision" aria-label="Route ' + esc(i.v) + ' on its own">') : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
-          + '<div class="ap-amt">' + (i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
+          + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : 'not read') + '</span>' + amtPop(i) : i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
           + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (AGE === i.id ? agePop(i) : '') + '</div>'
-          + '<div class="ap-nx">' + (i.changed && i.upd ? '<span class="upd">' + esc(i.upd) + '</span>' : esc(s.k === 'appr' ? 'Approved ' + fmtTime(i.f.ApprovedAt) : nextStep(i))) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '') + '</div>'
+          + (ceK ? '<div class="ap-ce">' + ceCell(i) + '</div>' : '')
+          + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i)
+              : noteCell(i) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '')) + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
       });
     }
     h += '</section>';
   });
-  h += bulkBar();
+  h += bulkBar() + entBar();
   h += '<p class="kbd" style="margin-top:22px"><kbd>j</kbd> <kbd>k</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close · <kbd>/</kbd> search</p>';
   $('#list').innerHTML = h;
 }
@@ -926,6 +1005,14 @@ function drawExp(){
 
 /* ---- bulk routing (Accounting, Triage) ---------------------------------------- */
 function bulkReady(i){ return !(i.type === 'Pay app' && (i.flags.length || i.missing.length)); }
+function entBar(){
+  if (!acctSeat() || !ENT.size) return '';
+  const sel = INV.filter(i => ENT.has(i.id) && i.sec === 'ready');
+  return '<div class="bulk"><b>' + sel.length + ' selected</b><span>' + money(sel.reduce((a, i) => a + i.amt, 0)) + '</span>'
+    + '<input class="bh-input" id="eRef" placeholder="CE batch or reference" aria-label="CE batch or reference">'
+    + '<button class="bh-btn" data-do="bulkenter"' + (BUSY ? ' disabled' : '') + '>Mark ' + sel.length + ' entered</button>'
+    + '<button class="bh-btn-outline" data-do="entclear">Clear</button></div>';
+}
 function bulkBar(){
   if (!acctSeat() || !BULK.size) return '';
   const sel = INV.filter(i => BULK.has(i.id)), ok = sel.filter(bulkReady), held = sel.length - ok.length;
@@ -1890,6 +1977,16 @@ function mailText(m){ return (m.to ? 'To: ' + m.to + '\n' : '') + (m.cc ? 'Cc: '
 /* ---- actions -------------------------------------------------------------------- */
 function act(k){
   if (k === 'bulkclear') { BULK.clear(); draw(); return; }
+  if (k === 'entclear') { ENT.clear(); draw(); return; }
+  if (k === 'bulkenter') {
+    if (!acctSeat()) return;
+    const v = ((document.getElementById('eRef') || {}).value || '').trim(); if (!v) { toast('Type the CE batch or reference first'); return; }
+    const sel = INV.filter(i => ENT.has(i.id) && i.sec === 'ready');
+    run(async () => { let n = 0;
+      for (const i of sel) { if (await saveRow(i, { Status:'approved and entered', CEReference:v, EnteredAt:new Date().toISOString(), EnteredBy: LIVE.me.email }, { s:'approved and entered', note:'Entered in ComputerEase · ' + v + ' (bulk, ' + sel.length + ' items)' })) { n++; ENT.delete(i.id); } }
+      toast(n + ' marked entered'); });
+    return;
+  }
   if (k === 'bulkroute') {
     if (!acctSeat()) return;
     const a = (document.getElementById('bAssign') || {}).value; if (!a) { toast('Choose who they go to'); return; }
@@ -2112,6 +2209,8 @@ function header(){
 /* ---- events --------------------------------------------------------------------------- */
 document.addEventListener('click', e => {
   const s = e.target.closest('[data-sec]'); if (s) { const k = s.dataset.sec; OPEN[k] = s.getAttribute('aria-expanded') !== 'true'; draw(); return; }
+  const ec = e.target.closest('.esel'); if (ec) { if (ec.checked) ENT.add(ec.dataset.eid); else ENT.delete(ec.dataset.eid); draw(); return; }
+  if (e.target.closest('.amt-pop')) return;
   const cb = e.target.closest('.bsel'); if (cb) { const id = cb.dataset.bid;
     if (e.shiftKey && LASTB) { const ids = [...document.querySelectorAll('.bsel')].map(x => x.dataset.bid), a = ids.indexOf(LASTB), b = ids.indexOf(id); ids.slice(Math.min(a,b), Math.max(a,b) + 1).forEach(x => BULK.add(x)); }
     else if (cb.checked) BULK.add(id); else BULK.delete(id);
