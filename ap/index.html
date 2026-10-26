@@ -10,7 +10,14 @@
 .ap-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 40px;border-bottom:1px solid var(--bh-hairline);background:#fff;position:sticky;top:0;z-index:20}
 .ap-bar .bh-input{min-height:38px;width:260px;font-size:13px}
 .ap-filt{position:relative;display:inline-flex}
-.ap-fm{position:absolute;left:0;top:calc(100% + 4px);z-index:50;min-width:170px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--bh-slate);box-shadow:0 6px 18px rgba(0,0,0,.14);padding:8px 0}
+.bh-chip.is-info{background:#e3ecf7;color:#1d4f91}
+.ap-fo{display:flex;justify-content:space-between;gap:16px}
+.ap-fo .c{color:var(--bh-ink-muted);font-weight:500;font-variant-numeric:tabular-nums}
+.ap-kinds{display:flex;flex-wrap:wrap;gap:6px;padding:8px 8px 4px}
+.ap-kind{border:1px solid var(--bh-slate);background:#fff;padding:5px 10px;font:600 11.5px var(--bh-font);letter-spacing:.03em;cursor:pointer;color:var(--bh-ink)}
+.ap-kind[aria-pressed="true"]{background:var(--bh-black);color:#fff;border-color:var(--bh-black)}
+.ap-kind .c{font-weight:500;margin-left:5px;opacity:.75}
+.ap-fm{position:absolute;left:0;top:calc(100% + 4px);z-index:50;min-width:160px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--bh-slate);box-shadow:0 6px 18px rgba(0,0,0,.14);padding:8px 0}
 .ap-fm[hidden]{display:none}
 .ap-fm .bh-label{padding:2px 14px 6px}
 .ap-fo{border:0;background:none;text-align:left;padding:8px 14px 8px 32px;font:500 13px var(--bh-font);color:var(--bh-ink);cursor:pointer;position:relative}
@@ -337,7 +344,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <button class="ap-tog" id="tMine" aria-pressed="false">Waiting on me <span class="n" id="nMine"></span></button>
   <button class="ap-tog" id="tChg" aria-pressed="false">Changed <span class="n" id="nChg"></span></button>
   <span class="ap-filt"><button class="ap-tog" id="tTypeBtn" aria-haspopup="true" aria-expanded="false">Filter ▾</button>
-    <span class="ap-fm" id="tType" role="menu" hidden><span class="bh-label">Show</span><button class="ap-fo" role="menuitemradio" data-ty="" aria-checked="true">All</button><button class="ap-fo" role="menuitemradio" data-ty="Pay app" aria-checked="false">Pay apps</button><button class="ap-fo" role="menuitemradio" data-ty="Invoice" aria-checked="false">Invoices</button><button class="ap-fo" role="menuitemradio" data-ty="Message" aria-checked="false">Emails</button></span></span>
+    <span class="ap-fm" id="tType" role="menu" hidden><button class="ap-fo" role="menuitemradio" data-ty="" aria-checked="true">All<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Pay app" aria-checked="false">Pay apps<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Invoice" aria-checked="false">Invoices<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Message" aria-checked="false">Emails<span class="c"></span></button></span></span>
   <span class="ap-sp"></span>
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
   <button class="ap-tog" id="refresh">Refresh</button>
@@ -678,13 +685,16 @@ function inScope(i){ return isAcct() ? true : (i.sec !== 'triage' && onTeam(i) &
 /* Type filter (26 Oct 2026): Accounting - all, pay apps, invoices, emails; approvers - no emails. */
 let TYPE = store.get('aptype') || '';
 function typeBar(){
-  if (TYPE === 'Message' && !isAcct()) TYPE = '';
-  document.querySelectorAll('#tType [data-ty]').forEach(b => { b.setAttribute('aria-checked', b.dataset.ty === TYPE); if (b.dataset.ty === 'Message') b.hidden = !isAcct(); });
-  const L = { 'Pay app':'Pay apps', 'Invoice':'Invoices', 'Message':'Emails' }, btn = $('#tTypeBtn');
+  if (/^Message/.test(TYPE) && !isAcct()) TYPE = '';
+  const base = INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed));
+  document.querySelectorAll('#tType [data-ty]').forEach(b => { const t = b.dataset.ty;
+    b.setAttribute('aria-checked', t === TYPE || (t === 'Message' && /^Message:/.test(TYPE))); if (t === 'Message') b.hidden = !isAcct();
+    const c = b.querySelector('.c'); if (c) c.textContent = base.filter(i => !t || i.type === t).length; });
+  const L = { 'Pay app':'Pay apps', 'Invoice':'Invoices', 'Message':'Emails', 'Message:comp':'Compliance', 'Message:pay':'Payment Qs', 'Message:stmt':'Statements', 'Message:other':'Other emails' }, btn = $('#tTypeBtn');
   if (btn) { btn.textContent = (TYPE ? 'Filter: ' + L[TYPE] : 'Filter') + ' ▾'; btn.classList.toggle('on', !!TYPE); }
 }
 function visible(){
-  return INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed) && (!TYPE || i.type === TYPE)
+  return INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed) && (!TYPE || (/^Message:/.test(TYPE) ? i.isMsg && msgKind(i) === TYPE.slice(8) : i.type === TYPE))
     && (!Q || (i.v + ' ' + i.no + ' ' + i.job + ' ' + jobName(i.job) + ' ' + i.id + ' ' + i.po + ' ' + i.desc).toLowerCase().includes(Q)));
 }
 /* Aging history (26 Oct 2026): how long the item sat in each stage, from its StatusLog.
@@ -724,9 +734,21 @@ function lastNote(i){
     .map(c => ({ at: c.at, by: c.who || '', text: c.text }));
   return fromLog.concat(fromCm).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).pop() || null;
 }
+/* Emails that are not a pay app or invoice (26 Oct 2026), sorted by kind from the subject,
+   body and attachment names. Compliance documents go to the compliance manager. */
+const COMPLIANCE_TO = 'tiffany.blackmon@baileyharris.com';
+const MSG_KIND = { comp:['Compliance','is-info'], pay:['Payment question','is-warn'], stmt:['Statement',''], other:['Email',''] };
+function msgKind(i){
+  if (!i.isMsg) return '';
+  const t = [i.desc, i.msgText, (i.files || []).map(x => x.name).join(' '), i.f.PdfPath || '', i.f.AttachmentNames || ''].join(' ').toLowerCase();
+  if (/\bcoi\b|certificates? of (liability )?insurance|insurance cert|\bacord\b|\bw-?9\b|lien waiver|waiver (and release )?of lien|conditional waiver|unconditional waiver|endorsement|additional insured|waiver of subrogation/.test(t)) return 'comp';
+  if (/\bstatement\b|account summary|aging report|open (item|invoice)s? (list|report)/.test(t)) return 'stmt';
+  if (/when (will|can|do) (we|i) (be|get) paid|payment status|status of (our |my |the )?payment|remittance|paid yet|check (number|status|#|was)|\bach\b|past due|overdue|haven.t (been )?(paid|received payment)/.test(t)) return 'pay';
+  return 'other';
+}
 function triageCheck(i){
   const c = [];
-  if (i.isMsg) return '<span class="bh-chip sm">Email</span>';
+  if (i.isMsg) { const k = MSG_KIND[msgKind(i)]; return '<span class="bh-chip sm ' + k[1] + '">' + k[0] + '</span>'; }
   const issues = i.flags.concat(i.missing.map(m => 'Missing ' + m));
   if (issues.length) c.push('<span class="bh-chip is-bad sm" title="' + esc(issues.join('\n')) + '">' + issues.length + ' flag' + (issues.length > 1 ? 's' : '') + '</span>');
   else if (i.type !== 'Invoice') c.push('<span class="bh-chip is-ok sm" title="Pay app figures agree with Procore and CE">✓ Match</span>');
@@ -810,6 +832,9 @@ function draw(){
     const ceK = s.k === 'ready' && isAcct();
     h += '<section class="ap-sec"><button class="ap-sec-h' + (ceK ? ' ce' : '') + '" aria-expanded="' + open + '" data-sec="' + s.k + '"><span class="car"></span><span class="tt"><span class="t">' + s.t + '</span><span class="c">' + rows.length + '</span><span class="o">' + s.o + '</span></span><span class="sum" title="Total balance due in this section">' + (rows.length ? money0(tot) : '') + '</span></button>';
     if (open) {
+      if (s.k === 'triage' && isAcct() && /^Message/.test(TYPE)) { const em = INV.filter(i => inScope(i) && i.isMsg && i.sec === 'triage');
+        h += '<div class="ap-kinds" role="group" aria-label="Email kinds">' + [['Message','All emails'],['Message:comp','Compliance'],['Message:pay','Payment questions'],['Message:stmt','Statements'],['Message:other','Other']]
+          .map(([t, l]) => '<button class="ap-kind" data-kind="' + t + '" aria-pressed="' + (TYPE === t) + '">' + l + '<span class="c">' + em.filter(i => t === 'Message' || msgKind(i) === t.slice(8)).length + '</span></button>').join('') + '</div>'; }
       if (rows.length) h += '<div class="ap-colh' + (ceK ? ' ce' : '') + '" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">' + (ceK ? 'Details to enter <span style="text-transform:none;font-weight:400;letter-spacing:0">(hover)</span>' : 'Balance due') + '</span><span class="r" title="Days in this stage">Days</span><span>' + (s.k === 'triage' ? 'Check' : 'Notes') + '</span><span title="Who it is with">With</span></div>';
       if (!rows.length) h += '<div class="ap-empty">' + (s.k === 'triage' ? 'Nothing waiting. New mail from payables@ lands here.' : 'Nothing here.') + '</div>';
       rows.forEach(i => {
@@ -832,8 +857,7 @@ function draw(){
           chips.unshift('<span class="bh-chip is-ok sm"' + (ab ? ' title="Approved by ' + esc(ab) + '"' : '') + '>✓ Approved</span>');
           if (!ceK && i.type === 'Invoice' && i.f.CostCode) chips.push('<span class="bh-chip sm" title="' + esc(i.f.CostCode) + '">' + esc(String(i.f.CostCode).split(';')[0].replace(/\s+\$[\d,.-]+$/, '')) + (/;/.test(i.f.CostCode) ? ' +' + (String(i.f.CostCode).split(';').length - 1) : '') + '</span>'); }
         h += '<div class="ap-row' + (ceK ? ' ce' : '') + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
-          + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' && !i.isMsg ? (bulkReady(i) ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + '">'
-            : '<input type="checkbox" disabled title="Pay apps with flags or missing details are routed one at a time — open it and use the Triage decision" aria-label="Route ' + esc(i.v) + ' on its own">') : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
+          + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + (bulkReady(i) ? '' : ' title="Flagged pay apps can be selected, but are routed one at a time from their Triage decision"') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
           + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : 'not read') + '</span>' + amtPop(i) : i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
@@ -1022,7 +1046,7 @@ function drawExp(){
 }
 
 /* ---- bulk routing (Accounting, Triage) ---------------------------------------- */
-function bulkReady(i){ return !(i.type === 'Pay app' && (i.flags.length || i.missing.length)); }
+function bulkReady(i){ return !i.isMsg && !(i.type === 'Pay app' && (i.flags.length || i.missing.length)); }
 function entBar(){
   if (!acctSeat() || !ENT.size) return '';
   const sel = INV.filter(i => ENT.has(i.id) && i.sec === 'ready');
@@ -1033,14 +1057,16 @@ function entBar(){
 }
 function bulkBar(){
   if (!acctSeat() || !BULK.size) return '';
-  const sel = INV.filter(i => BULK.has(i.id)), ok = sel.filter(bulkReady), held = sel.length - ok.length;
+  const sel = INV.filter(i => BULK.has(i.id)), ok = sel.filter(bulkReady), msgs = sel.filter(i => i.isMsg), comp = msgs.filter(i => msgKind(i) === 'comp'), held = sel.length - ok.length - msgs.length;
   const jobs = [...new Set(ok.map(i => i.job))], oneJob = jobs.length === 1 && JOBS[jobs[0]] && JOBS[jobs[0]].team.length ? jobs[0] : null;
   const tot = ok.reduce((a,i) => a + i.amt, 0);
-  return '<div class="bulk"><b>' + sel.length + ' selected</b><span>' + money(tot) + '</span>'
-    + '<select class="bh-select" id="bAssign"><option value="">Assign to…</option>'
+  return '<div class="bulk"><b>' + sel.length + ' selected</b>' + (ok.length ? '<span>' + money(tot) + '</span>' : '')
+    + (!ok.length ? '' : '<select class="bh-select" id="bAssign"><option value="">Assign to…</option>'
     + (oneJob ? '<optgroup label="PM team · ' + esc(oneJob) + '">' + JOBS[oneJob].team.map(k => '<option value="' + esc(k) + '">' + esc(P(k).n) + '</option>').join('') + '</optgroup>' : '')
-    + '<optgroup label="Department heads">' + DEPTS.map(d => '<option value="' + esc(d[0]) + '">' + esc(d[1]) + ' — ' + esc(P(d[0]).n) + '</option>').join('') + '</optgroup></select>'
-    + '<button class="bh-btn" data-do="bulkroute"' + (BUSY ? ' disabled' : '') + '>Route ' + ok.length + '</button>'
+    + '<optgroup label="Department heads">' + DEPTS.map(d => '<option value="' + esc(d[0]) + '">' + esc(d[1]) + ' — ' + esc(P(d[0]).n) + '</option>').join('') + '</optgroup></select>')
+    + (ok.length ? '<button class="bh-btn" data-do="bulkroute"' + (BUSY ? ' disabled' : '') + '>Route ' + ok.length + '</button>' : '')
+    + (comp.length ? '<button class="bh-btn" data-do="bulkfwd"' + (BUSY ? ' disabled' : '') + '>Forward ' + comp.length + ' to compliance</button>' : '')
+    + (msgs.length ? '<button class="bh-btn" data-do="bulkdismiss"' + (BUSY ? ' disabled' : '') + '>Dismiss ' + msgs.length + ' email' + (msgs.length > 1 ? 's' : '') + '</button>' : '')
     + '<button class="bh-btn-outline" data-do="bulkclear">Clear</button>'
     + (held ? '<span class="held">' + held + ' pay app' + (held > 1 ? 's' : '') + ' with flags or missing details left out — open them one at a time</span>' : '')
     + '</div>';
@@ -1048,7 +1074,7 @@ function bulkBar(){
 
 /* ---- pane ------------------------------------------------------------------------ */
 function primary(i){
-  if (i.isMsg && acctSeat()) return i.draft ? ['opendraft','Open the draft in Outlook'] : ['reply','Reply'];
+  if (i.isMsg && acctSeat()) return i.draft ? ['opendraft','Open the draft in Outlook'] : msgKind(i) === 'comp' ? ['fwdcomp','Forward to compliance'] : ['reply','Reply'];
   if (i.sec === 'pm' && mySeat(i)) return null;   // actions are in the review box
   if (i.raw === 'PM returned' && acctSeat()) return ['resend','Fixed — back to approver'];
   if (i.draft && acctSeat()) return ['opendraft','Open the draft in Outlook'];
@@ -1066,7 +1092,7 @@ function secondary(i){
 function moreItems(i){
   const m = [];
 
-  if (acctSeat() && i.isMsg) { m.push(['link','Attach to an item (AP-####)']); m.push(['dismiss','Dismiss — no action needed']); return m; }
+  if (acctSeat() && i.isMsg) { if (msgKind(i) === 'comp') m.push(['reply','Reply']); else m.push(['fwdcomp','Forward to compliance']); m.push(['link','Attach to an item (AP-####)']); m.push(['dismiss','Dismiss — no action needed']); return m; }
   if (acctSeat() && i.sec !== 'done') m.push(['reply', i.replied ? 'Reply to the trade partner' : 'Email the trade partner']);
   if (acctSeat() && i.sec === 'triage') {
     m.push(['notours', i.type === 'Pay app' ? 'Not a pay app — treat as a regular invoice' : 'Is a pay app — treat as Attachment G']);
@@ -1946,6 +1972,21 @@ async function deliver(i, m, replyTo, mode, note, win){
   if (mode === 'outlook') toast('Opened in Outlook — add attachments and send; the desk marks it sent');
   return true;
 }
+/* Forward the original email (attachments included) from payables@ to compliance, then take
+   it off the desk. Without Mail.Send.Shared the forward stays in payables@ Drafts and opens. */
+async function fwdComp(i, win, quiet){
+  const tok = await mailToken(); if (!tok) { if (win) win.close(); if (!quiet) toast('The mail permission is missing — forward it from payables@ in Outlook'); return 'fail'; }
+  const mid = i.f.MessageId; let orig = null;
+  if (mid) { const r = await g(tok, '/users/' + PAYABLES + "/messages?$filter=internetMessageId eq '" + encodeURIComponent(String(mid).replace(/'/g, "''")) + "'&$select=id,subject&$top=1"); orig = r.ok && r.body && r.body.value && r.body.value[0]; }
+  if (!orig) { if (win) win.close(); if (!quiet) toast('Couldn’t find this email in payables@ — forward it from Outlook'); return 'fail'; }
+  const d = await g(tok, '/users/' + PAYABLES + '/messages/' + orig.id + '/createForward', { method:'POST', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' },
+    body: JSON.stringify({ comment: mailHtml('Forwarded from the AP Desk for compliance — ' + i.v + ' (' + i.id + ').'), toRecipients: [{ emailAddress: { address: COMPLIANCE_TO } }] }) });
+  if (!d.ok) { if (win) win.close(); if (!quiet) toast('The forward could not be created (HTTP ' + d.status + ')'); return 'fail'; }
+  const sent = await sendDraft(d.body.id);
+  if (!sent && win) { if (d.body.webLink) win.location.href = d.body.webLink; else win.close(); }
+  await saveRow(i, { Status:'email only' }, { s:'email only', note: sent ? 'Forwarded to compliance (' + COMPLIANCE_TO + ') from payables@ by ' + LIVE.me.name + '.' : 'Forward to compliance (' + COMPLIANCE_TO + ') left in payables@ Drafts to send from Outlook.' });
+  return sent ? 'sent' : 'draft';
+}
 const outlookTab = () => { const w = window.open('about:blank', '_blank'); if (w) w.opener = null; return w; };
 const entryMail = e => ({ subject: e.mailSubject, body: e.mailBody, to: e.mailTo, cc: e.mailCc });
 
@@ -2006,6 +2047,22 @@ function mailText(m){ return (m.to ? 'To: ' + m.to + '\n' : '') + (m.cc ? 'Cc: '
 function act(k){
   if (k === 'bulkclear') { BULK.clear(); draw(); return; }
   if (k === 'entclear') { ENT.clear(); draw(); return; }
+  if (k === 'bulkfwd') {
+    if (!acctSeat()) return;
+    const sel = INV.filter(i => BULK.has(i.id) && i.isMsg && msgKind(i) === 'comp');
+    run(async () => { let sent = 0, drafts = 0, fail = 0;
+      for (const i of sel) { const r = await fwdComp(i, null, true); if (r === 'sent') sent++; else if (r === 'draft') drafts++; else fail++; if (r !== 'fail') BULK.delete(i.id); }
+      toast([sent ? sent + ' forwarded to compliance' : '', drafts ? drafts + ' left in payables@ Drafts to send' : '', fail ? fail + ' could not be forwarded' : ''].filter(Boolean).join(' · ')); });
+    return;
+  }
+  if (k === 'bulkdismiss') {
+    if (!acctSeat()) return;
+    const sel = INV.filter(i => BULK.has(i.id) && i.isMsg);
+    run(async () => { let n = 0;
+      for (const i of sel) { if (await saveRow(i, { Status:'email only' }, { s:'email only', note:'Dismissed — no action needed (bulk).' })) { n++; BULK.delete(i.id); } }
+      toast(n + ' email' + (n === 1 ? '' : 's') + ' dismissed'); });
+    return;
+  }
   if (k === 'bulkenter') {
     if (!acctSeat()) return;
     const v = ((document.getElementById('eRef') || {}).value || '').trim(); if (!v) { toast('Type the CE batch or reference first'); return; }
@@ -2188,6 +2245,11 @@ function act(k){
       if (ok && await saveRow(i, { Status:'email only' }, { s:'email only', note:'Attached to ' + t.id + '.' })) { toast('Attached to ' + t.id); SEL = null; document.body.classList.add('no-pane'); }
     });
     return; }
+  if (k === 'fwdcomp') { if (!acctSeat()) return;
+    const win = MAIL.send === false ? outlookTab() : null;
+    run(async () => { const r = await fwdComp(i, win); if (r === 'fail') return;
+      toast(r === 'sent' ? 'Forwarded to compliance' : 'The forward is open in Outlook — send it from there'); SEL = null; document.body.classList.add('no-pane'); });
+    return; }
   if (k === 'dismiss') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, { Status:'email only' }, { s:'email only', note:'Dismissed — no action needed.' })) { toast('Dismissed'); SEL = null; document.body.classList.add('no-pane'); } });
     return; }
@@ -2255,6 +2317,7 @@ document.addEventListener('click', e => {
   const wi = e.target.closest('[data-wi]'); if (wi) { whatIf(wi.dataset.wi); return; }
   const wx = e.target.closest('[data-wix]'); if (wx) { store.set('apwhatif:' + (XPER || curPeriod()) + ':' + wx.dataset.wix, ''); draw(); return; }
   const xr = e.target.closest('.xp-row:not(.hd)'); if (xr && !e.target.closest('input,button,a,label')) { const k = xr.dataset.xk; if (XOPEN.has(k)) XOPEN.delete(k); else XOPEN.add(k); draw(); return; }
+  const kd = e.target.closest('[data-kind]'); if (kd) { TYPE = kd.dataset.kind; store.set('aptype', TYPE); draw(); return; }
   const ag = e.target.closest('[data-age]'); if (ag) { AGE = AGE === ag.dataset.age ? null : ag.dataset.age; draw(); return; }
   if (e.target.closest('.age-pop')) return;
   if (AGE) { AGE = null; draw(); }
