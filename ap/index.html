@@ -9,6 +9,15 @@
 /* ---------- AP desk: list + pane (mockup) ---------- */
 .ap-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 40px;border-bottom:1px solid var(--bh-hairline);background:#fff;position:sticky;top:0;z-index:20}
 .ap-bar .bh-input{min-height:38px;width:260px;font-size:13px}
+.ap-filt{position:relative;display:inline-flex}
+.ap-fm{position:absolute;left:0;top:calc(100% + 4px);z-index:50;min-width:170px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--bh-slate);box-shadow:0 6px 18px rgba(0,0,0,.14);padding:8px 0}
+.ap-fm[hidden]{display:none}
+.ap-fm .bh-label{padding:2px 14px 6px}
+.ap-fo{border:0;background:none;text-align:left;padding:8px 14px 8px 32px;font:500 13px var(--bh-font);color:var(--bh-ink);cursor:pointer;position:relative}
+.ap-fo:hover{background:var(--bh-hairline,#f2f2f2)}
+.ap-fo[aria-checked="true"]{font-weight:700}
+.ap-fo[aria-checked="true"]::before{content:'✓';position:absolute;left:12px}
+#tTypeBtn.on{background:var(--bh-black);color:#fff}
 .ap-tog{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;border:1px solid var(--bh-slate);background:#fff;font:600 12px/1 var(--bh-font);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;color:var(--bh-ink)}
 .ap-tog[aria-pressed="true"]{background:var(--bh-black);color:#fff;border-color:var(--bh-black)}
 .ap-tog .n{font-weight:700}
@@ -90,7 +99,6 @@ body.no-pane .ap-pane{display:none}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
 .ap-colh{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;gap:14px;padding:7px 8px 6px;border-bottom:1px solid var(--bh-hairline);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted)}
 .ap-colh .r{text-align:right}
-.ap-row.ce,.ap-colh.ce,.ap-sec-h.ce{grid-template-columns:36px minmax(170px,1.4fr) minmax(120px,1fr) 110px 56px minmax(190px,1.2fr) minmax(140px,1fr) 34px}
 .ap-ce{min-width:0;font-size:12px}
 .ap-ce .l{display:flex;justify-content:space-between;gap:10px}
 .ap-ce .l b{font-weight:700;color:var(--bh-ink);white-space:nowrap}
@@ -328,7 +336,8 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <input class="bh-input" id="q" type="search" placeholder="Search vendor, job, invoice #" aria-label="Search">
   <button class="ap-tog" id="tMine" aria-pressed="false">Waiting on me <span class="n" id="nMine"></span></button>
   <button class="ap-tog" id="tChg" aria-pressed="false">Changed <span class="n" id="nChg"></span></button>
-  <span class="ap-view" id="tType" role="group" aria-label="Show"><button class="ap-tog" data-ty="" aria-pressed="true">All</button><button class="ap-tog" data-ty="Pay app" aria-pressed="false">Pay apps</button><button class="ap-tog" data-ty="Invoice" aria-pressed="false">Invoices</button><button class="ap-tog" data-ty="Message" aria-pressed="false">Emails</button></span>
+  <span class="ap-filt"><button class="ap-tog" id="tTypeBtn" aria-haspopup="true" aria-expanded="false">Filter ▾</button>
+    <span class="ap-fm" id="tType" role="menu" hidden><span class="bh-label">Show</span><button class="ap-fo" role="menuitemradio" data-ty="" aria-checked="true">All</button><button class="ap-fo" role="menuitemradio" data-ty="Pay app" aria-checked="false">Pay apps</button><button class="ap-fo" role="menuitemradio" data-ty="Invoice" aria-checked="false">Invoices</button><button class="ap-fo" role="menuitemradio" data-ty="Message" aria-checked="false">Emails</button></span></span>
   <span class="ap-sp"></span>
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
   <button class="ap-tog" id="refresh">Refresh</button>
@@ -670,7 +679,9 @@ function inScope(i){ return isAcct() ? true : (i.sec !== 'triage' && onTeam(i) &
 let TYPE = store.get('aptype') || '';
 function typeBar(){
   if (TYPE === 'Message' && !isAcct()) TYPE = '';
-  document.querySelectorAll('#tType [data-ty]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.ty === TYPE); if (b.dataset.ty === 'Message') b.hidden = !isAcct(); });
+  document.querySelectorAll('#tType [data-ty]').forEach(b => { b.setAttribute('aria-checked', b.dataset.ty === TYPE); if (b.dataset.ty === 'Message') b.hidden = !isAcct(); });
+  const L = { 'Pay app':'Pay apps', 'Invoice':'Invoices', 'Message':'Emails' }, btn = $('#tTypeBtn');
+  if (btn) { btn.textContent = (TYPE ? 'Filter: ' + L[TYPE] : 'Filter') + ' ▾'; btn.classList.toggle('on', !!TYPE); }
 }
 function visible(){
   return INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed) && (!TYPE || i.type === TYPE)
@@ -799,7 +810,7 @@ function draw(){
     const ceK = s.k === 'ready' && isAcct();
     h += '<section class="ap-sec"><button class="ap-sec-h' + (ceK ? ' ce' : '') + '" aria-expanded="' + open + '" data-sec="' + s.k + '"><span class="car"></span><span class="tt"><span class="t">' + s.t + '</span><span class="c">' + rows.length + '</span><span class="o">' + s.o + '</span></span><span class="sum" title="Total balance due in this section">' + (rows.length ? money0(tot) : '') + '</span></button>';
     if (open) {
-      if (rows.length) h += '<div class="ap-colh' + (ceK ? ' ce' : '') + '" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">Balance due</span><span class="r" title="Days in this stage">Days</span>' + (ceK ? '<span>Enter in CE</span>' : '') + '<span>' + (s.k === 'triage' ? 'Check' : 'Notes') + '</span><span title="Who it is with">With</span></div>';
+      if (rows.length) h += '<div class="ap-colh' + (ceK ? ' ce' : '') + '" aria-hidden="true"><span></span><span>Trade partner · document</span><span>Job</span><span class="r">' + (ceK ? 'Details to enter <span style="text-transform:none;font-weight:400;letter-spacing:0">(hover)</span>' : 'Balance due') + '</span><span class="r" title="Days in this stage">Days</span><span>' + (s.k === 'triage' ? 'Check' : 'Notes') + '</span><span title="Who it is with">With</span></div>';
       if (!rows.length) h += '<div class="ap-empty">' + (s.k === 'triage' ? 'Nothing waiting. New mail from payables@ lands here.' : 'Nothing here.') + '</div>';
       rows.forEach(i => {
         const who = P(i.assign), chips = [];
@@ -827,7 +838,6 @@ function draw(){
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
           + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : 'not read') + '</span>' + amtPop(i) : i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
           + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (AGE === i.id ? agePop(i) : '') + '</div>'
-          + (ceK ? '<div class="ap-ce">' + ceCell(i) + '</div>' : '')
           + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i)
               : noteCell(i) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '')) + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
@@ -836,7 +846,7 @@ function draw(){
     h += '</section>';
   });
   h += bulkBar() + entBar();
-  h += '<p class="kbd" style="margin-top:22px"><kbd>j</kbd> <kbd>k</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close · <kbd>/</kbd> search</p>';
+  h += '<p class="kbd" style="margin-top:22px"><kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close · <kbd>/</kbd> search</p>';
   $('#list').innerHTML = h;
 }
 
@@ -1559,7 +1569,7 @@ function acctCheck(i){
   const n4 = thisTot != null ? money(ceTot) + ' + ' + money(thisTot) : (L.exists ? money(ceTot) + ' · this period not in CE yet' : '');
   const n5 = L.exists || R ? money(ceRet) + ' + ' + (thisRet != null ? money(thisRet) : (R ? esc(R.text) : 'no retainage')) : '';
   const n8 = (inCe != null ? '' : 'not in CE yet') + (due != null && m.due != null && dif(m.due, due) ? (inCe != null ? '' : ' · ') + 'lines 4 − 5 − 7 = ' + money(due) : '');
-  h += '<table class="mt ac"><thead><tr><th>Attachment G</th><th>Pay app' + (canEd && !ed ? '<button class="xp-mini" data-do="figedit">Change</button>' : '') + '</th><th>CE</th><th>Procore</th></tr></thead><tbody>'
+  h += '<table class="mt ac"><thead><tr><th>Attachment G</th><th>Pay app' + (canEd && !ed ? '<button class="xp-mini" data-do="figedit">Edit</button>' : '') + '</th><th>CE</th><th>Procore</th></tr></thead><tbody>'
     + line(1, 'Org Contract', 'Base Contract', num(f.OriginalContract), P ? P.base : null, m.orig[1], '', 'OriginalContract')
     + line(2, 'Approved COs', 'RFCs (approved by the period end)', num(f.ChangeOrders), P ? P.cos : null, m.cos[1], '', 'ChangeOrders')
     + line(3, 'Adj Contract', 'Base + Approved RFCs', m.adj[0], P ? P.adj : null, m.adj[1], '', 'AdjustedContract')
@@ -1704,6 +1714,8 @@ function triageBox(i){
       + (inv ? REJ_INV : REJ).map(([k, t]) => '<label class="ck" style="padding:6px 0"><input type="checkbox" data-rr="' + k + '"' + (rrOn(i, k) ? ' checked' : '') + '> ' + esc(t) + '</label>'
         + (k === 'calc' && calcOn ? '<div style="margin-left:24px">' + CALC.map(([c, ct]) => '<label class="ck" style="padding:4px 0;font-size:12.5px"><input type="checkbox" data-rr="' + c + '"' + (rrOn(i, c) ? ' checked' : '') + '> ' + esc(ct) + '</label>').join('') + '</div>' : '')).join('')
       + '<textarea id="rejNote" placeholder="Anything else the ' + tp + ' should fix" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:8px;box-sizing:border-box">' + esc(i.rn || '') + '</textarea>'
+      + '<label class="bh-label" for="rejTo" style="display:block;margin-top:12px">Send to <span style="text-transform:none;font-weight:400">(change it if this isn’t the right contact)</span></label>'
+      + '<input class="bh-input" id="rejTo" type="email" style="width:100%;margin-top:4px;box-sizing:border-box" value="' + esc(i.toOver != null ? i.toOver : rejBase(i).to) + '" placeholder="Blank = reply to whoever sent the email">'
       + '<div class="bh-label" style="margin-top:12px">Email preview</div><div class="em" id="rejPrev">' + mailHTML(rejMail(i)) + '</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="bh-btn" style="min-height:38px" data-do="rejsend"' + (BUSY ? ' disabled' : '') + '>Reject and send</button>'
       + '<button class="bh-btn-outline" style="min-height:38px" data-do="rejoutlook"' + (BUSY ? ' disabled' : '') + '>Reject and open in Outlook to add attachments</button></div>'
@@ -1731,7 +1743,14 @@ function ledger(i){
     + '</tbody></table></div>';
 }
 /* the email: full Attachment G wording, built from the ticked reasons */
+/* Send to (26 Oct 2026): the rejection address can be changed; a typed address replaces
+   the recipients of the reply instead of being added to them. */
 function rejMail(i){
+  const m = rejBase(i);
+  if (i.toOver != null && i.toOver.trim() !== (isInv(i) ? '' : (i.vendorEmail || ''))) { m.to = i.toOver.trim(); m.toSet = true; }
+  return m;
+}
+function rejBase(i){
   if (isInv(i)) return rejMailInv(i);
   const box = document.querySelectorAll('[data-rr]');
   const keys = box.length ? [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr) : (i.rr || REJ.concat(CALC).map(x => x[0]).filter(k => preTick(i, k)));
@@ -1761,7 +1780,7 @@ function corrMail(i, text){
     body: 'Hello ' + i.v + ',\n\n' + text + '\n\nPlease revise and resubmit to payables@baileyharris.com, keeping [' + i.id + '] in the subject.\n\nThank you,\n' + (LIVE.me ? LIVE.me.name : '') + ' · Bailey-Harris Construction' };
 }
 function mailHTML(m){
-  return '<b>From</b> payables@baileyharris.com<br><b>To</b> ' + (m.to ? esc(m.to) + ' <span style="color:var(--bh-ink-muted)">(billing contact in Billy)</span>' : '<span style="color:var(--bh-ink-muted)">reply to the original email (no billing contact in Billy)</span>')
+  return '<b>From</b> payables@baileyharris.com<br><b>To</b> ' + (m.to ? esc(m.to) + ' <span style="color:var(--bh-ink-muted)">(' + (m.toSet ? 'changed by you' : 'billing contact in Billy') + ')</span>' : '<span style="color:var(--bh-ink-muted)">reply to the original email (no billing contact in Billy)</span>')
     + (m.cc ? '<br><b>Cc</b> ' + esc(m.cc) : '') + '<br><b>Subject</b> ' + esc(m.subject) + '<br><br>' + esc(m.body).replace(/\n/g,'<br>');
 }
 function replyMail(i, text){
@@ -1864,7 +1883,8 @@ async function makeDraft(i, m, replyTo){
   if (!d.ok) { toast('The draft could not be made in payables@ (HTTP ' + d.status + ')' + (d.status === 403 || d.status === 404 ? ' — you need access to the payables@ mailbox.' : '.')); return null; }
   const patch = { subject: m.subject };
   const to = (d.body.toRecipients || []).map(x => lc(x.emailAddress && x.emailAddress.address));
-  if (m.to && !to.includes(lc(m.to))) patch.toRecipients = (d.body.toRecipients || []).concat([{ emailAddress: { address: m.to } }]);
+  if (m.toSet && m.to) patch.toRecipients = [{ emailAddress: { address: m.to } }];
+  else if (m.to && !to.includes(lc(m.to))) patch.toRecipients = (d.body.toRecipients || []).concat([{ emailAddress: { address: m.to } }]);
   if (!to.length && !m.to) toast('No address on this email — add one in the draft.');
   if (m.cc) patch.ccRecipients = [{ emailAddress: { address: m.cc } }];
   const u = await g(tok, '/users/' + PAYABLES + '/messages/' + d.body.id, { method:'PATCH', headers:{ Authorization:'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify(patch) });
@@ -2101,6 +2121,7 @@ function act(k){
     return; }
   if (k === 'rejsend' || k === 'rejoutlook') { if (!acctSeat()) return;
     const m = rejMail(i); if (!m.reasons.length && !m.note) { toast('Pick a reason'); return; }
+    if (m.to && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m.to)) { toast('That email address doesn’t look right'); return; }
     const win = k === 'rejoutlook' ? outlookTab() : null;
     run(async () => { if (await saveRow(i, { Status:'revise and resubmit' }, Object.assign({ s:'revise and resubmit', k:'intake', mail:'pending', note: m.reasons.concat(m.note ? [m.note] : []).join('; ') }, mailFields(m)))) {
       i.rej = false; const fresh = INVrow(i);
@@ -2245,7 +2266,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   if (e.target.id === 'eSub') { const c = rosterFor(e.target.value); const h = $('#eSubHint'); if (h) h.textContent = c ? c.vendor + ' · ' + c.project_number + ' ' + c.project : (e.target.value ? 'Not on the Procore roster' : ''); if (c) { const j = $('#eJob'); if (j) j.value = c.project_number; } }
 });
-document.addEventListener('input', e => { if (e.target.id === 'rejNote') { const i = INV.find(x => x.id === SEL); if (i) { i.rn = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } } });
+document.addEventListener('input', e => { if (e.target.id === 'rejTo') { const i = INV.find(x => x.id === SEL); if (i) { i.toOver = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } return; } if (e.target.id === 'rejNote') { const i = INV.find(x => x.id === SEL); if (i) { i.rn = e.target.value; const pv = $('#rejPrev'); if (pv) pv.innerHTML = mailHTML(rejMail(i)); } } });
 document.addEventListener('change', e => {
   const i = INV.find(x => x.id === SEL);
   if (e.target.dataset && e.target.dataset.rr !== undefined && i) { i.rr = [...document.querySelectorAll('[data-rr]:checked')].map(x => x.dataset.rr);
@@ -2283,7 +2304,10 @@ function saveCtd(id){
   if (rev && v > rev * 1.1 && !confirm('That is more than the revised contract (' + money(rev) + '). Save anyway?')) return;
   run(async () => { if (await saveRow(i, { CompletedToDate: v }, { ctd: true, note: 'Completed & stored to date ' + (old == null ? 'keyed' : 'changed from ' + money(old)) + ': ' + money(v) })) { XED = ''; toast('Completed & stored saved'); } });
 }
-$('#tType').addEventListener('click', e => { const b = e.target.closest('[data-ty]'); if (!b) return; TYPE = b.dataset.ty; store.set('aptype', TYPE); draw(); });
+const typeMenu = open => { $('#tType').hidden = !open; $('#tTypeBtn').setAttribute('aria-expanded', open); };
+$('#tTypeBtn').addEventListener('click', e => { e.stopPropagation(); typeMenu($('#tType').hidden); });
+$('#tType').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-ty]'); if (!b) return; TYPE = b.dataset.ty; store.set('aptype', TYPE); typeMenu(false); draw(); });
+document.addEventListener('click', () => { const m = $('#tType'); if (m && !m.hidden) typeMenu(false); });
 $('#tMine').addEventListener('click', () => { MINE = !MINE; $('#tMine').setAttribute('aria-pressed', MINE); draw(); });
 $('#tChg').addEventListener('click', () => { CHG = !CHG; $('#tChg').setAttribute('aria-pressed', CHG); draw(); });
 $('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); }));
