@@ -328,6 +328,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <input class="bh-input" id="q" type="search" placeholder="Search vendor, job, invoice #" aria-label="Search">
   <button class="ap-tog" id="tMine" aria-pressed="false">Waiting on me <span class="n" id="nMine"></span></button>
   <button class="ap-tog" id="tChg" aria-pressed="false">Changed <span class="n" id="nChg"></span></button>
+  <span class="ap-view" id="tType" role="group" aria-label="Show"><button class="ap-tog" data-ty="" aria-pressed="true">All</button><button class="ap-tog" data-ty="Pay app" aria-pressed="false">Pay apps</button><button class="ap-tog" data-ty="Invoice" aria-pressed="false">Invoices</button><button class="ap-tog" data-ty="Message" aria-pressed="false">Emails</button></span>
   <span class="ap-sp"></span>
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
   <button class="ap-tog" id="refresh">Refresh</button>
@@ -665,8 +666,14 @@ const mySeat = i => !!LIVE.me && WHO === LIVE.me.email && i.assign === LIVE.me.e
 function onTeam(i){ return ((JOBS[i.job] && JOBS[i.job].team) || []).includes(WHO) || i.assign === WHO || i.approver === WHO; }
 function mine(i){ return isAcct() ? i.assign === ACCT : (onTeam(i) && i.assign === WHO); }
 function inScope(i){ return isAcct() ? true : (i.sec !== 'triage' && onTeam(i) && !i.intakeRej); }
+/* Type filter (26 Oct 2026): Accounting - all, pay apps, invoices, emails; approvers - no emails. */
+let TYPE = store.get('aptype') || '';
+function typeBar(){
+  if (TYPE === 'Message' && !isAcct()) TYPE = '';
+  document.querySelectorAll('#tType [data-ty]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.ty === TYPE); if (b.dataset.ty === 'Message') b.hidden = !isAcct(); });
+}
 function visible(){
-  return INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed)
+  return INV.filter(i => inScope(i) && (!MINE || mine(i)) && (!CHG || i.changed) && (!TYPE || i.type === TYPE)
     && (!Q || (i.v + ' ' + i.no + ' ' + i.job + ' ' + jobName(i.job) + ' ' + i.id + ' ' + i.po + ' ' + i.desc).toLowerCase().includes(Q)));
 }
 /* Aging history (26 Oct 2026): how long the item sat in each stage, from its StatusLog.
@@ -769,6 +776,7 @@ function draw(){
   if (!LIVE.me) return;
   document.body.classList.toggle('v-exp', VIEW === 'exp');
   if (VIEW === 'exp') { drawExp(); return; }
+  typeBar();
   const v = visible();
   $('#nMine').textContent = INV.filter(i => inScope(i) && mine(i)).length;
   $('#nChg').textContent = INV.filter(i => inScope(i) && i.changed && (!MINE || mine(i))).length;
@@ -2275,6 +2283,7 @@ function saveCtd(id){
   if (rev && v > rev * 1.1 && !confirm('That is more than the revised contract (' + money(rev) + '). Save anyway?')) return;
   run(async () => { if (await saveRow(i, { CompletedToDate: v }, { ctd: true, note: 'Completed & stored to date ' + (old == null ? 'keyed' : 'changed from ' + money(old)) + ': ' + money(v) })) { XED = ''; toast('Completed & stored saved'); } });
 }
+$('#tType').addEventListener('click', e => { const b = e.target.closest('[data-ty]'); if (!b) return; TYPE = b.dataset.ty; store.set('aptype', TYPE); draw(); });
 $('#tMine').addEventListener('click', () => { MINE = !MINE; $('#tMine').setAttribute('aria-pressed', MINE); draw(); });
 $('#tChg').addEventListener('click', () => { CHG = !CHG; $('#tChg').setAttribute('aria-pressed', CHG); draw(); });
 $('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); }));
