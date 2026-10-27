@@ -2,476 +2,489 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://api.open-meteo.com https://forecast.weather.gov https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com;">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>BH Employee Home</title>
+<title>Bailey-Harris</title>
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAicAAAGHCAYAAABrpPKuAAAACXBIWXMAAAsSAAALEgHS3X78AAANXElEQVR4nO3dT24cZ37G8Z8cIZnASMic4CV6l5WI5ABkTmDlBOJydlGQA5hez2I0y6yGzi6rUCdwc5+FdIEGa5dggIkITOJMPGNl0U3rH22opVa/T1V9PkDDNAywH0Cw8fVb1dX3Xr58WQAAKT7rPQAA4HXiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIIk4AgCjiBACIcr/3gBSL1o6r6knvHezE8sf+fjUMb/8zAixae1JVx713BLhYDcNF7xH75M/+B7P7s/8p4uSVw6o66T2CnXj7z/HL2x8Wrd3+OFTV9R2vZ6thePFp53GH4/LvX9W7YT0H/uzXlr0HJBEnzFXbvN75j+KitZuqevba69qJC8D+iBN410Gto+WHcNmcuFzVOlaWVbV0wgLwaYgTeH+3wfIPVVWL1p7XJlRKrADsjDiBD/dg87qNladVdVnrULnuuAtg1MQJ7M4Xm9ftqcqTqrp0ogKwHc85gU/jQVX9uqr+a9HaxaK10857AEZDnMCn96iqvlm0dr1o7fGitcPegwCSiRPYn1ZVv6yq60Vr5yIF4G7iBPbvoNYPhhMpAHcQJ9DPG5HSeQtADHEC/R1U1Zebe1Ie9h4D0Js4gRytqv5t0dqlSz3AnIkTyPNFrS/1OEUBZkmcQKaDWp+iXDhFAeZGnEC2R1W1XLR23HsIwL6IE8j3oNaBctp7CMA+iBMYh4NaP2X2rPcQgE9NnMC4/FqgAFMnTmB8BAowaeIExkmgAJMlTmC8BAowSeIExu2JjxkDUyNOYNwOav0xYw9qAyZDnMD4HVTVZe8RALsiTmAaThatPe49AmAXxAlMx/mitaPeIwA+ljiB6TioqoveIwA+ljiBaTnxHTzA2IkTmJ6L3gMAPoY4gelpHs4GjJk4gWk67z0A4EOJE5im5t4TYKzECUyX554AoyROYLq+8Fh7YIzECUzbWe8BANsSJzBtD3sPANiWOIFpO3FpBxgbcQLTd9p7AMA2xAlM32nvAQDbECcwfce9BwBsQ5zA9J30HgCwDXECM7BozekJMBriBObBJ3aA0RAnMA+nvQcAvK/7vQcQ56veA2r9f/nHr/38oOMWAPZMnPCG1TCc995wl809E0e1PgE4LcGyLfecAKMhThiF1TA8q6pnVXVZVbVo7ajW3xvzuKoOug0bD/ecAKPhnhNGaTUM16thOF8Nw2FV/WNV3fTeBMBuiBNGbzUMT2p9yeeq8xQAdsBlHSZhNQwvqup00dpFVT3qPOe9fH7/T6p9/rO9vNeff/bZ4W//+m9O9/JmH+Bv/+ovDr/9/vud/b7f/P67+s3//t/Ofh+wX+KESVkNw9nmfpT4p6K2z39W//LdfuKk1jcQf7OvN9vWP//+T3f6+35x+Gf1r//x253+TmB/XNZhih6We1AARkucMDmbSzznvXcA8GHECVN1UU5PAEZJnDBJm9OTy947ANieOGHKlr0HALA9ccKUXfceAMD2xAmTtRqGZe8NAGxPnAAAUcQJABBFnAAAUcQJk7Vo7bT3BgC2J06YsqPeAwDYnjhhyk57DwBge+KESVq0dljrLwAEYGTECVP1uKoOeo8AYHvihMlZtHZU6zgBYITu9x4Au7S5nHNZTk0Yp9NFa+e9R+zZUe8B5BEnTMYmTJZV9aDzFPhQJ5sXzJrLOkzCorXjEiYAk+DkhFHbnJY8rqove28BYDfECaO0aO1hrT8q/Kj3FgB2S5wQb3M6clzrh6rd/tUNrwATJU54w6K1Ze8NrzmqqtZ7BAD7JU54m08KANCVT+sAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQ5X7vAcT5u94DtnC0eR1W1fHm59ZvDgC7IE54w2oYlr03fIxFa0e1DpWHm9dB10EAbE2cMCmrYbiuquuquqyqWrR2VlVnVXXSaxMA23HPCZO2GoaL1TCcVtXfV9XQeQ4A70GcMAurYbis9eWep723APDTXNZhNlbD8KKqHi5au6iqR53nwF2+Wg3Dee8R+7RobVkuu/IWJyfMzmoYzsoJCkAsccJcnZV7UAAiiRNmaXOJ57z3DgDeJU6YrdUwXJTTE4A44oS5u+w9AIA3iRPmTpwAhBEnzNrYH9cPMEXiBKpueg8A4BVxAlXPeg8A4BVxAgBEEScAQBRxAusvBAQghDiBqoPeAwB4xbcSM2uL1k57vff//PH7ujq41+vt73Ry8/Kqx/v++1/ee/Df9+pwV7/vP7/7w65+FdCBOGHuHvZ64+vffVv/9Ltve739nVbDcNrjfX/e2rKqTnq8N5DHZR3mrlucAHA3ccJsLVo7q6rWewcAbxInzNKitcOqetJ7BwDvEifM1WX5lA5AJHHC7Cxauyg3XwLE8mkdZmNzKeeyhAlANCcnzMLm5tfrEiY/pcszTgDe5uSEydqclDysqvPyqRyA0RAnTMqiteNaf1fOw6r6ovOcsXnRewBAlTjhLT0f576lo82rah0jh+WSzcd61nsAQJU44V3f9B5AN9e9BwBUuSEWeOW69wCAKnECbKyGYdl7A0CVOAHWnvceAHBLnABVboYFgogToKpq2XsAwC1xAlStH+sPEEGcAM9Xw+ABbEAMcQJc9B4A8DpxArikA0QRJzBvT1fDcN17BMDrxAnM20XvAQBvEycwX8NqGFzSAeKIE5iv894DAO4iTmCehtUwXPQeAXAXcQLzdN57AMCPEScwP8+dmgDJxAnMz1nvAQA/RZzAvPxqNQy+gRiIJk5gPp6Xe02AERAnMA83VXXmC/6AMRAnMA+PXc4BxkKcwPT9yqdzgDERJzBtX6+G4XHvEQDbECcwXc9Xw3DWewTAtsQJTNPzqjrtPQLgQ4gTmJ6nVXXqkznAWN3vPQDYqa9dygHGzskJTMdXwgSYAicnMH63D1i77D0EYBecnMC4XVXVsTABpsTJCYzXV6thOO89AmDXxAmMz1V5HD0wYeIExuOm1lFy0XsIwKckTiDfTVU9qaonnl0CzIE4gWxfV9X5ahiuew8B2BdxAnluquqi1icl132nAOyfOIEcQ60v31y4fAPMmTiB/r6uqkvPKgFYEyfQx1WtL91cOiUBeJM4gf15WlWXVbV0LwnAjxMn8Ok8r6plrWPEJRuA9yROYHeuqupZvQoSl2sAPoA4gQ9zGyLXVfVsNQzLrmsAJkScwI+72vx1WVUvahMj7hcB+LTECXNxU+u4eN3ytZ+f1TpAXvhCPYC+7r18+bL3BgCAH3zWewAAwOvECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFHECQAQRZwAAFH+H7ZG0O0BLkloAAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* ===== Bailey-Harris launcher, on the BH shell (claude/bh-ui-spec.md).
-   Red, black, slate, cream and light gray are chrome; green / amber / red
-   fills are status in the data and nothing else. Square corners, no shadows.
-   Tokens come from /bh-shell.css, linked after this block. ===== */
+/* ===== Bailey-Harris brand — red, cream, charcoal and black are chrome and
+   identity; green / amber / red are reserved for status in the data. ===== */
 :root{
-  --paper:#ffffff; --ink:#211E1E; --muted:#484B4D; --faint:#8a8d90;
-  --line:#E8E6E7; --gray:#E8E6E7; --cream:#F2ECE1;
-  --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D;
-  --sun:#F7A928; /* decorative only: the weather sun */
-  --ok:#006100; --ok-soft:#C6EFCE; --warn:#9C6500; --warn-soft:#FFEB9C; --crit:#9C0006; --crit-soft:#FFC7CE;
+  color-scheme: light;
+  --paper:#f5f7fa; --surface:#ffffff; --surface-2:#faf9f7;
+  --ink:#211E1E; --muted:#5b6472; --faint:#8a919b;
+  --line:#E8E6E7; --line-soft:#F1EFF0;
+  --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D; --cream:#F2ECE1;
+  /* decorative only — the weather sun. Deliberately not --warn, which is a
+     status colour, and not --brand-red, which is identity. */
+  --sun:#F7A928;
+  --ok:#006100;   --ok-soft:#C6EFCE;
+  --warn:#9C6500; --warn-soft:#FFEB9C;
+  --crit:#9C0006; --crit-soft:#FFC7CE;
+  --shadow:0 1px 2px rgba(33,30,30,.06),0 8px 24px -16px rgba(33,30,30,.22);
+  --shadow-lift:0 2px 4px rgba(33,30,30,.07),0 14px 30px -18px rgba(33,30,30,.3);
 }
 *{box-sizing:border-box}
 [hidden]:not([hidden="until-found"]){display:none!important}
-html,body{overflow-x:hidden}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--bh-font,Figtree,Arial,sans-serif);
-  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
-h1,h2,h3{margin:0}
-a{color:var(--ink)}
-.wrap{max-width:1440px;margin:0 auto;padding:0 56px}
-.wrap.page{padding-top:48px;padding-bottom:16px}
-.mono{font-weight:600;letter-spacing:.02em}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Figtree',Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:'Figtree',Arial,Helvetica,sans-serif}
+.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+a{color:var(--maroon)}
+:focus-visible{outline:2px solid var(--maroon);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 22px}
+/* The rail floats rather than sitting in a grid column: the link sections keep
+   clear of it while it lasts and then run the full width, so the page does not
+   end with a tall empty gutter. */
+/* The rail floats rather than sitting in a grid column, and comes first in the
+   source so the sections after it keep clear while it lasts and then run the
+   full width — the page does not end with a tall empty gutter. */
+.cols{display:flow-root}
+.rail{float:right;width:322px;margin:0 0 22px 30px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:1040px){
+  .cols{display:flex;flex-direction:column}
+  .cols > .main{order:1}
+  .rail{order:2;float:none;width:auto;margin:4px 0 22px;flex-direction:row;flex-wrap:wrap}
+  .rail > *{flex:1 1 300px}
+}
 
-/* ---- header ---- */
-header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.lh .wrap{display:flex;align-items:center;gap:18px;min-height:78px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
-.brand img{height:30px;width:auto;display:block}
-.brand .wm{font-size:12px;font-weight:800;letter-spacing:.04em;line-height:1.05;text-transform:uppercase}
-.brand .wm small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.06em}
-.lh .spacer{flex:1 1 20px}
-.search{position:relative;flex:0 1 300px;min-width:200px}
-.search input{width:100%;font:14px var(--bh-font,Figtree,sans-serif);color:var(--ink);background:#fff;
-  border:1px solid var(--charcoal);border-radius:0;min-height:40px;padding:0 34px 0 12px}
+/* ---- masthead ---- */
+.bh-topbar{height:6px;background:var(--brand-red);width:100%}
+header.bh-header{background:#fff;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20}
+.masthead{display:flex;align-items:center;gap:18px;padding:11px 0 12px;flex-wrap:wrap}
+.bh-logo{height:56px;width:auto;flex:none}
+.bh-titles{min-width:0}
+.bh-title{color:var(--ink);font-size:20px;font-weight:800;letter-spacing:.045em;
+  text-transform:uppercase;line-height:1.15}
+.bh-sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.acct{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted)}
+.acct .who{font-weight:600;color:var(--ink)}
+
+/* ---- buttons: black and charcoal only ---- */
+.btn{appearance:none;font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:8px;
+  padding:10px 20px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--charcoal);border-color:var(--charcoal)}
+.btn.ghost{background:#fff;color:var(--charcoal);border:1px solid var(--charcoal)}
+.btn.ghost:hover{background:var(--charcoal);color:#fff}
+.btn.sm{padding:7px 14px;font-size:11.5px}
+
+main{padding:0 0 76px}
+
+/* ---- hero: photo band, date, clock, weather ---- */
+.hero{position:relative;overflow:hidden;background:var(--ink);margin-bottom:34px;
+  border-bottom:4px solid var(--brand-red)}
+.hero-bg{position:absolute;inset:0;background:url("hero.jpg") center 62% / cover no-repeat;
+  filter:saturate(.82)}
+.hero-scrim{position:absolute;inset:0;background:
+  linear-gradient(97deg,rgba(23,21,21,.95) 0%,rgba(23,21,21,.88) 38%,rgba(23,21,21,.52) 72%,rgba(23,21,21,.42) 100%)}
+.hero-dots{position:absolute;right:28px;bottom:26px;width:96px;height:44px;opacity:.38;
+  fill:#fff;pointer-events:none}
+.hero-inner{position:relative;padding:34px 22px 0;display:flex;gap:30px;
+  align-items:flex-start;flex-wrap:wrap}
+.hero-left{min-width:0;flex:1 1 380px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;
+  font-size:10.5px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
+  color:#fff;background:var(--brand-red);padding:5px 11px 5px 9px;border-radius:3px}
+.eyebrow svg{width:11px;height:11px;fill:#fff;opacity:.85}
+.hero-greet{color:#fff;font-size:33px;font-weight:800;letter-spacing:.005em;
+  line-height:1.1;margin:15px 0 0}
+.hero-tag{color:rgba(255,255,255,.62);font-size:13.5px;margin-top:9px;max-width:46ch}
+.clock{display:flex;align-items:baseline;gap:9px;margin-top:17px}
+.clock .t{font:700 30px/1 "JetBrains Mono",monospace;color:#fff;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.clock .z{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.55)}
+
+/* weather */
+.wx{flex:0 1 330px;min-width:270px;border:1px solid rgba(255,255,255,.17);border-radius:9px;
+  background:rgba(255,255,255,.07);backdrop-filter:blur(3px);padding:15px 17px 13px;color:#fff}
+.wx-top{display:flex;align-items:center;gap:14px}
+.wx-icon{width:48px;height:48px;flex:none;stroke:#fff;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.wx-icon .sun{fill:var(--sun);stroke:none}
+.wx-icon .drop{fill:rgba(255,255,255,.85);stroke:none}
+.wx-temp{font:700 34px/1 'Figtree',sans-serif;letter-spacing:-.02em}
+.wx-body{min-width:0}
+.wx-cond{font-size:13.5px;font-weight:700;letter-spacing:.01em}
+.wx-sub{font-size:11.5px;color:rgba(255,255,255,.66);margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.wx-days{display:flex;gap:2px;margin-top:13px;padding-top:11px;
+  border-top:1px solid rgba(255,255,255,.14)}
+.wx-day{flex:1;text-align:center;min-width:0}
+.wx-day .d{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.55);display:block}
+.wx-day svg{width:25px;height:25px;margin:5px auto 3px;display:block;stroke:#fff;fill:none;
+  stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.wx-day svg .sun{fill:var(--sun);stroke:none}
+.wx-day svg .drop{fill:rgba(255,255,255,.85);stroke:none}
+.wx-day .hi{font:600 12px/1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.wx-day .lo{font:400 12px/1 "JetBrains Mono",monospace;color:rgba(255,255,255,.5);
+  font-variant-numeric:tabular-nums;margin-left:4px}
+.wx-place{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.42);margin-top:11px}
+
+/* search sits on the hero's bottom edge */
+.searchrow{position:relative;padding:26px 22px 26px;display:flex;gap:10px;
+  align-items:center;flex-wrap:wrap}
+.search{position:relative;flex:1 1 340px;max-width:460px}
+.search input{width:100%;font-family:inherit;font-size:14px;color:var(--ink);
+  background:#fff;border:1px solid transparent;border-radius:8px;
+  padding:12px 14px 12px 40px;box-shadow:0 10px 30px -14px rgba(0,0,0,.65)}
 .search input::placeholder{color:var(--faint)}
-.search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 11px/1 var(--bh-font,sans-serif);
-  color:var(--faint);border:1px solid var(--line);padding:3px 6px;background:#fff}
+.search input:focus{outline:2px solid var(--brand-red);outline-offset:1px}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;stroke:var(--faint);fill:none;stroke-width:2}
+.search kbd{position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  font:600 10px/1 "JetBrains Mono",monospace;color:var(--faint);
+  border:1px solid var(--line);border-radius:4px;padding:4px 6px;background:var(--surface-2)}
 .search input:not(:placeholder-shown) ~ kbd{display:none}
-.acct{display:flex;align-items:center;gap:10px;min-width:0}
-.acct .av{width:36px;height:36px;flex:none;background:var(--charcoal);color:#fff;display:grid;place-items:center;
-  font-weight:700;font-size:13px}
-.acct .who{display:block;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap}
-.acct .role{display:block;font-size:12px;color:var(--muted);line-height:1.25;white-space:nowrap}
-.acct .so{display:inline-block;margin-top:5px;font:700 10px/1 var(--bh-font,Figtree,sans-serif);letter-spacing:.08em;text-transform:uppercase;
-  color:var(--ink);background:#fff;border:1px solid var(--charcoal);padding:4px 8px;cursor:pointer}
-.acct .so[hidden]{display:none}
-.acct .so:hover{background:var(--ink);color:#fff}
-.lh .acct{margin-left:auto}
 
-/* ---- hero: The Laurel in red duotone ---- */
-.hero{position:relative;overflow:hidden;background:var(--brand-red);min-height:500px}
-.hero-photo{position:absolute;inset:0;background:url("hero.jpg") center 55% / cover no-repeat;
-  filter:grayscale(1) contrast(1.12) brightness(.95);mix-blend-mode:multiply}
-/* a red wash behind the greeting so black and white type both read */
-.hero-wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(33,30,30,.74) 0%,rgba(33,30,30,.5) 40%,rgba(33,30,30,.2) 75%,rgba(33,30,30,.12) 100%)}
-.hero-in{position:relative;padding:44px 40px 0;max-width:1280px;margin:0 auto;min-height:500px}
-.today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
-.greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
-.greet .nm{display:block;font-weight:800}
-.hero-card{position:absolute;left:0;right:0;bottom:44px;padding:0 40px;max-width:1280px;margin:0 auto}
-.hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
-.hero-in p.eyebrow{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff}
-.hero-in p.eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:var(--brand-red);margin-right:9px;vertical-align:0}
-/* quick actions sit on the photo: white buttons, tan (brand cream) on hover */
-.hero-card .acts a,.hero-card .acts a.bh-btn,.hero-card .acts a.bh-btn-outline{background:#fff!important;color:var(--ink)!important;border:1px solid #fff!important;box-shadow:none}
-.hero-card .acts a:hover,.hero-card .acts a:focus-visible{background:var(--cream)!important;border-color:var(--cream)!important;color:var(--ink)!important}
-.acts{display:flex;gap:10px;flex-wrap:wrap}
-.acts a{min-height:44px}
-.deco{position:absolute;right:40px;bottom:112px;display:flex;align-items:flex-start;gap:34px;pointer-events:none}
-.deco .dots{display:grid;grid-template-columns:repeat(4,22px);gap:10px}
-.deco .dots i{width:22px;height:22px;border-radius:50%;background:#fff;display:block}
-.deco .sq{width:106px;height:106px;background:#fff}
-.caption{position:absolute;right:16px;bottom:12px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
-
-/* ---- weather: where you are now, then four days ---- */
-.wxstrip{display:grid;grid-template-columns:minmax(300px,1.7fr) repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
-.wxnow{display:flex;align-items:stretch;border-right:1px solid var(--line);min-width:0}
-a.wxmain{flex:1;display:flex;align-items:center;gap:12px;padding:14px 22px;text-decoration:none;color:var(--ink);min-width:0}
-a.wxmain:hover{background:var(--cream)}
-.wxnow .txt{min-width:0}
-.wxnow .pl{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wxnow .tp{display:block;font-size:28px;font-weight:700;line-height:1.1}
-.wxnow .cd{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wxnow svg{width:36px;height:36px;flex:none;margin-left:auto;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.wxnow svg .sun,.wxd svg .sun{fill:var(--sun);stroke:none}
-.wxnow svg .drop,.wxd svg .drop{fill:var(--charcoal);stroke:none}
-.pin{display:inline-block;width:8px;height:8px;background:var(--brand-red);border-radius:50%;margin-right:6px;vertical-align:1px}
-.pin.job{border-radius:0;background:var(--ink)}
-.wxsel{display:flex;align-items:center;padding:0 14px 0 0}
-.wxsel select{font:600 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.04em;border:1px solid var(--line);background:#fff;padding:5px 6px;color:var(--ink);max-width:150px}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.wxd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;column-gap:10px;padding:12px 18px;border-right:1px solid var(--line);min-width:0}
-.wxd:last-child{border-right:0}
-.wxd .dn{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-.wxd svg{grid-row:1 / span 2;grid-column:2;justify-self:end;width:28px;height:28px;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.wxd .hl{font-size:14px;color:var(--muted)} .wxd .hl b{font-size:17px;color:var(--ink)}
-.wxd .rn{grid-column:1 / span 2;font-size:11.5px;color:var(--muted)}
-.rn.hi{color:var(--charcoal);font-weight:700}
-a.wxc{display:flex;align-items:center;gap:12px;padding:14px 22px;text-decoration:none;color:var(--ink);
-  border-right:1px solid var(--line);min-width:0}
-a.wxc:last-child{border-right:0}
-a.wxc:hover{background:var(--cream)}
-.wxc .pl{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-.wxc .tp{display:block;font-size:22px;font-weight:700;line-height:1.1}
-.wxc .cd{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wxc svg{width:30px;height:30px;flex:none;margin-left:auto;stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.wxc svg .sun{fill:var(--sun);stroke:none}
-.wxc svg .drop{fill:var(--charcoal);stroke:none}
-.wxc .txt{min-width:0}
-
-/* ---- pulse: active jobs and the team, under the weather ---- */
-/* two columns under the weather: desks and links on the left, jobs and team on the right */
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:start}
-.layout.solo{grid-template-columns:minmax(0,1fr)}
-.pulse{display:grid;gap:24px;align-content:start}
-.pstats{border-top:3px solid var(--ink);padding:20px 22px 22px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-.ptop{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
-.pbig{font-size:56px;font-weight:800;line-height:1;letter-spacing:-.01em}
-.pcap{font-size:13px;color:var(--muted);max-width:42ch;padding-bottom:4px}
-.pcap a{font-weight:700;text-decoration:none;white-space:nowrap}
-.pcap a:hover{color:var(--maroon)}
-.bars{margin-top:18px;display:grid;gap:10px}
-.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 36px;align-items:center;gap:12px;font-size:13px}
-.bar .lab{color:var(--muted)}
-.bar .trk{height:14px;background:var(--gray);position:relative}
-.bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:0 4px 4px 0;min-width:2px}
-.bar .val{text-align:right;font-weight:700}
-.pmini{display:flex;gap:28px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
-.pmini b{display:block;font-size:22px;color:var(--ink);font-weight:800;line-height:1.1}
-.pasof{font-size:11.5px;color:var(--faint);margin-top:12px}
-@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.pulse{order:-1;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}}
-@media (max-width:640px){.pbig{font-size:44px}.bar{grid-template-columns:110px minmax(0,1fr) 36px}}
+/* ---- quick actions: a pill row on the hero, no section of its own ---- */
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+a.act{display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+  font-size:12px;font-weight:700;letter-spacing:.01em;color:#fff;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
+  border-radius:999px;padding:9px 15px;white-space:nowrap;
+  transition:background .14s ease,border-color .14s ease}
+a.act:hover{background:var(--brand-red);border-color:var(--brand-red)}
+a.act svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
 
 /* ---- safety strip ---- */
-.safety{background:var(--cream);border-bottom:1px solid var(--line)}
-.safety .wrap{display:flex;align-items:center;gap:20px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
-.safety .big{font-size:26px;font-weight:800;color:var(--maroon);line-height:1}
-.safety .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal);max-width:16ch;line-height:1.3}
-.safety .sep{width:1px;align-self:stretch;background:#ddd3bf}
-.safety .talk{font-size:13px}
-.safety .talk b{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal)}
+.safety{background:var(--cream);border-bottom:1px solid #e4dcc9;margin:-34px 0 30px}
+.safety .wrap{display:flex;align-items:center;gap:20px;padding:13px 22px;flex-wrap:wrap}
+.safety .big{font:800 27px/1 'Figtree',sans-serif;color:var(--maroon);
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.safety .lbl{font-size:10.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--charcoal);line-height:1.35;max-width:14ch}
+.safety .sep{width:1px;align-self:stretch;background:#e0d7c2;margin:0 4px}
+.safety .talk{font-size:13px;color:var(--ink)}
+.safety .talk b{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--charcoal);margin-bottom:2px}
 .safety a{color:var(--maroon);font-weight:700;text-decoration:none}
-.safety .stamp{margin-left:auto;font-size:11px;color:#8f8573}
+.safety a:hover{text-decoration:underline}
+.safety .stamp{margin-left:auto;font-size:11px;color:#9b917e}
 
-main{padding:0}
-.banner{border-left:4px solid var(--charcoal);background:var(--cream);padding:12px 16px;font-size:13.5px;margin:0 0 24px}
-.banner b{display:block;margin-bottom:2px}
+/* ---- rail panels ---- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);overflow:hidden}
+.panel > h2{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--charcoal);
+  padding:13px 16px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.panel > h2::before{content:"";width:9px;height:9px;flex:none;background:var(--brand-red);
+  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.panel > h2 .n{margin-left:auto;font:600 10px/1 "JetBrains Mono",monospace;color:var(--faint)}
+.panel .all{display:block;padding:10px 16px;border-top:1px solid var(--line-soft);
+  font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--charcoal);text-decoration:none;background:var(--surface-2)}
+.panel .all:hover{color:var(--maroon)}
 
-/* ---- section labels ---- */
-.sec{margin:0 0 48px}
-.sechead{display:flex;align-items:center;gap:16px;margin:0 0 22px}
-.sechead .blk{background:var(--brand-red);color:#fff;font-size:19px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
-  padding:9px 18px;line-height:1.2;position:relative}
-/* the label block runs out to the left edge of the window, as on the canvas */
-.sechead .blk::before{content:"";position:absolute;top:0;bottom:0;right:100%;width:100vw;background:inherit}
-.sechead .blk.dark{background:var(--ink)}
-.sechead .rest{font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
-.sechead .cap{font-size:13px;color:var(--muted)}
+/* newsletter: one issue, its sections underneath */
+.issue{display:block;padding:15px 16px 14px;text-decoration:none;color:inherit;
+  border-bottom:1px solid var(--line);background:var(--cream)}
+.issue:hover{background:#efe7d8}
+.issue .when{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--brand-red)}
+.issue .h{font-size:16px;font-weight:800;line-height:1.25;margin-top:4px;letter-spacing:.005em}
+.issue .x{color:var(--muted);font-size:12px;line-height:1.4;margin-top:4px}
+a.part{display:flex;align-items:center;gap:10px;padding:11px 16px;text-decoration:none;
+  color:inherit;border-bottom:1px solid var(--line-soft)}
+a.part:last-of-type{border-bottom:0}
+a.part:hover{background:var(--surface-2)}
+a.part .n{font-size:13px;font-weight:700;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.part .go{flex:none;width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2}
+a.part:hover .go{stroke:var(--maroon)}
+
+.panel .sub{font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint);padding:9px 16px 7px;background:var(--surface-2);
+  border-bottom:1px solid var(--line-soft);border-top:1px solid var(--line-soft)}
+.panel .sub:first-of-type{border-top:0}
+.noneout{padding:11px 16px;font-size:12.5px;color:var(--faint);
+  border-bottom:1px solid var(--line-soft)}
+.hol{display:flex;align-items:baseline;gap:8px;padding:9px 16px;background:var(--cream);
+  border-bottom:1px solid var(--line-soft);font-size:12px}
+.hol b{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--maroon);flex:none}
+.hol .d{margin-left:auto;font-size:11px;color:var(--charcoal);flex:none}
+.person{display:flex;align-items:center;gap:11px;padding:10px 16px;
+  border-bottom:1px solid var(--line-soft)}
+.person:last-of-type{border-bottom:0}
+.person .av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font:800 10.5px/1 'Figtree',sans-serif;color:#fff;background:var(--charcoal)}
+.person.m0 .av{background:var(--maroon)} .person.m2 .av{background:var(--ink)}
+.person .who{min-width:0;flex:1}
+.person .who{display:block}
+.person .nm{display:block;font-size:13px;font-weight:700;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person .rl{display:block;font-size:11px;color:var(--muted);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person .kind{flex:none;text-align:right}
+.person .kind .k{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--charcoal);background:var(--cream);border:1px solid var(--line);
+  border-radius:3px;padding:1px 4px;display:inline-block}
+.person .kind .k.now{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
+.person.away .av{background:var(--faint)}
+.person .kind .dt{display:block;font-size:10px;color:var(--faint);margin-top:3px}
+
+/* ---- weather: location picker + site rows ---- */
+.wx-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.wx-head .lbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:rgba(255,255,255,.5)}
+.wx-head a.more{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(255,255,255,.72);text-decoration:none;
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.wx-head a.more:hover{color:#fff}
+.wx-head a.more svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.4}
+.wx-head a.more + select{margin-left:10px}
+.wx-head select{margin-left:auto;font-family:inherit;font-size:11px;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:5px;
+  padding:4px 7px;cursor:pointer;max-width:170px}
+.wx-head select option{color:var(--ink);background:#fff}
+
+/* ---- section headings ---- */
+.sec{margin:0 0 26px;display:flow-root}
+.sechead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.sechead h2{font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--charcoal);white-space:nowrap;display:flex;align-items:center;gap:9px}
+.sechead h2::before{content:"";width:11px;height:11px;flex:none;
+  background:var(--brand-red);
+  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.sechead .rule{flex:1;height:1px;background:var(--line)}
+.sechead .count{font:600 11px/1 "JetBrains Mono",monospace;color:var(--faint)}
 
 /* ---- desk tiles ---- */
-.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-.tile{border-top:3px solid var(--ink);padding:14px 16px 12px;display:flex;flex-direction:column;min-width:0;background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-.tile.locked{background:var(--gray);border-top-color:var(--charcoal)}
-.tile h3{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.tile h3::before{content:"";width:11px;height:11px;flex:none;background:var(--brand-red)}
-.tile.locked h3::before{background:var(--charcoal)}
-.tile .big{font-size:13px;font-weight:700;line-height:1.2;margin:8px 0 0}
-.tile.locked .big{color:var(--charcoal);font-size:13px}
-.tile .big .bh-chip{font-size:13px;vertical-align:middle}
-.tile p{margin:8px 0 10px;color:var(--muted);font-size:12.5px;line-height:1.4}
-.tile > p:not(.msg){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.tile .msg{flex:0;font-size:12.5px;margin-top:-8px}
-.tile .sublinks{margin:-6px 0 16px;display:grid;gap:6px}
-.tile .sublinks a{font-size:13px;font-weight:700;text-decoration:none}
-.tile .sublinks a::after{content:" \2192"}
-.tile .sublinks a:hover{color:var(--maroon)}
-.tile .foot{display:flex;align-items:center;gap:10px;margin-top:auto}
-.tile .foot .bh-chip{font-size:10.5px}
-.tile .go{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
-.tile .go:hover{color:var(--maroon)}
-.tile .go::after{content:" \2192"}
-.tile.locked .go::after{content:""}
-.tile.locked .go{margin-left:0;color:var(--charcoal)}
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));align-items:stretch}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  padding:17px;display:flex;flex-direction:column;min-width:0}
+.tile.locked{background:var(--surface-2)}
+.tilehead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.tile h3{font-size:15.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.tile.locked h3{color:var(--muted)}
+.tilehead .tag{margin-left:auto;flex:none}
+.tile p{color:var(--muted);font-size:13.5px;margin:0 0 16px;flex:1}
+.tile .msg{font-size:12.5px;margin:0 0 16px}
+.stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:6px;
+  overflow:hidden;margin-bottom:16px}
+.stat{flex:1 1 100px;padding:10px 13px;border-right:1px solid var(--line);background:var(--surface-2)}
+.stat:last-child{border-right:0}
+.stat .k{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:5px}
+.stat .v{font:600 17px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
 
-/* ---- this week: newsletter and team ---- */
-.week{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.panel{border-top:3px solid var(--ink);background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-.panel > h2{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:14px 18px;border-bottom:1px solid var(--line)}
-.panel > h2::before{content:"";width:11px;height:11px;background:var(--brand-red);flex:none}
-.panel > h2 .n{margin-left:auto;font-size:12px;font-weight:600;color:var(--faint)}
-.panel .k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);padding:2px 6px}
-.panel .k.now{background:var(--ink);color:#fff}
-.panel .all{display:block;padding:11px 18px;border-top:1px solid var(--line);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
-.panel .all:hover{color:var(--maroon)}
-.issue{display:block;padding:16px 18px;text-decoration:none;color:inherit;background:var(--cream);border-bottom:1px solid var(--line)}
-.issue .when{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
-.issue .h{font-size:17px;font-weight:800;margin-top:3px}
-.issue .x{color:var(--muted);font-size:12.5px;margin-top:3px}
-a.part{display:flex;align-items:center;padding:11px 18px;text-decoration:none;color:inherit;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:600}
-a.part:last-child{border-bottom:0}
-a.part:hover{background:var(--cream)}
-a.part .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2;flex:none}
-.panel .sub{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid var(--line)}
-.noneout{padding:11px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--line)}
-.hol{display:flex;gap:8px;align-items:baseline;padding:9px 18px;background:var(--cream);border-bottom:1px solid var(--line);font-size:13px}
-.hol b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--maroon)}
-.hol .d{margin-left:auto;font-size:12px;color:var(--muted)}
-.person{display:flex;align-items:center;gap:11px;padding:10px 18px;border-bottom:1px solid var(--line)}
-.person:last-child{border-bottom:0}
-.person .av{width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--charcoal)}
-.person.m0 .av{background:var(--maroon)} .person.m2 .av{background:var(--ink)} .person.away .av{background:var(--faint)}
-.person .who{flex:1;min-width:0}
-.person .nm{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.person .rl{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.person .kind{text-align:right;flex:none}
-.person .kind .dt{display:block;font-size:11px;color:var(--faint);margin-top:3px}
+/* ---- app cards ---- */
+.apps{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(202px,1fr))}
+a.app{display:flex;align-items:flex-start;gap:11px;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:11px 12px;box-shadow:var(--shadow);min-width:0;min-height:62px;
+  transition:box-shadow .14s ease,transform .14s ease,border-color .14s ease}
+a.app:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px);border-color:#dcd9da}
+a.app:active{transform:translateY(0)}
+.mono-badge{flex:none;width:32px;height:32px;border-radius:6px;display:grid;place-items:center;
+  font:800 11.5px/1 'Figtree',sans-serif;letter-spacing:.02em;color:#fff}
+.mono-badge.m0{background:var(--maroon)}
+.mono-badge.m1{background:var(--charcoal)}
+.mono-badge.m2{background:var(--ink)}
+.appbody{min-width:0;flex:1}
+.appname{font-size:13px;font-weight:700;letter-spacing:.005em;line-height:1.25;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.appdesc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:2px}
+.pill{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:3px;padding:1px 4px;background:var(--cream);color:var(--charcoal);
+  border:1px solid var(--line);flex:none}
 
-/* ---- my day: the signed-in person's meetings, mail, tasks and BH work ---- */
-.sechead .mdhide{margin-left:auto;font:700 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.1em;text-transform:uppercase;
-  background:#fff;border:1px solid var(--line);color:var(--muted);padding:6px 10px;cursor:pointer;border-radius:0}
-.sechead .mdhide:hover{border-color:var(--charcoal);color:var(--ink)}
-.md{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
-@media (max-width:760px){.md{grid-template-columns:1fr}}
-.mdc > h2{padding:9px 14px!important;font-size:11.5px!important}
-.mdc .mdr{padding:6px 14px!important;gap:9px!important}
-.mdc .mdr .t{width:56px!important;font-size:11.5px!important}
-.mdc .mdr .sx{font-size:12.5px!important}
-.mdc .mdr .sb{font-size:11px!important}
-.mdc .sub{padding:6px 14px 4px!important;font-size:9.5px!important}
-.mdc .more,.mdc .none{padding:6px 14px!important;font-size:11.5px!important}
-.mdc .all{padding:7px 14px!important;font-size:10.5px!important}
-#sec-myday{margin-bottom:34px}
-/* ---- active jobs: one line under the weather ---- */
-.jobstrip{background:#fff;border-bottom:1px solid var(--line)}
-.jobstrip .wrap{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;padding-top:11px;padding-bottom:11px}
-.jobstrip .jt{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal)}
-.jobstrip .jc{font-size:12.5px;color:var(--muted);white-space:nowrap}
-.jobstrip .jc b{font-size:17px;font-weight:800;color:var(--ink);margin-right:6px}
-.jobstrip .jc.big b{font-size:22px;color:var(--maroon)}
-.jobstrip .jgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
-.jobstrip .jgo:hover{color:var(--maroon)}
-.jobstrip .jasof{font-size:11px;color:var(--faint);white-space:nowrap}
-@media (max-width:640px){.jobstrip .wrap{gap:12px}.jobstrip .jgo{margin-left:0}}
-.md > .panel{min-width:0}
-.mdc .mdr{display:flex;align-items:flex-start;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;min-width:0}
-.mdc a.mdr:hover{background:var(--cream)}
-.mdr .t{flex:none;width:68px;font-size:12px;font-weight:700;line-height:1.35;padding-top:1px}
-.mdr .t small{display:block;font-weight:500;color:var(--faint);font-size:11px}
-.mdr .b{flex:1;min-width:0}
-.mdr .sx{display:block;font-size:13.5px;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mdr .sb{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mdr .r{flex:none;text-align:right;font-size:11.5px;color:var(--faint);padding-top:1px}
-.mdr.past{opacity:.5}
-.mdr .join{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--maroon);text-decoration:none;white-space:nowrap}
-.mdr .join:hover{text-decoration:underline}
-.mdr .n2{display:inline-block;min-width:30px;text-align:center;font-size:15px;font-weight:800;padding:2px 6px;background:var(--gray)}
-.panel .k.crit{background:var(--crit-soft);color:var(--crit)}
-.panel .k.warn{background:var(--warn-soft);color:var(--warn)}
-.mdc .none{padding:12px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--line)}
-.mdc .more{padding:8px 18px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
-.mdc .alls{display:flex}
-.mdc .alls .all{flex:1}
-.mdc .alls .all + .all{border-left:1px solid var(--line)}
-.md.priv .sx,.md.priv .sb{filter:blur(5px);user-select:none}
-.mdnote{font-size:12.5px;color:var(--muted);margin:12px 0 0}
-.mdnote button{font:inherit;font-weight:700;color:var(--maroon);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
-@media (max-width:640px){.md{grid-template-columns:1fr}.mdr .t{width:58px}.sechead .mdhide{display:none}}
-/* ---- applications ---- */
-.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
-a.app{display:block;background:#fff;padding:16px 18px 18px;text-decoration:none;color:inherit;min-width:0}
-a.app:hover{background:var(--cream)}
-.appname{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px;font-weight:700;line-height:1.25}
-.appdesc{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:3px}
-.pill{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);padding:1px 5px}
-.empty{color:var(--faint);font-size:14px;padding:24px 0 0}
+.tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:4px;padding:3px 7px;display:inline-block}
+.tag.neutral{background:var(--cream);color:var(--charcoal);border:1px solid var(--line)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.crit{background:var(--crit-soft);color:var(--crit)}
 
-/* ---- sign-in gate ---- */
-.gatewrap{position:relative;min-height:calc(100vh - 86px);display:grid;place-items:center;padding:40px 20px;overflow:hidden;background:var(--brand-red)}
-.gate{position:relative;background:#fff;padding:40px 34px;text-align:center;max-width:430px;width:100%}
-.gate img{height:64px;width:auto;margin-bottom:20px}
-.gate h2{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+/* ---- gate ---- */
+.gatewrap{position:relative;min-height:calc(100vh - 88px);display:grid;place-items:center;
+  padding:40px 22px;overflow:hidden}
+.gatewrap .hero-bg,.gatewrap .hero-scrim{position:absolute;inset:0}
+.gatewrap .hero-scrim{background:linear-gradient(180deg,rgba(23,21,21,.88),rgba(23,21,21,.78))}
+.gate{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.7);
+  padding:40px 30px;text-align:center;max-width:430px;width:100%}
+.gate .rule{width:44px;height:4px;background:var(--brand-red);margin:0 auto 20px;border-radius:2px}
+.gate img{height:72px;width:auto;margin-bottom:22px}
+.gate h2{font-size:15px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .gate p{color:var(--muted);font-size:14px;margin:0 0 22px}
 
-/* ---- footer area ---- */
+.banner{border:1px solid var(--line);border-left:4px solid var(--charcoal);background:var(--cream);
+  color:var(--ink);border-radius:6px;padding:12px 15px;font-size:13.5px;margin-bottom:22px}
+.banner b{display:block;margin-bottom:3px}
+.empty{color:var(--faint);font-size:13.5px;padding:18px 0}
+
+details.diag{margin-top:38px;border-top:1px solid var(--line);padding-top:14px}
+details.diag summary{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer}
+details.diag summary:hover{color:var(--ink)}
+pre{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:12px;
+  overflow-x:auto;font:400 12px/1.55 "JetBrains Mono",monospace;margin:12px 0 10px;
+  white-space:pre-wrap;word-break:break-word}
 .foot{color:var(--faint);font-size:12px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
-details.diag{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
-details.diag summary{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer}
-pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:12px 0 10px;white-space:pre-wrap;word-break:break-word}
-.tag.ok{font-size:10px;font-weight:700;text-transform:uppercase;background:var(--ok-soft);color:var(--ok);padding:2px 6px}
-/* kept as it was: the flywheel band */
 .endband{margin-top:46px;background:var(--ink);color:#fff;padding:26px 0 24px}
 .endband .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .endband img{height:40px;width:auto;flex:none}
+/* the three values as a loop, the way the brand mark draws them */
 .flywheel{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
-.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;stroke-width:2.1;stroke-linecap:round}
-.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.88);white-space:nowrap}
-.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;
+  stroke-width:2.1;stroke-linecap:round}
+.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:rgba(255,255,255,.88);white-space:nowrap}
+.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);
+  clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
 .endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
-
-/* ---- narrower screens ---- */
-@media (max-width:960px){
-  .wrap,.hero-in{padding-left:20px;padding-right:20px}
-  .wrap.page{padding-top:32px}
-  .greet{font-size:46px}
-  .deco{display:none}
-  .hero-card{padding:0 20px}
-  .wxstrip{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .wxnow{grid-column:1 / -1;border-right:0;border-bottom:1px solid var(--line)}
-  .search{order:5;flex:1 1 100%}
+@media (max-width:860px){
+  .acts{margin-left:0;width:100%}
+  a.act{font-size:11.5px;padding:8px 13px}
 }
-@media (max-width:640px){
-  header.lh{position:static}
-  .acct .role{display:none}
-  .hero,.hero-in{min-height:0}
-  .hero-in{padding-top:28px;padding-bottom:24px}
-  .greet{font-size:32px}
-  .hero-card{position:relative;bottom:auto;padding:0 20px 24px}
-  .caption{display:none}
-  .hero-card p{font-size:15px}
-  .tiles{grid-template-columns:1fr}
-  .apps{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:760px){
+  .hero-dots{display:none}
+  .safety .stamp{display:none}
+  .safety .big{font-size:23px}
+  .hero-inner{padding:26px 22px 0;gap:20px}
+  .hero-greet{font-size:25px}
+  .clock .t{font-size:25px}
+  .wx{flex:1 1 100%}
+}
+/* ---- phones ---- */
+@media (max-width:600px){
+  /* two links per row instead of one: the list is the page's length problem,
+     and on a phone nobody needs to be told what Procore is */
+  .apps{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
+  a.app{min-height:54px;padding:9px 10px;gap:9px;align-items:center}
+  .mono-badge{width:28px;height:28px;font-size:10.5px;border-radius:5px}
+  .appname{font-size:12px;line-height:1.2}
   .appdesc{display:none}
-  .sechead .cap{display:none}
-  .wxstrip{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .wxnow{grid-column:1 / -1;border-right:0;border-bottom:1px solid var(--line)}
-  a.wxmain{padding:12px 16px} .wxd{padding:10px 12px} .wxd svg{width:22px;height:22px}
-  .endband .since{margin-left:0;flex:1 1 100%}
+  .pill{font-size:8px}
+  .sec{margin-bottom:20px}
+  .tiles{gap:11px}
+  .tile{padding:15px}
+  .wrap{padding:0 16px}
+  .safety .wrap,.hero-inner,.searchrow{padding-left:16px;padding-right:16px}
+  .hero-greet{font-size:22px}
+  .hero-tag{display:none}
+  .clock{margin-top:13px}
+  .clock .t{font-size:22px}
+  .acts{gap:6px}
+  a.act{font-size:11px;padding:7px 11px}
+  a.act svg{display:none}
+  .searchrow{padding-top:20px;padding-bottom:20px}
+  .panel > h2{padding:11px 14px}
+  a.news{padding:11px 14px}
+  .person{padding:9px 14px}
   .endband .wrap{gap:12px}
   .endband img{height:32px}
-  .flywheel{gap:7px;width:100%} .flywheel span{font-size:9.5px;letter-spacing:.1em} .flywheel i.ch{width:7px;height:9px}
-  .safety .stamp{display:none}
+  .flywheel{gap:7px;width:100%}
+  .flywheel span{font-size:9.5px;letter-spacing:.1em}
+  .flywheel i.ch{width:7px;height:9px}
 }
-/* team drawer: Who's out? | Team updates | Team celebrations */
-.teamnav{display:flex;border:1px solid var(--line);flex:none}
-.teamnav button{font:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#fff;border:0;border-left:1px solid var(--line);padding:8px 11px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
-.teamnav button:first-child{border-left:0}
-.teamnav button:hover,.teamnav button[aria-expanded="true"]{background:var(--cream)}
-.teamnav .c{font-size:10px;font-weight:700;background:var(--gray);padding:1px 6px;min-width:18px;text-align:center}
-.teamnav .c.on{background:var(--brand-red);color:#fff}
-.tscrim{position:fixed;inset:0;background:rgba(20,20,20,.35);z-index:40}
-.tdrawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:#fff;z-index:41;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.12);animation:tdin .18s ease-out}
-@keyframes tdin{from{transform:translateX(30px);opacity:.4}to{transform:none;opacity:1}}
-.tdrawer .tdh{display:flex;align-items:center;gap:8px;padding:14px 18px;border-top:3px solid var(--ink);border-bottom:1px solid var(--line)}
-.tdrawer .tdh b{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.tdrawer .tdh b::before{content:"";display:inline-block;width:11px;height:11px;background:var(--brand-red);margin-right:9px;vertical-align:-1px}
-.tdrawer .tdx{margin-left:auto;font:inherit;font-size:20px;line-height:1;background:none;border:0;cursor:pointer;padding:2px 6px;color:var(--muted)}
-.tdrawer .tdtabs{display:flex;border-bottom:1px solid var(--line)}
-.tdrawer .tdtabs button{flex:1;font:inherit;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#fff;border:0;border-bottom:3px solid transparent;padding:10px 6px;cursor:pointer;color:var(--muted)}
-.tdrawer .tdtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brand-red)}
-.tdrawer .panel{border:0;flex:1;overflow:auto}
-.tdrawer .issue .t{font-weight:800}
-@media (max-width:960px){.teamnav button .l2{display:none}}
-@media (max-width:640px){.teamnav button{padding:7px 8px;font-size:10px}}
+@media (max-width:640px){
+  header.bh-header{position:static}
+  .bh-logo{height:44px}
+  .bh-title{font-size:17px}
+  .acct{margin-left:0;flex:1 1 100%}
+  .search kbd{display:none}
+  .endband .since{margin-left:0;flex:1 1 100%}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-<link rel="stylesheet" href="/bh-shell.css">
 </head>
-<body class="bh-page">
+<body>
 
 <div class="bh-topbar"></div>
-<header class="lh">
+<header class="bh-header">
   <div class="wrap">
-    <a class="brand" href="/" aria-label="Bailey-Harris home">
-      <img src="data:image/png;base64,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" alt="">
-      <span class="wm">Bailey-Harris<small>Construction</small></span>
-    </a>
-    <span class="spacer"></span>
-    <nav class="teamnav" id="teamnav" aria-label="Team" hidden>
-      <button type="button" data-tp="out" aria-expanded="false" aria-controls="tdrawer">Who&rsquo;s out?<span class="c" id="tc-out">0</span></button>
-      <button type="button" data-tp="updates" aria-expanded="false" aria-controls="tdrawer"><span><span class="l2">Team </span>updates</span><span class="c" id="tc-updates">0</span></button>
-      <button type="button" data-tp="cele" aria-expanded="false" aria-controls="tdrawer"><span><span class="l2">Team </span>celebrations</span><span class="c" id="tc-cele">0</span></button>
-    </nav>
-    <div class="search" id="searchbox" hidden>
-      <input id="q" type="search" placeholder="Search desks and applications" autocomplete="off" spellcheck="false" aria-label="Search desks and applications">
-      <kbd>/</kbd>
-    </div>
-    <div class="acct" id="acct" hidden>
-      <span class="av" id="acctav" aria-hidden="true"></span>
-      <span><span class="who" id="acctname"></span><span class="role" id="acctrole"></span>
-        <button type="button" class="so" id="signout" hidden>Sign out</button></span>
+    <div class="masthead">
+      <img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris Construction">
+      <div class="bh-titles">
+        <div class="bh-title">Bailey-Harris</div>
+        <div class="bh-sub">Everything, in one place</div>
+      </div>
+      <div class="acct" id="acct" hidden>
+        <span class="who" id="acctname"></span>
+        <button class="btn ghost sm" id="signout">Sign out</button>
+      </div>
     </div>
   </div>
 </header>
-<div class="tscrim" id="tscrim" hidden></div>
-<aside class="tdrawer" id="tdrawer" role="dialog" aria-modal="true" aria-labelledby="tdtitle" hidden>
-  <div class="tdh"><b id="tdtitle">Team</b><button type="button" class="tdx" id="tdclose" aria-label="Close">&times;</button></div>
-  <div class="tdtabs" role="tablist">
-    <button type="button" role="tab" data-tp="out">Who&rsquo;s out?</button>
-    <button type="button" role="tab" data-tp="updates">Updates</button>
-    <button type="button" role="tab" data-tp="cele">Celebrations</button>
-  </div>
-  <section class="panel" id="tdbody" role="tabpanel"></section>
-</aside>
 
 <main>
 
   <div id="gatewrap" class="gatewrap" hidden>
-    <div class="hero-photo"></div>
+    <div class="hero-bg"></div>
+    <div class="hero-scrim"></div>
     <section id="gate" class="gate">
       <img src="data:image/png;base64,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" alt="">
+      <div class="rule"></div>
       <h2>Sign in to continue</h2>
       <p>Use your Bailey-Harris Microsoft account.</p>
-      <button class="bh-btn" id="signin">Sign in with Microsoft</button>
+      <button class="btn" id="signin">Sign in with Microsoft</button>
     </section>
   </div>
 
   <div id="app" hidden>
-    <section class="hero" aria-label="Welcome">
-      <div class="hero-photo"></div>
-      <div class="hero-wash"></div>
-      <div class="hero-in">
-        <p id="tagline" class="eyebrow">BH Employee Home</p>
-        <div class="today" id="today">&nbsp;</div>
-        <h1 class="greet"><span id="greet">Good morning</span><span class="nm" id="greetname"></span></h1>
-        <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-scrim"></div>
+      <div class="wrap hero-inner">
+        <div class="hero-left">
+          <span class="eyebrow">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v4M17 2v4M3 9h18M5 4h14a2 2 0 012 2v13a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+            <span id="today">&nbsp;</span>
+          </span>
+          <h1 class="hero-greet" id="greet">Good morning</h1>
+          <p class="hero-tag" id="tagline">Your desks, dashboards and the applications you use every day.</p>
+          <div class="clock"><span class="t" id="clock">&nbsp;</span><span class="z" id="tz"></span></div>
+        </div>
+        <div class="wx" id="wx" hidden></div>
       </div>
-      <div class="hero-card">
+      <div class="wrap searchrow">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Find an app or a desk" autocomplete="off" spellcheck="false" aria-label="Filter">
+          <kbd>/</kbd>
+        </div>
         <nav class="acts" id="acts" aria-label="Quick actions"></nav>
       </div>
-      <div class="caption" id="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
     </section>
 
-    <nav class="wxstrip" id="wx" aria-label="Weather at the offices" hidden></nav>
-    <nav class="jobstrip" id="jobstrip" aria-label="Active jobs" hidden></nav>
     <div class="safety" id="safety" hidden></div>
 
-    <div class="wrap page">
+    <div class="wrap">
       <div id="fatal" class="banner" hidden></div>
       <div id="degraded" class="banner" hidden></div>
 
-      <div class="layout" id="layout">
-        <div class="main">
-          <section class="sec" id="sec-myday" hidden>
-            <div class="sechead"><span class="blk">My day</span><span class="cap" id="mdcap"></span>
-              <button class="mdhide" id="mdhide" type="button" aria-pressed="false">Hide details</button></div>
-            <div class="md" id="mdgrid"></div>
-            <p class="mdnote" id="mdnote" hidden></p>
-          </section>
+      <div class="cols">
+        <aside class="rail" id="rail">
+          <section class="panel" id="newspanel" hidden></section>
+          <section class="panel" id="peoplepanel" hidden></section>
+        </aside>
 
+        <div class="main">
           <section class="sec" id="sec-desks">
-            <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
+            <div class="sechead"><h2>Desks and dashboards</h2><span class="rule"></span></div>
             <div class="tiles" id="tiles"></div>
           </section>
 
-          <section class="sec" id="rail" hidden>
-            <div class="sechead"><span class="blk dark">This week</span></div>
-            <div class="week">
-              <section class="panel" id="newspanel" hidden></section>
-            </div>
-          </section>
-
           <div id="appsections"></div>
+
           <p class="empty" id="noresults" hidden>Nothing matches that.</p>
         </div>
-
-        <aside class="pulse" id="pulse" aria-label="Jobs and team" hidden>
-          <div class="pstats" id="pstats" hidden></div>
-          <section class="panel" id="peoplepanel" hidden></section>
-        </aside>
       </div>
 
-      <p class="foot">
+      <p class="foot" style="clear:both">
         <span id="asof"></span>
         <span id="linksrc"></span>
       </p>
@@ -480,7 +493,7 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
         <summary>Diagnostics</summary>
         <div>
           <pre id="diag">…</pre>
-          <button class="bh-btn-outline" id="copy">Copy diagnostics</button>
+          <button class="btn ghost sm" id="copy">Copy diagnostics</button>
           <span class="tag ok" id="copied" hidden>copied</span>
         </div>
       </details>
@@ -528,59 +541,48 @@ const ACCESS_CONTACT = "itadmin@baileyharris.com";
    Everything else comes from links.json in SharePoint. */
 const DESKS = [
   {
-    key: "ap",
-    title: "AP Desk",
-    blurb: "Commitments on file. Pay applications and invoices, from intake through PM review to entry.",
-    href: "/ap/",
-    group: null,
-    audience: "Accounting",
-    library: "APData",
-    file: "ap_commitments.json",
-    quiet: true,   /* not group-gated here, so a failed read shows a dash, not an error */
-    links: [{ label: "Open invoices &amp; pay apps", href: "/ap/#open" }],
-    count: d => (d.commitments || []).length
-  },
-  {
     key: "compliance",
     title: "Compliance Desk",
-    blurb: "Trade partner COIs and coverage from Billy, joined to Procore contracts and Alabama licensing.",
+    blurb: "Subcontractor and vendor insurance compliance, licences and expiries. Open to everyone.",
     href: "https://compliance.baileyharris.com",
     group: null,
-    audience: "Everyone",
     external: true
   },
   {
     key: "projects",
     title: "Project Information",
-    blurb: "Financials, profitability, forecasting and monthly projections from Procore and ComputerEase.",
+    blurb: "Every job on a map \u2014 team, owner, contract, RFIs and change orders, refreshed hourly from Procore.",
     href: "https://projects.baileyharris.com",
     group: null,
-    audience: "Project teams",
     external: true
   },
   {
-    key: "precon",
-    title: "Precon Desk",
-    blurb: "Jobs on file. Price a job against what Bailey-Harris has built, escalated to today.",
-    href: "/precon/",
-    group: "41c5a747-de87-4e3a-9523-3e0da1bd08ac",
-    groupName: "BH-Desk-Precon",
-    library: "PreconData",
-    file: "projects.json",
-    count: d => d.rows.length
-  },
-  {
     key: "prequal",
-    title: "Prequal &amp; Sub Rating",
-    blurb: "Trade partner ratings, with prequalification and diversity classifications.",
-    blurbFor: d => "Trade partner ratings across " + new Set(d.rows.map(r => r.sid || r.s).filter(Boolean)).size.toLocaleString("en-US") +
-                   " companies, with prequalification and diversity classifications.",
+    title: "Prequal &amp; Sub Ratings",
+    blurb: "How subcontractors actually performed — ratings, notes, prequalification and diversity classifications.",
     href: "/prequal/",
     group: "b32fdca5-a99d-40d8-aabd-54975d34c386",
     groupName: "BH-Desk-Prequal",
     library: "PrequalData",
     file: "ratings.json",
-    count: d => d.rows.length
+    stats: d => [
+      ["Ratings", d.rows.length],
+      ["Jobs", new Set(d.rows.map(r => r.jn).filter(Boolean)).size]
+    ]
+  },
+  {
+    key: "precon",
+    title: "Precon Desk",
+    blurb: "What we have built, for pricing what we are about to bid — $/SF, schedule duration and comparables.",
+    href: "/precon/",
+    group: "41c5a747-de87-4e3a-9523-3e0da1bd08ac",
+    groupName: "BH-Desk-Precon",
+    library: "PreconData",
+    file: "projects.json",
+    stats: d => [
+      ["Jobs", d.rows.length],
+      ["With $/SF", d.rows.filter(p => p.psf != null && !p.sp && !p.flag).length]
+    ]
   }
 ];
 
@@ -593,7 +595,7 @@ const DESKS = [
 const FALLBACK_SITE = {
   weather: { tz: "America/Chicago",
              locations: [{ label: "Auburn office", lat: 32.6099, lon: -85.4808 }] },
-  tagline: "BH Employee Home",
+  tagline: "Your desks, dashboards and the applications you use every day.",
   actions: []
 };
 
@@ -602,8 +604,7 @@ const FALLBACK = {
     { name: "Every day", items: [
       { name: "Procore",   url: "https://account.activedirectory.windowsazure.com/applications/signin/Procore/87b67afa-8fd3-4537-982e-81b7c9376d55", desc: "Drawings, RFIs, submittals, daily logs", tag: "SSO" },
       { name: "FieldEase", url: "https://login.fieldease.com", desc: "Receipts and expense capture" },
-      { name: "Bailey-Harris Intranet", url: "https://" + SP_HOST + "/SitePages/Home.aspx", desc: "Company news, policies and documents" },
-      { name: "BH Academy / Training", url: "https://" + SP_HOST + "/sites/BHAcademy", desc: "Bailey-Harris Academy courses and training resources" }
+      { name: "Bailey-Harris Intranet", url: "https://" + SP_HOST + "/SitePages/Home.aspx", desc: "Company news, policies and documents" }
     ]},
     { name: "Office and accounting", items: [
       { name: "Spark",     url: "https://bh.pce.sparkbusinessworks.com/login?redirect=/", desc: "ComputerEase web portal" },
@@ -687,7 +688,7 @@ function badgeClass(name){
 function renderApps(doc){
   const host = $("#appsections");
   host.innerHTML = "";
-  let n = 0, first = true;
+  let n = 0;
   (doc.groups || []).forEach(g => {
     const items = (g.items || [])
       .map(it => Object.assign({}, it, { _u: safeUrl(it.url) }))
@@ -696,19 +697,20 @@ function renderApps(doc){
     const sec = document.createElement("section");
     sec.className = "sec";
     sec.innerHTML =
-      '<div class="sechead"><span class="blk dark">' + esc(g.name || "Applications") + '</span>' +
-      (first ? '<span class="rest">Applications</span>' : '') + '</div>' +
+      '<div class="sechead"><h2>' + esc(g.name || "Applications") + '</h2>' +
+      '<span class="rule"></span><span class="count">' + items.length + '</span></div>' +
       '<div class="apps">' + items.map(it => {
         n++;
         return '<a class="app" href="' + esc(it._u) + '"' +
           (opensTab(it._u) ? ' target="_blank" rel="noopener noreferrer"' : '') +
           ' data-find="' + esc(((it.name || "") + " " + (it.desc || "")).toLowerCase()) + '">' +
+          '<span class="mono-badge ' + badgeClass(it.name) + '" aria-hidden="true">' + esc(initials(it.name)) + '</span>' +
+          '<span class="appbody">' +
             '<span class="appname">' + esc(it.name) +
               (it.tag ? '<span class="pill">' + esc(it.tag) + '</span>' : '') + '</span>' +
             (it.desc ? '<span class="appdesc">' + esc(it.desc) + '</span>' : '') +
-          '</a>';
+          '</span></a>';
       }).join("") + '</div>';
-    first = false;
     host.append(sec);
   });
   log("app links", n);
@@ -748,8 +750,16 @@ function greeting(){
 
 /* ============ date and clock ============ */
 function paintClock(){
-  $("#today").textContent = new Date().toLocaleDateString("en-US",
+  const now = new Date();
+  $("#today").textContent = now.toLocaleDateString("en-US",
     { weekday: "long", month: "long", day: "numeric" });
+  $("#clock").textContent = now.toLocaleTimeString("en-US",
+    { hour: "numeric", minute: "2-digit" });
+  try {
+    const z = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+      .formatToParts(now).find(x => x.type === "timeZoneName");
+    $("#tz").textContent = z ? z.value : "";
+  } catch(_) {}
 }
 
 /* ============ weather ============ */
@@ -819,95 +829,95 @@ function wxLocations(w){
 function wxRemembered(){ try { return localStorage.getItem("bh.wx") || ""; } catch(_) { return ""; } }
 function wxRemember(v){ try { localStorage.setItem("bh.wx", v); } catch(_) {} }
 
+async function fetchWeather(cfg){
+  if (!cfg || cfg.lat == null || cfg.lon == null) return null;
+  const url = "https://api.open-meteo.com/v1/forecast"
+    + "?latitude="  + encodeURIComponent(cfg.lat)
+    + "&longitude=" + encodeURIComponent(cfg.lon)
+    + "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m"
+    + "&daily=weather_code,temperature_2m_max,temperature_2m_min"
+    + "&temperature_unit=fahrenheit&wind_speed_unit=mph"
+    + "&timezone=" + encodeURIComponent(cfg.tz || "auto")
+    + "&forecast_days=4";
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 7000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer" });
+    if (!r.ok) { log("weather", "HTTP " + r.status); return null; }
+    const j = await r.json();
+    log("weather", "ok");
+    return j;
+  } catch(e) {
+    log("weather", "unavailable");
+    return null;
+  } finally { clearTimeout(timer); }
+}
+
+let wxLast = null;
+/* The weather is decoration. If it cannot be fetched the panel simply never
+   appears — a launcher must not lead with an error nobody can act on. */
+function renderWeather(data, cfg){
+  const el = $("#wx");
+  if (!data || !data.current || !el) return;
+  const c = data.current, d = data.daily || {};
+  const night = c.is_day === 0;
+  const cond = (WXCODE[c.weather_code] || ["cloud", "Current conditions"])[1];
+
+  let days = "";
+  const codes = d.weather_code || [], hi = d.temperature_2m_max || [],
+        lo = d.temperature_2m_min || [], iso = d.time || [];
+  for (let i = 1; i < Math.min(4, iso.length); i++){
+    const dt = new Date(iso[i] + "T12:00:00");
+    days += '<div class="wx-day"><span class="d">' +
+      esc(dt.toLocaleDateString("en-US", { weekday: "short" })) + '</span>' +
+      wxSvg("", codes[i], false) +
+      '<span class="hi">' + degF(hi[i]) + '</span><span class="lo">' + degF(lo[i]) + '</span></div>';
+  }
+
+  const many = wxAll.length > 1;
+  const fc = safeUrl((cfg && cfg.forecastUrl) || nwsUrl(cfg));
+  const head =
+    '<div class="wx-head"><span class="lbl">Weather</span>' +
+    (fc ? '<a class="more" href="' + esc(fc) + '" target="_blank" rel="noopener noreferrer" ' +
+          'title="Hourly forecast and radar">Hourly' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '') +
+    (many
+      ? '<select id="wxpick" aria-label="Location">' + wxAll.map((l, i) =>
+          '<option value="' + i + '"' + (l === cfg ? ' selected' : '') + '>' +
+          esc(l.label || ("Location " + (i + 1))) + '</option>').join("") + '</select>'
+      : '') +
+    '</div>';
+
+  el.innerHTML = head +
+    '<div class="wx-top">' + wxSvg("wx-icon", c.weather_code, night) +
+      '<div class="wx-temp">' + degF(c.temperature_2m) + '</div>' +
+      '<div class="wx-body"><div class="wx-cond">' + esc(cond) + '</div>' +
+        '<div class="wx-sub">Feels ' + degF(c.apparent_temperature) +
+        ' &middot; Wind ' + (c.wind_speed_10m == null ? "\u2014" : Math.round(c.wind_speed_10m)) +
+        ' mph</div></div></div>' +
+    (days ? '<div class="wx-days">' + days + '</div>' : '') +
+    (many ? '' : '<div class="wx-place">' + esc((cfg && cfg.label) || "") + '</div>');
+  el.hidden = false;
+
+  const pick = $("#wxpick");
+  if (pick) pick.addEventListener("change", async e => {
+    const loc = wxAll[Number(e.target.value)] || wxAll[0];
+    wxCfg = loc;
+    wxRemember(loc.label);
+    renderWeather(await fetchWeather(loc), loc);
+  });
+}
+
 /* ---------- quick actions ---------- */
-/* Two queue buttons, each shown only when its count is above zero:
-   - "Approve invoices (n)" for a PM: Status "with PM" and AssignedApprover = the
-     signed-in person, the same rule as AP Desk's PM review queue. Opens PM review.
-   - "Open AP Queue (n)" for Accounting (same test as AP Desk: the two named people
-     or an Accounting department): the Accounting intake queue, counted the way AP
-     Desk counts it. Opens Accounting intake.
-   Both sit after the second quick action, before IT help. */
-let apReviewCount = 0, apQueueCount = 0, lastActions = [];
-const AP_SITE = "/sites/APDesk", AP_LIST = "AP Pay Applications";
-const AP_ACCOUNTING_PEOPLE = ["tiffany.blackmon@baileyharris.com", "hdatb@baileyharris.com"];
-const AP_ACCOUNTING_DEPTS = ["accounting - executives", "accounting - personnel", "executive", "directors"];
-/* list Status -> AP Desk stage, copied from AP Desk (connector STATUS_IN) */
-const AP_STAGE = { "received":"Intake", "AP verified":"Intake", "not a pay app":"Intake",
-  "with PM":"PM review", "revise and resubmit":"Correction needed", "PM returned":"Correction needed",
-  "PM approved":"Ready for entry", "ready for entry":"Ready for entry", "approved as noted":"Ready for entry",
-  "approved and entered":"Entered", "duplicate archived":"Duplicate archived", "email only":"Duplicate archived",
-  "handled outside desk":"Duplicate archived" };
-const digitsOf = v => String(v == null ? "" : v).replace(/[^0-9]/g, "");
-
-async function apListRows(){
-  const s = await graph("/sites/" + SP_HOST + ":" + AP_SITE + "?$select=id");
-  if (!(s.ok && s.body && s.body.id)){ log("ap queue", "APDesk site HTTP " + s.status); return null; }
-  let url = "/sites/" + s.body.id + "/lists/" + encodeURIComponent(AP_LIST) +
-    "/items?$expand=fields($select=Status,AssignedApprover,Title,OriginalTitle,Revision,Subcontract,PayRequest)&$select=id&$top=500";
-  const out = []; let pages = 0;
-  while (url && pages < 20){
-    const r = await graph(url);
-    if (!r.ok || !r.body){ log("ap queue", "list HTTP " + r.status); return null; }
-    (r.body.value || []).forEach(x => out.push({ id: Number(x.id), f: x.fields || {} }));
-    const next = r.body["@odata.nextLink"];
-    url = next ? next.replace("https://graph.microsoft.com/v1.0", "") : null;
-    pages++;
-  }
-  return out;
-}
-
-/* Same steps as AP Desk: one record per document (latest revision), keep the
-   ones at intake, and drop those ComputerEase already holds. */
-async function apIntakeCount(rows, drives){
-  const groups = {};
-  rows.forEach(r => { const k = String(r.f.OriginalTitle || r.f.Title || "").trim(); (groups[k] = groups[k] || []).push(r); });
-  const heads = Object.values(groups).map(g => g.sort((a, b) =>
-    (Number(a.f.Revision || 1) - Number(b.f.Revision || 1)) || (a.id - b.id))[g.length - 1]);
-  const open = heads.filter(r => (AP_STAGE[r.f.Status] || "Intake") === "Intake");
-  const maybeHeld = open.filter(r => digitsOf(r.f.PayRequest) && String(r.f.Subcontract || "").trim());
-  let held = new Set();
-  if (maybeHeld.length && drives && drives.APData){
-    const f = await graphRaw("/drives/" + drives.APData + "/root:/ap_ce_invoices.json:/content");
-    if (f.ok){
-      try {
-        const ce = JSON.parse(f.text);
-        const full = ce && ce.subcontracts && ce.has_payment_data !== false && !(ce.filters && ce.filters.since);
-        if (full) maybeHeld.forEach(r => {
-          const led = ce.subcontracts[String(r.f.Subcontract).trim().toUpperCase()];
-          const want = digitsOf(r.f.PayRequest);
-          if (led && (led.invoices || []).some(x => digitsOf(x.number) === want)) held.add(r);
-        });
-      } catch(_) { log("ap queue", "ap_ce_invoices.json parse failed"); }
-    } else log("ap queue", "ap_ce_invoices.json HTTP " + f.status);
-  }
-  return open.filter(r => !held.has(r)).length;
-}
-
-async function loadApQueues(email, dept, drives){
-  if (!email) return;
-  const rows = await apListRows();
-  if (!rows) return;
-  apReviewCount = rows.filter(r => r.f.Status === "with PM" &&
-    String(r.f.AssignedApprover || "").trim().toLowerCase() === email).length;
-  const acct = AP_ACCOUNTING_PEOPLE.includes(email) || AP_ACCOUNTING_DEPTS.includes(String(dept || "").trim().toLowerCase());
-  if (acct) apQueueCount = await apIntakeCount(rows, drives);
-  log("ap queue", apReviewCount + " waiting on " + email + (acct ? ", " + apQueueCount + " at Accounting intake" : ""));
-  renderActions(lastActions);
-}
-
 function renderActions(items){
   const host = $("#acts");
   if (!host) return;
-  lastActions = items || [];
-  const ok = lastActions.map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
-  const queue = [];
-  if (apReviewCount > 0) queue.push({ name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
-  if (apQueueCount > 0)  queue.push({ name: "Open AP Queue (" + apQueueCount + ")", _u: safeUrl("/ap/#intake") });
-  ok.splice(Math.min(2, ok.length), 0, ...queue);
-  host.innerHTML = ok.slice(0, 5).map((a, i) =>
-    '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
-      (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(a.name) + '</a>').join("");
-  host.parentElement.hidden = false;
+  const ok = (items || []).map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
+  host.innerHTML = ok.slice(0, 4).map(a =>
+    '<a class="act" href="' + esc(a._u) + '"' +
+      (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' +
+      esc(a.name) + '</a>').join("");
   log("quick actions", ok.length);
 }
 
@@ -981,465 +991,43 @@ function personRow(x, opts){
     '</span></div>';
 }
 
-/* Team data lives in a slide-over opened from three header buttons rather than a
-   side panel, so the launcher body stays desks + My day. Groups:
-   out = holidays + people away; updates = new hires and any other non-celebration
-   kind (plus the latest newsletter issue); celebrations = birthdays + anniversaries. */
-const CELE_KINDS = { birthday:1, anniversary:1 };
-let TEAM = null, teamIssue = null, teamTab = "out", teamWired = false;
-
 function renderTeam(people, out, holidays, moreUrl, outKnown){
+  const el = $("#peoplepanel");
+  if (!el) return;
   const away = (out || []).filter(x => x && x.name);
   const mile = (people || []).filter(x => x && x.name);
   const hols = (holidays || []).filter(x => x && x.name);
-  const cele = mile.filter(x => CELE_KINDS[String(x.kind || "").toLowerCase()]);
-  const upd  = mile.filter(x => !CELE_KINDS[String(x.kind || "").toLowerCase()]);
-  TEAM = { away, hols, cele, upd, outKnown: !!outKnown, more: moreUrl ? safeUrl(moreUrl) : null };
-  const nav = $("#teamnav");
-  if (!nav) return;
-  const any = away.length || hols.length || mile.length || outKnown || teamIssue;
-  const setC = (id, n, hot) => { const c = $(id); if (c){ c.textContent = n; c.classList.toggle("on", !!hot); } };
-  setC("#tc-out", away.length + hols.length, away.some(x => x.today));
-  setC("#tc-updates", upd.length + (teamIssue ? 1 : 0), false);
-  setC("#tc-cele", cele.length, cele.length > 0);
-  nav.hidden = !any;
-  wireTeam();
-  if (!$("#tdrawer").hidden) drawTeam();
-  log("team", away.length + " out, " + upd.length + " updates, " + cele.length + " celebrations, " + hols.length + " holidays");
-}
+  if (!away.length && !mile.length && !hols.length && !outKnown) return;
 
-function drawTeam(){
-  const el = $("#tdbody"); if (!el || !TEAM) return;
-  const T = TEAM, tab = teamTab;
-  const TITLES = { out: "Who’s out?", updates: "Team updates", cele: "Team celebrations" };
-  $("#tdtitle").innerHTML = esc(TITLES[tab]) + sampleTag(!!pipelinePeople);
-  document.querySelectorAll("#tdrawer .tdtabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tp === tab ? "true" : "false"));
-  document.querySelectorAll("#teamnav button").forEach(b => b.setAttribute("aria-expanded", (!$("#tdrawer").hidden && b.dataset.tp === tab) ? "true" : "false"));
+  const more = moreUrl ? safeUrl(moreUrl) : null;
   let body = "";
-  if (tab === "out"){
-    const today = T.away.filter(x => x.today), later = T.away.filter(x => !x.today);
-    if (T.hols.length){
-      body += '<div class="sub">Holidays</div>' + T.hols.map(x =>
-        '<div class="hol"><b>Holiday</b>' + esc(x.name) + '<span class="d">' + esc(x.date || "") + '</span></div>').join("");
-    }
-    body += '<div class="sub">Out today</div>' + (today.length
-      ? today.map(x => personRow(x, { away: true })).join("")
-      : '<div class="noneout">' + (T.outKnown || T.away.length ? "Nobody out today." : "Not available yet.") + '</div>');
-    if (later.length)
-      body += '<div class="sub">Later this week</div>' + later.map(x => personRow(x, { away: true })).join("");
-  } else if (tab === "updates"){
-    if (teamIssue && teamIssue.url){
-      const u = safeUrl(teamIssue.url);
-      if (u) body += '<div class="sub">Latest newsletter</div><a class="issue" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' +
-        '<span class="t">' + esc(teamIssue.title || "Newsletter") + '</span>' +
-        (teamIssue.blurb ? '<span class="d" style="display:block;font-size:13px;color:var(--muted);margin-top:4px">' + esc(teamIssue.blurb) + '</span>' : '') + '</a>';
-    }
-    body += '<div class="sub">New faces &amp; news</div>' + (T.upd.length
-      ? T.upd.map(x => personRow(x, { chip: { text: KINDLABEL[x.kind] || x.kind || "Update" } })).join("")
-      : '<div class="noneout">No team updates this week.</div>');
-  } else {
-    const bd = T.cele.filter(x => /birthday/i.test(x.kind)), an = T.cele.filter(x => !/birthday/i.test(x.kind));
-    if (!T.cele.length) body += '<div class="noneout">No birthdays or work anniversaries this week.</div>';
-    if (bd.length) body += '<div class="sub">Birthdays</div>' + bd.map(x => personRow(x, { chip: { text: "Birthday" } })).join("");
-    if (an.length) body += '<div class="sub">Work anniversaries</div>' + an.map(x => personRow(x, { chip: { text: x.years ? x.years + (x.years == 1 ? " year" : " years") : "Anniversary" } })).join("");
+
+  if (away.length || hols.length || outKnown){
+    body += '<div class="sub">Out</div>';
+    if (!away.length && !hols.length)
+      body += '<div class="noneout">Nobody out this week.</div>';
+    body += hols.slice(0, 2).map(x =>
+      '<div class="hol"><b>Holiday</b>' + esc(x.name) +
+      '<span class="d">' + esc(x.date) + '</span></div>').join("");
+    body += away.slice(0, 6).map(x =>
+      personRow(x, { away: true, chip: x.today ? { text: "Today", now: true } : null })).join("");
+    if (away.length > 6)
+      body += '<div class="sub" style="background:#fff;border-top:0;color:var(--muted)">and ' +
+              (away.length - 6) + ' more</div>';
   }
-  if (T.more) body += '<a class="all" href="' + esc(T.more) + '" target="_blank" rel="noopener noreferrer">Open BambooHR</a>';
-  el.innerHTML = body;
-}
 
-let teamReturn = null;
-function openTeam(tab){
-  teamTab = tab || teamTab;
-  teamReturn = document.activeElement;
-  $("#tscrim").hidden = false; $("#tdrawer").hidden = false;
-  drawTeam();
-  $("#tdclose").focus();
-}
-function closeTeam(){
-  $("#tscrim").hidden = true; $("#tdrawer").hidden = true;
-  document.querySelectorAll("#teamnav button").forEach(b => b.setAttribute("aria-expanded", "false"));
-  if (teamReturn && teamReturn.focus) teamReturn.focus();
-}
-function wireTeam(){
-  if (teamWired) return; teamWired = true;
-  document.querySelectorAll("#teamnav button").forEach(b => b.addEventListener("click", () => {
-    if (!$("#tdrawer").hidden && teamTab === b.dataset.tp) closeTeam(); else openTeam(b.dataset.tp);
-  }));
-  document.querySelectorAll("#tdrawer .tdtabs button").forEach(b => b.addEventListener("click", () => { teamTab = b.dataset.tp; drawTeam(); }));
-  $("#tdclose").addEventListener("click", closeTeam);
-  $("#tscrim").addEventListener("click", closeTeam);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#tdrawer").hidden) closeTeam(); });
-}
-
-/* ---------- pulse: active jobs, from the Project Information data ---------- */
-/* Same file and site the Project Information dashboard reads. Job counts only:
-   no contract, cost or profit figures on the launcher. If the read fails (no
-   access, or the file is missing) the block simply does not appear. */
-const PROJ_SITE = "/sites/" + SP_HOST + ":/sites/Resources";
-/* jobs_public.json: the project pull's launcher copy - job, stage, site and BH team,
-   no money. projects_data.json (the financial file) is only a fallback until the
-   first pull writes the public copy; once that file is locked down the fallback
-   simply fails and is never needed. */
-const PROJ_FILE = "Compliance Dashboard/jobs_public.json";
-const PROJ_FILE_OLD = "Compliance Dashboard/projects_data.json";
-const STAGE_ROWS = [["pre-construction", "Pre-construction"], ["construction", "Construction"], ["post-construction", "Post-construction"]];
-let pulseShown = false;
-
-async function loadPulse(){
-  const s = await graph(PROJ_SITE + "?$select=id");
-  if (!(s.ok && s.body && s.body.id)){ log("pulse", "Resources site HTTP " + s.status); return; }
-  const path = x => "/sites/" + s.body.id + "/drive/root:/" + x.split("/").map(encodeURIComponent).join("/") + ":/content";
-  let f = await graphRaw(path(PROJ_FILE));
-  if (f.status === 404){ log("pulse", "jobs_public.json not written yet, using projects_data.json"); f = await graphRaw(path(PROJ_FILE_OLD)); }
-  if (!f.ok){ log("pulse", "job list HTTP " + f.status); return; }
-  let data;
-  try { data = JSON.parse(f.text); } catch(_) { log("pulse", "job list parse failed"); return; }
-  projRows = data.projects || []; projSiteId = s.body.id;   /* My day reads the team from the same file */
-  /* the dashboard drops its internal FY-tracking projects; so do we */
-  const rows = (data.projects || []).filter(r => !/\bFY\s?\d{2,4}\b/i.test((r.project || "") + " " + (r.project_number || "")));
-  const stg = r => String(r.stage || "").toLowerCase();
-  const active = rows.filter(r => r.group ? r.group === "active" : STAGE_ROWS.some(x => x[0] === stg(r)));
-  const warranty = rows.filter(r => r.group ? r.group === "warranty" : /warranty/.test(stg(r))).length;
-  const closing = active.filter(r => r.closing_this_month).length;
-  const counts = STAGE_ROWS.map(([k, label]) => [label, active.filter(r => stg(r) === k).length]);
-  const max = Math.max(1, ...counts.map(c => c[1]));
-  const when = data.generated_at || data.generated || "";
-  /* one line under the weather instead of a side panel: counts only, no money */
-  const js=$("#jobstrip");
-  if (js){
-    const cell=(n,l,strong)=>'<span class="jc'+(strong?' big':'')+'"><b>'+n0(n)+'</b>'+esc(l)+'</span>';
-    js.innerHTML='<div class="wrap">'
-      + '<span class="jt">Active jobs</span>'
-      + cell(active.length,'active',true)
-      + counts.map(([label,n])=>cell(n,label)).join('')
-      + cell(closing,'closing this month') + cell(warranty,'in warranty')
-      + '<a class="jgo" href="https://projects.baileyharris.com" rel="noopener">Project Information &rarr;</a>'
-      + (when ? '<span class="jasof">as of '+esc(new Date(when).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</span>' : '')
-      + '</div>';
-    js.hidden=false;
+  if (mile.length){
+    body += '<div class="sub">This week</div>';
+    body += mile.slice(0, 6).map(x => personRow(x, {
+      chip: { text: x.years ? x.years + " years" : (KINDLABEL[x.kind] || x.kind || "") }
+    })).join("");
   }
-  pulseShown = true;   /* #pstats stays hidden; the strip above carries it */
-  log("pulse", active.length + " active, " + closing + " closing, " + warranty + " warranty");
-  layoutPulse();
-}
-function layoutPulse(){
-  const p = $("#pulse"); if (!p) return;
-  const a = !$("#pstats").hidden, b = !$("#peoplepanel").hidden;
-  p.hidden = !(a || b);
-  const l = $("#layout"); if (l) l.classList.toggle("solo", p.hidden);
-}
 
-/* ============ my day ============ */
-/* The signed-in person's own day: today's meetings, unread and flagged mail,
-   open Microsoft To Do tasks (plus a link to Procore My Open Items), and the Bailey-Harris work waiting on them.
-   Outlook and tasks use their OWN token with three extra delegated scopes, so
-   the rest of the page never depends on them: until those scopes are consented
-   the panel simply shows the Bailey-Harris items. Subjects and senders only —
-   Mail.ReadBasic cannot read a message body. Nothing here is stored. */
-const MY_SCOPES = ["Mail.ReadBasic", "Calendars.Read", "Tasks.Read"];
-const MY_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"; } catch(_) { return "America/Chicago"; } })();
-const OUTLOOK = { mail: "https://outlook.office.com/mail/", cal: "https://outlook.office.com/calendar/view/day",
-                  todo: "https://to-do.office.com/tasks/",
-                  procore: "https://app.procore.com/webclients/host/companies/15326/tools/opentasks" };
-/* Procore team roles that belong to the client or the design team, not to us
-   (same list as the Compliance Desk's "My projects" filter) */
-const EXTERNAL_ROLE = /^(owner|architect|construction manager|(geotechnical|mechanical|electrical|civil|structural|plumbing|fire protection) engineer)( contact)?$/i;
-const MD = { cal: null, mail: null, tasks: null, waiting: null, connect: false, off: false };
-let myTok = null, myAcct = null, myEmail = "", projRows = null, projSiteId = null, mdTimer = null;
-
-async function gMy(path, tz){
-  const h = { Authorization: "Bearer " + myTok };
-  if (tz) h.Prefer = 'outlook.timezone="' + tz + '"';
-  const res = await fetch("https://graph.microsoft.com/v1.0" + path, { headers: h });
-  let body = null;
-  try { body = await res.json(); } catch(_) {}
-  return { ok: res.ok, status: res.status, body };
-}
-async function myToken(){
-  try {
-    const r = await app.acquireTokenSilent({ scopes: MY_SCOPES, account: myAcct });
-    MD.connect = false; MD.off = false;
-    return r.accessToken;
-  } catch (e) {
-    /* never redirect on our own: the page must not bounce people to a consent
-       screen at 8am. Offer it instead. */
-    /* not consented yet (AADSTS65001) is IT's job, not the person's: say so
-       rather than offering a button that ends on "Need admin approval" */
-    const why = String((e && e.errorCode) || "") + " " + String((e && (e.errorMessage || e.message)) || "");
-    const noConsent = /consent_required|AADSTS65001|AADSTS90094/i.test(why);
-    MD.connect = e instanceof msal.InteractionRequiredAuthError && !noConsent;
-    MD.off = noConsent;
-    log("my day", "Outlook token not available — " + ((e && e.errorCode) || (e && e.message) || e));
-    return null;
-  }
-}
-
-const pad2 = n => String(n).padStart(2, "0");
-const ymd = d => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-const hm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-const md = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-const dow = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-const todayYmd = () => ymd(new Date());
-/* a Graph dateTimeTimeZone already in MY_TZ (we asked for it) reads as local time */
-const localOf = dt => dt && dt.dateTime ? new Date(String(dt.dateTime).replace(/\.\d+$/, "")) : null;
-const dayDiff = (a, b) => Math.round((new Date(a + "T12:00:00") - new Date(b + "T12:00:00")) / 86400000);
-function whenMail(iso){
-  const d = new Date(iso); if (isNaN(d)) return "";
-  return ymd(d) === todayYmd() ? hm(d) : md(d);
-}
-function dueChip(due){
-  if (!due) return "";
-  const t = todayYmd(), diff = dayDiff(due, t);
-  if (diff < 0) return '<span class="k crit">Overdue</span>';
-  if (diff === 0) return '<span class="k now">Today</span>';
-  if (diff === 1) return '<span class="k">Tomorrow</span>';
-  return '<span class="k">' + esc(dow(new Date(due + "T12:00:00"))) + '</span>';
-}
-const extLink = (u, inner, cls) => {
-  const s = safeUrl(u);
-  return s ? '<a class="' + cls + '" href="' + esc(s) + '" target="_blank" rel="noopener noreferrer">' + inner + '</a>'
-           : '<div class="' + cls + '">' + inner + '</div>';
-};
-
-/* ---------- meetings ---------- */
-async function loadCalendar(){
-  const s = new Date(); s.setHours(0, 0, 0, 0);
-  const e = new Date(s); e.setDate(e.getDate() + 1);
-  const r = await gMy("/me/calendarView?startDateTime=" + encodeURIComponent(s.toISOString()) +
-    "&endDateTime=" + encodeURIComponent(e.toISOString()) +
-    "&$select=subject,start,end,isAllDay,isCancelled,showAs,location,onlineMeeting,webLink,responseStatus" +
-    "&$orderby=start/dateTime&$top=40", MY_TZ);
-  if (!r.ok){ log("my day calendar", "HTTP " + r.status); MD.cal = null; return; }
-  const ev = (r.body.value || []).filter(x => !x.isCancelled &&
-    !(x.responseStatus && x.responseStatus.response === "declined"));
-  MD.cal = ev.map(x => ({ subject: x.subject || "(no subject)", allDay: !!x.isAllDay,
-    start: localOf(x.start), end: localOf(x.end),
-    where: (x.location && x.location.displayName) || "",
-    join: x.onlineMeeting && x.onlineMeeting.joinUrl, link: x.webLink, free: x.showAs === "free" }));
-  log("my day calendar", MD.cal.length + " today");
-}
-function cardCalendar(){
-  if (!MD.cal) return "";
-  const now = new Date();
-  const allDay = MD.cal.filter(x => x.allDay);
-  const timed = MD.cal.filter(x => !x.allDay && x.start);
-  const past = timed.filter(x => x.end && x.end <= now);
-  const ahead = timed.filter(x => !(x.end && x.end <= now));
-  const rows = [];
-  allDay.forEach(x => rows.push(
-    extLink(x.link, '<span class="t">All day</span><span class="b"><span class="sx">' + esc(x.subject) + '</span>' +
-      (x.where ? '<span class="sb">' + esc(x.where) + '</span>' : '') + '</span>', "mdr")));
-  ahead.slice(0, 4).forEach(x => {
-    const live = x.start <= now;
-    rows.push('<div class="mdr">' +
-      '<span class="t">' + esc(hm(x.start)) + '<small>' + (x.end ? esc(hm(x.end)) : '') + '</small></span>' +
-      '<span class="b">' + (safeUrl(x.link)
-          ? '<a class="sx" href="' + esc(safeUrl(x.link)) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">' + esc(x.subject) + '</a>'
-          : '<span class="sx">' + esc(x.subject) + '</span>') +
-        '<span class="sb">' + esc(x.where || (x.join ? "Microsoft Teams" : "")) + '</span></span>' +
-      '<span class="r">' + (live ? '<span class="k now">Now</span><br>' : '') +
-        (x.join && safeUrl(x.join) ? '<a class="join" href="' + esc(safeUrl(x.join)) + '" target="_blank" rel="noopener noreferrer">Join</a>' : '') +
-      '</span></div>');
-  });
-  const more = ahead.length > 4 ? '<div class="more">and ' + (ahead.length - 4) + ' more later today</div>' : '';
-  const earlier = past.length ? '<div class="more">' + past.length + ' earlier today</div>' : '';
-  const body = rows.length ? rows.join("") + more + earlier
-    : (earlier || "") + '<div class="none">' + (past.length ? "Nothing else on your calendar today." : "No meetings today.") + '</div>';
-  return '<section class="panel mdc"><h2>My calendar<span class="n">' + (ahead.length + allDay.length) + '</span></h2>' +
-    body + '<a class="all" href="' + OUTLOOK.cal + '" target="_blank" rel="noopener noreferrer">Open calendar</a></section>';
-}
-
-/* ---------- mail ---------- */
-async function loadMail(){
-  const sel = "&$select=subject,from,receivedDateTime,importance,webLink,flag";
-  /* $orderby with $filter: Graph requires the ordered property to lead the filter */
-  const [f, u, fl] = await Promise.all([
-    gMy("/me/mailFolders/inbox?$select=unreadItemCount"),
-    gMy("/me/mailFolders/inbox/messages?$filter=" + encodeURIComponent("receivedDateTime ge 2000-01-01T00:00:00Z and isRead eq false") +
-        "&$orderby=receivedDateTime%20desc&$top=3" + sel),
-    gMy("/me/messages?$filter=" + encodeURIComponent("flag/flagStatus eq 'flagged'") + "&$top=50" + sel, MY_TZ)
-  ]);
-  if (!f.ok && !u.ok && !fl.ok){ log("my day mail", "HTTP " + f.status + "/" + u.status + "/" + fl.status); MD.mail = null; return; }
-  const flagged = (fl.ok && fl.body.value || []).map(m => ({
-    subject: m.subject || "(no subject)", from: (m.from && m.from.emailAddress && m.from.emailAddress.name) || "",
-    at: m.receivedDateTime, link: m.webLink,
-    due: m.flag && m.flag.dueDateTime && m.flag.dueDateTime.dateTime ? String(m.flag.dueDateTime.dateTime).slice(0, 10) : "" }));
-  flagged.sort((a, b) => (a.due || "9999") .localeCompare(b.due || "9999") || String(b.at).localeCompare(String(a.at)));
-  MD.mail = {
-    unread: f.ok ? (f.body.unreadItemCount || 0) : null,
-    newest: (u.ok && u.body.value || []).map(m => ({ subject: m.subject || "(no subject)",
-      from: (m.from && m.from.emailAddress && m.from.emailAddress.name) || "", at: m.receivedDateTime,
-      link: m.webLink, high: m.importance === "high" })),
-    flagged, flagOk: fl.ok
-  };
-  log("my day mail", (MD.mail.unread == null ? "?" : MD.mail.unread) + " unread, " + flagged.length + " flagged" +
-    (fl.ok ? "" : " (flags HTTP " + fl.status + ")"));
-}
-function mailRow(m, right){
-  return extLink(m.link, '<span class="b"><span class="sx">' + esc(m.subject) + '</span>' +
-    '<span class="sb">' + esc(m.from) + '</span></span><span class="r">' + right + '</span>', "mdr");
-}
-function cardMail(){
-  const m = MD.mail; if (!m) return "";
-  let body = "";
-  body += '<div class="sub">Unread in your inbox' + (m.unread != null ? ' · ' + n0(m.unread) : '') + '</div>';
-  body += m.newest.length ? m.newest.map(x => mailRow(x, (x.high ? '<span class="k crit">High</span><br>' : '') + esc(whenMail(x.at)))).join("")
-    : '<div class="none">Inbox is read.</div>';
-  if (m.flagged.length){
-    body += '<div class="sub">Flagged · ' + n0(m.flagged.length) + '</div>';
-    body += m.flagged.slice(0, 3).map(x => mailRow(x, x.due ? dueChip(x.due) : esc(whenMail(x.at)))).join("");
-    if (m.flagged.length > 3) body += '<div class="more">and ' + (m.flagged.length - 3) + ' more flagged</div>';
-  }
-  return '<section class="panel mdc"><h2>Inbox<span class="n">' + (m.unread != null ? n0(m.unread) + ' unread' : '') + '</span></h2>' +
-    body + '<a class="all" href="' + OUTLOOK.mail + '" target="_blank" rel="noopener noreferrer">Open Outlook</a></section>';
-}
-
-/* ---------- tasks: Microsoft To Do (Planner is not used at BH) ----------
-   Procore's "My Open Items" has no API a page can read for another person: the only
-   company-level endpoint is /rest/v2.0/companies/{id}/open_items/mine, which answers for
-   whoever holds the token. So the card links to it rather than counting it. */
-async function loadTasks(){
-  const out = []; let okAny = false;
-  const lists = await gMy("/me/todo/lists");
-  if (lists.ok){
-    okAny = true;
-    /* flagged email already has its own section */
-    const ls = (lists.body.value || []).filter(l => l.wellknownListName !== "flaggedEmails").slice(0, 12);
-    const res = await Promise.all(ls.map(l => gMy("/me/todo/lists/" + encodeURIComponent(l.id) +
-      "/tasks?$filter=" + encodeURIComponent("status ne 'completed'") + "&$top=100")));
-    res.forEach((r, i) => {
-      if (!r.ok){ log("my day to do", ls[i].displayName + " HTTP " + r.status); return; }
-      (r.body.value || []).forEach(t => out.push({ title: t.title || "(untitled)",
-        due: t.dueDateTime && t.dueDateTime.dateTime ? String(t.dueDateTime.dateTime).slice(0, 10) : "",
-        src: ls[i].wellknownListName === "defaultList" ? "To Do" : "To Do · " + (ls[i].displayName || ""),
-        high: t.importance === "high", link: OUTLOOK.todo }));
-    });
-  } else log("my day to do", "HTTP " + lists.status);
-
-
-  if (!okAny){ MD.tasks = null; return; }
-  out.sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (b.high - a.high));
-  MD.tasks = out;
-  const t = todayYmd();
-  log("my day tasks", out.length + " open, " + out.filter(x => x.due && x.due < t).length + " overdue");
-}
-function cardTasks(){
-  const ts = MD.tasks; if (!ts) return "";
-  const t = todayYmd();
-  const over = ts.filter(x => x.due && x.due < t).length, today = ts.filter(x => x.due === t).length;
-  const rows = ts.slice(0, 4).map(x => extLink(x.link,
-    '<span class="b"><span class="sx">' + esc(x.title) + '</span><span class="sb">' + esc(x.src) + '</span></span>' +
-    '<span class="r">' + (x.high ? '<span class="k">Important</span><br>' : '') + dueChip(x.due) + '</span>', "mdr")).join("");
-  const sub = (over || today) ? '<div class="sub">' + [over ? over + ' overdue' : '', today ? today + ' due today' : ''].filter(Boolean).join(' · ') + '</div>' : '';
-  return '<section class="panel mdc"><h2>Tasks<span class="n">' + n0(ts.length) + ' open</span></h2>' + sub +
-    (rows || '<div class="none">No open tasks.</div>') +
-    (ts.length > 4 ? '<div class="more">and ' + (ts.length - 4) + ' more</div>' : '') +
-    '<div class="alls"><a class="all" href="' + OUTLOOK.todo + '" target="_blank" rel="noopener noreferrer">To Do</a>' +
-    '<a class="all" href="' + OUTLOOK.procore + '" target="_blank" rel="noopener noreferrer">My Procore open items</a></div></section>';
-}
-
-/* ---------- waiting on you: Bailey-Harris work ---------- */
-async function loadWaiting(){
-  const w = { ap: apReviewCount, intake: apQueueCount, jobs: [], bad: [], soon: [], read: false };
-  if (projRows && myEmail){
-    w.jobs = projRows.filter(p => (p.team || []).some(t =>
-      String(t.email || "").trim().toLowerCase() === myEmail && !EXTERNAL_ROLE.test(String(t.role || "").trim())))
-      .map(p => String(p.project_number || "")).filter(Boolean);
-  }
-  if (w.jobs.length && projSiteId){
-    const f = await graphRaw("/sites/" + projSiteId + "/drive/root:/" +
-      ["Compliance Dashboard", "compliance_data.json"].map(encodeURIComponent).join("/") + ":/content");
-    if (f.ok){
-      try {
-        const mine = new Set(w.jobs);
-        const rows = (JSON.parse(f.text).rows || []).filter(r => mine.has(String(r.project_number || "")) &&
-          String(r.contract_active || "Yes") === "Yes");
-        w.bad = rows.filter(r => r.status === "Non-Compliant");
-        w.soon = rows.filter(r => r.status === "Expiring Soon");
-        w.read = true;
-      } catch(_) { log("my day compliance", "compliance_data.json parse failed"); }
-    } else log("my day compliance", "compliance_data.json HTTP " + f.status);
-  }
-  MD.waiting = w;
-  log("my day waiting", "AP " + w.ap + "/" + w.intake + ", " + w.jobs.length + " of your jobs, " +
-    w.bad.length + " non-compliant, " + w.soon.length + " expiring");
-}
-function cardWaiting(){
-  const w = MD.waiting; if (!w) return "";
-  const rows = [];
-  if (w.ap > 0) rows.push('<a class="mdr" href="/ap/#review"><span class="b"><span class="sx" style="filter:none">Invoices to approve</span>' +
-    '<span class="sb" style="filter:none">Pay apps and invoices assigned to you</span></span><span class="r"><span class="n2">' + n0(w.ap) + '</span></span></a>');
-  if (w.intake > 0) rows.push('<a class="mdr" href="/ap/#intake"><span class="b"><span class="sx" style="filter:none">AP intake queue</span>' +
-    '<span class="sb" style="filter:none">Not yet routed or entered</span></span><span class="r"><span class="n2">' + n0(w.intake) + '</span></span></a>');
-  const comp = w.bad.concat(w.soon);
-  if (comp.length){
-    rows.push('<div class="sub">Trade partner compliance on your jobs</div>');
-    comp.slice(0, 3).forEach(r => rows.push(extLink("https://compliance.baileyharris.com",
-      '<span class="b"><span class="sx">' + esc(r.vendor || "") + '</span><span class="sb">' +
-      esc([r.project_number, r.notes || (r.status === "Expiring Soon" ? "Coverage expiring soon" : r.status)].filter(Boolean).join(" · ")) + '</span></span>' +
-      '<span class="r">' + (r.status === "Non-Compliant" ? '<span class="k crit">Non-compliant</span>' : '<span class="k warn">Expiring</span>') + '</span>', "mdr")));
-    if (comp.length > 3) rows.push('<div class="more">and ' + (comp.length - 3) + ' more on the Compliance Desk</div>');
-  }
-  /* someone with jobs or an AP role gets a reassuring empty state; everyone
-     else gets no card at all */
-  if (!rows.length && !(w.jobs.length && w.read)) return "";
-  const n = (w.ap || 0) + (w.intake || 0) + comp.length;
-  return '<section class="panel mdc"><h2>Waiting on you<span class="n">' + n0(n) + '</span></h2>' +
-    (rows.join("") || '<div class="none">Nothing waiting on you across your ' + w.jobs.length + ' job' + (w.jobs.length === 1 ? '' : 's') + '.</div>') +
-    (w.jobs.length ? '<a class="all" href="https://compliance.baileyharris.com" rel="noopener">Open Compliance Desk</a>' : '') + '</section>';
-}
-
-/* ---------- the section ---------- */
-function renderMyDay(){
-  const sec = $("#sec-myday"); if (!sec) return;
-  /* order: what needs action first (waiting, tasks), then the day (calendar, inbox) */
-  const cards = [cardWaiting(), cardTasks(), cardCalendar(), cardMail()].filter(Boolean);
-  $("#mdgrid").innerHTML = cards.join("");
-  const note = $("#mdnote");
-  if (MD.connect || MD.off){
-    note.innerHTML = MD.connect
-      ? 'Your meetings, email and tasks can show here too. <button type="button" id="mdconnect">Connect Outlook and To Do</button>'
-      : 'Meetings, email and tasks will show here once IT turns them on for the launcher.';
-    note.hidden = false;
-    const b = $("#mdconnect");
-    if (b) b.addEventListener("click", () => app.acquireTokenRedirect({ scopes: MY_SCOPES, account: myAcct }));
-  } else note.hidden = true;
-  /* one line under the heading: what the day holds, in counts */
-  const bits = [], now = new Date(), t = todayYmd();
-  if (MD.cal){ const n = MD.cal.filter(x => x.allDay || !(x.end && x.end <= now)).length; bits.push(n + " meeting" + (n === 1 ? "" : "s") + " left today"); }
-  if (MD.mail && MD.mail.unread != null) bits.push(n0(MD.mail.unread) + " unread");
-  if (MD.tasks){ const o = MD.tasks.filter(x => x.due && x.due < t).length; if (o) bits.push(o + " task" + (o === 1 ? "" : "s") + " overdue"); }
-  if (MD.waiting && MD.waiting.ap) bits.push(MD.waiting.ap + " invoice" + (MD.waiting.ap === 1 ? "" : "s") + " to approve");
-  $("#mdcap").textContent = bits.join(" · ");
-  sec.hidden = !(cards.length || !note.hidden);
-  log("my day", cards.length + " card(s)");
-}
-
-async function refreshPersonal(){
-  myTok = await myToken();
-  if (!myTok){ MD.cal = MD.mail = MD.tasks = null; renderMyDay(); return; }
-  await Promise.all([
-    loadCalendar().catch(e => log("my day calendar", "failed " + e.message)),
-    loadMail().catch(e => log("my day mail", "failed " + e.message)),
-    loadTasks().catch(e => log("my day tasks", "failed " + e.message))
-  ]);
-  /* a token, but every source refused: the scopes are not in it yet */
-  MD.off = !MD.cal && !MD.mail && !MD.tasks;
-  renderMyDay();
-}
-function startMyDay(acct){
-  myAcct = acct;
-  const r = refreshPersonal();
-  /* people leave the launcher open all day; keep it current without a reload */
-  if (!mdTimer) mdTimer = setInterval(() => { if (!document.hidden) refreshPersonal(); }, 5 * 60 * 1000);
-  return r;
-}
-
-function mdPrivacy(on){
-  const g = $("#mdgrid"), b = $("#mdhide");
-  if (g) g.classList.toggle("priv", on);
-  if (b){ b.textContent = on ? "Show details" : "Hide details"; b.setAttribute("aria-pressed", on ? "true" : "false"); }
-  try { localStorage.setItem("bh.mdpriv", on ? "1" : "0"); } catch(_) {}
+  el.innerHTML = '<h2>Team' + sampleTag(!!pipelinePeople) +
+    '<span class="n">' + (away.length + mile.length) + '</span></h2>' + body +
+    (more ? '<a class="all" href="' + esc(more) + '" target="_blank" rel="noopener noreferrer">Open BambooHR</a>' : '');
+  el.hidden = false;
+  log("team", away.length + " out, " + mile.length + " milestones, " + hols.length + " holidays");
 }
 
 /* ============ boot ============ */
@@ -1448,158 +1036,18 @@ let pipelineNewsletter = null;
 let wxAll = wxLocations(FALLBACK_SITE.weather);
 let wxCfg = wxAll[0] || null;
 let wxPromise = null;
-/* ---------- one place: the viewer's own location, else their office ----------
-   The browser asks once for location. Coordinates are rounded to about a
-   kilometre before they leave the page and go only to Open-Meteo (the forecast)
-   and the National Weather Service (the town name and the forecast link).
-   Nothing is stored except which choice the viewer made (bh.wx). If location
-   is refused or unavailable the strip uses the office on their Microsoft
-   profile, then the first office in links.json. */
-const WX = { offices: wxAll.slice(), jobs: [], place: null, data: null, officeHint: "" };
-const r2 = v => Math.round(v * 100) / 100;
-
-function wxOffice(){
-  const pref = wxRemembered();
-  const by = s => WX.offices.find(o => o.label && s && o.label.toLowerCase() === String(s).toLowerCase());
-  const hint = WX.officeHint && WX.offices.find(o => o.label && WX.officeHint.toLowerCase().includes(o.label.toLowerCase()));
-  const o = (pref && pref !== "geo" && by(pref)) || hint || WX.offices[0];
-  return o ? Object.assign({ src: "office" }, o) : null;
-}
-function wxGeo(){
-  return new Promise(res => {
-    if (!navigator.geolocation) return res(null);
-    navigator.geolocation.getCurrentPosition(
-      p => res({ lat: r2(p.coords.latitude), lon: r2(p.coords.longitude) }),
-      e => { log("weather", "location " + (e && e.code === 1 ? "refused" : "unavailable")); res(null); },
-      { enableHighAccuracy: false, timeout: 9000, maximumAge: 30 * 60 * 1000 });
-  });
-}
-/* "Opelika, AL" from the National Weather Service; plain "My location" if it cannot say */
-async function wxTown(lat, lon){
-  try {
-    const r = await fetch("https://api.weather.gov/points/" + lat + "," + lon, { referrerPolicy: "no-referrer" });
-    if (!r.ok) return "";
-    const j = await r.json(), rl = j && j.properties && j.properties.relativeLocation && j.properties.relativeLocation.properties;
-    return rl && rl.city ? rl.city + (rl.state ? ", " + rl.state : "") : "";
-  } catch(_) { return ""; }
-}
-async function wxPickPlace(){
-  const pref = wxRemembered();
-  /* a jobsite picked earlier: the job list arrives after sign-in, wxJobsReady() switches to it */
-  if (pref.startsWith("job:")) return WX.jobs.find(j => j.key === pref) || wxOffice();
-  if (pref && pref !== "geo") { const o = wxOffice(); if (o && o.label.toLowerCase() === pref.toLowerCase()) return o; }
-  const g = await wxGeo();
-  if (g) {
-    const near = WX.offices.find(o => Math.abs(o.lat - g.lat) < 0.12 && Math.abs(o.lon - g.lon) < 0.12);
-    return { src: "geo", lat: g.lat, lon: g.lon, label: "My location", town: near ? near.label : "", tz: "auto" };
-  }
-  /* no device location: the person's own jobsite, then their office */
-  return WX.jobs[0] || wxOffice();
-}
-async function fetchWeather(place){
-  const p = place || WX.place; if (!p) return null;
-  const url = "https://api.open-meteo.com/v1/forecast"
-    + "?latitude=" + encodeURIComponent(p.lat) + "&longitude=" + encodeURIComponent(p.lon)
-    + "&current=temperature_2m,is_day,weather_code"
-    + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
-    + "&temperature_unit=fahrenheit&timezone=auto&forecast_days=5";
-  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 7000);
-  try {
-    const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer" });
-    if (!r.ok) { log("weather", "HTTP " + r.status); return null; }
-    const j = await r.json(); log("weather", "ok, " + (p.src === "geo" ? "device location" : p.label));
-    return j;
-  } catch(e) { log("weather", "unavailable"); return null; }
-  finally { clearTimeout(timer); }
-}
-/* pick the place, fetch, and keep both; returns the forecast for the boot code */
-async function wxLoad(){
-  WX.place = await wxPickPlace();
-  if (!WX.place) return null;
-  const [d, town] = await Promise.all([fetchWeather(WX.place), WX.place.src === "geo" ? wxTown(WX.place.lat, WX.place.lon) : Promise.resolve("")]);
-  if (town) WX.place.town = town;
-  WX.data = d; return d;
-}
-/* The signed-in person's active jobs, from the same team list My day uses.
-   Construction jobs first, then the soonest completion; only jobs with a
-   geocoded site address (lat/lng in projects_data.json) can be used. */
-function wxJobsReady(){
-  if (!projRows || !myEmail) return;
-  const stg = r => String(r.stage || "").toLowerCase();
-  const mine = projRows.filter(r => (r.group ? r.group === "active" : /construction/.test(stg(r))) && r.lat != null && r.lng != null &&
-    (r.team || []).some(t => String(t.email || "").trim().toLowerCase() === myEmail && !EXTERNAL_ROLE.test(String(t.role || "").trim())));
-  mine.sort((a, b) => ((stg(a) === "construction" ? 0 : 1) - (stg(b) === "construction" ? 0 : 1)) ||
-    String(a.completion_date || "9999").localeCompare(String(b.completion_date || "9999")));
-  WX.jobs = mine.map(r => ({ src: "job", key: "job:" + r.project_number, num: String(r.project_number || ""),
-    label: String(r.project || r.project_number || "Jobsite"), lat: r2(+r.lat), lon: r2(+r.lng), tz: "auto" }));
-  log("weather", WX.jobs.length + " jobsite" + (WX.jobs.length === 1 ? "" : "s") + " for this person");
-  if (!WX.jobs.length || !WX.place) return;
-  const pref = wxRemembered();
-  const chosenOffice = pref && pref !== "geo" && !pref.startsWith("job:");
-  /* only replace an office that was a fallback, never one the person picked, and never their device location */
-  if (WX.place.src === "office" && !chosenOffice){
-    const j = WX.jobs.find(x => x.key === pref) || WX.jobs[0];
-    WX.place = j; fetchWeather(j).then(d => { WX.data = d; wxLast = d; renderWeather(d); });
-  } else renderWeather(wxLast);   /* adds the jobs to the picker */
-}
-function wxSwitch(v){
-  if (v.startsWith("job:")){ const j = WX.jobs.find(x => x.key === v); if (j){ wxRemember(v); WX.place = j; fetchWeather(j).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); return; } }
-  wxRemember(v);
-  wxLoad().then(d => { wxLast = d; renderWeather(d); });
-}
-
-let wxLast = null;
-/* The weather is decoration. If it cannot be fetched the strip simply never
-   appears; a launcher must not lead with an error nobody can act on. */
-function renderWeather(data){
-  const el = $("#wx");
-  if (!el) return;
-  const p = WX.place;
-  if (!data || !p || !data.daily){ el.hidden = true; return; }
-  const c = data.current || {}, d = data.daily || {};
-  const day = i => ({ t: (d.time || [])[i], code: (d.weather_code || [])[i], hi: (d.temperature_2m_max || [])[i],
-                      lo: (d.temperature_2m_min || [])[i], rain: (d.precipitation_probability_max || [])[i] });
-  const t0 = day(0);
-  const cond = (WXCODE[c.weather_code] || ["cloud", ""])[1];
-  const fc = safeUrl(p.forecastUrl || nwsUrl(p));
-  const where = p.src === "geo" ? (p.town || "My location") : p.src === "job" ? (p.num + " \u00b7 " + p.label) : (p.label || "Office");
-  const rainTxt = v => v == null ? "" : '<span class="rn' + (v >= 50 ? ' hi' : '') + '">' + Math.round(v) + '% rain</span>';
-  const opts = '<option value="geo"' + (p.src === "geo" ? " selected" : "") + '>My location</option>' +
-    (WX.jobs.length ? '<optgroup label="My jobsites">' + WX.jobs.map(j => '<option value="' + esc(j.key) + '"' + (p.src === "job" && p.key === j.key ? " selected" : "") + '>' + esc(j.num + " " + (j.label.length > 28 ? j.label.slice(0, 27) + "\u2026" : j.label)) + '</option>').join("") + '</optgroup>' : '') +
-    '<optgroup label="Offices">' + WX.offices.map(o => '<option value="' + esc(o.label) + '"' + (p.src === "office" && p.label === o.label ? " selected" : "") + '>' + esc(o.label) + ' office</option>').join("") + '</optgroup>';
-  let html = '<div class="wxnow">' +
-      '<a class="wxmain" href="' + esc(fc || "#") + '" target="_blank" rel="noopener noreferrer" title="Hourly forecast and radar">' +
-        '<span class="txt"><span class="pl" title="' + esc(where) + '">' + (p.src === "geo" ? '<span class="pin" aria-hidden="true"></span>' : p.src === "job" ? '<span class="pin job" aria-hidden="true"></span>' : '') + esc(where) + '</span>' +
-        '<span class="tp">' + degF(c.temperature_2m) + '</span>' +
-        '<span class="cd">' + esc(cond) + (t0.hi != null ? ' &middot; ' + degF(t0.hi) + ' / ' + degF(t0.lo) : '') + (t0.rain != null ? ' &middot; ' + rainTxt(t0.rain) : '') + '</span></span>' +
-        (c.weather_code != null ? wxSvg("", c.weather_code, c.is_day === 0) : '') + '</a>' +
-      '<label class="wxsel"><span class="sr">Weather for</span><select id="wxpick" aria-label="Weather for">' + opts + '</select></label>' +
-    '</div>';
-  for (let i = 1; i <= 4; i++){
-    const x = day(i); if (!x.t) continue;
-    const dn = new Date(x.t + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
-    html += '<div class="wxd"><span class="dn">' + esc(dn) + '</span>' + wxSvg("", x.code, false) +
-      '<span class="hl"><b>' + degF(x.hi) + '</b> ' + degF(x.lo) + '</span>' + rainTxt(x.rain) + '</div>';
-  }
-  el.innerHTML = html;
-  el.setAttribute("aria-label", "Weather for " + where);
-  const sel = $("#wxpick"); if (sel) sel.addEventListener("change", () => wxSwitch(sel.value));
-  el.hidden = false;
-}
-
 
 async function main(){
   $("#greet").textContent = greeting();
   paintClock();
   setInterval(paintClock, 15000);
   /* fired before sign-in resolves so the panel is ready when the page appears */
-  wxPromise = wxLoad();
+  wxPromise = fetchWeather(wxCfg);
 
   if (typeof msal === "undefined"){
     $("#app").hidden = false;
     wxLast = await wxPromise;
-    renderWeather(wxLast);
-    $("#searchbox").hidden = false;
+    renderWeather(wxLast, wxCfg);
     renderApps(FALLBACK);
     banner("#degraded", "Sign-in is unavailable right now.",
       "The Microsoft authentication script did not load, so the desks cannot be opened from here. " +
@@ -1626,18 +1074,15 @@ async function main(){
   const acct = accounts[0];
   app.setActiveAccount(acct);
   $("#acct").hidden = false;
-  $("#signout").hidden = false;
-  $("#searchbox").hidden = false;
-  $("#acctname").textContent = acct.name || acct.username || "";
-  $("#acctav").textContent = initials(acct.name || acct.username || "?");
+  $("#acctname").textContent = (acct.name || acct.username || "").split(" ")[0] || acct.username;
   $("#app").hidden = false;
   log("signed in as", acct.username);
 
   const first = (acct.name || "").trim().split(/\s+/)[0];
-  if (first){ $("#greet").textContent = greeting() + ","; $("#greetname").textContent = first; }
+  if (first) $("#greet").textContent = greeting() + ", " + first;
 
   wxLast = await wxPromise;
-  renderWeather(wxLast);
+  renderWeather(wxLast, wxCfg);
 
   const claims = acct.idTokenClaims || {};
   const myGroups = new Set(Array.isArray(claims.groups) ? claims.groups : []);
@@ -1667,18 +1112,6 @@ async function main(){
     renderDesksUnavailable();
     applyFilter();
     return;
-  }
-
-  /* job title and office under the name, from the profile User.Read already covers */
-  const me = await graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
-  if (me.ok && me.body){
-    const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
-    $("#acctrole").textContent = role;
-    WX.officeHint = me.body.officeLocation || "";
-    if (WX.place && WX.place.src === "office" && !wxRemembered()){
-      const o = wxOffice(); if (o && o.label !== WX.place.label){ WX.place = o; fetchWeather(o).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); }
-    }
-    if (me.body.displayName) $("#acctname").textContent = me.body.displayName;
   }
 
   if (overage){
@@ -1758,72 +1191,75 @@ async function main(){
     $("#linksrc").textContent = "Links: built into this page.";
   }
 
-  /* My day: Outlook and tasks run alongside everything below, on their own token */
-  myEmail = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
-  const personal = startMyDay(acct).catch(e => log("my day", "failed " + (e && e.message)));
-
-  try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
-  try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
-  try {
-    await loadApQueues(myEmail, me.body && me.body.department, drives);
-  } catch(e){ log("ap review", "failed " + (e && e.message)); }
-  try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
-  renderMyDay();   /* the Outlook half renders itself whenever it lands; the desks do not wait for it */
-  void personal;
-
   /* ---- the desks ---- */
   const host = $("#tiles");
   host.innerHTML = "";
   for (const desk of DESKS){
     const allowed = !desk.group || myGroups.has(desk.group);
-    if (!allowed){ host.append(lockedTile(desk)); log("tile " + desk.key, "locked"); continue; }
+    const el = document.createElement("article");
+    el.className = "tile" + (allowed ? "" : " locked");
+    el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
 
-    let big = "\u2014", blurb = desk.blurb, msg = "";
+    if (!allowed){
+      el.innerHTML =
+        '<div class="tilehead"><h3>' + desk.title + '</h3>' +
+        '<span class="tag neutral">no access</span></div>' +
+        '<p>' + esc(desk.blurb) + '</p>' +
+        '<p class="msg">Access is granted through <span class="mono">' + esc(desk.groupName) + '</span>.</p>' +
+        '<a class="btn ghost" href="mailto:' + esc(ACCESS_CONTACT) +
+          '?subject=' + encodeURIComponent("Access request: " + desk.key) +
+          '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") +
+          '">Request access</a>';
+      host.append(el);
+      log("tile " + desk.key, "locked");
+      continue;
+    }
+
+    let statsHtml = "", tag = "";
+
     if (desk.library && siteId){
       const driveId = drives[desk.library];
-      const f = driveId ? await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content") : { ok: false, status: "no library" };
-      if (f.ok){
-        try {
-          const data = JSON.parse(f.text);
-          big = n0(desk.count(data));
-          if (desk.blurbFor) blurb = desk.blurbFor(data);
-          log("tile " + desk.key, desk.file + " read");
-        } catch (e) {
-          if (!desk.quiet){ big = chip("bad", "bad file"); msg = esc(desk.file) + " is not valid JSON."; }
-          log("tile " + desk.key, desk.file + " parse failed");
-        }
-      } else if (desk.quiet){
-        log("tile " + desk.key, desk.file + " HTTP " + f.status + " (shown as a dash)");
-      } else if (f.status === "no library"){
-        big = chip("bad", "no library");
-        msg = 'No document library called <span class="mono">' + esc(desk.library) + '</span> on the site.';
+      if (!driveId){
+        tag = '<span class="tag crit">no library</span>';
+        statsHtml = '<p class="msg" style="color:var(--crit)">No document library called <span class="mono">' +
+          esc(desk.library) + '</span> on the site.</p>';
         log("tile " + desk.key, "library missing");
-      } else if (f.status === 403){
-        big = chip("bad", "403");
-        msg = 'You are in <span class="mono">' + esc(desk.groupName) + '</span> but SharePoint denied the read. ' +
-              'The group has not been granted on the <span class="mono">' + esc(desk.library) + '</span> library.';
-        log("tile " + desk.key, "403 \u2014 Entra membership without a SharePoint grant");
-      } else if (f.status === 404){
-        big = chip("warn", "no data");
-        msg = esc(desk.file) + ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.';
-        log("tile " + desk.key, desk.file + " 404");
       } else {
-        big = chip("bad", "HTTP " + f.status);
-        log("tile " + desk.key, "HTTP " + f.status);
+        const f = await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content");
+        if (f.ok){
+          try {
+            const data = JSON.parse(f.text);
+            statsHtml = '<div class="stats">' + desk.stats(data).map(p =>
+              '<div class="stat"><span class="k">' + esc(p[0]) + '</span>' +
+              '<span class="v">' + n0(p[1]) + '</span></div>').join("") + '</div>';
+            log("tile " + desk.key, desk.file + " read, " + (data.rows ? data.rows.length : "?") + " rows");
+          } catch (e) {
+            tag = '<span class="tag crit">bad file</span>';
+            statsHtml = '<p class="msg" style="color:var(--crit)">' + esc(desk.file) + ' is not valid JSON.</p>';
+            log("tile " + desk.key, desk.file + " parse failed");
+          }
+        } else if (f.status === 403){
+          tag = '<span class="tag crit">403</span>';
+          statsHtml = '<p class="msg" style="color:var(--crit)">You are in <span class="mono">' +
+            esc(desk.groupName) + '</span> but SharePoint denied the read. The group has not been granted on the ' +
+            '<span class="mono">' + esc(desk.library) + '</span> library.</p>';
+          log("tile " + desk.key, "403 — Entra membership without a SharePoint grant");
+        } else if (f.status === 404){
+          tag = '<span class="tag warn">no data</span>';
+          statsHtml = '<p class="msg" style="color:var(--warn)">' + esc(desk.file) +
+            ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.</p>';
+          log("tile " + desk.key, desk.file + " 404");
+        } else {
+          tag = '<span class="tag crit">HTTP ' + f.status + '</span>';
+          log("tile " + desk.key, "HTTP " + f.status);
+        }
       }
     }
-    const el = document.createElement("article");
-    el.className = "tile";
-    el.dataset.find = (desk.title + " " + desk.blurb + " " + (desk.audience || desk.groupName || "")).replace(/&amp;/g, "&").toLowerCase();
+
     el.innerHTML =
-      '<h3>' + desk.title + '</h3>' +
-      (/bh-chip/.test(big) ? '<div class="big">' + big + '</div>' : '') +
-      '<p>' + esc(blurb) + '</p>' +
-      (msg ? '<p class="msg">' + msg + '</p>' : '') +
-      (desk.links ? '<div class="sublinks">' + desk.links.map(l => '<a href="' + esc(l.href) + '">' + l.label + '</a>').join("") + '</div>' : '') +
-      '<div class="foot"><span class="bh-chip">' + esc(desk.audience || desk.groupName) + '</span>' +
-      '<a class="go" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') +
-      ' aria-label="Open ' + desk.title + '">Open</a></div>';
+      '<div class="tilehead"><h3>' + desk.title + '</h3>' + tag + '</div>' +
+      '<p>' + esc(desk.blurb) + '</p>' + statsHtml +
+      '<a class="btn" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') + '>Open</a>';
     host.append(el);
   }
 
@@ -1838,7 +1274,7 @@ async function main(){
 function applySite(site){
   SAMPLE = !!(site && site.sample);
   const t = $("#tagline");
-  if (t) t.textContent = FALLBACK_SITE.tagline;   /* fixed label; an old tagline in links.json is ignored */
+  if (t) t.textContent = (site && site.tagline) || FALLBACK_SITE.tagline;
 
   renderActions((site && site.actions) || FALLBACK_SITE.actions);
   renderSafety(site && site.safety);
@@ -1854,7 +1290,6 @@ function applySite(site){
       issue.archiveUrl = hand.archiveUrl;
   }
   renderNewsletter(issue);
-  teamIssue = issue || null;
 
   /* the pipeline's file, when present, is the source of truth for people */
   const people = pipelinePeople ? pipelinePeople.people : ((site && site.people) || []);
@@ -1865,57 +1300,44 @@ function applySite(site){
   const outKnown = !!(pipelinePeople && Array.isArray(pipelinePeople.out));
   renderTeam(people, out, hols, site && site.peopleUrl, outKnown);
 
-  layoutPulse();
-  /* no newsletter: no "This week" section at all */
+  /* the rail floats, so an empty one would hold open a 322px gutter */
   const rail = $("#rail");
   if (rail){
-    const anyPanel = Array.from(rail.querySelectorAll('.panel')).some(el => !el.hidden);
+    const anyPanel = Array.from(rail.children).some(el => !el.hidden);
     rail.hidden = !anyPanel;
     log("rail", anyPanel ? "shown" : "empty, hidden");
   }
 
-  const cap = $("#caption");
-  if (cap && site && typeof site.heroCaption === "string") { cap.textContent = site.heroCaption; cap.hidden = !site.heroCaption; }
-
   const list = wxLocations(site && site.weather);
   if (!list.length) return;
-  WX.offices = list; wxAll = list;
-  /* location wins; the office list only matters as the fallback and the picker */
-  if (WX.place && WX.place.src === "office"){
-    const o = wxOffice();
-    if (o && (o.label !== WX.place.label || o.lat !== WX.place.lat)){ WX.place = o; fetchWeather(o).then(d => { WX.data = d; wxLast = d; renderWeather(d); }); return; }
-  }
-  renderWeather(wxLast);
-}
-
-const chip = (k, t) => '<span class="bh-chip is-' + k + '">' + esc(t) + '</span>';
-
-function lockedTile(desk, why){
-  const el = document.createElement("article");
-  el.className = "tile locked";
-  el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
-  el.innerHTML =
-    '<h3>' + desk.title + '</h3>' +
-    '<div class="big">' + (why ? "Unavailable" : "No access") + '</div>' +
-    '<p>' + (why ? esc(why)
-      : 'Access is granted through <span class="mono">' + esc(desk.groupName) + '</span>. Ask IT and they will add you.') + '</p>' +
-    (why ? '' : '<div class="foot"><a class="go" href="mailto:' + esc(ACCESS_CONTACT) +
-      '?subject=' + encodeURIComponent("Access request: " + desk.key) +
-      '&body=' + encodeURIComponent("Please add me to " + desk.groupName + ".") + '">Ask IT to add you</a></div>');
-  return el;
+  wxAll = list;
+  const want = wxRemembered();
+  const next = list.find(l => l.label === want) || list[0];
+  const same = wxCfg && Number(next.lat) === Number(wxCfg.lat) && Number(next.lon) === Number(wxCfg.lon);
+  wxCfg = next;
+  if (same) { renderWeather(wxLast, next); return; }
+  fetchWeather(next).then(d => { wxLast = d; renderWeather(d, next); });
 }
 
 function renderDesksUnavailable(){
   const host = $("#tiles");
   host.innerHTML = "";
-  DESKS.forEach(desk => host.append(lockedTile(desk, "Sign-in has to succeed before this can open.")));
+  DESKS.forEach(desk => {
+    const el = document.createElement("article");
+    el.className = "tile locked";
+    el.dataset.find = (desk.title + " " + desk.blurb).replace(/&amp;/g, "&").toLowerCase();
+    el.innerHTML =
+      '<div class="tilehead"><h3>' + desk.title + '</h3>' +
+      '<span class="tag neutral">unavailable</span></div>' +
+      '<p>' + esc(desk.blurb) + '</p>' +
+      '<p class="msg">Sign-in has to succeed before this can open.</p>';
+    host.append(el);
+  });
 }
 
 /* ============ events ============ */
 $("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
 $("#signout").addEventListener("click", () => app.logoutRedirect());
-$("#mdhide").addEventListener("click", () => mdPrivacy(!$("#mdgrid").classList.contains("priv")));
-try { if (localStorage.getItem("bh.mdpriv") === "1") mdPrivacy(true); } catch(_) {}
 $("#q").addEventListener("input", applyFilter);
 $("#q").addEventListener("keydown", e => { if (e.key === "Escape"){ e.target.value = ""; applyFilter(); } });
 document.addEventListener("keydown", e => {
