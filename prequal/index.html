@@ -678,7 +678,16 @@ const CERTS=['Minority-owned (MBE)','Woman-owned (WBE)','Disadvantaged (DBE)','V
 'Service-disabled veteran-owned (SDVOSB)','Small business (SB)','8(a) certified','HUBZone','Section 3 business','Other'];
 const PQSTAT=['Approved','Approved with conditions','Not approved','Pending review'];
 
-const S={db:null,dl:null,arch:[],newR:[],subs:new Map(),projects:[],meta:null,sel:null,pqSel:null,ready:false,
+/* Downloads (27 Oct 2026): the artifact's downloads capability does not exist on
+   GitHub Pages, so S.dl was always null after the port and both save buttons
+   said "not available". A plain browser download does the same job. */
+const BROWSER_DL={save:async({filename,data,type})=>{
+  const blob=data instanceof Blob?data:new Blob([data],{type:type||(/\.csv$/i.test(filename)?'text/csv;charset=utf-8':'application/octet-stream')});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=filename; a.style.display='none'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},1500);
+}};
+const S={db:null,dl:BROWSER_DL,arch:[],newR:[],subs:new Map(),projects:[],meta:null,sel:null,pqSel:null,ready:false,
   fdivs:new Set(),fdivMode:'any',ddivs:new Set(),ddivMode:'any',divList:[],mg:null,edits:new Map(),fxSel:null};
 
 /* ---------- helpers ---------- */
