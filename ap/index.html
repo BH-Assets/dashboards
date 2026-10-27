@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://outlook.office.com https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com blob:;">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AP Desk</title>
 <link rel="stylesheet" href="/bh-shell.css">
@@ -325,7 +326,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   .ap-as,.ap-as select{max-width:100%}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script src="msal-browser.min.js"></script>
 </head>
 <body class="bh-page no-pane">
 <div class="bh-topbar"></div>
@@ -428,7 +429,7 @@ const store = { get(k){ try { return localStorage.getItem(k); } catch(_) { retur
 /* ---- sign-in and Graph ------------------------------------------------------ */
 const msalApp = new msal.PublicClientApplication({
   auth: { clientId: CLIENT_ID, authority: 'https://login.microsoftonline.com/' + TENANT_ID, redirectUri: location.origin + '/ap/' },
-  cache: { cacheLocation: 'sessionStorage' } });
+  cache: { cacheLocation: 'localStorage' } });
 async function token(){
   await msalApp.initialize();
   const redir = await msalApp.handleRedirectPromise();
