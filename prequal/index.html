@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com;">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prequal &amp; Sub Rating Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -661,7 +662,7 @@ a{color:var(--maroon)}
 </section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<script src="msal-browser.min.js"></script>
 <script>
 "use strict";
 const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
@@ -1459,7 +1460,7 @@ function bkXlsx(){
   if(bkXlsxP) return bkXlsxP;
   bkXlsxP=new Promise((res,rej)=>{
     const sc=document.createElement('script');
-    sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.src='xlsx.full.min.js';   // self-hosted SheetJS 0.20.3 (27 Oct 2026)
     sc.onload=()=>window.XLSX?res():rej(new Error('no XLSX'));
     sc.onerror=()=>rej(new Error('blocked'));
     document.head.appendChild(sc);
