@@ -2849,7 +2849,10 @@ async function exportSub(){
   await xSave(wb, 'Subcontractor Detail ' + jobs.join(' ').slice(0, 60) + ' ' + new Date().toISOString().slice(0, 10) + '.xlsx');
   toast('Exported ' + subs.length + ' subcontract' + (subs.length === 1 ? '' : 's') + (nDesk ? ' + ' + nDesk + ' desk pay app' + (nDesk === 1 ? '' : 's') : ''));
 }
-const xMenu = open => { $('#xMenu').hidden = !open; $('#xBtn').setAttribute('aria-expanded', open); };
+const xMenu = open => { const m = $('#xMenu'); m.hidden = !open; $('#xBtn').setAttribute('aria-expanded', open);
+  /* keep it on screen: the button can sit at the right end of the bar on a wide screen */
+  if (open) { m.style.left = '0'; m.style.right = 'auto'; const r = m.getBoundingClientRect();
+    if (r.right > document.documentElement.clientWidth - 8) { m.style.left = 'auto'; m.style.right = '0'; } } };
 $('#xBtn').addEventListener('click', e => { e.stopPropagation(); typeMenu(false); xMenu($('#xMenu').hidden); if (!$('#xMenu').hidden) $('#xJobs').placeholder = subJobs().slice(0, 4).join(', ') || 'e.g. 25AU010'; });
 $('#xMenu').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-x]'); if (!b) return; xMenu(false);
   toast('Building the Excel file…'); (b.dataset.x === 'open' ? exportOpen : exportSub)().catch(err => { console.error(err); toast('Export failed: ' + err.message); }); });
