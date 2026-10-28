@@ -108,6 +108,13 @@ body.no-pane .ap-pane{display:none}
 .rv-g .cr{margin-top:12px;padding-top:12px;border-top:1px solid var(--bh-hairline)}
 .ap-row.is-appr{box-shadow:inset 3px 0 0 #1b7f3b}
 .sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.comp-ban{border-left:4px solid var(--bh-ok-ink,#1e7b34);background:var(--bh-ok-bg,#eef7ef);padding:10px 14px;margin:0 0 12px;font-size:13px;line-height:1.45}
+.comp-ban.is-bad{border-left-color:var(--bh-bad-ink,#9c0006);background:var(--bh-bad-bg,#fbebeb)}
+.comp-ban.is-warn{border-left-color:var(--bh-warn-ink,#b07d00);background:var(--bh-warn-bg,#fdf6e3)}
+.comp-ban .h{font-weight:700;margin-bottom:4px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.comp-ban .src{font-weight:400;font-size:12px;color:var(--bh-ink-muted)}
+.comp-ban .cov{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.comp-ban .sub{font-size:12px;color:var(--bh-ink-muted);margin-top:4px}
 .sp-row .bh-input{flex:1 1 auto;width:auto;min-width:0;min-height:34px;box-sizing:border-box}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
 .sp-row .cl-sel{flex:1 1 200px;min-width:0;max-width:100%;min-height:34px;font-size:13px}
@@ -457,9 +464,9 @@ async function g(tok, path, opts){
 /* ---- load ------------------------------------------------------------------- */
 async function loadLive(){
   const tok = await token(); if (!tok) return false;
-  const me = (await g(tok, '/me?$select=displayName,mail,userPrincipalName,department')).body || {};
+  const me = (await g(tok, '/me?$select=displayName,mail,userPrincipalName,department,jobTitle')).body || {};
   const email = lc(me.mail || me.userPrincipalName);
-  LIVE.me = { name: me.displayName || email, email, dept: me.department || '',
+  LIVE.me = { name: me.displayName || email, email, dept: me.department || '', title: me.jobTitle || '',
     isAccounting: ACCOUNTING_PEOPLE.includes(email) || ACCOUNTING_DEPARTMENTS.map(lc).includes(lc(me.department)) };
   const site = await g(tok, '/sites/' + SP_HOST + ':' + SP_DATA);
   if (!site.ok) throw new Error('Could not reach ' + SP_DATA + ' (HTTP ' + site.status + ').');
@@ -810,6 +817,7 @@ function amtPop(i){
   if (ent && ent.asNoted) rows.push(['Note', esc(String(ent.note || '').split(' — Approved')[0])]);
   const dc = discCalc(i);
   if (dc) rows.push(['2% discount', '−' + money(dc.disc) + ' · <b>pay ' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) : '') + ceDiscHint(i, dc)]);
+  if (compOf(i) === 'soon') rows.push(['Compliance', '<b style="color:var(--bh-warn-ink,#7a5c00)">Certificate expiring soon</b>']);
   if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'Not in Billy']);
   if (i.hold) rows.unshift(['HOLD', '<b style="color:var(--bh-bad-ink,#9c0006)">Hold payment</b> — ' + esc(holdText(i.hold))]);
   return '<div class="amt-pop" role="tooltip"><div class="ah">Enter in CE · ' + (i.amtKnown ? money(i.amt) : '') + '</div><dl>' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl></div>';
@@ -842,10 +850,14 @@ function holdOf(i){
 function compOf(i){
   if (!i.c || i.isMsg) return '';
   if (!i.c.compliance) return 'none';
+  /* the Compliance desk's verdict when the pull carries it (28 Oct 2026), else Billy's own flag */
+  const st = String(i.c.compliance.status || '');
+  if (st) return /non-?compliant|unverified/i.test(st) || i.c.compliance.payment_ok === 'No' ? 'bad' : /expiring/i.test(st) ? 'soon' : 'ok';
   return i.c.compliance.billy_is_compliant === 'Yes' ? 'ok' : 'bad';
 }
 const compChip = i => { const c = compOf(i);
-  return c === 'bad' ? '<span class="bh-chip is-bad sm" title="Billy shows this subcontract as not compliant">Not compliant</span>'
+  return c === 'soon' ? '<span class="bh-chip is-warn sm" title="Compliant, but a certificate expires soon">Insurance expiring</span>'
+    : c === 'bad' ? '<span class="bh-chip is-bad sm" title="The Compliance desk shows this subcontract as not compliant">Not compliant</span>'
     : c === 'none' ? '<span class="bh-chip is-warn sm" title="No Billy contract for this commitment number">Not in Billy</span>' : ''; };
 /* 2% discount: agreed per subcontract on its DocuSign. Source, in order: the Procore
    commitment field (c.discount_2pct, once the pull carries it), else the latest choice
@@ -867,12 +879,50 @@ function discCalc(i){
   const d = Math.round(i.amt * 2) / 100, appr = i.f.ApprovedAt ? new Date(i.f.ApprovedAt) : null;
   return { disc: d, pay: Math.round((i.amt - d) * 100) / 100, by: appr ? new Date(appr.getTime() + 10 * 864e5).toISOString() : null };
 }
+/* ---- Compliance banner (28 Oct 2026) ----------------------------------------------------
+   The Compliance desk's verdict for this subcontract or PO (Billy, per contract), on the
+   review tab for Accounting and the approver. Per-coverage dates arrive with the commitments
+   pull; until then the banner shows the status and notes only. */
+const COMPLIANCE_URL = 'https://compliance.baileyharris.com';
+function covText(name, c){
+  if (!c) return null;
+  const d = c.days, exp = c.exp ? usDate(c.exp) : '';
+  if (d === 'waived') return { t: name + ' waived', k: '' };
+  if (d === 'missing') return { t: name + ' missing', k: 'is-bad' };
+  if (d === 'expired') return { t: name + ' expired' + (exp ? ' ' + exp : ''), k: 'is-bad' };
+  if (typeof d === 'number' || /^-?\d+$/.test(String(d))) { const n = Number(d);
+    return n < 0 ? { t: name + ' expired ' + exp, k: 'is-bad' } : { t: name + ' ' + exp + ' · ' + n + ' day' + (n === 1 ? '' : 's'), k: n <= 30 ? 'is-warn' : 'is-ok' }; }
+  return exp ? { t: name + ' ' + exp, k: '' } : null;
+}
+function compBanner(i){
+  if (i.isMsg || !i.c) return '';
+  const k = compOf(i), C = i.c.compliance;
+  if (k === 'none') {
+    const other = (i.c.billy_other_contracts || []).filter(Boolean);
+    return '<div class="comp-ban is-warn"><div class="h">Compliance · Not in Billy</div>'
+      + '<div>No Billy contract for ' + esc(i.c.number || i.po || 'this commitment') + ', so nothing has been checked.'
+      + (other.length ? ' Billy tracks ' + esc(i.c.vendor || 'this vendor') + ' on this job only under ' + esc(other.join(', ')) + '.' : '') + '</div>'
+      + '<div class="sub"><a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Open the Compliance desk</a></div></div>';
+  }
+  const st = C.status || (C.billy_is_compliant === 'Yes' ? 'Compliant' : 'Non-Compliant');
+  const cov = Object.entries(C.coverages || {}).map(([n, c]) => covText(n, c)).filter(Boolean);
+  if (C.w9_on_file === 'No') cov.push({ t: 'W-9 not on file', k: '' });
+  const soon = Object.values(C.coverages || {}).some(c => c && /^\d+$/.test(String(c.days)) && Number(c.days) <= 10);
+  return '<div class="comp-ban ' + (k === 'bad' ? 'is-bad' : k === 'soon' ? 'is-warn' : 'is-ok') + '"><div class="h">Compliance · ' + esc(st)
+    + '<span class="src">Compliance desk · Billy contract ' + esc(i.c.number || i.po || '') + '</span></div>'
+    + (cov.length ? '<div class="cov">' + cov.map(x => '<span class="bh-chip sm ' + x.k + '">' + esc(x.t) + '</span>').join('') + '</div>' : '')
+    + (C.notes ? '<div>' + esc(C.notes) + '</div>' : '')
+    + (C.mgr_review === 'Yes' && C.mgr_reasons ? '<div><b>Needs a manager look:</b> ' + esc(C.mgr_reasons) + '</div>' : '')
+    + (soon && k !== 'bad' ? '<div><b>A certificate expires within 10 days</b> — check it is renewed before this is paid.</div>' : '')
+    + '<div class="sub">' + [C.last_requested ? 'Last requested ' + esc(usDate(C.last_requested)) : '', C.vendor_email ? esc(C.vendor_email) : '',
+        '<a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Open the Compliance desk</a>'].filter(Boolean).join(' · ') + '</div></div>';
+}
 function holdPanel(i, who){
   const picks = i.hr || [];
   return '<div class="cr hold-p"><div class="bh-label">Hold payment because</div>'
     + HOLD_REASONS.map(([k, t]) => '<label class="ck"><input type="checkbox" data-hr="' + k + '"' + (picks.includes(k) ? ' checked' : '') + '> ' + esc(t) + '</label>').join('')
     + '<textarea id="holdNote" style="width:100%;min-height:44px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:6px;box-sizing:border-box" placeholder="Anything else — e.g. release when the final waiver is in">' + esc(i.hn || '') + '</textarea>'
-    + '<div class="rv-act"><button class="bh-btn" data-do="' + (who === 'pm' ? 'revhold' : 'holdset') + '"' + (BUSY ? ' disabled' : '') + '>' + (who === 'pm' ? 'Approve and hold payment' : 'Hold payment') + '</button><a href="#" data-do="holdtoggle">Cancel</a></div>'
+    + '<div class="rv-act"><button class="bh-btn" data-do="' + (who === 'pm' ? 'revhold' : 'holdset') + '"' + (BUSY ? ' disabled' : '') + '>' + (who === 'pm' ? (firstStep() ? 'Approve, recommend hold, route to PM/SPM' : 'Approve and hold payment') : 'Hold payment') + '</button><a href="#" data-do="holdtoggle">Cancel</a></div>'
     + '<p class="note" style="margin:6px 0 0">' + (who === 'pm' ? 'It goes to Accounting to enter in CE with payment held until the hold is released.' : 'Enter it in CE with payment held. Release the hold here when it clears.') + '</p></div>';
 }
 function holdBanner(i){
@@ -1223,7 +1273,7 @@ function pane(){
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
   const acctView = isAcct() && i.math && !i.isMsg;
-  if (TAB === 'review') h += holdBanner(i) + approvedBanner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
+  if (TAB === 'review') h += compBanner(i) + holdBanner(i) + approvedBanner(i) + step1Banner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
   if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF && !isInv(i)) h += reviewBox(i);
   if (TAB === 'review' && acctView) h += acctCheck(i);
   if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
@@ -1505,6 +1555,7 @@ function approvedBanner(i){
   if (i.type === 'Pay app' && i.po && acctSeat()) rows.push(['2% discount', dc
     ? '<b>Yes</b> · −' + money(dc.disc) + ' · pay <b>' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) + ' (7–10 days from approval)' : '') + (dsrc === 'desk' ? ' · <a href="#" data-do="discoff">Not on this subcontract</a>' : dsrc === 'ce' ? ' · from CE (2% Discount? = Yes)' : ' · from Procore') + ceDiscHint(i, dc)
     : (ceLed(i.po) && ceLed(i.po).discount_2pct ? 'No · CE subcontract says 2% Discount? = ' + esc(ceLed(i.po).discount_2pct) : 'No · <a href="#" data-do="discon">Subcontract agreed to 2% — apply it</a>')]);
+  if (compOf(i) === 'soon') rows.push(['Compliance', '<b style="color:var(--bh-warn-ink,#7a5c00)">Certificate expiring soon</b>']);
   if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'No Billy contract for ' + esc(i.po || 'this commitment')]);
   if (done) rows.push(['Entered in CE', esc(f.CEReference || '—') + (f.EnteredAt ? ' · ' + esc(fmtTime(f.EnteredAt)) : '') + (f.EnteredBy ? ' · ' + esc(P(lc(f.EnteredBy)).n) : '')]);
   return '<div class="ok-ban' + (done ? ' done' : '') + '"><div class="h"><span class="ic">✓</span>' + (done ? 'Entered in CE' : (note ? 'Approved as noted' : 'Approved') + ' — ready for entry in CE')
@@ -1562,6 +1613,7 @@ function keepReview(i){
   document.querySelectorAll('[data-spl]').forEach(el => { const r = (i.split || [])[Number(el.dataset.spl)]; if (r) r.line = el.value; });
   const cls = [...document.querySelectorAll('[data-cl]')];
   if (cls.length) i.cl = cls.map(el => ({ ix: el.value, amt: ((document.querySelector('[data-cla="' + el.dataset.cl + '"]') || {}).value || '').trim() }));
+  const rt = document.getElementById('rtTo'); if (rt) i.rt = rt.value;
   const n = document.getElementById('revNote'); if (n) i.revNote = n.value;
   const cn = document.getElementById('crNote'); if (cn) i.crn = cn.value;
   const crs = document.querySelectorAll('[data-cr]'); if (crs.length) i.cr = [...crs].filter(x => x.checked).map(x => x.dataset.cr);
@@ -1640,7 +1692,8 @@ function clTot(i){
 function ceSplitBox(i){
   const O = ceOpts(i); if (!O) return '';
   const tgt = billedThis(i);
-  if (!i.cl || !i.cl.length) i.cl = [{ ix: O.base.ix, amt: tgt != null ? tgt.toFixed(2) : '' }];
+  if (!i.cl || !i.cl.length) { const e = ceSplitOf(i);
+    i.cl = e && e.ceSplit && e.ceSplit.length ? e.ceSplit.map(x => ({ ix: x.ix, amt: x.amt == null ? '' : Number(x.amt).toFixed(2) })) : [{ ix: O.base.ix, amt: tgt != null ? tgt.toFixed(2) : '' }]; }
   const many = i.cl.length > 1;
   return '<div class="cl-box"><div class="bh-label" style="margin-top:12px">Split for CE entry <span style="text-transform:none;font-weight:400">· this period’s billing before retainage, on the CE line it belongs to</span></div>'
     + i.cl.map((r, k) => '<div class="sp-row">' + ceSelect(O, k, r.ix, 'data-cl') + '<input class="bh-input sp-amt" inputmode="decimal" data-cla="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount">'
@@ -1679,14 +1732,72 @@ function ceDiscHint(i, dc){
   if (sp == null || Math.abs(r2(sp * 0.02) - dc.disc) < 0.01) return '';
   return '<br><span class="note" style="margin:0">In CE, make the discount <b>' + money(dc.disc) + '</b> (2% of the net payment). CE fills in 2% of the invoice amount, ' + money(r2(sp * 0.02)) + '.</span>';
 }
+/* ---- Two-step approval (28 Oct 2026) -----------------------------------------------------
+   An APM or PE approves first and routes it to a PM/SPM for final approval. Titles are the
+   Entra job titles: the viewer's own from /me (User.Read); other people's from /users, which
+   needs delegated User.Read.All (admin consent). Without that consent the route list is the
+   job's Project Management Team in Procore with no default picked by title. */
+const TITLE_SCOPES = ['User.Read.All'];
+const TITLES = {};       // email -> Entra jobTitle ('' none, null unknown)
+let TITLES_OK = null;    // false = no consent for other people's titles
+const isFirstTitle = t => /assistant\s+project\s+manager|\bAPM\b|project\s+engineer|\bPE\b/i.test(String(t || ''));
+const isFinalTitle = t => !!t && !isFirstTitle(t) && /project\s+manager|\bS?PM\b/i.test(String(t));
+const firstStep = () => !!LIVE.me && WHO === LIVE.me.email && isFirstTitle(LIVE.me.title);
+const TITLE_REQ = new Set();
+async function loadTitles(emails){
+  const want = emails.map(lc).filter(e => e && !(e in TITLES) && !TITLE_REQ.has(e)); if (!want.length || TITLES_OK === false) return false;
+  want.forEach(e => TITLE_REQ.add(e));
+  const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0]; if (!account) return false;
+  let tok; try { tok = (await msalApp.acquireTokenSilent({ scopes: TITLE_SCOPES, account })).accessToken; TITLES_OK = true; }
+  catch (e) { TITLES_OK = false; return true; }
+  await Promise.all(want.map(async e => { const r = await g(tok, '/users/' + encodeURIComponent(e) + '?$select=jobTitle'); TITLES[e] = r.ok ? ((r.body && r.body.jobTitle) || '') : null; }));
+  return true;
+}
+function routeTargets(i){
+  const me = LIVE.me ? LIVE.me.email : '';
+  const team = [...new Set(((JOBS[i.job] && JOBS[i.job].team) || []).map(lc))].filter(e => e && e !== me);
+  const others = Object.keys(LIVE.pmName || {}).map(lc).filter(e => e && e !== me && !team.includes(e)).sort((a, b) => P(a).n.localeCompare(P(b).n));
+  const fin = team.filter(e => isFinalTitle(TITLES[e]));
+  return { team, others, def: fin[0] || team.find(e => TITLES[e] != null && !isFirstTitle(TITLES[e])) || '' };
+}
+function routeBox(i){
+  if (!firstStep()) return '';
+  const R = routeTargets(i);
+  if (R.team.some(e => !(e in TITLES)) && TITLES_OK !== false) loadTitles(R.team).then(ch => { if (ch && SEL === i.id) { keepReview(i); pane(); } });
+  if (!i.rt && R.def) i.rt = R.def;
+  const opt = e => '<option value="' + esc(e) + '"' + (e === i.rt ? ' selected' : '') + '>' + esc(P(e).n) + (TITLES[e] ? ' — ' + esc(TITLES[e]) : '') + '</option>';
+  return '<label class="bh-label" style="display:block;margin-top:10px" for="rtTo">Route for final approval to</label>'
+    + '<select class="bh-select" id="rtTo" style="width:100%;min-height:34px;margin-top:4px"><option value="">Pick the PM or SPM…</option>'
+    + (R.team.length ? '<optgroup label="' + esc(i.job || 'Job') + ' PM team">' + R.team.map(opt).join('') + '</optgroup>' : '')
+    + (R.others.length ? '<optgroup label="Other PMs">' + R.others.map(opt).join('') + '</optgroup>' : '') + '</select>'
+    + (TITLES_OK === false ? '<p class="note" style="margin:4px 0 0">Titles aren’t available to the desk yet — check this is the job’s PM or SPM.</p>' : '');
+}
+/* the first approval, for the PM/SPM doing the final one */
+function step1Of(i){ const e = [...(i.log || [])].reverse().find(x => x && (x.step1 || x.s === 'with PM')); return e && e.step1 ? e : null; }
+function step1Banner(i){
+  if (i.sec !== 'pm' || i.isMsg) return '';
+  const e = step1Of(i); if (!e) return '';
+  return '<div class="ok-ban"><div class="h"><span class="ic">✓</span>First approval — ' + esc(e.by || '') + (e.title1 ? ' (' + esc(e.title1) + ')' : '') + '</div><dl>'
+    + '<dt>When</dt><dd>' + esc(fmtTime(e.at || '')) + '</dd>'
+    + (e.note ? '<dt>Note</dt><dd>' + esc(String(e.note).replace(/\s*—\s*Approved by[\s\S]*$/, '') || 'Approved') + '</dd>' : '')
+    + (e.recHold ? '<dt>Recommends</dt><dd><b>Hold payment</b>: ' + esc(holdText({ reasons: e.recHold.holdReasons || [], note: e.recHold.holdNote || '' })) + '</dd>' : '')
+    + '</dl><div class="note" style="margin:4px 0 0">Their coding and CE split are filled in below — check them and give the final approval.</div></div>';
+}
+function step1Prefill(i){
+  if (i.s1done) return; i.s1done = true;
+  const e = step1Of(i); if (!e || firstStep()) return;
+  if (e.recHold && i.holdOpen == null) { i.holdOpen = true; i.hr = (e.recHold.holdReasons || []).slice(); i.hn = e.recHold.holdNote || ''; }
+}
 function payReviewBox(i){
+  step1Prefill(i);
   const corr = !!i.corrOpen, picks = i.cr || [];
   let h = '<div class="cf rv-g"><div class="bh-section-title">Review and approve</div>' + (compOf(i) === 'bad' ? '<div class="comp-warn"><b>Not compliant in Billy.</b> Approve it with payment held, or ask the trade partner to update their insurance first.</div>' : '')
     + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('')
     + ceSplitBox(i)
     + '<label class="bh-label" style="display:block;margin-top:10px" for="revNote">Note to Accounting <span style="text-transform:none;font-weight:400">(optional; needed for Approve as noted)</span></label>'
     + '<textarea id="revNote" style="width:100%;min-height:44px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="e.g. Pay as submitted; CO #6 will be on next month’s app.">' + esc(i.revNote || '') + '</textarea>'
-    + '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+    + routeBox(i)
+    + '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>' + (firstStep() ? 'Approve and route to PM/SPM' : 'Approve') + '</button>'
     + '<a href="#" data-do="revnoted">Approve as noted</a>'
     + '<a href="#" data-do="holdtoggle" aria-expanded="' + !!i.holdOpen + '">Approve – hold payment' + (i.holdOpen ? ' ▴' : ' ▾') + '</a>'
     + '<a href="#" data-do="crtoggle" aria-expanded="' + corr + '">Request correction' + (corr ? ' ▴' : ' ▾') + '</a></div>';
@@ -1700,8 +1811,10 @@ function payReviewBox(i){
 }
 function reviewBox(i){
   if (!isInv(i)) return payReviewBox(i);
+  step1Prefill(i);
   const inv = isInv(i), oh = !isJobInv(i);
-  if (inv && !i.split) i.split = splitOf(i.f.CostCode);
+  if (inv && !i.split) { i.split = splitOf(i.f.CostCode);
+    const e = ceSplitOf(i); if (e && e.poLines) e.poLines.forEach((x, k) => { if (i.split[k]) i.split[k].line = x.ix; }); }
   const rows = i.split || [], many = rows.length > 1;
   if (inv && isJobInv(i)) {   /* prefill the coding from the PO when nothing is coded yet */
     if (i.poOn == null) i.poOn = !!i.po;
@@ -1735,7 +1848,7 @@ function reviewBox(i){
   if (CHECKS(i).length) h += '<div class="bh-label" style="margin-top:14px">Checks</div>' + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('');
   h += '<label class="bh-label" style="display:block;margin-top:12px" for="revNote">' + (inv ? 'Note to Accounting' : 'Note') + ' <span style="text-transform:none;font-weight:400">(' + (inv ? 'optional' : 'optional with an approval; required for a correction — it goes to the trade partner') + ')</span></label>'
     + '<textarea id="revNote" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="' + (inv ? 'e.g. Half of this is for 25AU010 — split as shown.' : 'e.g. Line 12 is billed at 80%; about 50% is in place. Revise and resubmit.') + '">' + esc(i.revNote || '') + '</textarea>'
-    + (inv ? '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+    + (inv ? routeBox(i) + '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>' + (firstStep() ? 'Approve and route to PM/SPM' : 'Approve') + '</button>'
         + '<a href="#" data-do="holdtoggle">Approve – hold payment' + (i.holdOpen ? ' ▴' : ' ▾') + '</a>'
         + '<a href="#" data-do="askvendor" title="Opens an email in your own Outlook with payables@ copied, so the reply lands on this invoice">Ask the vendor</a>'
         + '<a href="#" data-do="revreturn" title="Sends it back to Accounting to reassign">Not my invoice</a></div>' + (i.holdOpen ? holdPanel(i, 'pm') : '')
@@ -2360,6 +2473,15 @@ function act(k){
     else if (isJobInv(i) && i.poOn) { const pl = plCheck(i); if (pl === null) return; if (pl.length) ceX = { poLines: pl, poRef: String(i.poSel || '').toUpperCase() }; }
     const note = (i.revNote || '').trim();
     const hold = go ? { hold:true, holdReasons: i.hr || [], holdNote: (i.hn || '').trim() } : {};
+    if (firstStep()) { const to = lc(i.rt || '');
+      if (!to || to === LIVE.me.email) { toast('Pick the PM or SPM to route it to'); const r = $('#rtTo'); if (r) r.focus(); return; }
+      const ff = {}; ff.AssignedApprover = to; if (f.CostCode) ff.CostCode = f.CostCode; if (f.Subcontract !== undefined) ff.Subcontract = f.Subcontract;
+      const e = Object.assign({ s:'with PM', step1:true, title1: LIVE.me.title || '', to,
+        note: (note ? note + ' — ' : '') + 'Approved by ' + LIVE.me.name + (LIVE.me.title ? ' (' + LIVE.me.title + ')' : '') + ' — routed to ' + P(to).n + ' for final approval'
+          + (hold.hold ? '; recommends holding payment: ' + holdText({ reasons: hold.holdReasons, note: hold.holdNote }) : '')
+          + (ceX.ceSplit ? ' — CE split: ' + splitText(ceX.ceSplit) : '') + '.' }, hold.hold ? { recHold: hold } : {}, ceX);
+      run(async () => { if (await saveRow(i, ff, e)) { i.revNote = ''; i.holdOpen = false; i.hr = []; i.hn = ''; i.cl = null; i.rt = ''; toast('Approved — routed to ' + P(to).n); } });
+      return; }
     run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + (isInv(i) && i.poOn && i.poSel ? ', PO ' + i.poSel.toUpperCase() : '') + (hold.hold ? ' — payment held: ' + holdText({ reasons: hold.holdReasons, note: hold.holdNote }) : '') + (ceX.ceSplit ? ' — CE split: ' + splitText(ceX.ceSplit) : '') + (ceX.poLines && ceX.poLines.some(x => x.rfc) ? ' — PO lines: ' + splitText(ceX.poLines) : '') + '.' }, note ? { asNoted:true } : {}, hold, ceX))) { i.cl = null; i.revNote = ''; i.holdOpen = false; i.hr = []; i.hn = ''; toast(hold.hold ? 'Approved — payment on hold' : 'Approved — Ready for entry'); } });
     return; }
   if (k === 'revreturn') { if (!mySeat(i)) return; keepReview(i); const n = (i.revNote || '').trim() ? (isInv(i) ? 'Not my invoice — ' : '') + i.revNote.trim() : (isInv(i) ? 'Not my invoice — please reassign.' : '');
@@ -2703,7 +2825,7 @@ function openRows(){
       gross: F.gross, prior: F.gross, ret: F.ret, payable: F.payable, disc: F.disc, valid: dc ? dc.by : null,
       st: i.hold ? 'Hold' : (i.sec === 'ready' || i.sec === 'done') ? 'Pay' : 'Pending',
       desc: i.job ? jobName(i.job) : (i.desc || ''), job: i.job || '', stage: stageText(i) + (i.sec === 'done' && !F.inCE && i.type === 'Pay app' ? ' · not in the CE ledger yet' : ''),
-      ap: i.id, comp: compOf(i) === 'bad' ? 'Not compliant' : compOf(i) === 'none' ? 'Not in Billy' : '' });
+      ap: i.id, comp: compOf(i) === 'bad' ? 'Not compliant' : compOf(i) === 'none' ? 'Not in Billy' : compOf(i) === 'soon' ? 'Expiring soon' : '' });
   }
   return out;
 }
