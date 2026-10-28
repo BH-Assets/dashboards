@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://outlook.office.com https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://bh-compliance-sync.soft-math-3331.workers.dev https://graph.microsoft.com https://login.microsoftonline.com https://outlook.office.com https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com blob:;">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AP Desk</title>
 <link rel="stylesheet" href="/bh-shell.css">
@@ -108,6 +108,15 @@ body.no-pane .ap-pane{display:none}
 .rv-g .cr{margin-top:12px;padding-top:12px;border-top:1px solid var(--bh-hairline)}
 .ap-row.is-appr{box-shadow:inset 3px 0 0 #1b7f3b}
 .sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.chg-ban{border-left:4px solid var(--bh-warn-ink,#b07d00);background:var(--bh-warn-bg,#fdf6e3);padding:10px 14px;margin:0 0 12px;font-size:13px;line-height:1.45}
+.chg-ban.is-bad{border-left-color:var(--bh-bad-ink,#9c0006);background:var(--bh-bad-bg,#fbebeb)}
+.chg-ban .h{font-weight:700;margin-bottom:4px}
+.chg-ban ul{margin:4px 0 4px 18px;padding:0}
+.chg-ban .sn{margin-top:6px;border-top:1px solid rgba(0,0,0,.08);padding-top:6px}
+.chg-ban .sub{font-size:12px;color:var(--bh-ink-muted);margin-top:6px}
+.pw-new{color:var(--bh-bad-ink,#9c0006)}
+.bh-asof .fresh{display:block;font-size:11px;color:var(--bh-ink-muted);margin-top:2px}
+.bh-asof .fresh b{font-weight:600;color:var(--bh-ink)}.bh-asof .fresh b.old{color:var(--bh-bad-ink,#9c0006)}
 .comp-ban{border-left:4px solid var(--bh-ok-ink,#1e7b34);background:var(--bh-ok-bg,#eef7ef);padding:8px 14px;margin:0 0 12px;font-size:13px;line-height:1.45}
 .comp-ban.is-bad{border-left-color:var(--bh-bad-ink,#9c0006);background:var(--bh-bad-bg,#fbebeb)}
 .comp-ban.is-warn{border-left-color:var(--bh-warn-ink,#b07d00);background:var(--bh-warn-bg,#fdf6e3)}
@@ -346,7 +355,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <a href="/" aria-label="All desks"><img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris"></a>
   <div><h1 class="bh-desk-name">AP Desk</h1><div class="bh-desk-sub">Pay applications and invoices from payables@ — triage, approval and entry in ComputerEase</div></div>
   <div class="bh-header-spacer"></div>
-  <div class="bh-asof"><span class="bh-label">Procore data as of</span><strong id="asof">—</strong></div>
+  <div class="bh-asof"><span class="bh-label">Procore data as of</span><strong id="asof">—</strong><span class="fresh" id="fresh"></span></div>
   <a class="bh-btn-outline" href="/">All desks</a>
   <div class="bh-avatar" id="me">…</div>
 </header>
@@ -597,6 +606,7 @@ function toItem(row){
   { const kl = [...log].reverse().find(e => e.ctd); i.ctdBy = kl ? kl.by : ''; }
   i.hold = holdOf(i);
   i.age = Math.max(0, Math.floor((Date.now() - (Date.parse(i.changedAt||'') || Date.now())) / 86400000));
+  i.bd = bizDays(i.changedAt);
   if (!isMsg && /no text in the pdf|read by ocr/i.test(note)) i.note = note;
   if (pay && !figs && !i.note && /not on attachment g/i.test(note)) i.note = note;
   /* missing details */
@@ -815,6 +825,9 @@ function amtPop(i){
   if (ent && ent.asNoted) rows.push(['Note', esc(String(ent.note || '').split(' — Approved')[0])]);
   const dc = discCalc(i);
   if (dc) rows.push(['2% discount', '−' + money(dc.disc) + ' · <b>pay ' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) : '') + ceDiscHint(i, dc)]);
+  { const l = changesSince(i), sn = sinceNotes(i);
+    if (l.length) rows.push(['Changed', l.map(x => (x.block && !chgAcked(i, l) ? '<b style="color:var(--bh-bad-ink,#9c0006)">' + esc(x.t) + '</b>' : esc(x.t))).join('<br>')]);
+    if (sn.length) rows.push(['Since approval', sn.map(x => esc(x.note || '') + ' <span class="note" style="margin:0">— ' + esc(x.by || '') + '</span>').join('<br>')]); }
   if (compOf(i) === 'soon') rows.push(['Compliance', '<b style="color:var(--bh-warn-ink,#7a5c00)">Certificate expiring soon</b>']);
   if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'Not in Billy']);
   if (i.hold) rows.unshift(['HOLD', '<b style="color:var(--bh-bad-ink,#9c0006)">Hold payment</b> — ' + esc(holdText(i.hold))]);
@@ -889,6 +902,81 @@ function compBanner(i){
     + (k === 'none' ? ' <span class="src">— no Billy contract for ' + esc(i.c.number || i.po || 'this commitment') + ', so nothing has been checked</span>' : '')
     + ' <a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Details on the Compliance desk ›</a></div>';
 }
+/* ---- Freshness, aging and "changed since approved" (28 Oct 2026) ------------------------
+   Each decision (routed to an approver, approved, routed on) records a snapshot of what it
+   was based on. On every load the desk compares that snapshot with the data now and lists
+   what changed. Blocking changes stop Mark entered until Accounting confirms or sends the
+   item back; the rest inform. Aging counts business days (Mon-Fri). */
+const STALE = { triage: 2, pm: 5, corr: 10, ready: 3 };
+function bizDays(fromIso){
+  const t = Date.parse(fromIso || ''); if (!t) return 0;
+  const d = new Date(t); d.setHours(0, 0, 0, 0); const end = new Date(); end.setHours(0, 0, 0, 0); let n = 0;
+  while (d < end) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) n++; }
+  return n;
+}
+const isStale = i => !i.isMsg && STALE[i.sec] != null && i.bd >= STALE[i.sec];
+const staleChip = i => isStale(i) ? '<span class="bh-chip is-warn sm" title="Past the ' + STALE[i.sec] + '-business-day mark for this stage">Sitting ' + i.bd + ' business days</span>' : '';
+function snapOf(i){
+  const c = i.c, L = i.ledger || {};
+  return { amt: i.amtKnown ? r2(i.amt) : null, rev: i.rev, comp: compOf(i),
+    adj: c && c.revised_contract != null ? num(c.revised_contract) : null,
+    cos: c && Array.isArray(c.change_orders) ? c.change_orders.filter(x => /approved/i.test(x.status || '')).map(x => coNo(x.number)).filter(Boolean).sort().join(',') : null,
+    prev: L.available && L.exists ? L.prior : null, inCE: !!(L.available && L.thisApp && L.thisApp.length),
+    disc: discOf(i) ? 1 : 0, ledger: LIVE.ceInv ? String(LIVE.ceInv.as_of || LIVE.ceInv.generated_at || '').slice(0, 10) : '' };
+}
+const SNAP_AT = /^(with PM|ready for entry)$/;
+function snapEntry(i){ return [...(i.log || [])].reverse().find(e => e && e.snap && SNAP_AT.test(e.s || '')) || null; }
+function changesSince(i){
+  if (i.isMsg || !['pm', 'corr', 'ready'].includes(i.sec)) return [];
+  const e = snapEntry(i); if (!e) return [];
+  const a = e.snap, b = snapOf(i), out = [];
+  const add = (k, t, block) => out.push({ k, t, block: !!block });
+  if (a.amt != null && b.amt != null && Math.abs(a.amt - b.amt) > 0.005) add('amt', 'Amount changed from ' + money(a.amt) + ' to ' + money(b.amt), true);
+  if (b.rev > (a.rev || 1)) add('rev', 'The trade partner sent a revised ' + (i.type === 'Pay app' ? 'pay app' : 'invoice') + ' (rev ' + b.rev + ')', true);
+  if (a.comp !== 'bad' && b.comp === 'bad') add('comp', 'Compliance is now Non-Compliant (was ' + ({ ok: 'compliant', soon: 'expiring soon', none: 'not in Billy' }[a.comp] || 'not checked') + ')', true);
+  else if (a.comp === 'bad' && b.comp !== 'bad' && b.comp) add('comp', 'Compliance is no longer Non-Compliant', false);
+  if (!a.inCE && b.inCE && i.sec !== 'done') {
+    const t = (i.ledger.thisApp || []).reduce((s2, x) => s2 + Number(x.payable || 0), 0);
+    add('ce', 'CE already shows this pay app entered (' + money(r2(t)) + ' payable) — check it isn’t a double entry', true); }
+  if (a.cos != null && b.cos != null && b.cos !== a.cos) {
+    const was = new Set(String(a.cos).split(',').filter(Boolean)), now = String(b.cos).split(',').filter(x => x && !was.has(x));
+    if (now.length) add('cos', 'Change order' + (now.length > 1 ? 's' : '') + ' ' + now.map(x => '#' + x).join(', ') + ' approved in Procore since — the billing may need ' + (now.length > 1 ? 'them' : 'it'), false); }
+  if (a.adj != null && b.adj != null && Math.abs(a.adj - b.adj) > 0.005) add('adj', 'Revised contract changed from ' + money(a.adj) + ' to ' + money(b.adj), false);
+  if (a.prev != null && b.prev != null && Math.abs(a.prev - b.prev) > 0.005) add('prev', 'CE previous payments changed from ' + money(a.prev) + ' to ' + money(b.prev), false);
+  if (a.disc !== b.disc) add('disc', b.disc ? '2% discount now applies to this subcontract' : '2% discount no longer applies', false);
+  return out;
+}
+const chgSig = list => list.filter(x => x.block).map(x => x.k).sort().join(',');
+function chgAcked(i, list){
+  const sig = chgSig(list); if (!sig) return true;
+  const e = snapEntry(i), at = e ? String(e.at || '') : '';
+  return (i.log || []).some(x => x && x.chgAck && String(x.at || '') >= at && x.sig === sig);
+}
+const chgBlocked = i => { const l = changesSince(i); return l.some(x => x.block) && !chgAcked(i, l); };
+function sinceNotes(i){ const e = snapEntry(i), at = e ? String(e.at || '') : ''; return (i.log || []).filter(x => x && x.since && String(x.at || '') >= at); }
+function chgChip(i){
+  const l = changesSince(i); if (!l.length) return '';
+  const blk = l.some(x => x.block) && !chgAcked(i, l);
+  return '<span class="bh-chip ' + (blk ? 'is-bad' : 'is-warn') + ' sm" title="' + esc(l.map(x => x.t).join('\n')) + '">Changed since ' + (i.sec === 'pm' ? 'routed' : 'approved') + '</span>';
+}
+function chgBanner(i){
+  if (i.isMsg || !['pm', 'corr', 'ready'].includes(i.sec)) return '';
+  const l = changesSince(i), notes = sinceNotes(i), e = snapEntry(i);
+  const stale = isStale(i);
+  if (!l.length && !notes.length && !stale) return '';
+  const blk = l.some(x => x.block) && !chgAcked(i, l), acked = l.some(x => x.block) && !blk;
+  const when = i.sec === 'pm' ? 'routed' : 'approved';
+  let h = '<div class="chg-ban ' + (blk ? 'is-bad' : 'is-warn') + '"><div class="h">' + (l.length ? 'Changed since it was ' + when + (e ? ' (' + esc(fmtTime(e.at)) + ')' : '') : stale ? 'Sitting ' + i.bd + ' business days in ' + esc((SECTIONS.find(x => x.k === i.sec) || {}).t || '') : 'Notes since it was ' + when) + '</div>';
+  if (l.length) h += '<ul>' + l.map(x => '<li>' + (x.block ? '<b>' + esc(x.t) + '</b>' : esc(x.t)) + '</li>').join('') + '</ul>';
+  if (l.length && stale) h += '<div class="sub">Sitting ' + i.bd + ' business days in this stage.</div>';
+  if (notes.length) h += '<div class="sn">' + notes.map(x => '<div><b>' + esc(x.by || '') + '</b> · ' + esc(fmtTime(x.at)) + ' — ' + esc(x.note || '') + '</div>').join('') + '</div>';
+  if (acked) { const a = [...(i.log || [])].reverse().find(x => x && x.chgAck); h += '<div class="sub">Confirmed by ' + esc((a && a.by) || '') + (a && a.note ? ': ' + esc(a.note) : '') + '</div>'; }
+  if (blk && i.sec === 'ready' && acctSeat()) h += '<div class="sub">Mark entered is off until you confirm these or send it back.</div>'
+    + '<textarea id="chgNote" placeholder="Why it’s still right to enter (required to confirm)" style="width:100%;min-height:40px;border:1px solid var(--bh-slate);padding:6px 8px;font:13px var(--bh-font);margin-top:6px;box-sizing:border-box"></textarea>'
+    + '<div class="rv-act"><button class="bh-btn" data-do="chgok"' + (BUSY ? ' disabled' : '') + '>Confirm and keep</button><a href="#" data-do="chgback">Send back to ' + esc(P(i.approver || '').n) + ' to re-approve</a></div>';
+  h += '<div class="sub"><a href="#" data-do="sincenote">Add a note since ' + when + '</a></div>';
+  return h + '</div>';
+}
 function holdPanel(i, who){
   const picks = i.hr || [];
   return '<div class="cr hold-p"><div class="bh-label">Hold payment because</div>'
@@ -957,6 +1045,8 @@ function draw(){
         if (i.asNoted && i.sec === 'ready') chips.push('<span class="bh-chip sm">As noted</span>');
         if (i.hold && (i.sec === 'ready' || i.sec === 'done' || s.k === 'appr')) chips.unshift('<span class="bh-chip is-bad sm" title="' + esc(holdText(i.hold)) + '">Hold payment</span>');
         if (i.sec !== 'triage' && compChip(i)) chips.push(compChip(i));
+        if (chgChip(i)) chips.push(chgChip(i));
+        if (i.sec !== 'triage' && staleChip(i)) chips.push(staleChip(i));
         if ((i.sec === 'ready' || i.sec === 'done') && acctSeat() && discCalc(i)) chips.push('<span class="bh-chip sm" title="2% discount: pay ' + money(discCalc(i).pay) + '">2% discount</span>');
         if (i.raw === 'PM returned') chips.push('<span class="bh-chip sm">PM returned</span>');
         if (i.intakeRej) chips.push('<span class="bh-chip sm">Rejected at intake</span>');
@@ -975,8 +1065,8 @@ function draw(){
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
           + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : 'not read') + '</span>' + amtPop(i) : i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
-          + '<div class="ap-age' + (i.age > 5 && s.k !== 'done' ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (AGE === i.id ? agePop(i) : '') + '</div>'
-          + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i)
+          + '<div class="ap-age' + (isStale(i) ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (AGE === i.id ? agePop(i) : '') + '</div>'
+          + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i) + (staleChip(i) ? '<div class="chips">' + staleChip(i) + '</div>' : '')
               : noteCell(i) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '')) + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
       });
@@ -1245,7 +1335,7 @@ function pane(){
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
   const acctView = isAcct() && i.math && !i.isMsg;
-  if (TAB === 'review') h += compBanner(i) + holdBanner(i) + approvedBanner(i) + step1Banner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
+  if (TAB === 'review') h += compBanner(i) + chgBanner(i) + holdBanner(i) + approvedBanner(i) + step1Banner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
   if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF && !isInv(i)) h += reviewBox(i);
   if (TAB === 'review' && acctView) h += acctCheck(i);
   if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
@@ -1527,6 +1617,9 @@ function approvedBanner(i){
   if (i.type === 'Pay app' && i.po && acctSeat()) rows.push(['2% discount', dc
     ? '<b>Yes</b> · −' + money(dc.disc) + ' · pay <b>' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) + ' (7–10 days from approval)' : '') + (dsrc === 'desk' ? ' · <a href="#" data-do="discoff">Not on this subcontract</a>' : dsrc === 'ce' ? ' · from CE (2% Discount? = Yes)' : ' · from Procore') + ceDiscHint(i, dc)
     : (ceLed(i.po) && ceLed(i.po).discount_2pct ? 'No · CE subcontract says 2% Discount? = ' + esc(ceLed(i.po).discount_2pct) : 'No · <a href="#" data-do="discon">Subcontract agreed to 2% — apply it</a>')]);
+  { const l = changesSince(i), sn = sinceNotes(i);
+    if (l.length) rows.push(['Changed', l.map(x => (x.block && !chgAcked(i, l) ? '<b style="color:var(--bh-bad-ink,#9c0006)">' + esc(x.t) + '</b>' : esc(x.t))).join('<br>')]);
+    if (sn.length) rows.push(['Since approval', sn.map(x => esc(x.note || '') + ' <span class="note" style="margin:0">— ' + esc(x.by || '') + '</span>').join('<br>')]); }
   if (compOf(i) === 'soon') rows.push(['Compliance', '<b style="color:var(--bh-warn-ink,#7a5c00)">Certificate expiring soon</b>']);
   if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'No Billy contract for ' + esc(i.po || 'this commitment')]);
   if (done) rows.push(['Entered in CE', esc(f.CEReference || '—') + (f.EnteredAt ? ' · ' + esc(fmtTime(f.EnteredAt)) : '') + (f.EnteredBy ? ' · ' + esc(P(lc(f.EnteredBy)).n) : '')]);
@@ -2317,7 +2410,8 @@ async function saveRow(i, fields, logEntry, comment){
   if (logEntry) {
     const log = parseJ(f.StatusLog, []);
     if (!log.length && f.ReceivedAt) log.push({ s: f.Status || 'received', at: f.ReceivedAt });
-    log.push(Object.assign({ at: now, by: who }, logEntry));
+    const snapE = /^(with PM|ready for entry)$/.test(logEntry.s || '') && !logEntry.snap ? { snap: snapOf(i) } : {};
+    log.push(Object.assign({ at: now, by: who }, logEntry, snapE));
     body.StatusLog = JSON.stringify(log.slice(-60));
     if (fields.Status) body.StatusChangedAt = now;
   }
@@ -2378,7 +2472,9 @@ function act(k){
   if (k === 'bulkenter') {
     if (!acctSeat()) return;
     const v = ((document.getElementById('eRef') || {}).value || '').trim(); if (!v) { toast('Type the CE batch or reference first'); return; }
-    const sel = INV.filter(i => ENT.has(i.id) && i.sec === 'ready');
+    const all = INV.filter(i => ENT.has(i.id) && i.sec === 'ready'), sel = all.filter(i => !chgBlocked(i));
+    if (sel.length < all.length) toast((all.length - sel.length) + ' left out — changed since approved; confirm them one at a time');
+    if (!sel.length) return;
     run(async () => { let n = 0;
       for (const i of sel) { if (await saveRow(i, { Status:'approved and entered', CEReference:v, EnteredAt:new Date().toISOString(), EnteredBy: LIVE.me.email }, { s:'approved and entered', note:'Entered in ComputerEase · ' + v + ' (bulk, ' + sel.length + ' items)' })) { n++; ENT.delete(i.id); } }
       toast(n + ' marked entered'); });
@@ -2403,6 +2499,18 @@ function act(k){
   if (k === 'figedit') { i.editFig = true; pane(); return; }
   if (k.startsWith('pocode:')) { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
     const e = i.split.find(r => !r.code) || i.split[0]; e.code = k.slice(7); pane(); return; }
+  if (k === 'chgok') { if (!acctSeat()) return; const n = ((document.getElementById('chgNote') || {}).value || '').trim();
+    if (!n) { toast('Say why it’s still right to enter'); const t = $('#chgNote'); if (t) t.focus(); return; }
+    const l = changesSince(i);
+    run(async () => { if (await saveRow(i, {}, { chgAck: true, sig: chgSig(l), note: 'Changes since approval confirmed (' + l.filter(x => x.block).map(x => x.t).join('; ') + '): ' + n })) toast('Confirmed — ready to enter'); });
+    return; }
+  if (k === 'chgback') { if (!acctSeat()) return; const l = changesSince(i), to = i.approver || '';
+    if (!to) { toast('No approver on record — route it from More'); return; }
+    run(async () => { if (await saveRow(i, { Status:'with PM', AssignedApprover: to }, { s:'with PM', note:'Sent back to ' + P(to).n + ' to re-approve — changed since approval: ' + l.map(x => x.t).join('; ') + '.' })) toast('Sent back to ' + P(to).n); });
+    return; }
+  if (k === 'sincenote') { const n = prompt('Note since ' + (i.sec === 'pm' ? 'it was routed' : 'approval') + ' — e.g. Owner withheld the October draw, hold'); if (!n || !n.trim()) return;
+    run(async () => { if (await saveRow(i, {}, { since: true, note: n.trim() })) toast('Note added'); });
+    return; }
   if (k === 'cladd') { keepReview(i); const O = ceOpts(i); if (!O) return; if (!i.cl || !i.cl.length) i.cl = [{ ix: O.base.ix, amt:'' }];
     const co = O.opts.find(o => o.rfc && !o.why && !i.cl.some(r => String(r.ix) === String(o.ix)));
     i.cl.push({ ix: co ? co.ix : O.base.ix, amt:'' }); pane(); return; }
@@ -2613,7 +2721,9 @@ function act(k){
   if (k === 'totriage') { if (!acctSeat()) return;
     run(async () => { if (await saveRow(i, { Status:'received' }, { s:'received', note: i.sec === 'corr' ? 'Resubmission received; back to Triage.' : 'Back to Triage.' })) toast('Back in Triage'); });
     return; }
-  if (k === 'enter') { if (!acctSeat()) return; const v = prompt('CE voucher or invoice reference'); if (!v) { pane(); return; }
+  if (k === 'enter') { if (!acctSeat()) return;
+    if (chgBlocked(i)) { toast('This changed since it was approved — confirm the changes or send it back first'); TAB = 'review'; pane(); return; }
+    const v = prompt('CE voucher or invoice reference'); if (!v) { pane(); return; }
     run(async () => { if (await saveRow(i, { Status:'approved and entered', CEReference:v, EnteredAt:new Date().toISOString(), EnteredBy: LIVE.me.email }, { s:'approved and entered', note:'Entered in ComputerEase · ' + v })) toast('Marked entered'); });
     return; }
   if (k === 'notours') { if (!acctSeat()) return; const to = i.type === 'Pay app' ? 'invoice' : 'pay app';
@@ -2632,14 +2742,68 @@ function act(k){
 function toast(t){ const e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
 
 /* ---- header ------------------------------------------------------------------------ */
+/* ---- payables@ watch (28 Oct 2026) ------------------------------------------------------
+   While Accounting has the desk open it looks in payables@ every 5 minutes (delegated
+   Mail.ReadWrite.Shared - the permission the desk already uses for drafts; no app gets new
+   mailbox access) for mail newer than the newest item on the desk. New mail starts the
+   pay-app pull through the dashboard Worker (bh-compliance-sync -> repository_dispatch ->
+   BH-invoice-capture "AP pay apps"). The Worker allows one start per 10 minutes, and the
+   desk never starts it twice for the same mail. */
+const SYNC_WORKER_URL = 'https://bh-compliance-sync.soft-math-3331.workers.dev';
+const PW = { n: 0, newest: '', st: null, busy: false, at: '' };
+async function workerCall(body){
+  const tok = await token(); if (!tok) return null;
+  try { const r = await fetch(SYNC_WORKER_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({})); return Object.assign({ status: r.status }, j); }
+  catch (e) { return null; }
+}
+async function pwStatus(){ const st = await workerCall({ action: 'sync_status' }); PW.st = st && st.datasets ? st.datasets.payables || null : null; }
+async function payablesWatch(auto){
+  if (!LIVE.me || !LIVE.me.isAccounting || PW.busy) return;
+  const tok = await mailToken(); if (!tok) return;
+  const rows = (LIVE.queue && LIVE.queue.items) || [];
+  const since = rows.map(r => r.f.ReceivedAt).filter(Boolean).sort().pop() || new Date(Date.now() - 2 * 864e5).toISOString();
+  const r = await g(tok, '/users/' + PAYABLES + '/messages?$filter=' + encodeURIComponent('receivedDateTime gt ' + since)
+    + '&$select=id,receivedDateTime,isDraft,from&$orderby=receivedDateTime desc&$top=50');
+  if (!r.ok) return;
+  const msgs = ((r.body && r.body.value) || []).filter(m => !m.isDraft && lc(((m.from || {}).emailAddress || {}).address) !== PAYABLES);
+  PW.n = msgs.length; PW.newest = msgs.length ? msgs[0].receivedDateTime : ''; PW.at = new Date().toISOString();
+  await pwStatus();
+  if (auto && PW.n && PW.st && PW.st.can_sync && (!PW.st.last || PW.newest > PW.st.last)) await pullNow(true);
+  else header();
+}
+async function pullNow(auto){
+  if (PW.busy) return; PW.busy = true;
+  const j = await workerCall({ action: 'sync', dataset: 'payables' });
+  PW.busy = false;
+  if (j && j.ok) {
+    if (!auto) toast('Pulling payables@ — new items show up in a few minutes');
+    const again = () => run(async () => { await loadLive(); rebuild(); header(); draw(); if (SEL) pane(); });
+    setTimeout(again, 4 * 60e3); setTimeout(again, 9 * 60e3);
+  } else if (!auto) toast((j && j.error) || 'Could not start the pull — the Worker did not answer');
+  await pwStatus(); header();
+}
+function pwLine(){
+  if (!LIVE.me || !LIVE.me.isAccounting) return '';
+  const st = PW.st;
+  return (PW.n ? ' · <b class="pw-new">' + PW.n + ' new email' + (PW.n === 1 ? '' : 's') + ' in payables@ not pulled yet</b>' : '')
+    + (st && st.last ? ' · pull started ' + esc(fmtTime(st.last)) : '')
+    + ' · <a href="#" id="pullNow"' + (st && !st.can_sync ? ' title="' + esc(st.reason || '') + '"' : '') + '>Pull now</a>';
+}
+document.addEventListener('click', e => { if (e.target && e.target.id === 'pullNow') { e.preventDefault(); pullNow(false); } });
+setInterval(() => { if (document.visibilityState === 'visible') payablesWatch(true); }, 5 * 60e3);
+setTimeout(() => payablesWatch(true), 8000);
 function header(){
   const me = LIVE.me;
   $('#me').textContent = initials(me.name); $('#me').title = me.name + (me.isAccounting ? ' · Accounting' : '');
   $('#asof').textContent = LIVE.cMeta && LIVE.cMeta.generated_at ? fmtTime(LIVE.cMeta.generated_at) : '—';
+  { const ce = LIVE.ceInv && (LIVE.ceInv.as_of || String(LIVE.ceInv.generated_at || '').slice(0, 10));
+    const bd = ce ? bizDays(ce + 'T12:00:00') : null;
+    $('#fresh').innerHTML = 'CE ledger <b class="' + (bd != null && bd > 1 ? 'old' : '') + '">' + (ce ? esc(usDate(ce)) + (bd > 1 ? ' · ' + bd + ' business days old' : '') : '—') + '</b>'; }
   const rows = (LIVE.queue && LIVE.queue.items) || [];
   const newest = rows.map(r => r.f.ReceivedAt).filter(Boolean).sort().pop();
   const today = new Date().toISOString().slice(0,10), nNew = rows.filter(r => String(r.f.ReceivedAt||'').slice(0,10) === today).length;
-  $('#pull').innerHTML = 'Newest from payables@ <b>' + esc(newest ? fmtTime(newest) : '—') + '</b>' + (nNew ? ' · ' + nNew + ' today' : '');
+  $('#pull').innerHTML = 'Newest from payables@ <b>' + esc(newest ? fmtTime(newest) : '—') + '</b>' + (nNew ? ' · ' + nNew + ' today' : '') + pwLine();
   const opts = me.isAccounting
     ? '<option value="' + ACCT + '">' + esc(me.name) + ' — Accounting</option>' + Object.keys(PEOPLE).filter(k => k !== ACCT && k !== me.email).sort((a,b) => P(a).n.localeCompare(P(b).n)).map(k => '<option value="' + esc(k) + '">' + esc(P(k).n) + (P(k).dept ? ' — ' + esc(P(k).dept) + ' department head' : ' — view only') + '</option>').join('')
       + '<option value="' + esc(me.email) + '">' + esc(me.name) + ' — as approver</option>'
@@ -2959,7 +3123,7 @@ $('#tType').addEventListener('click', e => { e.stopPropagation(); const b = e.ta
 document.addEventListener('click', () => { const m = $('#tType'); if (m && !m.hidden) typeMenu(false); });
 $('#tMine').addEventListener('click', () => { MINE = !MINE; $('#tMine').setAttribute('aria-pressed', MINE); draw(); });
 $('#tChg').addEventListener('click', () => { CHG = !CHG; $('#tChg').setAttribute('aria-pressed', CHG); draw(); });
-$('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); }));
+$('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); payablesWatch(false); }));
 $('#who').addEventListener('change', e => { WHO = e.target.value; MINE = false; BULK.clear(); $('#tMine').setAttribute('aria-pressed', false); MENU = false; CF = false; draw(); if (SEL) { if (INV.some(x => x.id === SEL && inScope(x))) pane(); else closePane(); } });
 document.addEventListener('keydown', e => {
   if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { if (e.key === 'Escape') document.activeElement.blur(); return; }
