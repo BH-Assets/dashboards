@@ -108,13 +108,11 @@ body.no-pane .ap-pane{display:none}
 .rv-g .cr{margin-top:12px;padding-top:12px;border-top:1px solid var(--bh-hairline)}
 .ap-row.is-appr{box-shadow:inset 3px 0 0 #1b7f3b}
 .sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
-.comp-ban{border-left:4px solid var(--bh-ok-ink,#1e7b34);background:var(--bh-ok-bg,#eef7ef);padding:10px 14px;margin:0 0 12px;font-size:13px;line-height:1.45}
+.comp-ban{border-left:4px solid var(--bh-ok-ink,#1e7b34);background:var(--bh-ok-bg,#eef7ef);padding:8px 14px;margin:0 0 12px;font-size:13px;line-height:1.45}
 .comp-ban.is-bad{border-left-color:var(--bh-bad-ink,#9c0006);background:var(--bh-bad-bg,#fbebeb)}
 .comp-ban.is-warn{border-left-color:var(--bh-warn-ink,#b07d00);background:var(--bh-warn-bg,#fdf6e3)}
-.comp-ban .h{font-weight:700;margin-bottom:4px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
-.comp-ban .src{font-weight:400;font-size:12px;color:var(--bh-ink-muted)}
-.comp-ban .cov{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
-.comp-ban .sub{font-size:12px;color:var(--bh-ink-muted);margin-top:4px}
+.comp-ban .src{font-size:12px;color:var(--bh-ink-muted)}
+.comp-ban a{margin-left:8px;font-size:12px}
 .sp-row .bh-input{flex:1 1 auto;width:auto;min-width:0;min-height:34px;box-sizing:border-box}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
 .sp-row .cl-sel{flex:1 1 200px;min-width:0;max-width:100%;min-height:34px;font-size:13px}
@@ -880,42 +878,16 @@ function discCalc(i){
   return { disc: d, pay: Math.round((i.amt - d) * 100) / 100, by: appr ? new Date(appr.getTime() + 10 * 864e5).toISOString() : null };
 }
 /* ---- Compliance banner (28 Oct 2026) ----------------------------------------------------
-   The Compliance desk's verdict for this subcontract or PO (Billy, per contract), on the
-   review tab for Accounting and the approver. Per-coverage dates arrive with the commitments
-   pull; until then the banner shows the status and notes only. */
+   The Compliance desk's status for this subcontract or PO (Billy, per contract), on the review
+   tab for Accounting and the approver. Status only - the details live on the Compliance desk. */
 const COMPLIANCE_URL = 'https://compliance.baileyharris.com';
-function covText(name, c){
-  if (!c) return null;
-  const d = c.days, exp = c.exp ? usDate(c.exp) : '';
-  if (d === 'waived') return { t: name + ' waived', k: '' };
-  if (d === 'missing') return { t: name + ' missing', k: 'is-bad' };
-  if (d === 'expired') return { t: name + ' expired' + (exp ? ' ' + exp : ''), k: 'is-bad' };
-  if (typeof d === 'number' || /^-?\d+$/.test(String(d))) { const n = Number(d);
-    return n < 0 ? { t: name + ' expired ' + exp, k: 'is-bad' } : { t: name + ' ' + exp + ' · ' + n + ' day' + (n === 1 ? '' : 's'), k: n <= 30 ? 'is-warn' : 'is-ok' }; }
-  return exp ? { t: name + ' ' + exp, k: '' } : null;
-}
 function compBanner(i){
   if (i.isMsg || !i.c) return '';
   const k = compOf(i), C = i.c.compliance;
-  if (k === 'none') {
-    const other = (i.c.billy_other_contracts || []).filter(Boolean);
-    return '<div class="comp-ban is-warn"><div class="h">Compliance · Not in Billy</div>'
-      + '<div>No Billy contract for ' + esc(i.c.number || i.po || 'this commitment') + ', so nothing has been checked.'
-      + (other.length ? ' Billy tracks ' + esc(i.c.vendor || 'this vendor') + ' on this job only under ' + esc(other.join(', ')) + '.' : '') + '</div>'
-      + '<div class="sub"><a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Open the Compliance desk</a></div></div>';
-  }
-  const st = C.status || (C.billy_is_compliant === 'Yes' ? 'Compliant' : 'Non-Compliant');
-  const cov = Object.entries(C.coverages || {}).map(([n, c]) => covText(n, c)).filter(Boolean);
-  if (C.w9_on_file === 'No') cov.push({ t: 'W-9 not on file', k: '' });
-  const soon = Object.values(C.coverages || {}).some(c => c && /^\d+$/.test(String(c.days)) && Number(c.days) <= 10);
-  return '<div class="comp-ban ' + (k === 'bad' ? 'is-bad' : k === 'soon' ? 'is-warn' : 'is-ok') + '"><div class="h">Compliance · ' + esc(st)
-    + '<span class="src">Compliance desk · Billy contract ' + esc(i.c.number || i.po || '') + '</span></div>'
-    + (cov.length ? '<div class="cov">' + cov.map(x => '<span class="bh-chip sm ' + x.k + '">' + esc(x.t) + '</span>').join('') + '</div>' : '')
-    + (C.notes ? '<div>' + esc(C.notes) + '</div>' : '')
-    + (C.mgr_review === 'Yes' && C.mgr_reasons ? '<div><b>Needs a manager look:</b> ' + esc(C.mgr_reasons) + '</div>' : '')
-    + (soon && k !== 'bad' ? '<div><b>A certificate expires within 10 days</b> — check it is renewed before this is paid.</div>' : '')
-    + '<div class="sub">' + [C.last_requested ? 'Last requested ' + esc(usDate(C.last_requested)) : '', C.vendor_email ? esc(C.vendor_email) : '',
-        '<a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Open the Compliance desk</a>'].filter(Boolean).join(' · ') + '</div></div>';
+  const st = k === 'none' ? 'Not in Billy' : (C.status || (C.billy_is_compliant === 'Yes' ? 'Compliant' : 'Non-Compliant'));
+  return '<div class="comp-ban ' + (k === 'bad' ? 'is-bad' : k === 'ok' ? 'is-ok' : 'is-warn') + '"><b>Compliance · ' + esc(st) + '</b>'
+    + (k === 'none' ? ' <span class="src">— no Billy contract for ' + esc(i.c.number || i.po || 'this commitment') + ', so nothing has been checked</span>' : '')
+    + ' <a href="' + COMPLIANCE_URL + '" target="_blank" rel="noopener">Details on the Compliance desk ›</a></div>';
 }
 function holdPanel(i, who){
   const picks = i.hr || [];
