@@ -26,6 +26,7 @@
 .ap-fo[aria-checked="true"]{font-weight:700}
 .ap-fo[aria-checked="true"]::before{content:'✓';position:absolute;left:12px}
 #tTypeBtn.on{background:var(--bh-black);color:#fff}
+.ap-xm{min-width:290px}.ap-xj{display:flex;align-items:center;gap:8px;padding:8px 14px 2px 32px;font:600 12px var(--bh-font)}.ap-xj input{flex:1;height:30px;font-size:13px;min-width:0}.ap-xn{padding:2px 14px 6px 32px;font-size:11px;color:var(--bh-ink-muted)}
 .ap-tog{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;border:1px solid var(--bh-slate);background:#fff;font:600 12px/1 var(--bh-font);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;color:var(--bh-ink)}
 .ap-tog[aria-pressed="true"]{background:var(--bh-black);color:#fff;border-color:var(--bh-black)}
 .ap-tog .n{font-weight:700}
@@ -83,6 +84,10 @@ body.no-pane .ap-pane{display:none}
 .ap-pane.wide .iv{grid-template-columns:minmax(0,1fr) minmax(620px,760px);gap:20px}   /* same split as a pay app beside its PDF */
 .ap-pane.wide .iv-pdf{height:calc(100vh - 210px);min-height:520px}
 .ap-pane.wide .iv-r{position:sticky;top:12px;align-self:start}
+.hold-ban{border-left:4px solid var(--bh-bad-ink,#9c0006);background:#fdecee;padding:12px 16px;margin:0 0 16px;font-size:13px;line-height:1.5}
+.hold-ban .h{font-weight:700;font-size:14px;color:var(--bh-bad-ink,#9c0006)}
+.hold-ban .sub{color:var(--bh-ink-muted);font-size:12px;margin-top:4px}
+.comp-warn{border-left:4px solid var(--bh-bad-ink,#9c0006);background:#fdecee;padding:8px 12px;margin:0 0 10px;font-size:13px}
 .ok-ban{border-left:4px solid #1b7f3b;background:#eef8f0;padding:12px 16px;margin:0 0 16px;font-size:13px;line-height:1.5}
 .ok-ban .h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:700;font-size:14px;color:#14532d}
 .ok-ban .h .ic{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#1b7f3b;color:#fff;align-items:center;justify-content:center;font-size:12px}
@@ -105,6 +110,8 @@ body.no-pane .ap-pane{display:none}
 .sp-row{display:flex;gap:6px;align-items:center;margin-top:6px}
 .sp-row .bh-input{flex:1 1 auto;width:auto;min-width:0;min-height:34px;box-sizing:border-box}
 .sp-row .bh-input.sp-amt{flex:0 0 130px;width:130px}
+.sp-row .cl-sel{flex:1 1 200px;min-width:0;max-width:100%;min-height:34px;font-size:13px}
+.ok-ban .cl-box{background:#fff;border:1px solid var(--bh-hairline,#ddd);padding:4px 10px 10px;margin-top:8px}
 .ap-colh{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;gap:14px;padding:7px 8px 6px;border-bottom:1px solid var(--bh-hairline);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted)}
 .ap-colh .r{text-align:right}
 .ap-ce{min-width:0;font-size:12px}
@@ -350,6 +357,8 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
   <button class="ap-tog" id="refresh">Refresh</button>
   <label class="ap-as"><span class="bh-label">Viewing as</span><select class="bh-select" id="who"></select></label>
+  <span class="ap-filt" id="xWrap"><button class="ap-tog" id="xBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+    <span class="ap-fm ap-xm" id="xMenu" role="menu" hidden><span class="bh-label">Excel, laid out like CE</span><button class="ap-fo" role="menuitem" data-x="open">A/P open invoices</button><button class="ap-fo" role="menuitem" data-x="sub">Subcontractor detail by vendor</button><label class="ap-xj">Jobs <input class="bh-input" id="xJobs" autocomplete="off"></label><span class="ap-xn">Blank = every job with a pay app open on the desk</span></span></span>
 </div>
 
 <div class="ap-work">
@@ -581,6 +590,7 @@ function toItem(row){
     ledger: L,
   };
   { const kl = [...log].reverse().find(e => e.ctd); i.ctdBy = kl ? kl.by : ''; }
+  i.hold = holdOf(i);
   i.age = Math.max(0, Math.floor((Date.now() - (Date.parse(i.changedAt||'') || Date.now())) / 86400000));
   if (!isMsg && /no text in the pdf|read by ocr/i.test(note)) i.note = note;
   if (pay && !figs && !i.note && /not on attachment g/i.test(note)) i.note = note;
@@ -754,6 +764,7 @@ function triageCheck(i){
   if (issues.length) c.push('<span class="bh-chip is-bad sm" title="' + esc(issues.join('\n')) + '">' + issues.length + ' flag' + (issues.length > 1 ? 's' : '') + '</span>');
   else if (i.type !== 'Invoice') c.push('<span class="bh-chip is-ok sm" title="Pay app figures agree with Procore and CE">✓ Match</span>');
   if (i.note) c.push('<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">' + (/ocr|scan/i.test(i.note) ? 'OCR · check accuracy' : 'Needs a look') + '</span>');
+  if (compChip(i)) c.push(compChip(i));
   if (i.type === 'Invoice') c.push('<span class="bh-chip sm">Invoice</span>');
   if (i.rev > 1) c.push('<span class="bh-chip sm">Rev ' + i.rev + '</span>');
   if (i.replied) c.push('<span class="bh-chip ' + (i.replyNew ? 'is-warn ' : '') + 'sm">Trade partner replied</span>');
@@ -769,11 +780,17 @@ function noteCell(i){
    its amount; hovering the balance due shows the names, PO, document and approval. */
 function ceLines(i){
   const f = i.f;
+  const spE = ceSplitOf(i);
+  if (i.type === 'Pay app' && spE && spE.ceSplit && spE.ceSplit.length)
+    return spE.ceSplit.map(x => ({ code: (x.pc ? (i.job || '') + '.' + x.pc : 'Sub ' + (i.po || '—')) + ' · ' + (x.rfc ? 'CO ' + x.rfc : 'SC'), amt: x.amt,
+      nm: 'Sub ' + (i.po || '') + (x.line && x.line.includes(' · ') ? ' · ' + x.line.split(' · ').slice(1).join(' · ') : '') + (x.amt == null ? ' · all of this period' : ' · before retainage') }));
   if (i.type === 'Pay app') return [{ code: 'Sub ' + (i.po || '—'), amt: i.amtKnown ? i.amt : null, nm: 'Net due' + (f.RetainageHeld != null && f.RetainageHeld !== '' ? ' · retainage held ' + money(Number(f.RetainageHeld)) : '') }];
   const parts = String(f.CostCode || '').split(/\s*;\s*/).filter(Boolean);
-  return parts.map(p => { const m = p.match(/\s+\$([\d,.-]+)$/), code = p.replace(/\s+\$[\d,.-]+$/, '');
-    const x = isJobInv(i) ? ccFind(i.job, code) : null;
-    return { code, amt: m ? Number(m[1].replace(/,/g, '')) : (parts.length === 1 && i.amtKnown ? i.amt : null), nm: x ? ccLabel(x, i.job) : (!isJobInv(i) ? glName(code) : '') }; });
+  const pls = (spE && spE.poLines) || [];
+  return parts.map((p, k) => { const m = p.match(/\s+\$([\d,.-]+)$/), code = p.replace(/\s+\$[\d,.-]+$/, '');
+    const x = isJobInv(i) ? ccFind(i.job, code) : null, pl = pls[k];
+    return { code: code + (pl && pl.rfc ? ' · PO CO ' + pl.rfc : ''), amt: m ? Number(m[1].replace(/,/g, '')) : (parts.length === 1 && i.amtKnown ? i.amt : null),
+      nm: (pl ? 'PO ' + (spE.poRef || '') + ' · ' + (pl.rfc ? 'CO ' + pl.rfc : 'base line') + (pl.line && pl.line.includes(' · ') ? ' · ' + pl.line.split(' · ').slice(1).join(' · ') : '') + ' · ' : '') + (x ? ccLabel(x, i.job) : (!isJobInv(i) ? glName(code) : '')) }; });
 }
 function ceCell(i){
   const L = ceLines(i);
@@ -791,7 +808,77 @@ function amtPop(i){
   if (f.DueDate) rows.push(['Due', esc(usDate(f.DueDate))]);
   if (f.ApprovedBy) rows.push(['Approved', esc(P(lc(f.ApprovedBy)).n) + (f.ApprovedAt ? ' · ' + esc(fmtTime(f.ApprovedAt)) : '')]);
   if (ent && ent.asNoted) rows.push(['Note', esc(String(ent.note || '').split(' — Approved')[0])]);
+  const dc = discCalc(i);
+  if (dc) rows.push(['2% discount', '−' + money(dc.disc) + ' · <b>pay ' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) : '') + ceDiscHint(i, dc)]);
+  if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'Not in Billy']);
+  if (i.hold) rows.unshift(['HOLD', '<b style="color:var(--bh-bad-ink,#9c0006)">Hold payment</b> — ' + esc(holdText(i.hold))]);
   return '<div class="amt-pop" role="tooltip"><div class="ah">Enter in CE · ' + (i.amtKnown ? money(i.amt) : '') + '</div><dl>' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl></div>';
+}
+/* Payment holds, compliance and the 2% discount (28 Oct 2026).
+   A hold is approval with payment held back: the item still goes to Ready for entry
+   and is keyed in CE, but CE's payment is held until the hold is released. It lives
+   in the StatusLog ({hold:true|false, holdReasons, holdNote}), so no list column. */
+const HOLD_REASONS = [
+  ['comp','Not compliant in Billy (insurance / COI)'],
+  ['waiver','Lien waiver missing (unconditional for the last payment)'],
+  ['work','Work not complete or not in place yet'],
+  ['inspect','Waiting on inspection or owner acceptance'],
+  ['punch','Punch list or defective work open'],
+  ['closeout','Retainage: closeout documents outstanding (O&Ms, warranties, as-builts)'],
+  ['owner','Owner has not paid us for this work yet (pay-when-paid)'],
+  ['backcharge','Backcharge or dispute pending'],
+  ['payroll','Certified payroll missing (prevailing-wage job)'],
+  ['co','Change order billed but not yet executed'],
+  ['setup','Vendor setup incomplete (W-9, banking)'],
+  ['joint','Sub-tier supplier notice: joint check needed'],
+];
+const holdText = h => !h ? '' : (h.reasons || []).map(k => (HOLD_REASONS.find(r => r[0] === k) || [k, k])[1]).concat(h.note ? [h.note] : []).join('; ');
+function holdOf(i){
+  const e = [...(i.log || [])].reverse().find(x => x && x.hold !== undefined);
+  return e && e.hold ? { reasons: e.holdReasons || [], note: e.holdNote || '', by: e.by || '', at: e.at || '' } : null;
+}
+/* Billy compliance for the item's subcontract or PO: 'ok' | 'bad' | 'none' (no Billy
+   contract) | '' (no commitment matched, so nothing to say). */
+function compOf(i){
+  if (!i.c || i.isMsg) return '';
+  if (!i.c.compliance) return 'none';
+  return i.c.compliance.billy_is_compliant === 'Yes' ? 'ok' : 'bad';
+}
+const compChip = i => { const c = compOf(i);
+  return c === 'bad' ? '<span class="bh-chip is-bad sm" title="Billy shows this subcontract as not compliant">Not compliant</span>'
+    : c === 'none' ? '<span class="bh-chip is-warn sm" title="No Billy contract for this commitment number">Not in Billy</span>' : ''; };
+/* 2% discount: agreed per subcontract on its DocuSign. Source, in order: the Procore
+   commitment field (c.discount_2pct, once the pull carries it), else the latest choice
+   Accounting made on the desk for that subcontract. Shown from Ready for entry on. */
+function discOf(i){
+  const num = String(i.po || '').toUpperCase();
+  if (!num || isInv(i)) return null;
+  if (i.c && i.c.discount_2pct) return /^y/i.test(i.c.discount_2pct) ? 'procore' : null;
+  /* CE's "2% Discount?" field on the subcontract (published by the CE ledger pull from 28 Oct 2026) */
+  const led = LIVE.ceInv && LIVE.ceInv.subcontracts ? LIVE.ceInv.subcontracts[num] : null;
+  if (led && led.discount_2pct) return /^y/i.test(led.discount_2pct) ? 'ce' : null;
+  let last = null;
+  for (const x of INV) if (String(x.po || '').toUpperCase() === num)
+    for (const e of (x.log || [])) if (e && e.disc !== undefined && (!last || String(e.at) > String(last.at))) last = e;
+  return last && last.disc ? 'desk' : null;
+}
+function discCalc(i){
+  if (!discOf(i) || !i.amtKnown) return null;
+  const d = Math.round(i.amt * 2) / 100, appr = i.f.ApprovedAt ? new Date(i.f.ApprovedAt) : null;
+  return { disc: d, pay: Math.round((i.amt - d) * 100) / 100, by: appr ? new Date(appr.getTime() + 10 * 864e5).toISOString() : null };
+}
+function holdPanel(i, who){
+  const picks = i.hr || [];
+  return '<div class="cr hold-p"><div class="bh-label">Hold payment because</div>'
+    + HOLD_REASONS.map(([k, t]) => '<label class="ck"><input type="checkbox" data-hr="' + k + '"' + (picks.includes(k) ? ' checked' : '') + '> ' + esc(t) + '</label>').join('')
+    + '<textarea id="holdNote" style="width:100%;min-height:44px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:6px;box-sizing:border-box" placeholder="Anything else — e.g. release when the final waiver is in">' + esc(i.hn || '') + '</textarea>'
+    + '<div class="rv-act"><button class="bh-btn" data-do="' + (who === 'pm' ? 'revhold' : 'holdset') + '"' + (BUSY ? ' disabled' : '') + '>' + (who === 'pm' ? 'Approve and hold payment' : 'Hold payment') + '</button><a href="#" data-do="holdtoggle">Cancel</a></div>'
+    + '<p class="note" style="margin:6px 0 0">' + (who === 'pm' ? 'It goes to Accounting to enter in CE with payment held until the hold is released.' : 'Enter it in CE with payment held. Release the hold here when it clears.') + '</p></div>';
+}
+function holdBanner(i){
+  const h = i.hold; if (!h || !(i.sec === 'ready' || i.sec === 'done')) return '';
+  return '<div class="hold-ban"><div class="h">Payment on hold</div><div>' + esc(holdText(h)) + '</div>'
+    + '<div class="sub">' + esc(h.by || '') + (h.at ? ' · ' + esc(fmtTime(h.at)) : '') + (acctSeat() ? ' · <a href="#" data-do="holdrelease">Release the hold</a>' : '') + '</div></div>';
 }
 function nextStep(i){
   if (i.isMsg) return i.draft ? 'Reply drafted in payables@' : 'Email — link, reply or dismiss';
@@ -809,6 +896,7 @@ function nextStep(i){
 function draw(){
   if (!LIVE.me) return;
   document.body.classList.toggle('v-exp', VIEW === 'exp');
+  { const w = document.getElementById('xWrap'); if (w) w.hidden = !isAcct(); }
   if (VIEW === 'exp') { drawExp(); return; }
   typeBar();
   const v = visible();
@@ -845,6 +933,9 @@ function draw(){
         if (i.note && i.sec === 'triage') chips.push('<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">' + (/ocr|scan/i.test(i.note) ? 'Scanned · check figures' : 'Needs a look') + '</span>');
         if (s.k === 'appr') chips.push(i.sec === 'ready' ? '<span class="bh-chip is-warn sm">Waiting for entry</span>' : '<span class="bh-chip is-ok sm">Entered in CE' + (i.f.CEReference ? ' · ' + esc(i.f.CEReference) : '') + '</span>');
         if (i.asNoted && i.sec === 'ready') chips.push('<span class="bh-chip sm">As noted</span>');
+        if (i.hold && (i.sec === 'ready' || i.sec === 'done' || s.k === 'appr')) chips.unshift('<span class="bh-chip is-bad sm" title="' + esc(holdText(i.hold)) + '">Hold payment</span>');
+        if (i.sec !== 'triage' && compChip(i)) chips.push(compChip(i));
+        if ((i.sec === 'ready' || i.sec === 'done') && acctSeat() && discCalc(i)) chips.push('<span class="bh-chip sm" title="2% discount: pay ' + money(discCalc(i).pay) + '">2% discount</span>');
         if (i.raw === 'PM returned') chips.push('<span class="bh-chip sm">PM returned</span>');
         if (i.intakeRej) chips.push('<span class="bh-chip sm">Rejected at intake</span>');
         if (i.mailPending && i.sec === 'corr') chips.push('<span class="bh-chip is-warn sm">' + (i.draft ? 'Draft ready' : 'Email to send') + '</span>');
@@ -1092,6 +1183,7 @@ function secondary(i){
 }
 function moreItems(i){
   const m = [];
+  if (acctSeat() && !i.isMsg && (i.sec === 'ready' || i.sec === 'done')) m.push(i.hold ? ['holdrelease','Release the payment hold'] : ['holdtoggle','Hold payment…']);
 
   if (acctSeat() && i.isMsg) { if (msgKind(i) === 'comp') m.push(['reply','Reply']); else m.push(['fwdcomp','Forward to compliance']); m.push(['link','Attach to an item (AP-####)']); m.push(['dismiss','Dismiss — no action needed']); return m; }
   if (acctSeat() && i.sec !== 'done') m.push(['reply', i.replied ? 'Reply to the trade partner' : 'Email the trade partner']);
@@ -1131,7 +1223,7 @@ function pane(){
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
   const acctView = isAcct() && i.math && !i.isMsg;
-  if (TAB === 'review') h += approvedBanner(i) + routedBanner(i);
+  if (TAB === 'review') h += holdBanner(i) + approvedBanner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
   if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF && !isInv(i)) h += reviewBox(i);
   if (TAB === 'review' && acctView) h += acctCheck(i);
   if (TAB === 'review' && i.type === 'Invoice') h += invView(i);
@@ -1400,14 +1492,24 @@ function approvedBanner(i){
   const note = ent && ent.asNoted ? String(ent.note || '').split(' — Approved')[0] : '';
   const rows = [];
   if (by) rows.push(['Approved', esc(by) + (at ? ' · ' + esc(fmtTime(at)) : '')]);
-  if (i.type === 'Invoice' && f.CostCode) rows.push([isJobInv(i) ? 'Cost code' : 'GL account', String(f.CostCode).split(/\s*;\s*/).map(c => { const x = isJobInv(i) ? ccFind(i.job, c.replace(/\s+\$[\d,.-]+$/, '')) : null; const g = !isJobInv(i) ? glName(c) : '';
-    return '<b>' + esc(c) + '</b>' + (x ? ' · ' + esc(ccLabel(x, i.job)) : g ? ' · ' + esc(g) : ''); }).join('<br>')]);
+  if (i.type === 'Invoice' && f.CostCode) rows.push([isJobInv(i) ? 'Cost code' : 'GL account', String(f.CostCode).split(/\s*;\s*/).map((c, k) => { const pl = (((ceSplitOf(i) || {}).poLines) || [])[k]; const x = isJobInv(i) ? ccFind(i.job, c.replace(/\s+\$[\d,.-]+$/, '')) : null; const g = !isJobInv(i) ? glName(c) : '';
+    return '<b>' + esc(c) + '</b>' + (x ? ' · ' + esc(ccLabel(x, i.job)) : g ? ' · ' + esc(g) : '') + (pl ? ' · PO line <b>' + esc(pl.rfc ? 'CO ' + pl.rfc : 'base') + '</b>' : ''); }).join('<br>')]);
   if (i.type === 'Invoice' && f.Subcontract) rows.push(['PO #', '<b>' + esc(f.Subcontract) + '</b>']);
   if (i.type === 'Pay app' && i.po) rows.push(['Subcontract', esc(i.po) + (i.c ? ' · ' + esc(i.c.vendor) : '')]);
+  if (i.type === 'Pay app') { const e = ceSplitOf(i);
+    if (e && e.ceSplit && e.ceSplit.length) rows.push(['Enter in CE', e.ceSplit.map(x => '<b>' + esc((x.pc ? (i.job || '') + '.' + x.pc + ' ' : '') + (x.rfc ? 'CO ' + x.rfc : 'SC')) + '</b> ' + (x.amt != null ? money(x.amt) : '(all of this period)')
+      + (x.line && x.line.includes(' · ') ? ' · ' + esc(x.line.split(' · ').slice(1).join(' · ')) : '')).join('<br>') + '<div class="note" style="margin:2px 0 0">Before retainage, one CE line each' + (acctSeat() ? ' · <a href="#" data-do="cledit">Edit</a>' : '') + '</div>']);
+    else if (acctSeat() && ceOpts(i)) rows.push(['Enter in CE', 'No CE split from the approver · <a href="#" data-do="cledit">Add it</a>']); }
   if (note) rows.push(['Note', esc(note)]);
+  const dc = discCalc(i), dsrc = discOf(i);
+  if (i.type === 'Pay app' && i.po && acctSeat()) rows.push(['2% discount', dc
+    ? '<b>Yes</b> · −' + money(dc.disc) + ' · pay <b>' + money(dc.pay) + '</b>' + (dc.by ? ' by ' + esc(usDate(dc.by)) + ' (7–10 days from approval)' : '') + (dsrc === 'desk' ? ' · <a href="#" data-do="discoff">Not on this subcontract</a>' : dsrc === 'ce' ? ' · from CE (2% Discount? = Yes)' : ' · from Procore') + ceDiscHint(i, dc)
+    : (ceLed(i.po) && ceLed(i.po).discount_2pct ? 'No · CE subcontract says 2% Discount? = ' + esc(ceLed(i.po).discount_2pct) : 'No · <a href="#" data-do="discon">Subcontract agreed to 2% — apply it</a>')]);
+  if (compOf(i) === 'bad' || compOf(i) === 'none') rows.push(['Compliance', compOf(i) === 'bad' ? '<b style="color:var(--bh-bad-ink,#9c0006)">Not compliant in Billy</b>' : 'No Billy contract for ' + esc(i.po || 'this commitment')]);
   if (done) rows.push(['Entered in CE', esc(f.CEReference || '—') + (f.EnteredAt ? ' · ' + esc(fmtTime(f.EnteredAt)) : '') + (f.EnteredBy ? ' · ' + esc(P(lc(f.EnteredBy)).n) : '')]);
   return '<div class="ok-ban' + (done ? ' done' : '') + '"><div class="h"><span class="ic">✓</span>' + (done ? 'Entered in CE' : (note ? 'Approved as noted' : 'Approved') + ' — ready for entry in CE')
-    + (i.amtKnown ? '<span style="font-weight:600;color:inherit">' + money(i.amt) + '</span>' : '') + '</div><dl>' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl></div>';
+    + (i.amtKnown ? '<span style="font-weight:600;color:inherit">' + money(i.amt) + '</span>' : '') + '</div><dl>' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>'
+    + (i.clOpen && acctSeat() && i.type === 'Pay app' ? ceSplitBox(i) + '<div class="rv-act"><button class="bh-btn" data-do="clsave"' + (BUSY ? ' disabled' : '') + '>Save the split</button><a href="#" data-do="cledit">Cancel</a></div>' : '') + '</div>';
 }
 /* Routed banner (22 Oct 2026): what the approver reads first - Accounting has verified it,
    who routed it and when, Accounting's notes, and what is left for them to do. */
@@ -1447,11 +1549,19 @@ function poGuess(i){
   const hits = v ? jobPOs(i.job).filter(c => String(c.vendor || '').toLowerCase().includes(v)) : [];
   return hits.length === 1 ? String(hits[0].number) : '';
 }
+function keepHold(i){
+  const b = document.querySelectorAll('[data-hr]'); if (b.length) i.hr = [...b].filter(x => x.checked).map(x => x.dataset.hr);
+  const n = document.getElementById('holdNote'); if (n) i.hn = n.value;
+}
 function keepReview(i){
+  keepHold(i);
   const po = document.getElementById('poOn'); if (po) i.poOn = po.checked;
   const pp = document.getElementById('poPick'); if (pp) i.poSel = pp.value.trim();
   const rows = [...document.querySelectorAll('[data-sp-code]')];
   if (rows.length) i.split = rows.map(el => ({ code: el.value.trim(), amt: ((document.querySelector('[data-sp-amt="' + el.dataset.spCode + '"]') || {}).value || '').trim() }));
+  document.querySelectorAll('[data-spl]').forEach(el => { const r = (i.split || [])[Number(el.dataset.spl)]; if (r) r.line = el.value; });
+  const cls = [...document.querySelectorAll('[data-cl]')];
+  if (cls.length) i.cl = cls.map(el => ({ ix: el.value, amt: ((document.querySelector('[data-cla="' + el.dataset.cl + '"]') || {}).value || '').trim() }));
   const n = document.getElementById('revNote'); if (n) i.revNote = n.value;
   const cn = document.getElementById('crNote'); if (cn) i.crn = cn.value;
   const crs = document.querySelectorAll('[data-cr]'); if (crs.length) i.cr = [...crs].filter(x => x.checked).map(x => x.dataset.cr);
@@ -1460,15 +1570,127 @@ function keepReview(i){
 const PM_CORR = [['wip','Work completed doesn’t match work in place','Work completed does not match the work in place. Please update your SOV and resubmit.'],
   ['cos','Billing for change orders not yet approved','The application bills change orders that have not yet been approved. Please update your SOV and resubmit.'],
   ['ret','Retainage is calculated incorrectly','Retainage is not calculated per the subcontract terms. Please correct it and resubmit.']];
+/* ---- Split for CE entry (28 Oct 2026) ---------------------------------------------------
+   CE keeps every change order as its own line on the subcontract or PO, usually on the same
+   phase.category as the base, and Drew can only put a billing on the right line if the PM says
+   which. Lines come from the CE ledger pull (ap_ce_invoices.json lines[]); a CO with several CE
+   lines is shown one level down. Only lines approved in CE by the period end (pay app) or invoice
+   date can be picked; Procore-approved COs CE has no RFC for yet are listed greyed out. */
+const pcOf = l => (l.phase && l.cat) ? l.phase + '.' + l.cat : '';
+const coNo = v => { const d = digits(v); return d ? String(Number(d)) : ''; };
+function ceOpts(i){
+  const po = isInv(i) ? (i.poOn ? (i.poSel || '') : '') : i.po;
+  const led = ceLed(po); if (!led) return null;
+  const lines = subLines(led); if (!lines.some(l => l.rfc)) return null;
+  const asOf = isInv(i) ? String(i.f.InvoiceDate || i.f.ReceivedAt || '').slice(0, 10) : payAsOf(i.f);
+  const lineOf = x => x.li != null ? x.li : (lines.find(l => (l.rfc || null) === (x.rfc || null)) || lines[0] || {}).ix;
+  const billed = {}; for (const x of (led.invoices || [])) { const k = lineOf(x); billed[k] = (billed[k] || 0) + Number(x.total || 0); }
+  const groups = {}; lines.forEach(l => { const g = l.rfc || ''; (groups[g] = groups[g] || []).push(l); });
+  const kind = isInv(i) ? 'PO' : 'SC';
+  const opts = lines.map(l => {
+    const g = groups[l.rfc || ''], n = g.indexOf(l) + 1, many = g.length > 1;
+    const left = l.balance != null ? Number(l.balance) : r2(Number(l.amount || 0) - (billed[l.ix] || 0));
+    const head = (pcOf(l) ? pcOf(l) + ' ' : '') + (l.rfc ? 'CO ' + l.rfc : kind);
+    const sub = many ? (l.description && g.some(x => x.description !== l.description) ? l.description : 'line ' + n + ' of ' + g.length) + ' (' + money(l.amount) + ')' : '';
+    let why = '';
+    if (Number(l.amount) < 0) why = 'credit line';
+    else if (l.status && !/approv/i.test(l.status)) why = l.status + ' in CE';
+    else if (l.rfc && l.date_approved && asOf && l.date_approved > asOf) why = 'approved in CE ' + usDate(l.date_approved) + ', after ' + (isInv(i) ? 'the invoice date' : 'the period');
+    return { ix: l.ix, rfc: l.rfc || null, pc: pcOf(l), head, sub, left: r2(left), why,
+             label: head + (sub ? ' · ' + sub : '') + ' · ' + money(left) + ' left' + (why ? ' · ' + why : '') };
+  });
+  const have = new Set(lines.filter(l => l.rfc).map(l => coNo(l.rfc)));
+  const c = isInv(i) ? (LIVE.commitments || []).find(x => String(x.number || '').toUpperCase() === String(po).toUpperCase()) : i.c;
+  const missing = ((c && c.change_orders) || []).filter(x => /approved/i.test(x.status || '') && Number(x.amount || 0) !== 0 && !have.has(coNo(x.number)))
+    .map(x => ({ label: 'CO ' + x.number + (x.title ? ' · ' + x.title : '') + ' · ' + money(Number(x.amount)) + ' · approved in Procore, not in CE yet' }));
+  const base = opts.find(o => !o.rfc && !o.why) || opts.find(o => !o.rfc) || opts[0];
+  return { opts, missing, base, kind, po };
+}
+function ceSelect(O, k, sel, attr){
+  const byG = {}; O.opts.forEach(o => (byG[o.rfc || ''] = byG[o.rfc || ''] || []).push(o));
+  let h = '<select class="bh-select cl-sel" ' + attr + '="' + k + '" aria-label="CE line">';
+  for (const g of Object.keys(byG).sort((a, b) => (a ? 1 : 0) - (b ? 1 : 0) || a.localeCompare(b))) {
+    const list = byG[g];
+    const opt = o => '<option value="' + o.ix + '"' + (String(sel) === String(o.ix) ? ' selected' : '') + (o.why && String(sel) !== String(o.ix) ? ' disabled' : '') + '>'
+      + esc(list.length > 1 ? (o.pc ? o.pc + ' · ' : '') + (o.sub || o.head) + ' · ' + money(o.left) + ' left' + (o.why ? ' · ' + o.why : '') : o.label) + '</option>';
+    h += list.length > 1 ? '<optgroup label="' + esc(g ? 'CO ' + g : O.kind) + '">' + list.map(opt).join('') + '</optgroup>' : list.map(opt).join('');
+  }
+  if (O.missing.length) h += '<optgroup label="Not in CE yet">' + O.missing.map(m => '<option disabled>' + esc(m.label) + '</option>').join('') + '</optgroup>';
+  return h + '</select>';
+}
+/* This period's billing before retainage: completed & stored to date less what CE has invoiced
+   on the earlier applications; else balance due + this period's retention when that is known. */
+function billedThis(i){
+  const f = i.f, L = i.po ? ledgerFor(i.po, f.PayRequest) : null, ctd = num(f.CompletedToDate);
+  if (ctd != null && L && L.available && L.exists) {
+    const prior = (L.led.invoices || []).filter(x => !L.thisApp.includes(x)).reduce((t, x) => t + Number(x.total || 0), 0);
+    const v = r2(ctd - prior), net = i.amtKnown ? i.amt : null;
+    /* a stale or short CE ledger makes this too big: trust it only when it sits where
+       retainage can put it - between the net due and net / 0.85 */
+    if (v > 0 && (net == null || (v >= net - 0.005 && v <= net / 0.85 + 0.005))) return v; }
+  const F = deskFig(i); return F.ret != null ? F.gross : null;
+}
+const clAmt = r => String((r && r.amt) || '').replace(/[$,\s]/g, '');
+function clTot(i){
+  const tgt = billedThis(i), sum = r2((i.cl || []).reduce((t, r) => t + (Number(clAmt(r)) || 0), 0));
+  return tgt != null ? 'Lines total ' + money(sum) + (Math.abs(sum - tgt) < 0.005 ? ' <span class="bh-chip is-ok sm">= billed this period</span>'
+      : ' <span class="bh-chip is-bad sm">' + (tgt > sum ? money(r2(tgt - sum)) + ' left' : money(r2(sum - tgt)) + ' over') + ' of ' + money(tgt) + '</span>')
+    : 'Billed this period wasn’t read off the pay app — enter each line from the SOV';
+}
+function ceSplitBox(i){
+  const O = ceOpts(i); if (!O) return '';
+  const tgt = billedThis(i);
+  if (!i.cl || !i.cl.length) i.cl = [{ ix: O.base.ix, amt: tgt != null ? tgt.toFixed(2) : '' }];
+  const many = i.cl.length > 1;
+  return '<div class="cl-box"><div class="bh-label" style="margin-top:12px">Split for CE entry <span style="text-transform:none;font-weight:400">· this period’s billing before retainage, on the CE line it belongs to</span></div>'
+    + i.cl.map((r, k) => '<div class="sp-row">' + ceSelect(O, k, r.ix, 'data-cl') + '<input class="bh-input sp-amt" inputmode="decimal" data-cla="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount">'
+      + (many ? '<button class="xp-mini" data-do="clrm:' + k + '" aria-label="Remove line">✕</button>' : '') + '</div>').join('')
+    + '<p class="note" style="margin:4px 0 0"><span class="cl-tot">' + clTot(i) + '</span> · <a href="#" data-do="cladd">Add a line</a></p>'
+    + (O.missing.length ? '<p class="note" style="margin:2px 0 0;color:var(--bh-bad-ink,#9c0006)">' + (O.missing.length > 1 ? O.missing.length + ' change orders approved in Procore are' : 'A change order approved in Procore is') + ' not in CE yet. If this pay app bills it, approve with payment held (Change order billed but not yet executed).</p>' : '')
+    + '</div>';
+}
+/* null = blocked (toast shown), [] = nothing to split, else the split to save */
+function clCheck(i){
+  const O = ceOpts(i); if (!O) return [];
+  keepReview(i);
+  const rows = (i.cl || []).filter(r => r.ix !== '' && r.ix != null);
+  if (!rows.length) return [];
+  if (rows.length > 1 && rows.some(r => !/^-?\d+(\.\d{1,2})?$/.test(clAmt(r)))) { toast('Give every CE line an amount'); return null; }
+  const tgt = billedThis(i), sum = r2(rows.reduce((t, r) => t + (Number(clAmt(r)) || 0), 0));
+  if (rows.length > 1 && tgt != null && Math.abs(sum - tgt) > 0.005) { toast('The CE lines total ' + money(sum) + ' — they need to add up to ' + money(tgt) + ' billed this period'); return null; }
+  const picked = rows.map(r => O.opts.find(x => String(x.ix) === String(r.ix)));
+  if (picked.some(o => !o || o.why)) { toast('One of the CE lines can’t be used — pick another'); return null; }
+  return rows.map((r, k) => { const o = picked[k]; return { ix: o.ix, rfc: o.rfc, pc: o.pc, line: o.head + (o.sub ? ' · ' + o.sub : ''), amt: clAmt(r) === '' ? null : Number(clAmt(r)) }; });
+}
+/* PO invoices: which PO line each coding row goes on */
+function plCheck(i){
+  const O = ceOpts(i); if (!O) return [];
+  const rows = (i.split || []).filter(r => r.code || r.amt);
+  const picked = rows.map(r => O.opts.find(x => String(x.ix) === String(r.line != null ? r.line : O.base.ix)) || O.base);
+  if (picked.some(o => o.why)) { toast('One of the PO lines can’t be used — pick another'); return null; }
+  return picked.map(o => ({ ix: o.ix, rfc: o.rfc, pc: o.pc, line: o.head + (o.sub ? ' · ' + o.sub : '') }));
+}
+const ceSplitOf = i => [...(i.log || [])].reverse().find(x => x && (x.ceSplit || x.poLines)) || null;
+const splitText = sp => sp.map(x => (x.pc ? x.pc + ' ' : '') + (x.rfc ? 'CO ' + x.rfc : 'SC') + (x.amt != null ? ' ' + money(x.amt) : '')).join('; ');
+/* 2% is taken on the NET payment (Tiffany, 28 Oct 2026). CE's invoice screen fills 2% of the
+   invoice amount (gross), so Drew overrides it. */
+function ceDiscHint(i, dc){
+  const e = ceSplitOf(i), sp = e && e.ceSplit && e.ceSplit.length && e.ceSplit.every(x => x.amt != null) ? r2(e.ceSplit.reduce((t, x) => t + x.amt, 0)) : billedThis(i);
+  if (sp == null || Math.abs(r2(sp * 0.02) - dc.disc) < 0.01) return '';
+  return '<br><span class="note" style="margin:0">In CE, make the discount <b>' + money(dc.disc) + '</b> (2% of the net payment). CE fills in 2% of the invoice amount, ' + money(r2(sp * 0.02)) + '.</span>';
+}
 function payReviewBox(i){
   const corr = !!i.corrOpen, picks = i.cr || [];
-  let h = '<div class="cf rv-g"><div class="bh-section-title">Review and approve</div>'
+  let h = '<div class="cf rv-g"><div class="bh-section-title">Review and approve</div>' + (compOf(i) === 'bad' ? '<div class="comp-warn"><b>Not compliant in Billy.</b> Approve it with payment held, or ask the trade partner to update their insurance first.</div>' : '')
     + CHECKS(i).map(c => '<label class="ck"><input type="checkbox" data-ck="' + c[0] + '"' + (i.checks[c[0]] ? ' checked' : '') + '> ' + c[1] + '</label>').join('')
+    + ceSplitBox(i)
     + '<label class="bh-label" style="display:block;margin-top:10px" for="revNote">Note to Accounting <span style="text-transform:none;font-weight:400">(optional; needed for Approve as noted)</span></label>'
     + '<textarea id="revNote" style="width:100%;min-height:44px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="e.g. Pay as submitted; CO #6 will be on next month’s app.">' + esc(i.revNote || '') + '</textarea>'
     + '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
     + '<a href="#" data-do="revnoted">Approve as noted</a>'
+    + '<a href="#" data-do="holdtoggle" aria-expanded="' + !!i.holdOpen + '">Approve – hold payment' + (i.holdOpen ? ' ▴' : ' ▾') + '</a>'
     + '<a href="#" data-do="crtoggle" aria-expanded="' + corr + '">Request correction' + (corr ? ' ▴' : ' ▾') + '</a></div>';
+  if (i.holdOpen) h += holdPanel(i, 'pm');
   if (corr) h += '<div class="cr"><div class="bh-label">Ask the trade partner to fix</div>'
     + PM_CORR.map(([k, t]) => '<label class="ck"><input type="checkbox" data-cr="' + k + '"' + (picks.includes(k) ? ' checked' : '') + '> ' + esc(t) + '</label>').join('')
     + '<textarea id="crNote" style="width:100%;min-height:44px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:6px;box-sizing:border-box" placeholder="Anything else — e.g. Line 12 is billed at 80%; about 50% is in place.">' + esc(i.crn || '') + '</textarea>'
@@ -1490,14 +1712,17 @@ function reviewBox(i){
       rows[0].code = pc0.length === 1 ? pc0[0].key : ''; i.prefillFor = i.poSel; i.prefillCode = rows[0].code; }
   }
   const sum = rows.reduce((a, r) => a + (Number(r.amt) || 0), 0), left = Math.round(((i.amtKnown ? i.amt : 0) - sum) * 100) / 100;
-  let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">' + (inv ? 'Code and approve' : 'Your review') + '</div>';
+  const PO_O = inv && !oh && i.poOn ? ceOpts(i) : null;
+  let h = '<div class="cf" style="margin-top:0"><div class="bh-section-title">' + (inv ? 'Code and approve' : 'Your review') + '</div>' + (compOf(i) === 'bad' ? '<div class="comp-warn"><b>Not compliant in Billy.</b> Approve it with payment held, or ask the trade partner to update their insurance first.</div>' : '');
   if (inv) {
     h += '<div class="bh-label" style="margin-top:10px">' + (oh ? 'GL account' : 'Cost code · ' + esc(i.job)) + ' <span style="color:var(--bh-bad-ink,#b00020)">required</span></div>'
       + rows.map((r, k) => '<div class="sp-row"><input class="bh-input" data-sp-code="' + k + '" list="' + (oh ? 'glList' : 'ccList') + '" value="' + esc(r.code) + '" placeholder="' + (oh ? 'GL account — type a number or name' : 'e.g. 01-403 O') + '">'
+        + (PO_O ? ceSelect(PO_O, k, r.line != null ? r.line : PO_O.base.ix, 'data-spl') : '')
         + (many ? '<input class="bh-input sp-amt" inputmode="decimal" data-sp-amt="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount"><button class="xp-mini" data-do="sprm:' + k + '" aria-label="Remove line">✕</button>' : '') + '</div>').join('')
       + (oh ? glList() : ccList(i.job, !!i.poOn))
       + '<p class="note" style="margin:4px 0 0">' + (many ? 'Lines total ' + money(sum) + (i.amtKnown ? (Math.abs(left) < 0.005 ? ' <span class="bh-chip is-ok sm">= invoice</span>' : ' <span class="bh-chip is-bad sm">' + (left > 0 ? money(left) + ' left' : money(-left) + ' over') + '</span>') : '') + ' · ' : '')
-      + '<a href="#" data-do="spadd">' + (many ? 'Add a line' : 'Split across codes') + '</a></p>';
+      + '<a href="#" data-do="spadd">' + (many ? 'Add a line' : 'Split across codes') + '</a></p>'
+      + (PO_O ? '<p class="note" style="margin:2px 0 0">PO ' + esc(PO_O.po.toUpperCase()) + ' has change orders in CE — pick the PO line each amount goes on (base or the CO).</p>' : '');
     if (!oh) {
       if (i.poOn == null) i.poOn = !!i.po;
       if (i.poSel == null) i.poSel = poGuess(i);
@@ -1511,8 +1736,9 @@ function reviewBox(i){
   h += '<label class="bh-label" style="display:block;margin-top:12px" for="revNote">' + (inv ? 'Note to Accounting' : 'Note') + ' <span style="text-transform:none;font-weight:400">(' + (inv ? 'optional' : 'optional with an approval; required for a correction — it goes to the trade partner') + ')</span></label>'
     + '<textarea id="revNote" style="width:100%;min-height:56px;border:1px solid var(--bh-slate);padding:8px;font:13px var(--bh-font);margin-top:4px;box-sizing:border-box" placeholder="' + (inv ? 'e.g. Half of this is for 25AU010 — split as shown.' : 'e.g. Line 12 is billed at 80%; about 50% is in place. Revise and resubmit.') + '">' + esc(i.revNote || '') + '</textarea>'
     + (inv ? '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
+        + '<a href="#" data-do="holdtoggle">Approve – hold payment' + (i.holdOpen ? ' ▴' : ' ▾') + '</a>'
         + '<a href="#" data-do="askvendor" title="Opens an email in your own Outlook with payables@ copied, so the reply lands on this invoice">Ask the vendor</a>'
-        + '<a href="#" data-do="revreturn" title="Sends it back to Accounting to reassign">Not my invoice</a></div>'
+        + '<a href="#" data-do="revreturn" title="Sends it back to Accounting to reassign">Not my invoice</a></div>' + (i.holdOpen ? holdPanel(i, 'pm') : '')
       : '<div class="rv-act"><button class="bh-btn" data-do="revapprove"' + (BUSY ? ' disabled' : '') + '>Approve</button>'
         + '<a href="#" data-do="pmcorr" title="Opens an email to the trade partner in your own Outlook (payables@ copied) and moves this to Corrections until they resubmit">Request correction from trade partner</a></div>')
     + '</div>';
@@ -2092,20 +2318,49 @@ function act(k){
   if (k === 'figedit') { i.editFig = true; pane(); return; }
   if (k.startsWith('pocode:')) { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
     const e = i.split.find(r => !r.code) || i.split[0]; e.code = k.slice(7); pane(); return; }
+  if (k === 'cladd') { keepReview(i); const O = ceOpts(i); if (!O) return; if (!i.cl || !i.cl.length) i.cl = [{ ix: O.base.ix, amt:'' }];
+    const co = O.opts.find(o => o.rfc && !o.why && !i.cl.some(r => String(r.ix) === String(o.ix)));
+    i.cl.push({ ix: co ? co.ix : O.base.ix, amt:'' }); pane(); return; }
+  if (k.startsWith('clrm:')) { keepReview(i); i.cl.splice(Number(k.slice(5)), 1); if (!i.cl.length) i.cl = null; pane(); return; }
+  if (k === 'cledit') { if (!acctSeat()) return; i.clOpen = !i.clOpen;
+    if (i.clOpen) { const e = ceSplitOf(i); i.cl = e && e.ceSplit ? e.ceSplit.map(x => ({ ix: x.ix, amt: x.amt == null ? '' : Number(x.amt).toFixed(2) })) : null; } pane(); return; }
+  if (k === 'clsave') { if (!acctSeat()) return; const sp = clCheck(i); if (sp === null) return; if (!sp.length) { toast('No CE lines to split on'); return; }
+    run(async () => { if (await saveRow(i, {}, { ceSplit: sp, note: 'CE split set by ' + LIVE.me.name + ': ' + splitText(sp) + '.' })) { i.clOpen = false; i.cl = null; toast('Split saved'); } }); return; }
   if (k === 'spadd') { keepReview(i); if (!i.split || !i.split.length) i.split = [{ code:'', amt:'' }];
     if (i.split.length === 1 && i.amtKnown && !i.split[0].amt) i.split[0].amt = i.amt.toFixed(2);
     i.split.push({ code:'', amt:'' }); pane(); return; }
   if (k.startsWith('sprm:')) { keepReview(i); i.split.splice(Number(k.slice(5)), 1); if (!i.split.length) i.split = [{ code:'', amt:'' }]; if (i.split.length === 1) i.split[0].amt = ''; pane(); return; }
+  if (k === 'holdtoggle') { keepReview(i); i.holdOpen = !i.holdOpen; if (i.holdOpen && !(i.hr || []).length && compOf(i) === 'bad') i.hr = ['comp']; pane(); return; }
+  if (k === 'revhold') { if (!mySeat(i)) return; keepReview(i);
+    if (!(i.hr || []).length && !(i.hn || '').trim()) { toast('Pick why payment is held'); return; }
+    i.holdGo = true; act('revapprove'); return; }
+  if (k === 'holdset') { if (!acctSeat()) return; keepHold(i);
+    if (!(i.hr || []).length && !(i.hn || '').trim()) { toast('Pick why payment is held'); return; }
+    run(async () => { if (await saveRow(i, {}, { hold:true, holdReasons: i.hr || [], holdNote: (i.hn || '').trim(), note:'Payment held: ' + holdText({ reasons: i.hr || [], note: (i.hn || '').trim() }) + '.' })) { i.holdOpen = false; i.hr = []; i.hn = ''; toast('Payment on hold'); } });
+    return; }
+  if (k === 'holdrelease') { if (!acctSeat()) return;
+    run(async () => { if (await saveRow(i, {}, { hold:false, note:'Payment hold released by ' + LIVE.me.name + '.' })) toast('Hold released'); });
+    return; }
+  if (k === 'discon' || k === 'discoff') { if (!acctSeat()) return; const on = k === 'discon';
+    run(async () => { if (await saveRow(i, {}, { disc:on, note: on ? '2% discount applies to subcontract ' + i.po + ' (per its DocuSign).' : 'No 2% discount on subcontract ' + i.po + '.' })) toast(on ? '2% discount applied to ' + i.po : '2% discount removed'); });
+    return; }
   if (k === 'revapprove') { if (!mySeat(i)) return;
     keepReview(i);
+    /* not compliant in Billy: a plain approval is not allowed - approve with payment held */
+    const go = !!i.holdGo; i.holdGo = false;
+    if (!go && compOf(i) === 'bad') { i.holdOpen = true; if (!(i.hr || []).length) i.hr = ['comp']; toast('Not compliant in Billy — approve with payment held'); pane(); return; }
     if (!CHECKS(i).every(c => i.checks[c[0]])) { toast('Tick the check first'); return; }
     const f = { Status:'ready for entry', ApprovedBy: LIVE.me.email, ApprovedAt: new Date().toISOString() };
     if (isInv(i)) { const code = revCoding(i); if (!code) return; f.CostCode = code;
       if (isJobInv(i)) { const po = i.poOn ? (i.poSel || '').toUpperCase() : '';
         if (i.poOn && !po) { toast('Pick the PO, or untick Tied to a PO'); return; }
         if (po !== String(i.po || '').toUpperCase()) f.Subcontract = po; } }
+    let ceX = {};
+    if (!isInv(i)) { const sp = clCheck(i); if (sp === null) return; if (sp.length) ceX = { ceSplit: sp }; }
+    else if (isJobInv(i) && i.poOn) { const pl = plCheck(i); if (pl === null) return; if (pl.length) ceX = { poLines: pl, poRef: String(i.poSel || '').toUpperCase() }; }
     const note = (i.revNote || '').trim();
-    run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + (isInv(i) && i.poOn && i.poSel ? ', PO ' + i.poSel.toUpperCase() : '') + '.' }, note ? { asNoted:true } : {}))) { i.revNote = ''; toast('Approved — Ready for entry'); } });
+    const hold = go ? { hold:true, holdReasons: i.hr || [], holdNote: (i.hn || '').trim() } : {};
+    run(async () => { if (await saveRow(i, f, Object.assign({ s:'ready for entry', note: (note ? note + ' — ' : '') + 'Approved ' + money(i.amt) + (f.CostCode ? ', coded ' + f.CostCode : '') + (isInv(i) && i.poOn && i.poSel ? ', PO ' + i.poSel.toUpperCase() : '') + (hold.hold ? ' — payment held: ' + holdText({ reasons: hold.holdReasons, note: hold.holdNote }) : '') + (ceX.ceSplit ? ' — CE split: ' + splitText(ceX.ceSplit) : '') + (ceX.poLines && ceX.poLines.some(x => x.rfc) ? ' — PO lines: ' + splitText(ceX.poLines) : '') + '.' }, note ? { asNoted:true } : {}, hold, ceX))) { i.cl = null; i.revNote = ''; i.holdOpen = false; i.hr = []; i.hn = ''; toast(hold.hold ? 'Approved — payment on hold' : 'Approved — Ready for entry'); } });
     return; }
   if (k === 'revreturn') { if (!mySeat(i)) return; keepReview(i); const n = (i.revNote || '').trim() ? (isInv(i) ? 'Not my invoice — ' : '') + i.revNote.trim() : (isInv(i) ? 'Not my invoice — please reassign.' : '');
     if (!n) { toast('Say why in the note to Accounting — not yours, or your question'); const t = $('#revNote'); if (t) t.focus(); return; }
@@ -2346,6 +2601,8 @@ function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('ar
 $('#vQ').addEventListener('click', () => setView('queue'));
 $('#vE').addEventListener('click', () => setView('exp'));
 document.addEventListener('change', e => { if (e.target.id === 'poPick') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-cla]')) { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); const t = document.querySelector('.cl-tot'); if (t) t.innerHTML = clTot(i); } } });
+document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-cl],[data-spl]')) { const i = INV.find(x => x.id === SEL); if (i) keepReview(i); } });
 document.addEventListener('change', e => { if (e.target.id === 'poOn') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
 document.addEventListener('change', e => { if (e.target.id === 'xPer') { XPER = e.target.value === curPeriod() ? '' : e.target.value; draw(); } });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('wi-')) { const b = e.target.parentNode.querySelector('[data-wi]'); if (b) b.click(); return; }
@@ -2368,6 +2625,237 @@ function saveCtd(id){
   if (rev && v > rev * 1.1 && !confirm('That is more than the revised contract (' + money(rev) + '). Save anyway?')) return;
   run(async () => { if (await saveRow(i, { CompletedToDate: v }, { ctd: true, note: 'Completed & stored to date ' + (old == null ? 'keyed' : 'changed from ' + money(old)) + ': ' + money(v) })) { XED = ''; toast('Completed & stored saved'); } });
 }
+/* ---- Excel exports laid out like CE (28 Oct 2026) ------------------------------------
+   A/P Open Invoice Report and Subcontractor Detail Report by Vendor, built in the browser
+   with ExcelJS (exceljs.min.js beside the page, loaded only when an export is asked for). */
+let XLP = null;
+function loadXL(){ return XLP || (XLP = new Promise((ok, no) => {
+  if (window.ExcelJS) return ok(window.ExcelJS);
+  const s = document.createElement('script'); s.src = 'exceljs.min.js';
+  s.onload = () => { if (window.ExcelJS) ok(window.ExcelJS); else { XLP = null; no(new Error('ExcelJS did not load')); } };
+  s.onerror = () => { XLP = null; no(new Error('exceljs.min.js is missing next to the desk page')); };
+  document.head.appendChild(s); })); }
+const XNUM = '#,##0.00;-#,##0.00;0.00';
+const ceJob = j => String(j || '').toUpperCase().replace(/^(\d{2}[A-Z]+)0+(\d)/, '$1$2');   /* 25AU010 -> 25AU10, as CE writes it */
+const xDate = v => { if (!v) return null; const d = new Date(String(v).slice(0, 10) + 'T12:00:00Z'); return isNaN(d) ? null : d; };
+const r2 = n => Math.round(Number(n || 0) * 100) / 100;
+const ceLed = po => (LIVE.ceInv && LIVE.ceInv.subcontracts && po) ? LIVE.ceInv.subcontracts[String(po).trim().toUpperCase()] || null : null;
+const vendCode = i => { const l = ceLed(i.po); return (l && l.vendor_code) || (i.c && i.c.ce_code) || ''; };
+async function xSave(wb, name){
+  const buf = await wb.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function xSheet(wb, name, title, widths){
+  const ws = wb.addWorksheet(name, { pageSetup:{ orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0,
+    margins:{ left:.3, right:.3, top:.4, bottom:.5, header:.2, footer:.2 } }, views:[{ showGridLines:false }] });
+  ws.columns = widths.map(w => ({ width:w }));
+  const t = ws.addRow([title]); t.font = { size:16 }; t.alignment = { horizontal:'center' }; ws.mergeCells(t.number, 1, t.number, widths.length);
+  const s = ws.addRow(['Bailey-Harris Construction Co, Inc. · from the AP Desk · ' + new Date().toLocaleString('en-US')]);
+  s.font = { size:9, color:{ argb:'FF666666' } }; s.alignment = { horizontal:'center' }; ws.mergeCells(s.number, 1, s.number, widths.length);
+  ws.headerFooter.oddFooter = '&L' + title + '&RPage &P of &N';
+  return ws;
+}
+const VEND_FONT = { bold:true, size:12, color:{ argb:'FF1F3FBF' } };
+function xHead(ws, cols, numC){ const r = ws.addRow(cols); r.font = { bold:true, underline:true, size:9 };
+  r.eachCell((c, k) => { c.alignment = { horizontal: numC.includes(k) ? 'right' : 'left', vertical:'bottom', wrapText:true }; }); return r; }
+function xFmt(r, numC, dateC, font){ r.font = Object.assign({ size:9 }, font || {});
+  for (const k of numC) { const c = r.getCell(k); if (typeof c.value === 'number') c.numFmt = XNUM; }
+  for (const k of dateC || []) { const c = r.getCell(k); if (c.value instanceof Date) c.numFmt = 'm/d/yy'; } }
+function xTot(r, numC, dbl){ for (const k of numC) r.getCell(k).border = dbl ? { top:{ style:'thin' }, bottom:{ style:'double' } } : { top:{ style:'thin' } }; r.font = { bold:true, size:9 }; }
+
+/* This period's figures for a desk item. Once CE holds the pay app (entered), CE's own
+   Invoiced Total / Retention / Discount / Payable are used. Before that: Payable = balance due;
+   retention this period = retainage held to date (pay app) less retention CE has on the earlier
+   invoices, when both are known; Invoice Amount = Payable + that retention. */
+function deskFig(i){
+  const f = i.f, pay = i.type === 'Pay app';
+  const L = pay && i.po ? ledgerFor(i.po, f.PayRequest) : { available:false };
+  const inCE = !!(L.available && L.thisApp && L.thisApp.length);
+  const sum = k => r2(L.thisApp.reduce((t, x) => t + Number(x[k] || 0), 0));
+  if (inCE) return { L, inCE, paid: L.thisApp.every(x => Number(x.paid || 0) > 0), gross: sum('total'), ret: sum('retention'), disc: sum('discount'), payable: sum('payable') };
+  let ret = null; const payable = i.amtKnown ? r2(i.amt) : null;
+  if (pay && num(f.RetainageHeld) != null && L.available && L.exists) {
+    const prior = (L.led.invoices || []).reduce((t, x) => t + Number(x.retention || 0), 0), r = r2(num(f.RetainageHeld) - prior);
+    if (r >= 0 && payable != null && r <= Math.abs(payable) * 0.18) ret = r;   /* retainage over ~15% of the gross means the CE ledger is short or stale */
+  }
+  const dc = (i.sec === 'ready' || i.sec === 'done') ? discCalc(i) : null;
+  return { L, inCE, paid:false, gross: payable == null ? null : r2(payable + (ret || 0)), ret, disc: dc ? dc.disc : null, payable, dc };
+}
+const ceInvNo = i => i.type === 'Pay app' ? 'PR' + (i.f.PayRequest || '?') + ' ' + ceJob(i.job) : String(i.f.PayRequest || i.no || '');
+const stageText = i => ((SECTIONS.find(s => s.k === i.sec) || {}).t || '') + (i.hold ? ' · held: ' + holdText(i.hold) : '');
+
+/* Everything still open: Triage, With approver, Corrections, Ready for entry, and Entered
+   items CE has not paid yet (pay apps: no check on the CE invoice; plain invoices: the desk
+   cannot see payment, so entered ones show for 30 days). */
+function openRows(){
+  const out = [];
+  for (const i of (ALLH || [])) {
+    if (i.hidden || i.isMsg || !i.sec) continue;
+    const F = deskFig(i), f = i.f;
+    if (i.sec === 'done' && (F.paid || (!F.inCE && i.age > 30))) continue;
+    const invDate = f.InvoiceDate || f.PeriodEnding || f.ReceivedAt;
+    const due = f.DueDate || (invDate ? new Date(Date.parse(String(invDate).slice(0, 10) + 'T12:00:00Z') + 30 * 864e5).toISOString() : null);
+    const dc = F.dc || ((i.sec === 'ready' || i.sec === 'done') ? discCalc(i) : null);
+    out.push({ i, vcode: vendCode(i), vname: i.v, voucher: i.sec === 'done' ? String(f.CEReference || '') : '',
+      invDate, due, past: !!(due && Date.parse(due) < Date.now()), invNo: ceInvNo(i), po: i.po || '',
+      gross: F.gross, prior: F.gross, ret: F.ret, payable: F.payable, disc: F.disc, valid: dc ? dc.by : null,
+      st: i.hold ? 'Hold' : (i.sec === 'ready' || i.sec === 'done') ? 'Pay' : 'Pending',
+      desc: i.job ? jobName(i.job) : (i.desc || ''), job: i.job || '', stage: stageText(i) + (i.sec === 'done' && !F.inCE && i.type === 'Pay app' ? ' · not in the CE ledger yet' : ''),
+      ap: i.id, comp: compOf(i) === 'bad' ? 'Not compliant' : compOf(i) === 'none' ? 'Not in Billy' : '' });
+  }
+  return out;
+}
+const AGE_L = ['Current', '1 - 30', '31 - 60', '61 - 90', '91 - 120', 'Over 120'];
+const ageIx = due => { const d = due ? Math.floor((Date.now() - Date.parse(due)) / 864e5) : 0; return d <= 0 ? 0 : d <= 30 ? 1 : d <= 60 ? 2 : d <= 90 ? 3 : d <= 120 ? 4 : 5; };
+function xAging(ws, ag, bold){
+  const cols = [1, 2, 4, 5, 6, 7], h = [], v = [];
+  cols.forEach((c, k) => { h[c - 1] = AGE_L[k]; v[c - 1] = r2(ag[k]); });
+  const hr = ws.addRow(h); hr.font = { underline:true, size:9, bold:!!bold }; cols.forEach(c => hr.getCell(c).alignment = { horizontal:'right' });
+  const vr = ws.addRow(v); xFmt(vr, cols, [], bold ? { bold:true } : null);
+}
+async function exportOpen(){
+  const rows = openRows();
+  if (!rows.length) { toast('Nothing open on the desk'); return; }
+  const X = await loadXL(), wb = new X.Workbook(); wb.creator = 'AP Desk';
+  const W = [10, 9, 2, 9, 15, 13, 13, 13, 11, 13, 10, 9, 8, 30, 9, 30, 8, 13];
+  const H = ['Voucher Number','Invoice Date','','Date Due','Invoice Number','P.O. Number','Invoice Amount','Prior Balance','Reten.','Payable','Disc.','Valid Thru','Status','Description','Job','Desk stage','AP #','Compliance'];
+  const NUMC = [7, 8, 9, 10, 11], DATEC = [2, 4, 12], K = ['gross', 'prior', 'ret', 'payable', 'disc'];
+  const ws = xSheet(wb, 'Open invoices', 'A/P Open Invoice Report', W);
+  const byV = {}; rows.forEach(r => { const k = r.vcode + '|' + r.vname; (byV[k] = byV[k] || []).push(r); });
+  const sortKey = k => { const [c, n] = k.split('|'); return (c || 'ZZZZ' + n).toUpperCase(); };
+  const G = {}, GA = [0, 0, 0, 0, 0, 0]; K.forEach(k => G[k] = 0);
+  for (const k of Object.keys(byV).sort((a, b) => sortKey(a).localeCompare(sortKey(b)))) {
+    const [code, name] = k.split('|'), list = byV[k].sort((a, b) => String(a.invDate || '').localeCompare(String(b.invDate || '')));
+    ws.addRow([]); const vr = ws.addRow(['Vendor:  ' + (code ? code + '   ' : '') + name]); vr.font = VEND_FONT;
+    xHead(ws, H, NUMC);
+    const S = {}, ag = [0, 0, 0, 0, 0, 0]; K.forEach(x => S[x] = 0);
+    for (const r of list) {
+      const row = ws.addRow([r.voucher, xDate(r.invDate), r.past ? '*' : '', xDate(r.due), r.invNo, r.po, r.gross, r.prior, r.ret, r.payable, r.disc, xDate(r.valid), r.st, r.desc, r.job, r.stage, r.ap, r.comp]);
+      xFmt(row, NUMC, DATEC);
+      row.getCell(13).font = r.st === 'Hold' ? { bold:true, size:9, color:{ argb:'FFC00000' } } : r.st === 'Pending' ? { size:9, color:{ argb:'FF1F3FBF' } } : { size:9 };
+      if (r.comp) row.getCell(18).font = { size:9, color:{ argb:'FFC00000' } };
+      K.forEach(x => { S[x] += Number(r[x] || 0); G[x] += Number(r[x] || 0); });
+      const a = ageIx(r.due); ag[a] += Number(r.payable || 0); GA[a] += Number(r.payable || 0);
+    }
+    const t = ws.addRow(['', '', '', '', '', ''].concat(K.map(x => r2(S[x])))); xFmt(t, NUMC); xTot(t, NUMC);
+    ws.addRow([]); xAging(ws, ag);
+  }
+  ws.addRow([]); ws.addRow([]);
+  const g = ws.addRow(['Report totals', '', '', '', '', ''].concat(K.map(x => r2(G[x])))); xFmt(g, NUMC); xTot(g, NUMC, true);
+  ws.addRow([]); xAging(ws, GA, true);
+  const n = ws.addRow(['* past due. Status: Pay = approved (Ready for entry or Entered); Pending = still in Triage, with the approver or in Corrections; Hold = approved with payment held. Disc. and Valid Thru = the 2% discount and pay-by date (approval + 10 days) on subcontracts that agreed to it. Before CE has the invoice, Reten. is retainage held to date less what CE shows on earlier invoices.']);
+  n.font = { italic:true, size:8, color:{ argb:'FF666666' } }; ws.mergeCells(n.number, 1, n.number, W.length); n.alignment = { wrapText:true }; n.height = 30;
+  /* a flat sheet for sorting and pivots */
+  const d = wb.addWorksheet('Data', { views:[{ state:'frozen', ySplit:1 }] });
+  d.columns = ['Vendor code','Vendor','AP #','Type','Job','Job name','P.O. Number','Invoice Number','Voucher','Invoice Date','Date Due','Days past due','Invoice Amount','Retention','Payable','2% discount','Valid Thru','Status','Desk stage','Compliance']
+    .map(h => ({ header:h, width: Math.max(10, h.length + 2) }));
+  for (const r of rows) d.addRow([r.vcode, r.vname, r.ap, r.i.type, r.job, r.desc, r.po, r.invNo, r.voucher, xDate(r.invDate), xDate(r.due),
+    r.due ? Math.max(0, Math.floor((Date.now() - Date.parse(r.due)) / 864e5)) : null, r.gross, r.ret, r.payable, r.disc, xDate(r.valid), r.st, r.stage, r.comp]);
+  d.getRow(1).font = { bold:true }; d.autoFilter = { from:'A1', to:{ row:1, column:20 } };
+  [13, 14, 15, 16].forEach(c => d.getColumn(c).numFmt = XNUM); [10, 11, 17].forEach(c => d.getColumn(c).numFmt = 'm/d/yy');
+  await xSave(wb, 'AP Open Invoices ' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  toast('Exported ' + rows.length + ' open item' + (rows.length === 1 ? '' : 's'));
+}
+
+/* Subcontractor Detail Report by Vendor: CE's lines and invoices from the CE ledger pull
+   (ap_ce_invoices.json - the scheduled QTool Subcontract Detail CSV), plus pay apps on the
+   desk that CE does not have yet, in italics and left out of the totals. */
+function subLines(s){
+  if (Array.isArray(s.lines) && s.lines.length) return s.lines.map((l, ix) => Object.assign({ ix }, l));
+  const L = [{ ix:0, rfc:null, description:'Base contract', amount:s.base_amount, status:s.status }];
+  (s.change_orders || []).forEach(c => L.push({ ix:L.length, rfc:c.rfc, description:c.description, amount:c.amount, status:c.status }));
+  return L;
+}
+function subJobs(){
+  const t = String(($('#xJobs') || {}).value || '').toUpperCase().split(/[\s,;]+/).filter(Boolean);
+  if (t.length) return t;
+  return [...new Set((ALLH || []).filter(i => !i.hidden && !i.isMsg && i.type === 'Pay app' && i.job && i.sec !== 'done').map(i => String(i.job).toUpperCase()))].sort();
+}
+async function exportSub(){
+  if (!LIVE.ceInv || !LIVE.ceInv.subcontracts) { toast('The CE ledger (ap_ce_invoices.json) is not loaded'); return; }
+  const jobs = subJobs(); if (!jobs.length) { toast('Type a job number, e.g. 25AU010'); return; }
+  const J = new Set(jobs.map(ceJob)), S = LIVE.ceInv.subcontracts;
+  const subs = Object.entries(S).filter(([, s]) => J.has(ceJob(s.job)));
+  const desk = {};
+  for (const i of (ALLH || [])) {
+    if (i.hidden || i.isMsg || i.type !== 'Pay app' || !i.po || !J.has(ceJob(i.job))) continue;
+    const F = deskFig(i); if (F.inCE) continue;
+    (desk[i.po] = desk[i.po] || []).push(i);
+  }
+  for (const po of Object.keys(desk)) if (!S[po]) { const i0 = desk[po][0];
+    subs.push([po, { job:i0.job, vendor:i0.v, vendor_code:vendCode(i0), status:'', lines:[], invoices:[], _deskOnly:true }]); }
+  if (!subs.length) { toast('No CE subcontracts for ' + jobs.join(', ')); return; }
+  const X = await loadXL(), wb = new X.Workbook(); wb.creator = 'AP Desk';
+  const W = [12, 6, 5, 9, 6, 6, 28, 12, 9, 12, 13, 9, 12, 10, 9, 12, 9, 9, 12, 10, 9];
+  const H = ['Sub #','RFC #','Stat','Job','Phase','Cat','Description','Amount','Charge','Balance','Invoice Number','Invoice Date','Total','Retention','Discount','Payable','Num.','Date','Amount','Retention','Discount'];
+  const NUMC = [8, 9, 10, 13, 14, 15, 16, 19, 20, 21], DATEC = [12, 18];
+  const ws = xSheet(wb, 'Subcontractor detail', 'Subcontractor Detail Report by Vendor', W);
+  const jr = ws.addRow(['Jobs: ' + jobs.join(', ') + (LIVE.ceInv.as_of ? ' · CE ledger as of ' + usDate(LIVE.ceInv.as_of) : '')]);
+  jr.font = { size:9 }; ws.mergeCells(jr.number, 1, jr.number, W.length); jr.alignment = { horizontal:'center' };
+  const byV = {}; subs.forEach(([n, s]) => { const k = (s.vendor_code || '') + '|' + (s.vendor || ''); (byV[k] = byV[k] || []).push([n, s]); });
+  const sortKey = k => { const [c, n] = k.split('|'); return (c || 'ZZZZ' + n).toUpperCase(); };
+  const Z = () => ({ amount:0, bc:0, bal:0, total:0, ret:0, disc:0, payable:0, pAmt:0, pRet:0, pDisc:0 });
+  const totRow = (label, T, dbl) => { const r = ws.addRow(['', '', '', '', '', '', label, r2(T.amount), r2(T.bc), r2(T.bal), '', '', r2(T.total), r2(T.ret), r2(T.disc), r2(T.payable), '', '', r2(T.pAmt), r2(T.pRet), r2(T.pDisc)]);
+    xFmt(r, NUMC); xTot(r, NUMC, dbl); r.getCell(7).font = { bold:true, size:9, color:{ argb:'FF1F3FBF' } }; r.getCell(7).alignment = { horizontal:'right' }; };
+  const add = (T, k, v) => { T[k] += Number(v || 0); };
+  let nDesk = 0;
+  for (const k of Object.keys(byV).sort((a, b) => sortKey(a).localeCompare(sortKey(b)))) {
+    const [code, name] = k.split('|');
+    ws.addRow([]); const vr = ws.addRow(['Vendor:  ' + (code ? code + ' - ' : '') + name]); vr.font = VEND_FONT;
+    const g = ws.addRow([]); g.getCell(9).value = 'Back'; g.getCell(13).value = 'Invoiced'; g.getCell(17).value = 'Check'; g.getCell(18).value = 'Check'; g.getCell(19).value = 'Payment';
+    ws.mergeCells(g.number, 13, g.number, 16); ws.mergeCells(g.number, 19, g.number, 21);
+    g.font = { bold:true, size:9 }; [13, 19].forEach(c => { g.getCell(c).alignment = { horizontal:'center' }; g.getCell(c).border = { bottom:{ style:'thin' } }; });
+    xHead(ws, H, NUMC);
+    const VT = Z();
+    for (const [num0, s] of byV[k].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const lines = subLines(s), invs = s.invoices || [], ST = Z(); let first = true;
+      const lineOf = inv => inv.li != null ? inv.li : (lines.find(l => (l.rfc || null) === (inv.rfc || null)) || lines[0] || {}).ix;
+      for (const l of lines) {
+        const mine = invs.filter(x => lineOf(x) === l.ix);
+        add(ST, 'amount', l.amount); add(ST, 'bc', l.back_charge); add(ST, 'bal', l.balance);
+        const lineCells = [first ? num0 : '', l.rfc || '', String(l.status || s.status || '').charAt(0), s.job || '', l.phase || '', l.cat || '', l.description || '',
+          l.amount == null ? null : r2(l.amount), l.back_charge == null ? null : r2(l.back_charge), l.balance == null ? null : r2(l.balance)];
+        first = false;
+        if (!mine.length) { const r = ws.addRow(lineCells); xFmt(r, NUMC, DATEC); continue; }
+        mine.forEach((inv, n) => {
+          const pays = inv.payments && inv.payments.length ? inv.payments : [null];
+          pays.forEach((p, pn) => {
+            const invCells = pn ? ['', null, null, null, null, null] : [inv.raw_reference || inv.number, xDate(inv.date), r2(inv.total), r2(inv.retention), r2(inv.discount), r2(inv.payable)];
+            const payCells = p ? [p.check || '', xDate(p.date), r2(p.amount), r2(p.retention), p.discount == null ? null : r2(p.discount)]
+                               : (inv.check ? [inv.check, xDate(inv.check_date), r2(inv.paid), null, null] : ['', null, null, null, null]);
+            const r = ws.addRow((n === 0 && pn === 0 ? lineCells : ['', '', '', '', '', '', '', null, null, null]).concat(invCells, payCells));
+            xFmt(r, NUMC, DATEC);
+            if (!pn) { add(ST, 'total', inv.total); add(ST, 'ret', inv.retention); add(ST, 'disc', inv.discount); add(ST, 'payable', inv.payable); }
+            if (p) { add(ST, 'pAmt', p.amount); add(ST, 'pRet', p.retention); add(ST, 'pDisc', p.discount); } else if (inv.check) add(ST, 'pAmt', inv.paid);
+          });
+        });
+      }
+      for (const i of (desk[num0] || []).sort((a, b) => Number(a.f.PayRequest || 0) - Number(b.f.PayRequest || 0))) {
+        const F = deskFig(i); nDesk++;
+        const r = ws.addRow([first ? num0 : '', '', '', i.job || '', '', '', 'On AP desk, not in CE yet · ' + stageText(i) + ' · ' + i.id, null, null, null,
+          ceInvNo(i), xDate(i.f.PeriodEnding || i.f.InvoiceDate || i.f.ReceivedAt), F.gross, F.ret, F.disc, F.payable, '', null, null, null, null]);
+        first = false; xFmt(r, NUMC, DATEC, { italic:true, color:{ argb:'FF7A5C00' } });
+      }
+      if (!s._deskOnly) totRow('Subcontract ' + num0 + ' totals', ST);
+      Object.keys(VT).forEach(x => VT[x] += ST[x]);
+    }
+    totRow('Vendor ' + (code || name) + ' totals', VT, true);
+  }
+  ws.addRow([]);
+  const n = ws.addRow(['From the CE ledger pull (QTool Subcontract Detail by Vendor, emailed daily by CE Report Book). Italic rows are pay apps on the AP desk that CE does not hold yet; they are not in the totals. Invoiced Discount is CE\'s figure on the invoice; Payment Discount is what the check took.']);
+  n.font = { italic:true, size:8, color:{ argb:'FF666666' } }; ws.mergeCells(n.number, 1, n.number, W.length); n.alignment = { wrapText:true }; n.height = 24;
+  await xSave(wb, 'Subcontractor Detail ' + jobs.join(' ').slice(0, 60) + ' ' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  toast('Exported ' + subs.length + ' subcontract' + (subs.length === 1 ? '' : 's') + (nDesk ? ' + ' + nDesk + ' desk pay app' + (nDesk === 1 ? '' : 's') : ''));
+}
+const xMenu = open => { $('#xMenu').hidden = !open; $('#xBtn').setAttribute('aria-expanded', open); };
+$('#xBtn').addEventListener('click', e => { e.stopPropagation(); typeMenu(false); xMenu($('#xMenu').hidden); if (!$('#xMenu').hidden) $('#xJobs').placeholder = subJobs().slice(0, 4).join(', ') || 'e.g. 25AU010'; });
+$('#xMenu').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-x]'); if (!b) return; xMenu(false);
+  toast('Building the Excel file…'); (b.dataset.x === 'open' ? exportOpen : exportSub)().catch(err => { console.error(err); toast('Export failed: ' + err.message); }); });
+$('#xJobs').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#xMenu [data-x="sub"]').click(); } });
+document.addEventListener('click', () => { const m = $('#xMenu'); if (m && !m.hidden) xMenu(false); });
+
 const typeMenu = open => { $('#tType').hidden = !open; $('#tTypeBtn').setAttribute('aria-expanded', open); };
 $('#tTypeBtn').addEventListener('click', e => { e.stopPropagation(); typeMenu($('#tType').hidden); });
 $('#tType').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-ty]'); if (!b) return; TYPE = b.dataset.ty; store.set('aptype', TYPE); typeMenu(false); draw(); });
