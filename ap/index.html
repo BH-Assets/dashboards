@@ -169,6 +169,7 @@ body.no-pane .ap-pane{display:none}
 .ap-age{text-align:right;color:var(--bh-ink-muted)}
 .ap-age.old{color:var(--bh-warn-ink);font-weight:600}
 .ap-age{position:relative}
+.ap-age .st{display:block;font-size:11px;color:var(--bh-ink-muted);margin-top:1px;cursor:help}
 .age-btn{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
 .age-btn:hover{color:var(--bh-ink)}
 .age-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:290px;background:#fff;border:1px solid var(--bh-slate);box-shadow:0 6px 18px rgba(0,0,0,.14);padding:10px 12px;text-align:left;font-size:12px;font-weight:400;color:var(--bh-ink);cursor:default}
@@ -915,7 +916,7 @@ function bizDays(fromIso){
   return n;
 }
 const isStale = i => !i.isMsg && STALE[i.sec] != null && i.bd > STALE[i.sec];
-const staleText = i => { const n = i.bd - STALE[i.sec]; return n + ' business day' + (n === 1 ? '' : 's') + ' past the ' + STALE[i.sec] + '-business-day mark for ' + ((SECTIONS.find(x => x.k === i.sec) || {}).t || 'this stage'); };
+const staleText = i => { const n = i.bd - STALE[i.sec]; return n + ' day' + (n === 1 ? '' : 's') + ' past the ' + STALE[i.sec] + ' business day mark for ' + ((SECTIONS.find(x => x.k === i.sec) || {}).t || 'this stage'); };
 const staleChip = i => isStale(i) ? '<span class="bh-chip is-warn sm" title="' + esc(staleText(i)) + '">Stale</span>' : '';
 function snapOf(i){
   const c = i.c, L = i.ledger || {};
@@ -1047,7 +1048,6 @@ function draw(){
         if (i.hold && (i.sec === 'ready' || i.sec === 'done' || s.k === 'appr')) chips.unshift('<span class="bh-chip is-bad sm" title="' + esc(holdText(i.hold)) + '">Hold payment</span>');
         if (i.sec !== 'triage' && compChip(i)) chips.push(compChip(i));
         if (chgChip(i)) chips.push(chgChip(i));
-        if (i.sec !== 'triage' && staleChip(i)) chips.push(staleChip(i));
         if ((i.sec === 'ready' || i.sec === 'done') && acctSeat() && discCalc(i)) chips.push('<span class="bh-chip sm" title="2% discount: pay ' + money(discCalc(i).pay) + '">2% discount</span>');
         if (i.raw === 'PM returned') chips.push('<span class="bh-chip sm">PM returned</span>');
         if (i.intakeRej) chips.push('<span class="bh-chip sm">Rejected at intake</span>');
@@ -1065,9 +1065,9 @@ function draw(){
           + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + (bulkReady(i) ? '' : ' title="Flagged pay apps can be selected, but are routed one at a time from their Triage decision"') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
-          + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : 'not read') + '</span>' + amtPop(i) : i.isMsg ? '<span class="note" style="margin:0">email</span>' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">not read</span>') + '</div>'
-          + '<div class="ap-age' + (isStale(i) ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (AGE === i.id ? agePop(i) : '') + '</div>'
-          + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i) + (staleChip(i) ? '<div class="chips">' + staleChip(i) + '</div>' : '')
+          + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : '<span title="No balance due was read off the document">—</span>') + '</span>' + amtPop(i) : i.isMsg ? '' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">—</span>') + '</div>'
+          + '<div class="ap-age' + (isStale(i) ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (isStale(i) ? '<span class="st" title="' + esc(staleText(i)) + '">stale</span>' : '') + (AGE === i.id ? agePop(i) : '') + '</div>'
+          + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i)
               : noteCell(i) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '')) + '</div>'
           + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
       });
