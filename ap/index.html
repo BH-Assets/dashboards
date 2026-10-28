@@ -372,7 +372,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <button class="ap-tog" id="refresh">Refresh</button>
   <label class="ap-as"><span class="bh-label">Viewing as</span><select class="bh-select" id="who"></select></label>
   <span class="ap-filt" id="xWrap"><button class="ap-tog" id="xBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
-    <span class="ap-fm ap-xm" id="xMenu" role="menu" hidden><span class="bh-label">Excel, laid out like CE</span><button class="ap-fo" role="menuitem" data-x="open">A/P open invoices</button><button class="ap-fo" role="menuitem" data-x="sub">Subcontractor detail by vendor</button><label class="ap-xj">Jobs <input class="bh-input" id="xJobs" autocomplete="off"></label><span class="ap-xn">Blank = every job with a pay app open on the desk</span></span></span>
+    <span class="ap-fm ap-xm" id="xMenu" role="menu" hidden><span class="bh-label">Excel, laid out like CE</span><button class="ap-fo" role="menuitem" data-x="open">A/P open invoices</button><button class="ap-fo" role="menuitem" data-x="sub">Subcontractor detail by vendor</button><label class="ap-xj">Jobs <input class="bh-input" id="xJobs" autocomplete="off"></label><span class="ap-xn">Blank = every job with a pay app open on the desk (approvers: your jobs only)</span></span></span>
 </div>
 
 <div class="ap-work">
@@ -779,7 +779,7 @@ function triageCheck(i){
   if (issues.length) c.push('<span class="bh-chip is-bad sm" title="' + esc(issues.join('\n')) + '">' + issues.length + ' flag' + (issues.length > 1 ? 's' : '') + '</span>');
   else if (i.type !== 'Invoice') c.push('<span class="bh-chip is-ok sm" title="Pay app figures agree with Procore and CE">✓ Match</span>');
   if (i.note) c.push('<span class="bh-chip is-warn sm" title="' + esc(i.note) + '">' + (/ocr|scan/i.test(i.note) ? 'OCR · check accuracy' : 'Needs a look') + '</span>');
-  if (compChip(i)) c.push(compChip(i));
+  /* no compliance tag in Triage (28 Oct 2026): the Check column is flags + OCR only; compliance shows from With approver on */
   if (i.type === 'Invoice') c.push('<span class="bh-chip sm">Invoice</span>');
   if (i.rev > 1) c.push('<span class="bh-chip sm">Rev ' + i.rev + '</span>');
   if (i.replied) c.push('<span class="bh-chip ' + (i.replyNew ? 'is-warn ' : '') + 'sm">Trade partner replied</span>');
@@ -914,8 +914,9 @@ function bizDays(fromIso){
   while (d < end) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) n++; }
   return n;
 }
-const isStale = i => !i.isMsg && STALE[i.sec] != null && i.bd >= STALE[i.sec];
-const staleChip = i => isStale(i) ? '<span class="bh-chip is-warn sm" title="Past the ' + STALE[i.sec] + '-business-day mark for this stage">Sitting ' + i.bd + ' business days</span>' : '';
+const isStale = i => !i.isMsg && STALE[i.sec] != null && i.bd > STALE[i.sec];
+const staleText = i => { const n = i.bd - STALE[i.sec]; return n + ' business day' + (n === 1 ? '' : 's') + ' past the ' + STALE[i.sec] + '-business-day mark for ' + ((SECTIONS.find(x => x.k === i.sec) || {}).t || 'this stage'); };
+const staleChip = i => isStale(i) ? '<span class="bh-chip is-warn sm" title="' + esc(staleText(i)) + '">Stale</span>' : '';
 function snapOf(i){
   const c = i.c, L = i.ledger || {};
   return { amt: i.amtKnown ? r2(i.amt) : null, rev: i.rev, comp: compOf(i),
@@ -966,9 +967,9 @@ function chgBanner(i){
   if (!l.length && !notes.length && !stale) return '';
   const blk = l.some(x => x.block) && !chgAcked(i, l), acked = l.some(x => x.block) && !blk;
   const when = i.sec === 'pm' ? 'routed' : 'approved';
-  let h = '<div class="chg-ban ' + (blk ? 'is-bad' : 'is-warn') + '"><div class="h">' + (l.length ? 'Changed since it was ' + when + (e ? ' (' + esc(fmtTime(e.at)) + ')' : '') : stale ? 'Sitting ' + i.bd + ' business days in ' + esc((SECTIONS.find(x => x.k === i.sec) || {}).t || '') : 'Notes since it was ' + when) + '</div>';
+  let h = '<div class="chg-ban ' + (blk ? 'is-bad' : 'is-warn') + '"><div class="h">' + (l.length ? 'Changed since it was ' + when + (e ? ' (' + esc(fmtTime(e.at)) + ')' : '') : stale ? 'Stale — ' + esc(staleText(i)) : 'Notes since it was ' + when) + '</div>';
   if (l.length) h += '<ul>' + l.map(x => '<li>' + (x.block ? '<b>' + esc(x.t) + '</b>' : esc(x.t)) + '</li>').join('') + '</ul>';
-  if (l.length && stale) h += '<div class="sub">Sitting ' + i.bd + ' business days in this stage.</div>';
+  if (l.length && stale) h += '<div class="sub">Stale — ' + esc(staleText(i)) + '.</div>';
   if (notes.length) h += '<div class="sn">' + notes.map(x => '<div><b>' + esc(x.by || '') + '</b> · ' + esc(fmtTime(x.at)) + ' — ' + esc(x.note || '') + '</div>').join('') + '</div>';
   if (acked) { const a = [...(i.log || [])].reverse().find(x => x && x.chgAck); h += '<div class="sub">Confirmed by ' + esc((a && a.by) || '') + (a && a.note ? ': ' + esc(a.note) : '') + '</div>'; }
   if (blk && i.sec === 'ready' && acctSeat()) h += '<div class="sub">Mark entered is off until you confirm these or send it back.</div>'
@@ -1006,7 +1007,7 @@ function nextStep(i){
 function draw(){
   if (!LIVE.me) return;
   document.body.classList.toggle('v-exp', VIEW === 'exp');
-  { const w = document.getElementById('xWrap'); if (w) w.hidden = !isAcct(); }
+  { const w = document.getElementById('xWrap'); if (w) w.hidden = !LIVE.me; }
   if (VIEW === 'exp') { drawExp(); return; }
   typeBar();
   const v = visible();
@@ -2750,7 +2751,20 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.hidden = false; c
    BH-invoice-capture "AP pay apps"). The Worker allows one start per 10 minutes, and the
    desk never starts it twice for the same mail. */
 const SYNC_WORKER_URL = 'https://bh-compliance-sync.soft-math-3331.workers.dev';
-const PW = { n: 0, newest: '', st: null, busy: false, at: '' };
+const PW = { n: 0, more: false, newest: '', st: null, busy: false, at: '', status: null, tag: '[AP TEST]' };
+/* The pull's own subject filter, from the status file it writes after each run (beside the
+   PDFs on the queue site). Until it has written one, assume its default: test mode, [AP TEST]. */
+async function pullStatus(){
+  const q = LIVE.queue; if (!q || !q.siteId) return null;
+  const tok = await token(); if (!tok) return null;
+  const r = await g(tok, '/sites/' + q.siteId + '/drive/root:/ap_pull_status.json:/content');
+  return r.ok && r.body && typeof r.body === 'object' ? r.body : null;
+}
+const pullWants = (m, tag, nb) => {
+  const subj = String(m.subject || '');
+  if (nb && String(m.receivedDateTime || '').slice(0, 10) < String(nb).slice(0, 10)) return false;
+  return !tag || tag === '*' || subj.toLowerCase().includes(tag.toLowerCase()) || /\[AP-\d+\]/i.test(subj);
+};
 async function workerCall(body){
   const tok = await token(); if (!tok) return null;
   try { const r = await fetch(SYNC_WORKER_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -2763,10 +2777,13 @@ async function payablesWatch(auto){
   const tok = await mailToken(); if (!tok) return;
   const rows = (LIVE.queue && LIVE.queue.items) || [];
   const since = rows.map(r => r.f.ReceivedAt).filter(Boolean).sort().pop() || new Date(Date.now() - 2 * 864e5).toISOString();
-  const r = await g(tok, '/users/' + PAYABLES + '/messages?$filter=' + encodeURIComponent('receivedDateTime gt ' + since)
-    + '&$select=id,receivedDateTime,isDraft,from&$orderby=receivedDateTime desc&$top=50');
-  if (!r.ok) return;
-  const msgs = ((r.body && r.body.value) || []).filter(m => !m.isDraft && lc(((m.from || {}).emailAddress || {}).address) !== PAYABLES);
+  PW.status = await pullStatus();
+  PW.tag = PW.status ? String(PW.status.subject_tag || '*') : '[AP TEST]';
+  let url = '/users/' + PAYABLES + '/messages?$filter=' + encodeURIComponent('receivedDateTime gt ' + since)
+    + '&$select=id,receivedDateTime,isDraft,from,subject&$orderby=receivedDateTime desc&$top=50', all = [], pages = 0;
+  while (url && pages < 4) { const r = await g(tok, url); if (!r.ok) return; all = all.concat((r.body && r.body.value) || []); url = r.body && r.body['@odata.nextLink']; pages++; }
+  PW.more = !!url;
+  const msgs = all.filter(m => !m.isDraft && lc(((m.from || {}).emailAddress || {}).address) !== PAYABLES && pullWants(m, PW.tag, PW.status && PW.status.not_before));
   PW.n = msgs.length; PW.newest = msgs.length ? msgs[0].receivedDateTime : ''; PW.at = new Date().toISOString();
   await pwStatus();
   if (auto && PW.n && PW.st && PW.st.can_sync && (!PW.st.last || PW.newest > PW.st.last)) await pullNow(true);
@@ -2786,8 +2803,10 @@ async function pullNow(auto){
 function pwLine(){
   if (!LIVE.me || !LIVE.me.isAccounting) return '';
   const st = PW.st;
-  return (PW.n ? ' · <b class="pw-new">' + PW.n + ' new email' + (PW.n === 1 ? '' : 's') + ' in payables@ not pulled yet</b>' : '')
-    + (st && st.last ? ' · pull started ' + esc(fmtTime(st.last)) : '')
+  const test = PW.tag && PW.tag !== '*';
+  return (PW.n ? ' · <b class="pw-new">' + PW.n + (PW.more && !test ? '+' : '') + ' new ' + (test ? esc(PW.tag) + ' ' : '') + 'email' + (PW.n === 1 ? '' : 's') + ' in payables@ not pulled yet</b>' : '')
+    + (test ? ' · <span title="The pull only files mail whose subject contains ' + esc(PW.tag) + ' (repo variable AP_SUBJECT_TAG). Set it to * to go live.">test mode</span>' : '')
+    + (PW.status && PW.status.finished_at ? ' · last pull finished ' + esc(fmtTime(PW.status.finished_at)) : st && st.last ? ' · pull started ' + esc(fmtTime(st.last)) : '')
     + ' · <a href="#" id="pullNow"' + (st && !st.can_sync ? ' title="' + esc(st.reason || '') + '"' : '') + '>Pull now</a>';
 }
 document.addEventListener('click', e => { if (e.target && e.target.id === 'pullNow') { e.preventDefault(); pullNow(false); } });
@@ -2951,6 +2970,7 @@ function openRows(){
   const out = [];
   for (const i of (ALLH || [])) {
     if (i.hidden || i.isMsg || !i.sec) continue;
+    if (!isAcct() && !inScope(i)) continue;          // approvers: their own jobs only
     const F = deskFig(i), f = i.f;
     if (i.sec === 'done' && (F.paid || (!F.inCE && i.age > 30))) continue;
     const invDate = f.InvoiceDate || f.PeriodEnding || f.ReceivedAt;
@@ -3027,18 +3047,19 @@ function subLines(s){
   return L;
 }
 function subJobs(){
+  const mineJob = j => isAcct() || ((JOBS[j] && JOBS[j].team) || []).map(lc).includes(WHO) || (ALLH || []).some(i => i.job === j && inScope(i));
   const t = String(($('#xJobs') || {}).value || '').toUpperCase().split(/[\s,;]+/).filter(Boolean);
-  if (t.length) return t;
-  return [...new Set((ALLH || []).filter(i => !i.hidden && !i.isMsg && i.type === 'Pay app' && i.job && i.sec !== 'done').map(i => String(i.job).toUpperCase()))].sort();
+  if (t.length) return t.filter(j => mineJob(j) || mineJob(Object.keys(JOBS).find(k => ceJob(k) === ceJob(j)) || ''));
+  return [...new Set((ALLH || []).filter(i => !i.hidden && !i.isMsg && i.type === 'Pay app' && i.job && i.sec !== 'done' && (isAcct() || inScope(i))).map(i => String(i.job).toUpperCase()))].sort();
 }
 async function exportSub(){
   if (!LIVE.ceInv || !LIVE.ceInv.subcontracts) { toast('The CE ledger (ap_ce_invoices.json) is not loaded'); return; }
-  const jobs = subJobs(); if (!jobs.length) { toast('Type a job number, e.g. 25AU010'); return; }
+  const jobs = subJobs(); if (!jobs.length) { toast(isAcct() ? 'Type a job number, e.g. 25AU010' : 'Type one of your job numbers, e.g. 25AU010'); return; }
   const J = new Set(jobs.map(ceJob)), S = LIVE.ceInv.subcontracts;
   const subs = Object.entries(S).filter(([, s]) => J.has(ceJob(s.job)));
   const desk = {};
   for (const i of (ALLH || [])) {
-    if (i.hidden || i.isMsg || i.type !== 'Pay app' || !i.po || !J.has(ceJob(i.job))) continue;
+    if (i.hidden || i.isMsg || i.type !== 'Pay app' || !i.po || !J.has(ceJob(i.job)) || (!isAcct() && !inScope(i))) continue;
     const F = deskFig(i); if (F.inCE) continue;
     (desk[i.po] = desk[i.po] || []).push(i);
   }
