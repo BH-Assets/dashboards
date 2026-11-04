@@ -10,15 +10,15 @@
 :root{
   --bh-red:#ed2b30; --bh-black:#211e1e; --bh-slate:#484b4d; --bh-gray:#e8e6e7; --bh-cream:#f2ece1;
   --surface:#ffffff; --panel:#f6f5f5; --ink:#211e1e; --ink-muted:#484b4d; --hair:#e2e0e1; --line:#211e1e;
-  --accent:#ed2b30; --card:#ffffff; --live:#1e6b35; --live-bg:#e6f2e9;
+  --accent:#ed2b30; --card:#ffffff; --live:#1e6b35; --live-bg:#e6f2e9; --test:#a35f00;
   --f:"Figtree","Segoe UI","Helvetica Neue",Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --surface:#211e1e; --panel:#2a2727; --ink:#ffffff; --ink-muted:#d9d6d7; --hair:#3d3a3a; --line:#ffffff;
-  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; color-scheme:dark}}
+  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; --test:#e3a33d; color-scheme:dark}}
 :root[data-theme="dark"]{
   --surface:#211e1e; --panel:#2a2727; --ink:#ffffff; --ink-muted:#d9d6d7; --hair:#3d3a3a; --line:#ffffff;
-  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; color-scheme:dark}
+  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; --test:#e3a33d; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--surface);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;margin:0;font-variant-numeric:tabular-nums}
 .wrap{max-width:1360px;margin:0 auto;padding-block:36px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
@@ -42,7 +42,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 
 /* the schedule */
-.board{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));margin-top:10px;border-top:1px solid var(--hair)}
+.board{display:grid;grid-template-columns:150px repeat(5,minmax(0,1fr));margin-top:10px;border-top:1px solid var(--hair)}
 .colh{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--surface);padding:14px 12px 10px;border-bottom:2px solid var(--line)}
 .colh .t{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
 .colh .d{font-size:12px;color:var(--ink-muted);margin-top:2px}
@@ -62,9 +62,10 @@ h1 em{font-style:normal;color:var(--accent)}
 .card.open .cw{display:block}
 .card.is-live{border-left:4px solid var(--live)}
 .card.is-building{border-left:4px solid var(--accent)}
+.card.is-testing{border-left:4px solid var(--test)}
 .empty{font-size:12px;color:var(--ink-muted);opacity:.6}
 .mk{width:10px;height:10px;flex:none;display:inline-block}
-.mk.live{background:var(--live)} .mk.building{background:var(--accent)}
+.mk.live{background:var(--live)} .mk.building{background:var(--accent)} .mk.testing{background:var(--test)}
 .mk.next{border:2px solid var(--ink)} .mk.later{border:2px dashed var(--ink-muted)}
 
 footer{margin-top:40px;padding-top:18px;border-top:3px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:13px;color:var(--ink-muted)}
@@ -108,9 +109,10 @@ footer b{color:var(--ink)}
     </div>
     <div class="legend" aria-hidden="true">
       <span><i class="mk live"></i>Live, use it today</span>
+      <span><i class="mk testing"></i>Testing</span>
       <span><i class="mk building"></i>Being built</span>
       <span><i class="mk next"></i>Up next</span>
-      <span><i class="mk later"></i>On the list</span>
+      <span><i class="mk later"></i>Saved for later</span>
     </div>
   </div>
 
@@ -118,7 +120,7 @@ footer b{color:var(--ink)}
 
   <footer>
     <div><b>Have an idea, or want to try something early?</b><br>Bring it to the AI roundtable, or talk to Tiffany Blackmon in IT and process improvement.</div>
-    <div><b>How to read this.</b> Live items are in use now. Being built means work is under way. Up next is the next thing started on each team. On the list is planned, with no date yet.</div>
+    <div><b>How to read this.</b> Live items are in use now. Testing means a few people are trying it before everyone gets it. Being built means work is under way. Up next is the next thing started on each team. Saved for later is planned, with no date yet.</div>
   </footer>
 </div>
 
@@ -130,9 +132,10 @@ const LANES=[
   {k:'foundations', t:'Foundations', d:'Company-wide pieces everything else stands on'}];
 const STAGES=[
   {k:'live', t:'Live', d:'In use now'},
+  {k:'testing', t:'Testing', d:'Being tried before it goes live'},
   {k:'building', t:'Being built', d:'Work under way'},
   {k:'next', t:'Up next', d:'Starting soon'},
-  {k:'later', t:'On the list', d:'Planned, no date yet'}];
+  {k:'later', t:'Saved for later', d:'Planned, no date yet'}];
 let DATA=null, LANE='all';
 try{ const s=localStorage.getItem('bh-roadmap-lane'); if(s) LANE=s; }catch(e){}
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
