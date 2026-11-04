@@ -161,7 +161,36 @@ a.wxc:hover{background:var(--cream)}
 .fold a.app:hover{border-color:var(--charcoal)}
 .fold .appname{font-size:14px}
 .fold .appdesc{font-size:12.5px}
-.fold .tiles{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.fold .tiles{display:block}
+/* desks as a stacked list: name | what it is | open (4 Nov 2026) */
+.fold .tile{display:grid;grid-template-columns:210px minmax(0,1fr) auto;column-gap:18px;align-items:center;
+  border:0;border-top:1px solid var(--line);padding:11px 0;background:none}
+.fold .tile:first-child{border-top:0;padding-top:4px}
+.fold .tile > *{grid-column:2;margin:0}
+.fold .tile h3{grid-column:1;grid-row:1 / span 4;font-size:12.5px}
+.fold .tile .foot{grid-column:3;grid-row:1 / span 4;margin:0;gap:12px}
+.fold .tile > p:not(.msg){margin:0;-webkit-line-clamp:1}
+.fold .tile .msg{margin:2px 0 0}
+.fold .tile .big{margin:0}
+.fold .tile .sublinks{margin:3px 0 0;display:flex;flex-wrap:wrap;gap:4px 16px}
+.fold .tile .sublinks a{font-size:12.5px}
+.fold .tile.locked{background:none;border-top-color:var(--line)}
+.fold .tile.locked h3{color:var(--muted)}
+.fold .tile.locked .big{display:none}
+.fold .tile h3::before{display:none}
+@media (max-width:640px){
+  /* phone: name and Open only, so the list stays short */
+  .fold .tile{padding:10px 0}
+  #sec-desks .tile > p,#sec-desks .tile .sublinks{display:none}
+  .fold .tile h3{font-size:12px}
+}
+@media (max-width:640px){
+  .fold .tile{grid-template-columns:minmax(0,1fr) auto;row-gap:3px}
+  .fold .tile > *{grid-column:1 / -1}
+  .fold .tile h3{grid-column:1;grid-row:1}
+  .fold .tile .foot{grid-column:2;grid-row:1}
+  .fold .tile .foot .bh-chip{display:none}
+}
 .rmstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;font-size:13px;color:var(--muted)}
 .rmstrip b{font-size:20px;font-weight:800;color:var(--ink);margin-right:5px}
 .rmstrip .rmgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap;border-bottom:2px solid var(--brand-red)}
@@ -520,6 +549,11 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
             <button class="fh" type="button" aria-expanded="true"><span class="t">Desks</span><span class="s">Open to you through your Bailey-Harris Microsoft account</span><span class="chev"></span></button>
             <div class="fb"><div class="tiles" id="tiles"></div></div>
           </section>
+
+          <section class="fold" id="sec-roadmap" data-fold="roadmap" hidden>
+            <button class="fh" type="button" aria-expanded="true"><span class="t">AI roadmap</span><span class="s" id="rmcap">What we are building for the field, project teams and the office</span><span class="chev"></span></button>
+            <div class="fb"><div id="rmgrid"></div></div>
+          </section>
           <p class="empty" id="noresults" hidden>Nothing matches that.</p>
         </div>
 
@@ -536,11 +570,6 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
           </div>
         </aside>
       </div>
-
-      <section class="fold" id="sec-roadmap" data-fold="roadmap" hidden>
-        <button class="fh" type="button" aria-expanded="true"><span class="t">AI roadmap</span><span class="s" id="rmcap">What we are building for the field, project teams and the office</span><span class="chev"></span></button>
-        <div class="fb"><div id="rmgrid"></div></div>
-      </section>
 
       <section class="sec" id="rail" hidden>
         <div class="sechead"><span class="blk dark">This week</span></div>
