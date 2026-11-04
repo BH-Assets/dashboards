@@ -1,13 +1,77 @@
 {
- "updated": "2026-11-03",
+ "updated": "2026-11-04",
  "items": [
   {
-   "id": "field-app",
-   "lane": "field",
+   "id": "ai-licences",
+   "lane": "foundations",
    "stage": "next",
-   "title": "Field app for receipts and time",
-   "text": "One phone app for snapping card receipts and, later, logging hours by job and cost code. Managers approve in the app and accounting gets a clean weekly batch. Replaces FieldEase.",
-   "who": "Cardholders, superintendents, crews, accounting"
+   "title": "AI tools for each team",
+   "text": "A planned rollout of the right AI tool for each department, with training first.",
+   "who": "Everyone"
+  },
+  {
+   "id": "ai-policy",
+   "lane": "foundations",
+   "stage": "testing",
+   "title": "AI use policy",
+   "text": "Clear rules for which AI tools to use and what data can go into them. With HR for review.",
+   "who": "Everyone"
+  },
+  {
+   "id": "ai-roundtable",
+   "lane": "foundations",
+   "stage": "live",
+   "title": "AI roundtable",
+   "text": "A standing group that collects how people are using AI, plans training and handles AI license requests.",
+   "who": "Everyone"
+  },
+  {
+   "id": "ap-ai-reader",
+   "lane": "office",
+   "stage": "next",
+   "title": "AI second reader for invoices",
+   "text": "AI reads each invoice and pay application alongside the scanner. Where they disagree, or a check fails, it goes to a person with the reason shown.",
+   "who": "Accounting"
+  },
+  {
+   "id": "ap-desk",
+   "lane": "office",
+   "stage": "testing",
+   "title": "AP Desk",
+   "text": "Pay applications and invoices from payables@ in one queue: checked against Procore and ComputerEase, routed to the right approver and tracked until entered.",
+   "who": "Accounting, project managers"
+  },
+  {
+   "id": "bhc-assistant",
+   "lane": "foundations",
+   "stage": "building",
+   "title": "BHC Assistant (pilot)",
+   "text": "Ask about company basics, processes and where to find things, answered only from approved Bailey-Harris sources.",
+   "who": "Everyone"
+  },
+  {
+   "id": "co-recap",
+   "lane": "project",
+   "stage": "testing",
+   "title": "Change order recap helper (pilot)",
+   "text": "Fills in the owner's change order recap from trade partner proposals, then sets up a draft change event in Procore for the PM to check and send.",
+   "who": "Project managers"
+  },
+  {
+   "id": "coi-ai-reader",
+   "lane": "project",
+   "stage": "later",
+   "title": "AI check on insurance certificates",
+   "text": "A second reader on incoming certificates and endorsements that flags what is missing before anyone reviews it.",
+   "who": "Compliance"
+  },
+  {
+   "id": "coi-intake",
+   "lane": "project",
+   "stage": "next",
+   "title": "Send a COI, it gets filed",
+   "text": "Forward a certificate of insurance to one address (or drop it in one place) and it is filed in Billy against the right job and trade partner.",
+   "who": "Project teams, accounting"
   },
   {
    "id": "competent-persons",
@@ -16,54 +80,6 @@
    "title": "Competent person tracking",
    "text": "Shows which competent person forms are on file for each active job, pulled from Procore forms.",
    "who": "Superintendents, safety, project teams"
-  },
-  {
-   "id": "procore-assistant",
-   "lane": "field",
-   "stage": "building",
-   "title": "Procore assistant (pilot)",
-   "text": "Ask plain questions about a job and get answers straight from Procore: RFIs, submittals, commitments. Read-only. Two field and project leaders are piloting it.",
-   "who": "Superintendents, project managers"
-  },
-  {
-   "id": "submittals",
-   "lane": "field",
-   "stage": "later",
-   "title": "Submittals assistant",
-   "text": "Help preparing and checking submittals against the spec, so less goes back and forth.",
-   "who": "Superintendents, project engineers"
-  },
-  {
-   "id": "crew-allocation",
-   "lane": "field",
-   "stage": "later",
-   "title": "Crew planning for self-perform",
-   "text": "Match crews to work by skill and track productivity, built with Auburn University Building Science as a research partner.",
-   "who": "Self-perform team"
-  },
-  {
-   "id": "sp-takeoff",
-   "lane": "field",
-   "stage": "later",
-   "title": "Self-perform takeoff and estimating",
-   "text": "Faster quantity takeoff and pricing for concrete and other self-perform scopes, with Auburn University Building Science.",
-   "who": "Self-perform team, preconstruction"
-  },
-  {
-   "id": "field-later",
-   "lane": "field",
-   "stage": "later",
-   "title": "More in the field app",
-   "text": "Daily crew assignments, time-and-material tickets and jobsite forms, in the same app as receipts and time.",
-   "who": "Superintendents, foremen"
-  },
-  {
-   "id": "project-dash",
-   "lane": "project",
-   "stage": "live",
-   "title": "Project Information dashboard",
-   "text": "Contract, cost, forecast, change orders and buyout for every active job in one place, from Procore and ComputerEase.",
-   "who": "Project teams, leadership"
   },
   {
    "id": "compliance-desk",
@@ -76,89 +92,73 @@
   {
    "id": "compliance-notes",
    "lane": "project",
-   "stage": "building",
+   "stage": "live",
    "title": "Compliance notes and PM updates",
    "text": "Each trade partner now has notes and a history of requests. A note can be emailed straight to the job's PM team, with a link back to that trade partner.",
    "who": "Project teams, compliance"
   },
   {
+   "id": "crew-allocation",
+   "lane": "field",
+   "stage": "later",
+   "title": "Crew planning for self-perform",
+   "text": "Match crews to work by skill and track productivity, built with Auburn University Building Science as a research partner.",
+   "who": "Self-perform team"
+  },
+  {
    "id": "docusign-buyout",
    "lane": "project",
-   "stage": "live",
+   "stage": "testing",
    "title": "Who has the contract to sign",
    "text": "The buyout view shows when a subcontract is out for signature and whether it is waiting on us or the trade partner.",
    "who": "Project teams"
   },
   {
-   "id": "co-recap",
-   "lane": "project",
-   "stage": "building",
-   "title": "Change order recap helper (pilot)",
-   "text": "Fills in the owner's change order recap from trade partner proposals, then sets up a draft change event in Procore for the PM to check and send.",
-   "who": "Project managers"
-  },
-  {
-   "id": "precon-desk",
-   "lane": "project",
-   "stage": "live",
-   "title": "Precon desk",
-   "text": "Past project history for pricing new work: cost per square foot, schedule and fee from comparable jobs.",
-   "who": "Preconstruction, leadership"
-  },
-  {
-   "id": "prequal-desk",
-   "lane": "project",
-   "stage": "live",
-   "title": "Trade partner ratings and prequal",
-   "text": "Ratings from past jobs, prequalification files and diversity classifications for every trade partner.",
-   "who": "Project teams, preconstruction"
-  },
-  {
-   "id": "coi-intake",
-   "lane": "project",
+   "id": "field-app",
+   "lane": "field",
    "stage": "next",
-   "title": "Send a COI, it gets filed",
-   "text": "Forward a certificate of insurance to one address (or drop it in one place) and it is filed in Billy against the right job and trade partner.",
-   "who": "Project teams, accounting"
+   "title": "Field app for receipts and time",
+   "text": "One phone app for snapping card receipts and, later, logging hours by job and cost code. Managers approve in the app and accounting gets a clean weekly batch. Replaces FieldEase.",
+   "who": "Cardholders, superintendents, crews, accounting"
   },
   {
-   "id": "coi-ai-reader",
-   "lane": "project",
+   "id": "field-later",
+   "lane": "field",
    "stage": "later",
-   "title": "AI check on insurance certificates",
-   "text": "A second reader on incoming certificates and endorsements that flags what is missing before anyone reviews it.",
-   "who": "Compliance"
+   "title": "More in the field app",
+   "text": "Daily crew assignments, time-and-material tickets and jobsite forms, in the same app as receipts and time.",
+   "who": "Superintendents, foremen"
   },
   {
-   "id": "ap-desk",
+   "id": "it-invoices",
    "lane": "office",
-   "stage": "live",
-   "title": "AP Desk",
-   "text": "Pay applications and invoices from payables@ in one queue: checked against Procore and ComputerEase, routed to the right approver and tracked until entered.",
-   "who": "Accounting, project managers"
+   "stage": "testing",
+   "title": "IT vendor invoice capture",
+   "text": "Utility, phone and copier invoices are read from payables@ and logged automatically for budget tracking.",
+   "who": "IT, accounting"
   },
   {
-   "id": "ap-two-step",
-   "lane": "office",
-   "stage": "building",
-   "title": "Two-step approvals",
-   "text": "Assistant PMs and project engineers approve first and route to the PM for final approval.",
-   "who": "Project teams, accounting"
+   "id": "job-master",
+   "lane": "foundations",
+   "stage": "testing",
+   "title": "One job list across systems",
+   "text": "Every job's Procore, ComputerEase and Unanet numbers, PM team and status in one table, so every desk and app agrees on which job is which.",
+   "who": "Everyone (behind the scenes)"
   },
   {
-   "id": "ap-exports",
-   "lane": "office",
-   "stage": "live",
-   "title": "AP reports and payment holds",
-   "text": "Open invoice and subcontractor detail reports in the ComputerEase layout, plus payment holds and early-pay discounts tracked on the desk.",
-   "who": "Accounting, project managers"
+   "id": "launcher",
+   "lane": "foundations",
+   "stage": "testing",
+   "title": "Employee Home",
+   "text": "One starting page for every desk, with the apps you use and who is out this week.",
+   "who": "Everyone"
   },
   {
-   "id": "ap-ai-reader",
+   "id": "lien-waivers",
    "lane": "office",
    "stage": "next",
-   "title": "AI second reader for invoices",
-   "text": "AI reads each invoice and pay application alongside the scanner. Where they disagree, or a check fails, it goes to a person with the reason shown.",
+   "title": "Lien waiver tracking",
+   "text": "See which waivers are in and which are still owed for each payment.",
    "who": "Accounting"
   },
   {
@@ -170,76 +170,52 @@
    "who": "Trade partners, accounting, project managers"
   },
   {
-   "id": "lien-waivers",
-   "lane": "office",
+   "id": "precon-desk",
+   "lane": "project",
+   "stage": "building",
+   "title": "Precon desk",
+   "text": "Past project history for pricing new work: cost per square foot, schedule and fee from comparable jobs.",
+   "who": "Preconstruction, leadership"
+  },
+  {
+   "id": "prequal-desk",
+   "lane": "project",
+   "stage": "building",
+   "title": "Trade partner ratings and prequal",
+   "text": "Ratings from past jobs, prequalification files and diversity classifications for every trade partner.",
+   "who": "Project teams, preconstruction"
+  },
+  {
+   "id": "procore-assistant",
+   "lane": "field",
+   "stage": "building",
+   "title": "Procore assistant (pilot)",
+   "text": "Ask plain questions about a job and get answers straight from Procore: RFIs, submittals, commitments. Read-only. Two field and project leaders are piloting it.",
+   "who": "Superintendents, project managers"
+  },
+  {
+   "id": "project-dash",
+   "lane": "project",
+   "stage": "building",
+   "title": "Project Information dashboard",
+   "text": "Contract, cost, forecast, change orders and buyout for every active job in one place, from Procore and ComputerEase.",
+   "who": "Project teams, leadership"
+  },
+  {
+   "id": "sp-takeoff",
+   "lane": "field",
    "stage": "later",
-   "title": "Lien waiver tracking",
-   "text": "See which waivers are in and which are still owed for each payment.",
-   "who": "Accounting"
+   "title": "Self-perform takeoff and estimating",
+   "text": "Faster quantity takeoff and pricing for concrete and other self-perform scopes, with Auburn University Building Science.",
+   "who": "Self-perform team, preconstruction"
   },
   {
-   "id": "it-invoices",
-   "lane": "office",
-   "stage": "live",
-   "title": "IT vendor invoice capture",
-   "text": "Utility, phone and copier invoices are read from payables@ and logged automatically for budget tracking.",
-   "who": "IT, accounting"
-  },
-  {
-   "id": "launcher",
-   "lane": "foundations",
-   "stage": "live",
-   "title": "Employee Home",
-   "text": "One starting page for every desk, with the apps you use and who is out this week.",
-   "who": "Everyone"
-  },
-  {
-   "id": "job-master",
-   "lane": "foundations",
-   "stage": "building",
-   "title": "One job list across systems",
-   "text": "Every job's Procore, ComputerEase and Unanet numbers, PM team and status in one table, so every desk and app agrees on which job is which.",
-   "who": "Everyone (behind the scenes)"
-  },
-  {
-   "id": "hosting",
-   "lane": "foundations",
-   "stage": "building",
-   "title": "Bailey-Harris-owned hosting",
-   "text": "Moving every desk onto hosting we control, with the code kept private.",
-   "who": "Everyone (behind the scenes)"
-  },
-  {
-   "id": "ai-roundtable",
-   "lane": "foundations",
-   "stage": "live",
-   "title": "AI roundtable",
-   "text": "A standing group that collects how people are using AI, plans training and handles AI license requests.",
-   "who": "Everyone"
-  },
-  {
-   "id": "ai-policy",
-   "lane": "foundations",
-   "stage": "building",
-   "title": "AI use policy",
-   "text": "Clear rules for which AI tools to use and what data can go into them. With HR for review.",
-   "who": "Everyone"
-  },
-  {
-   "id": "bhc-assistant",
-   "lane": "foundations",
-   "stage": "building",
-   "title": "BHC Assistant (pilot)",
-   "text": "Ask about company basics, processes and where to find things, answered only from approved Bailey-Harris sources.",
-   "who": "Everyone"
-  },
-  {
-   "id": "ai-licences",
-   "lane": "foundations",
-   "stage": "next",
-   "title": "AI tools for each team",
-   "text": "A planned rollout of the right AI tool for each department, with training first.",
-   "who": "Everyone"
+   "id": "submittals",
+   "lane": "field",
+   "stage": "later",
+   "title": "Submittals assistant",
+   "text": "Help preparing and checking submittals against the spec, so less goes back and forth.",
+   "who": "Superintendents, project engineers"
   }
  ]
 }
