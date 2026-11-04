@@ -1639,17 +1639,48 @@ function renderWeather(data){
 }
 
 
+/* SharePoint site and library ids barely change: keep them for a week (4 Nov 2026) */
+const SPC_KEY = "bh.spids";
+async function spResolve(fresh){
+  if (!fresh){
+    try {
+      const c = JSON.parse(localStorage.getItem(SPC_KEY) || "null");
+      if (c && c.path === SP_PATH && c.siteId && c.drives && Date.now() - c.at < 7 * 864e5){
+        log("site", SP_PATH + " (remembered ids)");
+        return { siteId: c.siteId, drives: c.drives, cached: true };
+      }
+    } catch(_) {}
+  } else { try { localStorage.removeItem(SPC_KEY); } catch(_) {} }
+  let siteId = null; const drives = {};
+  const site = await graph("/sites/" + SP_HOST + ":" + SP_PATH);
+  if (site.ok && site.body && site.body.id){
+    siteId = site.body.id;
+    log("site", SP_PATH + " resolved");
+    const dr = await graph("/sites/" + siteId + "/drives?$select=id,name");
+    if (dr.ok && dr.body && dr.body.value){
+      dr.body.value.forEach(d => { drives[d.name] = d.id; });
+      log("libraries", dr.body.value.map(d => d.name).join(", ") || "none");
+    } else log("libraries", "could not list — HTTP " + dr.status);
+  } else {
+    log("site", "HTTP " + site.status);
+  }
+  if (siteId && Object.keys(drives).length){
+    try { localStorage.setItem(SPC_KEY, JSON.stringify({ path: SP_PATH, siteId, drives, at: Date.now() })); } catch(_) {}
+  }
+  return { siteId, drives, cached: false };
+}
+
 async function main(){
   $("#greet").textContent = greeting();
   paintClock();
   setInterval(paintClock, 15000);
   /* fired before sign-in resolves so the panel is ready when the page appears */
-  wxPromise = wxLoad();
+  /* weather draws itself whenever it lands; nothing else waits for it (4 Nov 2026) */
+  wxPromise = wxLoad().then(d => { wxLast = d; renderWeather(d); return d; },
+                            e => { log("weather", "failed " + ((e && e.message) || e)); return null; });
 
   if (typeof msal === "undefined"){
     $("#app").hidden = false;
-    wxLast = await wxPromise;
-    renderWeather(wxLast);
     $("#searchbox").hidden = false;
     renderApps(FALLBACK);
     banner("#degraded", "Sign-in is unavailable right now.",
@@ -1687,9 +1718,6 @@ async function main(){
   const first = (acct.name || "").trim().split(/\s+/)[0];
   if (first){ $("#greet").textContent = greeting() + ","; $("#greetname").textContent = first; }
 
-  wxLast = await wxPromise;
-  renderWeather(wxLast);
-
   const claims = acct.idTokenClaims || {};
   const myGroups = new Set(Array.isArray(claims.groups) ? claims.groups : []);
   const overage = !!(claims._claim_names || claims._claim_sources);
@@ -1721,7 +1749,11 @@ async function main(){
   }
 
   /* job title and office under the name, from the profile User.Read already covers */
-  const me = await graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
+  /* profile, group overage and the site lookup do not depend on each other (4 Nov 2026) */
+  const meP  = graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
+  const grpP = overage ? graph("/me/transitiveMemberOf/microsoft.graph.group?$select=id&$top=999") : null;
+  const siteP = spResolve(false);
+  const me = await meP;
   if (me.ok && me.body){
     const role = [me.body.jobTitle, me.body.officeLocation].filter(Boolean).join(" \u00b7 ");
     $("#acctrole").textContent = role;
@@ -1732,33 +1764,31 @@ async function main(){
     if (me.body.displayName) $("#acctname").textContent = me.body.displayName;
   }
 
-  if (overage){
-    const g = await graph("/me/transitiveMemberOf/microsoft.graph.group?$select=id&$top=999");
+  if (grpP){
+    const g = await grpP;
     if (g.ok && g.body && g.body.value){
       g.body.value.forEach(x => myGroups.add(x.id));
       log("groups from graph", myGroups.size);
     } else log("groups from graph", "failed HTTP " + g.status);
   }
 
-  let siteId = null, drives = {};
-  const site = await graph("/sites/" + SP_HOST + ":" + SP_PATH);
-  if (site.ok && site.body && site.body.id){
-    siteId = site.body.id;
-    log("site", SP_PATH + " resolved");
-    const dr = await graph("/sites/" + siteId + "/drives?$select=id,name");
-    if (dr.ok && dr.body && dr.body.value){
-      dr.body.value.forEach(d => { drives[d.name] = d.id; });
-      log("libraries", dr.body.value.map(d => d.name).join(", ") || "none");
-    } else log("libraries", "could not list — HTTP " + dr.status);
-  } else {
-    log("site", "HTTP " + site.status);
+  let { siteId, drives, cached: spCached } = await siteP;
+
+  /* people, newsletter and links come from the same library: read them together */
+  const libRead = name => (siteId && drives[LINK_LIB])
+    ? graphRaw("/drives/" + drives[LINK_LIB] + "/root:/" + name + ":/content").catch(() => ({ ok: false, status: "network" }))
+    : Promise.resolve({ ok: false, status: "no library" });
+  let [pfR, nfR, lfR] = await Promise.all([libRead(PEOPLE_FILE), libRead(NEWS_FILE), libRead(LINK_FILE)]);
+  if (spCached && !lfR.ok){
+    /* remembered ids may be stale: look the site up again once */
+    log("site", "cached ids failed (" + lfR.status + "), resolving again");
+    ({ siteId, drives } = await spResolve(true));
+    [pfR, nfR, lfR] = await Promise.all([libRead(PEOPLE_FILE), libRead(NEWS_FILE), libRead(LINK_FILE)]);
   }
 
   /* ---- files the pipelines write ---- */
   if (siteId && drives[LINK_LIB]){
-    const lib = drives[LINK_LIB];
-
-    const pf = await graphRaw("/drives/" + lib + "/root:/" + PEOPLE_FILE + ":/content");
+    const pf = pfR;
     if (pf.ok){
       try {
         const j = JSON.parse(pf.text);
@@ -1769,7 +1799,7 @@ async function main(){
       } catch(_) { log(PEOPLE_FILE, "parse failed"); }
     } else log(PEOPLE_FILE, "HTTP " + pf.status);
 
-    const nf = await graphRaw("/drives/" + lib + "/root:/" + NEWS_FILE + ":/content");
+    const nf = nfR;
     if (nf.ok){
       try {
         const j = JSON.parse(nf.text);
@@ -1783,7 +1813,7 @@ async function main(){
 
   /* ---- the link list ---- */
   if (siteId && drives[LINK_LIB]){
-    const f = await graphRaw("/drives/" + drives[LINK_LIB] + "/root:/" + LINK_FILE + ":/content");
+    const f = lfR;
     if (f.ok){
       try {
         const parsed = JSON.parse(f.text);
@@ -1813,11 +1843,19 @@ async function main(){
   myEmail = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
   const personal = startMyDay(acct).catch(e => log("my day", "failed " + (e && e.message)));
 
-  try { await loadPulse(); } catch(e){ log("pulse", "failed " + (e && e.message)); }
+  /* desk tile files: start every read now, the tiles below pick them up (4 Nov 2026) */
+  const deskReads = {};
+  for (const desk of DESKS){
+    if ((!desk.group || myGroups.has(desk.group)) && desk.library && siteId && drives[desk.library])
+      deskReads[desk.key] = graphRaw("/drives/" + drives[desk.library] + "/root:/" + desk.file + ":/content")
+        .catch(() => ({ ok: false, status: "network" }));
+  }
+
+  await Promise.all([
+    loadPulse().catch(e => log("pulse", "failed " + (e && e.message))),
+    loadApQueues(myEmail, me.body && me.body.department, drives).catch(e => log("ap review", "failed " + (e && e.message)))
+  ]);
   try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
-  try {
-    await loadApQueues(myEmail, me.body && me.body.department, drives);
-  } catch(e){ log("ap review", "failed " + (e && e.message)); }
   try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
   renderMyDay();   /* the Outlook half renders itself whenever it lands; the desks do not wait for it */
   void personal;
@@ -1832,7 +1870,7 @@ async function main(){
     let big = "\u2014", blurb = desk.blurb, msg = "";
     if (desk.library && siteId){
       const driveId = drives[desk.library];
-      const f = driveId ? await graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content") : { ok: false, status: "no library" };
+      const f = driveId ? await (deskReads[desk.key] || graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content")) : { ok: false, status: "no library" };
       if (f.ok){
         try {
           const data = JSON.parse(f.text);
