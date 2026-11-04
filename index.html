@@ -171,6 +171,24 @@ main{padding:0}
 
 /* ---- desk tiles ---- */
 .tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+/* ---- AI roadmap (3 Nov 2026) ---- */
+.sechead .rmall{margin-left:auto;font:700 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;border:1px solid var(--charcoal);padding:8px 12px;white-space:nowrap}
+.sechead .rmall:hover{background:var(--ink);color:#fff}
+.rm{display:grid;gap:14px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.rm .col{background:#fff;border:1px solid var(--line);border-top:3px solid var(--ink);padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column}
+.rm .col.live{border-top-color:var(--ok)} .rm .col.building{border-top-color:var(--brand-red)}
+.rm .col.later{border-top-color:var(--charcoal);border-top-style:dashed}
+.rm .h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rm .t{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.rm .c{font-size:26px;font-weight:800;line-height:1}
+.rm .d{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.rm ul{list-style:none;margin:0;padding:0}
+.rm li{padding:7px 0;border-top:1px solid var(--line);font-size:13.5px;font-weight:600;line-height:1.3}
+.rm li small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.rm .more{margin-top:auto;padding-top:8px;font-size:12px;color:var(--muted)}
+@media (max-width:1100px){.rm{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.rm{grid-template-columns:1fr}.sechead .rmall{margin-left:0}}
 .tile{border-top:3px solid var(--ink);padding:14px 16px 12px;display:flex;flex-direction:column;min-width:0;background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .tile.locked{background:var(--gray);border-top-color:var(--charcoal)}
 .tile h3{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -453,6 +471,12 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
           <section class="sec" id="sec-desks">
             <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
             <div class="tiles" id="tiles"></div>
+          </section>
+
+          <section class="sec" id="sec-roadmap" hidden>
+            <div class="sechead"><span class="blk dark">AI roadmap</span><span class="cap" id="rmcap">What we are building for the field, project teams and the office</span>
+              <a class="rmall" href="roadmap/">See the full roadmap</a></div>
+            <div class="rm" id="rmgrid"></div>
           </section>
 
           <section class="sec" id="rail" hidden>
@@ -1122,6 +1146,32 @@ async function loadPulse(){
   pulseShown = true;   /* #pstats stays hidden; the strip above carries it */
   log("pulse", active.length + " active, " + closing + " closing, " + warranty + " warranty");
   layoutPulse();
+}
+/* ============ AI roadmap (3 Nov 2026) ============ */
+/* roadmap/roadmap.json sits beside the full roadmap page on this same site (made from the
+   Roadmap Tracker). No token needed. Missing or broken file: the section stays hidden. */
+const RM_STAGES = [["live","Live","In use now"],["building","Being built","Work under way"],["next","Up next","Starting soon"],["later","On the list","Planned, no date yet"]];
+const RM_LANES = {field:"Field", project:"Project teams", office:"Office", foundations:"Foundations"};
+let rmLoaded = false;
+async function loadRoadmap(){
+  if (rmLoaded) return; rmLoaded = true;
+  const sec = $("#sec-roadmap"), grid = $("#rmgrid"); if (!sec || !grid) return;
+  try{
+    const r = await fetch("roadmap/roadmap.json", { cache: "no-store" });
+    if (!r.ok) { log("roadmap", "HTTP " + r.status); return; }
+    const j = await r.json(), items = (j && j.items) || [];
+    if (!items.length) return;
+    grid.innerHTML = RM_STAGES.map(([k, t, d]) => {
+      const list = items.filter(i => i.stage === k), show = list.slice(0, k === "live" ? 4 : 3);
+      return '<div class="col ' + k + '"><div class="h"><span class="t">' + esc(t) + '</span><span class="c">' + list.length + '</span></div>' +
+        '<div class="d">' + esc(d) + '</div><ul>' +
+        show.map(i => '<li>' + esc(i.title) + '<small>' + esc(RM_LANES[i.lane] || i.lane || "") + '</small></li>').join("") + '</ul>' +
+        (list.length > show.length ? '<div class="more">+' + (list.length - show.length) + ' more on the full roadmap</div>' : '') + '</div>';
+    }).join("");
+    if (j.updated) { const dt = new Date(j.updated + "T12:00:00"); if (!isNaN(dt)) $("#rmcap").textContent = "What we are building for the field, project teams and the office · updated " + dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+    sec.hidden = false;
+    log("roadmap", items.length + " items");
+  }catch(e){ log("roadmap", "not loaded: " + (e && e.message || e)); }
 }
 function layoutPulse(){
   const p = $("#pulse"); if (!p) return;
@@ -1855,6 +1905,7 @@ function applySite(site){
       issue.archiveUrl = hand.archiveUrl;
   }
   renderNewsletter(issue);
+  loadRoadmap();
   teamIssue = issue || null;
 
   /* the pipeline's file, when present, is the source of truth for people */
