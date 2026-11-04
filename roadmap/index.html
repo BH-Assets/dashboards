@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Bailey-Harris AI Roadmap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="What Bailey-Harris is building with AI and data, for the field, project teams and the office.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Layout: a builder's schedule. Lanes run down the left like trades on a Gantt, stages run across
+   like phases; each card sits in its cell. Red square = the brand's one mark of emphasis. */
+:root{
+  --bh-red:#ed2b30; --bh-black:#211e1e; --bh-slate:#484b4d; --bh-gray:#e8e6e7; --bh-cream:#f2ece1;
+  --surface:#ffffff; --panel:#f6f5f5; --ink:#211e1e; --ink-muted:#484b4d; --hair:#e2e0e1; --line:#211e1e;
+  --accent:#ed2b30; --card:#ffffff; --live:#1e6b35; --live-bg:#e6f2e9;
+  --f:"Figtree","Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --surface:#211e1e; --panel:#2a2727; --ink:#ffffff; --ink-muted:#d9d6d7; --hair:#3d3a3a; --line:#ffffff;
+  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --surface:#211e1e; --panel:#2a2727; --ink:#ffffff; --ink-muted:#d9d6d7; --hair:#3d3a3a; --line:#ffffff;
+  --card:#2f2c2c; --live:#8fd1a0; --live-bg:#22382a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--surface);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;margin:0;font-variant-numeric:tabular-nums}
+.wrap{max-width:1360px;margin:0 auto;padding-block:36px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+header.top{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding-bottom:22px;border-bottom:3px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted)}
+.sq{width:14px;height:14px;background:var(--accent);flex:none}
+.home{margin-left:14px;padding-left:14px;border-left:1px solid var(--hair);color:var(--ink-muted);text-decoration:none}
+.home:hover{color:var(--ink);text-decoration:underline}
+h1{font-size:clamp(34px,6vw,64px);line-height:.95;font-weight:900;letter-spacing:-.01em;text-transform:uppercase;margin:12px 0 10px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:62ch;color:var(--ink-muted);font-size:16px;margin:0}
+.asof{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);text-align:right}
+.asof b{display:block;font-size:22px;letter-spacing:0;color:var(--ink);text-transform:none}
+
+.controls{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--hair);background:var(--card);color:var(--ink);font:600 13px/1 var(--f);padding:9px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.chip:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink-muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* the schedule */
+.board{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));margin-top:10px;border-top:1px solid var(--hair)}
+.colh{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--surface);padding:14px 12px 10px;border-bottom:2px solid var(--line)}
+.colh .t{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.colh .d{font-size:12px;color:var(--ink-muted);margin-top:2px}
+.colh.corner{border-bottom-color:transparent}
+.laneh{padding:16px 14px 16px 0;border-bottom:1px solid var(--hair)}
+.laneh .t{font-size:18px;font-weight:900;text-transform:uppercase;line-height:1.05}
+.laneh .d{font-size:12.5px;color:var(--ink-muted);margin-top:6px;max-width:22ch}
+.laneh .n{display:inline-block;margin-top:10px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)}
+.cell{padding:12px;border-bottom:1px solid var(--hair);border-left:1px solid var(--hair);display:flex;flex-direction:column;gap:10px;min-width:0}
+.cell.live{background:var(--panel)}
+.card{background:var(--card);border:1.5px solid var(--hair);padding:12px 13px 13px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;display:block}
+.card:hover{border-color:var(--ink)}
+.card .ct{font-weight:800;font-size:14.5px;line-height:1.25}
+.card .cx{font-size:13px;color:var(--ink-muted);margin-top:5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card.open .cx{-webkit-line-clamp:unset;display:block}
+.card .cw{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);margin-top:9px;display:none}
+.card.open .cw{display:block}
+.card.is-live{border-left:4px solid var(--live)}
+.card.is-building{border-left:4px solid var(--accent)}
+.empty{font-size:12px;color:var(--ink-muted);opacity:.6}
+.mk{width:10px;height:10px;flex:none;display:inline-block}
+.mk.live{background:var(--live)} .mk.building{background:var(--accent)}
+.mk.next{border:2px solid var(--ink)} .mk.later{border:2px dashed var(--ink-muted)}
+
+footer{margin-top:40px;padding-top:18px;border-top:3px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:13px;color:var(--ink-muted)}
+footer b{color:var(--ink)}
+.err{padding:30px 0;color:var(--ink-muted)}
+
+/* phone and narrow screens: each lane becomes its own section, stages listed in order */
+@media (max-width:900px){
+  header.top{grid-template-columns:1fr}
+  .asof{text-align:left}
+  .board{display:block;border-top:0}
+  .colh{display:none}
+  .laneh{padding:24px 0 8px;border-bottom:2px solid var(--line)}
+  .laneh .d{max-width:none}
+  .cell{border-left:0;padding:12px 0}
+  .cell::before{content:attr(data-stage);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+  .cell.live{background:none}
+  .cell.none{display:none}
+  footer{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .12s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="sq" aria-hidden="true"></span>Bailey-Harris Construction<a class="home" href="/">Employee Home</a></div>
+      <h1>AI <em>Roadmap</em></h1>
+      <p class="lede">What we are building with AI and our own data to take busywork off the field, project teams and the office. Click a card for who it helps.</p>
+    </div>
+    <div class="asof">Updated<b id="asof">—</b></div>
+  </header>
+
+  <div class="controls">
+    <div class="chips" role="group" aria-label="Show a team">
+      <button class="chip" id="f-all" data-lane="all" aria-pressed="true">Everything</button>
+      <button class="chip" id="f-field" data-lane="field" aria-pressed="false">Field</button>
+      <button class="chip" id="f-project" data-lane="project" aria-pressed="false">Project teams</button>
+      <button class="chip" id="f-office" data-lane="office" aria-pressed="false">Office</button>
+      <button class="chip" id="f-foundations" data-lane="foundations" aria-pressed="false">Foundations</button>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="mk live"></i>Live, use it today</span>
+      <span><i class="mk building"></i>Being built</span>
+      <span><i class="mk next"></i>Up next</span>
+      <span><i class="mk later"></i>On the list</span>
+    </div>
+  </div>
+
+  <div id="board" class="board" aria-live="polite"><div class="err">Loading the roadmap…</div></div>
+
+  <footer>
+    <div><b>Have an idea, or want to try something early?</b><br>Bring it to the AI roundtable, or talk to Tiffany Blackmon in IT and process improvement.</div>
+    <div><b>How to read this.</b> Live items are in use now. Being built means work is under way. Up next is the next thing started on each team. On the list is planned, with no date yet.</div>
+  </footer>
+</div>
+
+<script>
+const LANES=[
+  {k:'field', t:'Field', d:'Superintendents, foremen and crews on the jobsite'},
+  {k:'project', t:'Project teams', d:'Project managers, engineers and preconstruction'},
+  {k:'office', t:'Office', d:'Accounting, AP and administration'},
+  {k:'foundations', t:'Foundations', d:'Company-wide pieces everything else stands on'}];
+const STAGES=[
+  {k:'live', t:'Live', d:'In use now'},
+  {k:'building', t:'Being built', d:'Work under way'},
+  {k:'next', t:'Up next', d:'Starting soon'},
+  {k:'later', t:'On the list', d:'Planned, no date yet'}];
+let DATA=null, LANE='all';
+try{ const s=localStorage.getItem('bh-roadmap-lane'); if(s) LANE=s; }catch(e){}
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){
+  const b=document.getElementById('board');
+  if(!DATA){ return; }
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed', String(c.dataset.lane===LANE)));
+  const lanes=LANES.filter(l=>LANE==='all'||l.k===LANE);
+  let h='<div class="colh corner"></div>'+STAGES.map(s=>'<div class="colh"><div class="t">'+s.t+'</div><div class="d">'+s.d+'</div></div>').join('');
+  for(const l of lanes){
+    const items=DATA.items.filter(i=>i.lane===l.k);
+    h+='<div class="laneh"><div class="t">'+esc(l.t)+'</div><div class="d">'+esc(l.d)+'</div><span class="n">'+items.length+' item'+(items.length===1?'':'s')+'</span></div>';
+    for(const s of STAGES){
+      const cards=items.filter(i=>i.stage===s.k);
+      h+='<div class="cell '+s.k+(cards.length?'':' none')+'" data-stage="'+esc(s.t)+'">'
+        +(cards.length?cards.map(i=>'<button class="card is-'+s.k+'" id="c-'+esc(i.id)+'" aria-expanded="false"><div class="ct">'+esc(i.title)+'</div><div class="cx">'+esc(i.text)+'</div><div class="cw">For: '+esc(i.who)+'</div></button>').join(''):'<span class="empty">Nothing here yet</span>')
+        +'</div>';
+    }
+  }
+  b.innerHTML=h;
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(c){ LANE=c.dataset.lane; try{localStorage.setItem('bh-roadmap-lane',LANE);}catch(x){} render(); return; }
+  const k=e.target.closest('.card'); if(k){ const o=!k.classList.contains('open'); k.classList.toggle('open',o); k.setAttribute('aria-expanded',String(o)); }
+});
+fetch('roadmap.json',{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(j=>{
+  DATA=j;
+  const d=j.updated?new Date(j.updated+'T12:00:00'):null;
+  document.getElementById('asof').textContent=d?d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—';
+  render();
+}).catch(e=>{ document.getElementById('board').innerHTML='<div class="err">The roadmap could not load ('+esc(e.message)+'). Refresh the page to try again.</div>'; });
+</script>
+</body></html>
