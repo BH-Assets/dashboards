@@ -59,16 +59,16 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .lh .acct{margin-left:auto}
 
 /* ---- hero: The Laurel in red duotone ---- */
-.hero{position:relative;overflow:hidden;background:var(--brand-red);min-height:500px}
+.hero{position:relative;overflow:hidden;background:var(--brand-red);min-height:330px}
 .hero-photo{position:absolute;inset:0;background:url("hero.jpg") center 55% / cover no-repeat;
-  filter:grayscale(1) contrast(1.12) brightness(.95);mix-blend-mode:multiply}
+  filter:grayscale(1) contrast(1.08) brightness(1.3);mix-blend-mode:multiply}
 /* a red wash behind the greeting so black and white type both read */
-.hero-wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(33,30,30,.74) 0%,rgba(33,30,30,.5) 40%,rgba(33,30,30,.2) 75%,rgba(33,30,30,.12) 100%)}
-.hero-in{position:relative;padding:44px 40px 0;max-width:1280px;margin:0 auto;min-height:500px}
+.hero-wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(33,30,30,.58) 0%,rgba(33,30,30,.34) 40%,rgba(33,30,30,.1) 75%,rgba(33,30,30,0) 100%)}
+.hero-in{position:relative;padding:32px 40px 0;max-width:1280px;margin:0 auto;min-height:330px}
 .today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
-.greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
+.greet{margin-top:8px;font-size:46px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
 .greet .nm{display:block;font-weight:800}
-.hero-card{position:absolute;left:0;right:0;bottom:44px;padding:0 40px;max-width:1280px;margin:0 auto}
+.hero-card{position:absolute;left:0;right:0;bottom:28px;padding:0 40px;max-width:1280px;margin:0 auto}
 .hero-card p{margin:0 0 16px;font-size:17px;color:var(--ink)}
 .hero-in p.eyebrow{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff}
 .hero-in p.eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:var(--brand-red);margin-right:9px;vertical-align:0}
@@ -77,10 +77,10 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .hero-card .acts a:hover,.hero-card .acts a:focus-visible{background:var(--cream)!important;border-color:var(--cream)!important;color:var(--ink)!important}
 .acts{display:flex;gap:10px;flex-wrap:wrap}
 .acts a{min-height:44px}
-.deco{position:absolute;right:40px;bottom:112px;display:flex;align-items:flex-start;gap:34px;pointer-events:none}
-.deco .dots{display:grid;grid-template-columns:repeat(4,22px);gap:10px}
-.deco .dots i{width:22px;height:22px;border-radius:50%;background:#fff;display:block}
-.deco .sq{width:106px;height:106px;background:#fff}
+.deco{position:absolute;right:40px;bottom:84px;display:flex;align-items:flex-start;gap:24px;pointer-events:none}
+.deco .dots{display:grid;grid-template-columns:repeat(4,16px);gap:8px}
+.deco .dots i{width:16px;height:16px;border-radius:50%;background:#fff;display:block}
+.deco .sq{width:76px;height:76px;background:#fff}
 .caption{position:absolute;right:16px;bottom:12px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
 
@@ -122,7 +122,54 @@ a.wxc:hover{background:var(--cream)}
 
 /* ---- pulse: active jobs and the team, under the weather ---- */
 /* two columns under the weather: desks and links on the left, jobs and team on the right */
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:start}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+/* ---- 4 Nov 2026: two columns, sections that fold ---- */
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.side .md{grid-template-columns:1fr}
+.side #sec-myday{margin:0}
+.sidehead{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+.sidehead .t{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.sidehead .cap{font-size:12.5px;color:var(--muted);min-width:0}
+.sidehead .mdhide{margin-left:auto;font:700 10.5px var(--bh-font,Figtree,sans-serif);letter-spacing:.1em;text-transform:uppercase;
+  background:#fff;border:1px solid var(--line);color:var(--muted);padding:5px 9px;cursor:pointer;border-radius:0}
+.sidehead .mdhide:hover{border-color:var(--charcoal);color:var(--ink)}
+.fold{background:#fff;border:1px solid var(--line);border-top:3px solid var(--ink);margin:0 0 20px;min-width:0}
+.fold > .fh{font:inherit;color:inherit;background:none;border:0;border-radius:0;display:flex;align-items:center;gap:10px;width:100%;
+  padding:13px 18px;cursor:pointer;text-align:left}
+.fold > .fh::before{content:"";width:11px;height:11px;background:var(--brand-red);flex:none}
+.fh .t{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.fh .s{font-size:12.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh .chev,.mdc > h2::after{margin-left:auto;width:8px;height:8px;flex:none;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(45deg)}
+.mdc > h2::after{content:"";margin-left:6px}
+.fold.folded .chev,.mdc.folded > h2::after{transform:rotate(-45deg)}
+.fold > .fh:hover,.mdc > h2:hover{background:var(--cream)}
+.fold > .fh:focus-visible,.mdc > h2:focus-visible{outline:2px solid var(--brand-red);outline-offset:-2px}
+.fold > .fb{padding:0 18px 18px}
+.fold.folded > .fb{display:none}
+.mdc > h2{cursor:pointer;user-select:none}
+.mdc.folded > :not(h2){display:none}
+.mdc.folded > h2{border-bottom:0}
+.searching .fold.folded > .fb{display:block}
+.apptabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 14px;overflow-x:auto}
+.apptabs button{font:600 13px var(--bh-font,Figtree,sans-serif);background:none;border:0;border-bottom:2px solid transparent;padding:7px 12px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.apptabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brand-red)}
+.searching .apptabs{display:none}
+.appgh{display:none;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.searching .appgh{display:block}
+.fold .apps{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;background:none;border:0}
+.fold a.app{padding:12px 14px 13px;border:1px solid var(--line)}
+.fold a.app:hover{border-color:var(--charcoal)}
+.fold .appname{font-size:14px}
+.fold .appdesc{font-size:12.5px}
+.fold .tiles{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.rmstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;font-size:13px;color:var(--muted)}
+.rmstrip b{font-size:20px;font-weight:800;color:var(--ink);margin-right:5px}
+.rmstrip .rmgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap;border-bottom:2px solid var(--brand-red)}
+.rmbar{display:flex;height:8px;margin-top:12px;background:var(--gray)}
+.rmbar span{display:block;height:100%}
+.rmnow{margin-top:10px;font-size:12.5px;color:var(--muted)}
+.rmnow b{color:var(--ink);font-weight:700}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.side{order:-1}}
 .layout.solo{grid-template-columns:minmax(0,1fr)}
 .pulse{display:grid;gap:24px;align-content:start}
 .pstats{border-top:3px solid var(--ink);padding:20px 22px 22px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -461,40 +508,46 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
 
       <div class="layout" id="layout">
         <div class="main">
-          <section class="sec" id="sec-myday" hidden>
-            <div class="sechead"><span class="blk">My day</span><span class="cap" id="mdcap"></span>
+          <section class="fold" id="sec-apps" data-fold="apps">
+            <button class="fh" type="button" aria-expanded="true"><span class="t">Applications</span><span class="s">grouped, one tab at a time</span><span class="chev"></span></button>
+            <div class="fb">
+              <div class="apptabs" id="apptabs" role="tablist" aria-label="Application groups"></div>
+              <div id="appsections"></div>
+            </div>
+          </section>
+
+          <section class="fold" id="sec-desks" data-fold="desks">
+            <button class="fh" type="button" aria-expanded="true"><span class="t">Desks</span><span class="s">Open to you through your Bailey-Harris Microsoft account</span><span class="chev"></span></button>
+            <div class="fb"><div class="tiles" id="tiles"></div></div>
+          </section>
+          <p class="empty" id="noresults" hidden>Nothing matches that.</p>
+        </div>
+
+        <aside class="side" aria-label="My day">
+          <section id="sec-myday" hidden>
+            <div class="sidehead"><span class="t">My day</span><span class="cap" id="mdcap"></span>
               <button class="mdhide" id="mdhide" type="button" aria-pressed="false">Hide details</button></div>
             <div class="md" id="mdgrid"></div>
             <p class="mdnote" id="mdnote" hidden></p>
           </section>
-
-          <section class="sec" id="sec-desks">
-            <div class="sechead"><span class="blk">Desks</span><span class="cap">Open to you through your Bailey-Harris Microsoft account</span></div>
-            <div class="tiles" id="tiles"></div>
-          </section>
-
-          <section class="sec" id="sec-roadmap" hidden>
-            <div class="sechead"><span class="blk dark">AI roadmap</span><span class="cap" id="rmcap">What we are building for the field, project teams and the office</span>
-              <a class="rmall" href="roadmap/">See the full roadmap</a></div>
-            <div class="rm" id="rmgrid"></div>
-          </section>
-
-          <section class="sec" id="rail" hidden>
-            <div class="sechead"><span class="blk dark">This week</span></div>
-            <div class="week">
-              <section class="panel" id="newspanel" hidden></section>
-            </div>
-          </section>
-
-          <div id="appsections"></div>
-          <p class="empty" id="noresults" hidden>Nothing matches that.</p>
-        </div>
-
-        <aside class="pulse" id="pulse" aria-label="Jobs and team" hidden>
-          <div class="pstats" id="pstats" hidden></div>
-          <section class="panel" id="peoplepanel" hidden></section>
+          <div class="pulse" id="pulse" hidden>
+            <div class="pstats" id="pstats" hidden></div>
+            <section class="panel" id="peoplepanel" hidden></section>
+          </div>
         </aside>
       </div>
+
+      <section class="fold" id="sec-roadmap" data-fold="roadmap" hidden>
+        <button class="fh" type="button" aria-expanded="true"><span class="t">AI roadmap</span><span class="s" id="rmcap">What we are building for the field, project teams and the office</span><span class="chev"></span></button>
+        <div class="fb"><div id="rmgrid"></div></div>
+      </section>
+
+      <section class="sec" id="rail" hidden>
+        <div class="sechead"><span class="blk dark">This week</span></div>
+        <div class="week">
+          <section class="panel" id="newspanel" hidden></section>
+        </div>
+      </section>
 
       <p class="foot">
         <span id="asof"></span>
@@ -709,20 +762,25 @@ function badgeClass(name){
   return "m" + (h % 3);
 }
 
+/* applications: one tab per links.json group; a search looks across every group (4 Nov 2026) */
+let APPTAB = null;
 function renderApps(doc){
-  const host = $("#appsections");
+  const host = $("#appsections"), tabs = $("#apptabs");
   host.innerHTML = "";
-  let n = 0, first = true;
+  let n = 0;
+  const names = [];
   (doc.groups || []).forEach(g => {
     const items = (g.items || [])
       .map(it => Object.assign({}, it, { _u: safeUrl(it.url) }))
       .filter(it => it._u);
     if (!items.length) return;
-    const sec = document.createElement("section");
-    sec.className = "sec";
+    const name = g.name || "Applications";
+    names.push(name);
+    const sec = document.createElement("div");
+    sec.className = "appgrp";
+    sec.dataset.g = name;
     sec.innerHTML =
-      '<div class="sechead"><span class="blk dark">' + esc(g.name || "Applications") + '</span>' +
-      (first ? '<span class="rest">Applications</span>' : '') + '</div>' +
+      '<div class="appgh">' + esc(name) + '</div>' +
       '<div class="apps">' + items.map(it => {
         n++;
         return '<a class="app" href="' + esc(it._u) + '"' +
@@ -733,9 +791,14 @@ function renderApps(doc){
             (it.desc ? '<span class="appdesc">' + esc(it.desc) + '</span>' : '') +
           '</a>';
       }).join("") + '</div>';
-    first = false;
     host.append(sec);
   });
+  let saved = null; try { saved = localStorage.getItem("bh.apptab"); } catch(_) {}
+  APPTAB = names.includes(saved) ? saved : (names[0] || null);
+  if (tabs){
+    tabs.innerHTML = names.map(nm => '<button type="button" role="tab" data-g="' + esc(nm) + '" aria-selected="' + (nm === APPTAB) + '">' + esc(nm) + '</button>').join("");
+    tabs.hidden = names.length < 2;
+  }
   log("app links", n);
 }
 
@@ -748,12 +811,14 @@ function applyFilter(){
     a.hidden = !hit;
     if (hit) shown++;
   });
-  $$("#appsections .sec").forEach(sec => {
+  /* no search: only the chosen tab; a search shows every group with a match */
+  $$("#appsections .appgrp").forEach(sec => {
     const any = Array.from(sec.querySelectorAll(".app")).some(a => !a.hidden);
-    sec.hidden = !any;
-    const c = sec.querySelector(".count");
-    if (c) c.textContent = Array.from(sec.querySelectorAll(".app")).filter(a => !a.hidden).length;
+    sec.hidden = q ? !any : (sec.dataset.g !== APPTAB);
   });
+  const lay = $("#layout"); if (lay) lay.classList.toggle("searching", !!q);
+  const anyApp = $$("#appsections .app").some(a => !a.hidden);
+  $("#sec-apps").hidden = !anyApp && !!q;
 
   $$("#tiles .tile").forEach(t => {
     const hit = !q || (t.dataset.find || "").includes(q);
@@ -929,7 +994,7 @@ function renderActions(items){
   if (apReviewCount > 0) queue.push({ name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
   if (apQueueCount > 0)  queue.push({ name: "Open AP Queue (" + apQueueCount + ")", _u: safeUrl("/ap/#intake") });
   ok.splice(Math.min(2, ok.length), 0, ...queue);
-  host.innerHTML = ok.slice(0, 5).map((a, i) =>
+  host.innerHTML = ok.slice(0, 6).map((a, i) =>
     '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
       (opensTab(a._u) ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(a.name) + '</a>').join("");
   host.parentElement.hidden = false;
@@ -1161,13 +1226,15 @@ async function loadRoadmap(){
     if (!r.ok) { log("roadmap", "HTTP " + r.status); return; }
     const j = await r.json(), items = (j && j.items) || [];
     if (!items.length) return;
-    grid.innerHTML = RM_STAGES.map(([k, t, d]) => {
-      const list = items.filter(i => i.stage === k), show = list.slice(0, k === "live" ? 4 : 3);
-      return '<div class="col ' + k + '"><div class="h"><span class="t">' + esc(t) + '</span><span class="c">' + list.length + '</span></div>' +
-        '<div class="d">' + esc(d) + '</div><ul>' +
-        show.map(i => '<li>' + esc(i.title) + '<small>' + esc(RM_LANES[i.lane] || i.lane || "") + '</small></li>').join("") + '</ul>' +
-        (list.length > show.length ? '<div class="more">+' + (list.length - show.length) + ' more on the full roadmap</div>' : '') + '</div>';
-    }).join("");
+    /* one row: counts per stage, a bar, and what is being built now (4 Nov 2026) */
+    const RM_COL = { live: "var(--ok)", building: "var(--brand-red)", next: "var(--charcoal)", later: "var(--line)" };
+    const counts = RM_STAGES.map(([k, t]) => [k, t, items.filter(i => i.stage === k).length]);
+    const tot = Math.max(1, counts.reduce((a, c) => a + c[2], 0));
+    const now = items.filter(i => i.stage === "building").slice(0, 3).map(i => esc(i.title));
+    grid.innerHTML = '<div class="rmstrip">' + counts.map(([k, t, n]) => '<span><b>' + n + '</b>' + esc(t.toLowerCase()) + '</span>').join("") +
+      '<a class="rmgo" href="roadmap/">See the full roadmap</a></div>' +
+      '<div class="rmbar" aria-hidden="true">' + counts.map(([k, t, n]) => '<span style="width:' + (100 * n / tot).toFixed(1) + '%;background:' + RM_COL[k] + '"></span>').join("") + '</div>' +
+      (now.length ? '<div class="rmnow"><b>Being built:</b> ' + now.join(" · ") + '</div>' : '');
     if (j.updated) { const dt = new Date(j.updated + "T12:00:00"); if (!isNaN(dt)) $("#rmcap").textContent = "What we are building for the field, project teams and the office · updated " + dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
     sec.hidden = false;
     log("roadmap", items.length + " items");
@@ -1177,7 +1244,7 @@ function layoutPulse(){
   const p = $("#pulse"); if (!p) return;
   const a = !$("#pstats").hidden, b = !$("#peoplepanel").hidden;
   p.hidden = !(a || b);
-  const l = $("#layout"); if (l) l.classList.toggle("solo", p.hidden);
+
 }
 
 /* ============ my day ============ */
@@ -1446,6 +1513,13 @@ function renderMyDay(){
   /* order: what needs action first (waiting, tasks), then the day (calendar, inbox) */
   const cards = [cardWaiting(), cardTasks(), cardCalendar(), cardMail()].filter(Boolean);
   $("#mdgrid").innerHTML = cards.join("");
+  /* each card folds from its heading; the inbox starts folded (4 Nov 2026) */
+  $$("#mdgrid .mdc").forEach(c => {
+    const h = c.querySelector(":scope > h2"); if (!h) return;
+    const k = "md-" + String((h.firstChild && h.firstChild.textContent) || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    c.dataset.fold = k; h.tabIndex = 0; h.setAttribute("role", "button");
+    foldApply(c, k, k === "md-inbox");
+  });
   const note = $("#mdnote");
   if (MD.connect || MD.off){
     note.innerHTML = MD.connect
@@ -2000,6 +2074,40 @@ function renderDesksUnavailable(){
   host.innerHTML = "";
   DESKS.forEach(desk => host.append(lockedTile(desk, "Sign-in has to succeed before this can open.")));
 }
+
+/* ============ folding sections (4 Nov 2026) ============ */
+/* open or folded is remembered per section in this browser only */
+function foldGet(k, def){ try { const v = localStorage.getItem("bh.fold." + k); return v == null ? def : v === "1"; } catch(_) { return def; } }
+function foldSet(k, on){ try { localStorage.setItem("bh.fold." + k, on ? "1" : "0"); } catch(_) {} }
+function foldApply(el, k, def){
+  const f = foldGet(k, def);
+  el.classList.toggle("folded", f);
+  const h = el.querySelector(":scope > .fh") || el.querySelector(":scope > h2");
+  if (h) h.setAttribute("aria-expanded", String(!f));
+}
+function foldToggle(h){
+  const box = h.parentElement, k = box.dataset.fold;
+  const f = !box.classList.contains("folded");
+  box.classList.toggle("folded", f);
+  h.setAttribute("aria-expanded", String(!f));
+  if (k) foldSet(k, f);
+}
+$$(".fold[data-fold]").forEach(el => foldApply(el, el.dataset.fold, false));
+document.addEventListener("click", e => {
+  const h = e.target.closest(".fold > .fh, .mdc > h2");
+  if (!h || (e.target.closest("a") && !e.target.closest(".fh"))) return;
+  foldToggle(h);
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".mdc > h2")){ e.preventDefault(); foldToggle(e.target); }
+});
+$("#apptabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-g]"); if (!b) return;
+  APPTAB = b.dataset.g;
+  try { localStorage.setItem("bh.apptab", APPTAB); } catch(_) {}
+  $$("#apptabs button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+  applyFilter();
+});
 
 /* ============ events ============ */
 $("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
