@@ -1244,7 +1244,7 @@ async function loadPulse(){
 /* ============ AI roadmap (3 Nov 2026) ============ */
 /* roadmap/roadmap.json sits beside the full roadmap page on this same site (made from the
    Roadmap Tracker). No token needed. Missing or broken file: the section stays hidden. */
-const RM_STAGES = [["live","Live","In use now"],["building","Being built","Work under way"],["next","Up next","Starting soon"],["later","On the list","Planned, no date yet"]];
+const RM_STAGES = [["live","Live","In use now"],["testing","Testing","Being tried before it goes live"],["building","Being built","Work under way"],["next","Up next","Starting soon"],["later","Saved for later","Planned, no date yet"]];
 const RM_LANES = {field:"Field", project:"Project teams", office:"Office", foundations:"Foundations"};
 let rmLoaded = false;
 async function loadRoadmap(){
@@ -1256,7 +1256,7 @@ async function loadRoadmap(){
     const j = await r.json(), items = (j && j.items) || [];
     if (!items.length) return;
     /* one row: counts per stage, a bar, and what is being built now (4 Nov 2026) */
-    const RM_COL = { live: "var(--ok)", building: "var(--brand-red)", next: "var(--charcoal)", later: "var(--line)" };
+    const RM_COL = { next: "var(--charcoal)", building: "var(--brand-red)", testing: "#b26a00", live: "var(--ok)", later: "var(--line)" };
     const counts = RM_STAGES.map(([k, t]) => [k, t, items.filter(i => i.stage === k).length]);
     const tot = Math.max(1, counts.reduce((a, c) => a + c[2], 0));
     const now = items.filter(i => i.stage === "building").slice(0, 3).map(i => esc(i.title));
