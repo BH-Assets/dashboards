@@ -3107,6 +3107,18 @@ const JP_RULES = {
   gmpRatio: 0.25              // original contract under 25% of revised = GMP shape: bid fee from first approved snapshot
 };
 let JP_JOB = null;
+/* One view at a time: the side menu switches between these instead of scrolling one long page. */
+const JP_VIEWS = ['health', 'changed', 'open', 'money', 'buyout'];
+let JP_VIEW = 'health', JP_MONEY = null;   // JP_MONEY = job whose Money charts are drawn (drawn only while visible)
+function jpView(v){
+  if(!JP_VIEWS.includes(v)) v = 'health';
+  JP_VIEW = v;
+  document.querySelectorAll('.jp-sec').forEach(sec => { sec.hidden = sec.id !== v; });
+  document.querySelectorAll('.bh-side-item[href^="#"]').forEach(a => { if(a.getAttribute('href') === '#' + v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  try{ history.replaceState(null, '', location.pathname + location.search + '#' + v); }catch(e){}
+  if(v === 'money' && JP_JOB && JP_MONEY !== JP_JOB){ JP_MONEY = JP_JOB; try{ renderDetail(); }catch(e){ console.error('detail', e); } }
+  window.scrollTo(0, 0);
+}
 
 const jpDay = d => { if(!d) return null; const t = new Date(String(d).slice(0,10) + 'T12:00:00'); return isNaN(t.getTime()) ? null : t; };
 const jpFmt = d => d ? d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
@@ -3227,6 +3239,9 @@ function jpRenderHealth(r){
     + '<span class="bh-chip ' + chip[x.state][0] + '">' + chip[x.state][1] + '</span>'
     + '<div class="jp-hr">' + esc(x.head) + '</div>' + (x.note ? '<div class="jp-hn">' + esc(x.note) + '</div>' : '') + '</div>').join('');
   const ex = h.filter(x => x.state === 'bad' && x.ex), pm = jpTeamPM(r) || 'PM';
+  const side = document.querySelector('.bh-side-item[href="#health"]');
+  if(side){ let c = side.querySelector('.bh-count'); if(!c){ c = document.createElement('span'); c.className = 'bh-count'; side.appendChild(c); }
+    c.textContent = ex.length ? String(ex.length) : ''; c.hidden = !ex.length; c.title = ex.length + ' to act on'; }
   const exEl = document.getElementById('jpEx');
   if(exEl) exEl.innerHTML = ex.length ? '<div class="jp-ex">' + ex.map(x => '<div><b>' + esc(x.area) + ':</b> ' + esc(x.head) + ' &rarr; ' + esc(x.ex)
     + '<span class="jp-own">Owner: ' + esc(x.area === 'Billing' ? pm + ' + Accounting' : pm) + '</span></div>').join('') + '</div>'
@@ -3265,7 +3280,7 @@ function jpShow(id){
   document.getElementById('jpHead').innerHTML = jobInfo(r);
   document.getElementById('jpBuy').innerHTML = '<div class="cl-note">Loading buyout and commitments&hellip;</div>';
   jpRenderHealth(r); jpRenderChanged(r);
-  try{ renderDetail(); }catch(e){ console.error('detail', e); }
+  JP_MONEY = null; if(JP_VIEW === 'money') jpView('money');
   renderChanges().then(() => jpRenderHealth(r)).catch(e => console.error('changes', e));
   Promise.all([clLoad(), boLoad(r.project_number)]).then(() => {
     if(String(r.procore_id) !== JP_JOB) return;
@@ -3294,10 +3309,12 @@ buildUI = function(){
   let r = want && jobs.find(x => String(x.project_number).toUpperCase() === want.toUpperCase());
   if(!r){ try{ const s = localStorage.getItem('jpJob'); if(s) r = jobs.find(x => String(x.project_number) === s); }catch(e){} }
   jpShow((r || jobs[0]).procore_id);
+  jpView(location.hash.slice(1));
 };
-/* side menu: mark the section in view */
+/* side menu switches the view; the job picker and job header stay on every view */
 document.addEventListener('click', e => { const a = e.target.closest('.bh-side-item[href^="#"]'); if(!a) return;
-  document.querySelectorAll('.bh-side-item[href^="#"]').forEach(x => { if(x === a) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); }); });
+  e.preventDefault(); jpView(a.getAttribute('href').slice(1)); });
+window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if(v !== JP_VIEW) jpView(v); });
 
 </script>
 <script src="https://dashboard.baileyharris.com/bh-shell.js" defer></script>
