@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-05",
+ "updated": "2026-11-09",
  "items": [
   {
    "id": "ai-licences",
@@ -103,7 +103,8 @@
    "stage": "later",
    "title": "Crew planning for self-perform",
    "text": "Match crews to work by skill and track productivity, built with Auburn University Building Science as a research partner.",
-   "who": "Self-perform team"
+   "who": "Self-perform team",
+   "partner": "Auburn University"
   },
   {
    "id": "docusign-buyout",
@@ -218,6 +219,15 @@
    "who": "Project teams, leadership"
   },
   {
+   "id": "sched-early-warning",
+   "lane": "project",
+   "stage": "later",
+   "title": "Schedule updates as an early warning",
+   "text": "Keep the history of every schedule update and use it to spot jobs heading for a late finish before it shows in the completion date, such as float shrinking, work out of sequence or milestones slipping again and again.",
+   "who": "Project teams, scheduler, leadership",
+   "partner": "Auburn University"
+  },
+  {
    "id": "sched-health",
    "lane": "project",
    "stage": "later",
@@ -247,7 +257,8 @@
    "stage": "later",
    "title": "Self-perform takeoff and estimating",
    "text": "Faster quantity takeoff and pricing for concrete and other self-perform scopes, with Auburn University Building Science.",
-   "who": "Self-perform team, preconstruction"
+   "who": "Self-perform team, preconstruction",
+   "partner": "Auburn University"
   },
   {
    "id": "submittals",
