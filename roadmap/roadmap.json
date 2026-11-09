@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-04",
+ "updated": "2026-11-05",
  "items": [
   {
    "id": "ai-licences",
@@ -200,6 +200,46 @@
    "title": "Project Information dashboard",
    "text": "Contract, cost, forecast, change orders and buyout for every active job in one place, from Procore and ComputerEase.",
    "who": "Project teams, leadership"
+  },
+  {
+   "id": "sched-brief",
+   "lane": "project",
+   "stage": "later",
+   "title": "Schedule update briefing",
+   "text": "After each schedule update, a short plain-English summary: what moved, why, what is at risk next, and who owns the next step.",
+   "who": "Project managers, leadership"
+  },
+  {
+   "id": "sched-dashboard",
+   "lane": "project",
+   "stage": "later",
+   "title": "Schedule trends on the project dashboard",
+   "text": "Milestones, how the finish date has moved between updates, and critical work for each job, next to cost and change orders.",
+   "who": "Project teams, leadership"
+  },
+  {
+   "id": "sched-health",
+   "lane": "project",
+   "stage": "later",
+   "title": "Schedule health check",
+   "text": "Each time a schedule is updated, an automatic check flags missing logic, hard dates, open ends and stale progress, with a simple score, before anyone relies on it.",
+   "who": "Project scheduler, project managers"
+  },
+  {
+   "id": "sched-lookahead",
+   "lane": "field",
+   "stage": "later",
+   "title": "Three-week look-ahead for the field",
+   "text": "A look-ahead pulled from the job schedule that superintendents can confirm or correct from the jobsite, so the schedule matches what is really happening.",
+   "who": "Superintendents, foremen"
+  },
+  {
+   "id": "sched-standards",
+   "lane": "foundations",
+   "stage": "next",
+   "title": "Standard schedule setup",
+   "text": "One way to code and build every job schedule, so schedules can be checked automatically and compared across jobs.",
+   "who": "Project scheduler, project managers"
   },
   {
    "id": "sp-takeoff",
