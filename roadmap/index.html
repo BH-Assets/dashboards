@@ -68,6 +68,33 @@ h1 em{font-style:normal;color:var(--accent)}
 .mk.live{background:var(--live)} .mk.building{background:var(--accent)} .mk.testing{background:var(--test)}
 .mk.next{border:2px solid var(--ink)} .mk.later{border:2px dashed var(--ink-muted)}
 
+/* suggest an idea */
+.sugg{margin-top:14px;border:0;background:var(--accent);color:#fff;font:800 12.5px/1 var(--f);letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;cursor:pointer}
+.sugg:hover{background:var(--bh-black)}
+.sugg:focus-visible,.idea button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+dialog.idea{border:0;padding:0;width:min(640px,100% - 24px);max-height:calc(100% - 24px);background:var(--surface);color:var(--ink);border-top:6px solid var(--accent)}
+dialog.idea::backdrop{background:rgba(33,30,30,.55)}
+.idea form,.idea .done{padding:22px 24px 24px;display:grid;gap:16px}
+.idea h2{margin:0;font-size:24px;font-weight:900;text-transform:uppercase;line-height:1}
+.idea .sub{margin:-6px 0 0;color:var(--ink-muted);font-size:14px}
+.idea label,.idea legend{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.idea label small,.idea legend small{font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-muted)}
+.idea input[type=text],.idea input[type=email],.idea textarea,.idea select{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--card);border:1.5px solid var(--hair);padding:9px 11px}
+.idea textarea{min-height:76px;resize:vertical}
+.idea input:focus,.idea textarea:focus,.idea select:focus{outline:none;border-color:var(--ink)}
+.idea fieldset{border:0;margin:0;padding:0}
+.idea .opts{display:flex;flex-wrap:wrap;gap:6px}
+.idea .opts label{margin:0;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;border:1.5px solid var(--hair);padding:7px 10px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.idea .opts input{margin:0;accent-color:var(--accent)}
+.idea .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.idea .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.idea .acts button,.idea .acts a{font:800 12.5px/1 var(--f);letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;cursor:pointer;text-decoration:none;border:1.5px solid var(--ink);background:var(--card);color:var(--ink)}
+.idea .acts .go{background:var(--accent);border-color:var(--accent);color:#fff}
+.idea .msg{font-size:13px;color:var(--ink-muted)}
+.idea .msg.bad{color:var(--accent);font-weight:700}
+.idea .from{font-size:13px;color:var(--ink-muted)}
+@media (max-width:600px){.idea .two{grid-template-columns:1fr}.idea form,.idea .done{padding:18px 16px 20px}}
+
 footer{margin-top:40px;padding-top:18px;border-top:3px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:13px;color:var(--ink-muted)}
 footer b{color:var(--ink)}
 .err{padding:30px 0;color:var(--ink-muted)}
@@ -96,7 +123,7 @@ footer b{color:var(--ink)}
       <h1>AI <em>Roadmap</em></h1>
       <p class="lede">What we are building with AI and our own data to take busywork off the field, project teams and the office. Click a card for who it helps.</p>
     </div>
-    <div class="asof">Updated<b id="asof">—</b></div>
+    <div class="asof">Updated<b id="asof">—</b><button class="sugg" id="suggest" type="button">Suggest an idea</button></div>
   </header>
 
   <div class="controls">
@@ -119,11 +146,55 @@ footer b{color:var(--ink)}
   <div id="board" class="board" aria-live="polite"><div class="err">Loading the roadmap…</div></div>
 
   <footer>
-    <div><b>Have an idea, or want to try something early?</b><br>Bring it to the AI roundtable, or talk to Tiffany Blackmon in IT and process improvement.</div>
+    <div><b>Have an idea, or want to try something early?</b><br>Use <a href="#suggest" id="suggest2">Suggest an idea</a>, bring it to the AI roundtable, or talk to Tiffany Blackmon in IT and process improvement.</div>
     <div><b>How to read this.</b> Live items are in use now. Testing means a few people are trying it before everyone gets it. Being built means work is under way. Up next is the next thing started on each team. Saved for later is planned, with no date yet.</div>
   </footer>
 </div>
 
+
+<dialog class="idea" id="ideaDlg" aria-labelledby="ideaH">
+  <form id="ideaForm" novalidate>
+    <h2 id="ideaH">Suggest an idea</h2>
+    <p class="sub">Tell us about work that takes too long or goes wrong. You do not need a solution, just the problem.</p>
+    <div><label for="i-title">Give it a short name</label><input type="text" id="i-title" maxlength="80" placeholder="e.g. Look-ahead schedule for the field" required></div>
+    <div><label for="i-problem">What takes too long, or goes wrong, today?</label><textarea id="i-problem" maxlength="1500" placeholder="What do you do now, step by step? Where does it slow down or break?" required></textarea></div>
+    <fieldset><legend>Who does it affect most?</legend><div class="opts">
+      <label><input type="radio" name="lane" value="field"> Field</label>
+      <label><input type="radio" name="lane" value="project"> Project teams</label>
+      <label><input type="radio" name="lane" value="office"> Office</label>
+      <label><input type="radio" name="lane" value="foundations"> Everyone</label></div></fieldset>
+    <div class="two">
+      <div><label for="i-often">How often does it come up?</label><select id="i-often">
+        <option value="">Choose one</option><option>Every day</option><option>Every week</option><option>Every month</option><option>A few times a year</option></select></div>
+      <div><label for="i-time">Time it costs each time</label><select id="i-time">
+        <option value="">Choose one</option><option>Under 15 minutes</option><option>15 to 60 minutes</option><option>1 to 4 hours</option><option>Half a day or more</option></select></div>
+    </div>
+    <div><label for="i-people">How many people deal with it? <small>(rough guess is fine)</small></label><input type="text" id="i-people" maxlength="60" placeholder="e.g. every superintendent, 3 people in AP"></div>
+    <fieldset><legend>Which systems are involved?</legend><div class="opts" id="i-sys">
+      <label><input type="checkbox" value="Procore"> Procore</label>
+      <label><input type="checkbox" value="ComputerEase / Spark"> ComputerEase / Spark</label>
+      <label><input type="checkbox" value="Schedule (P6, MS Project)"> Schedule software</label>
+      <label><input type="checkbox" value="Outlook / Teams"> Outlook / Teams</label>
+      <label><input type="checkbox" value="Excel / SharePoint"> Excel / SharePoint</label>
+      <label><input type="checkbox" value="Billy"> Billy</label>
+      <label><input type="checkbox" value="DocuSign"> DocuSign</label>
+      <label><input type="checkbox" value="Paper or whiteboard"> Paper or whiteboard</label></div></fieldset>
+    <div><label for="i-fixed">What would "fixed" look like? <small>(optional)</small></label><textarea id="i-fixed" maxlength="1000" placeholder="If this worked perfectly, what would you see or not have to do?"></textarea></div>
+    <div><label for="i-when">Is anything making it urgent? <small>(optional)</small></label><input type="text" id="i-when" maxlength="160" placeholder="e.g. a job starting in January, an audit, a new owner requirement"></div>
+    <fieldset><legend>Can we ask you to try an early version?</legend><div class="opts">
+      <label><input type="radio" name="pilot" value="Yes" checked> Yes</label>
+      <label><input type="radio" name="pilot" value="No"> No</label></div></fieldset>
+    <div id="i-whobox"><label for="i-name">Your name</label><input type="text" id="i-name" maxlength="80" autocomplete="name"></div>
+    <p class="from" id="i-from" hidden></p>
+    <div class="acts"><button class="go" type="submit" id="i-send">Send idea</button><button type="button" id="i-cancel">Cancel</button><span class="msg" id="i-msg" role="status"></span></div>
+  </form>
+  <div class="done" id="ideaDone" hidden>
+    <h2>Thank you</h2>
+    <p class="sub" id="doneTxt"></p>
+    <div class="acts" id="doneActs"></div>
+  </div>
+</dialog>
+<script src="/msal-browser.min.js"></script>
 <script>
 const LANES=[
   {k:'field', t:'Field', d:'Superintendents, foremen and crews on the jobsite'},
@@ -168,5 +239,77 @@ fetch('roadmap.json',{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('HT
   document.getElementById('asof').textContent=d?d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—';
   render();
 }).catch(e=>{ document.getElementById('board').innerHTML='<div class="err">The roadmap could not load ('+esc(e.message)+'). Refresh the page to try again.</div>'; });
+
+/* ---------- suggest an idea (5 Nov 2026) ---------- */
+const IDEA_TO='Tiffany.Blackmon@baileyharris.com', IDEA_TAG='[BH roadmap idea]';
+const MSAL_CFG={auth:{clientId:'1825a1c0-1ce3-4078-aeb7-a4714562c422',authority:'https://login.microsoftonline.com/848aa890-7982-4028-befa-3323d82583ce',redirectUri:location.origin+'/'},cache:{cacheLocation:'localStorage',storeAuthStateInCookie:false}};
+let MS=null, ACCT=null;
+async function msInit(){
+  if(MS!==null) return;
+  MS=false;
+  try{ if(typeof msal==='undefined') return; const a=new msal.PublicClientApplication(MSAL_CFG); await a.initialize(); MS=a; ACCT=a.getAllAccounts()[0]||null; }catch(e){ MS=false; }
+}
+const dlg=document.getElementById('ideaDlg'), fm=document.getElementById('ideaForm');
+async function openIdea(){
+  document.getElementById('ideaDone').hidden=true; fm.hidden=false;
+  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open','');
+  await msInit();
+  if(ACCT){ document.getElementById('i-whobox').hidden=true; const f=document.getElementById('i-from'); f.hidden=false; f.textContent='Sending as '+(ACCT.name||ACCT.username)+' ('+ACCT.username+').'; }
+  document.getElementById('i-title').focus();
+}
+function closeIdea(){ if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); if(location.hash==='#suggest') history.replaceState(null,'',location.pathname); }
+document.getElementById('suggest').addEventListener('click',openIdea);
+document.getElementById('suggest2').addEventListener('click',e=>{ e.preventDefault(); openIdea(); });
+document.getElementById('i-cancel').addEventListener('click',closeIdea);
+if(location.hash==='#suggest') openIdea();
+function ideaData(){
+  const v=id=>document.getElementById(id).value.trim();
+  const r=n=>{ const x=fm.querySelector('input[name="'+n+'"]:checked'); return x?x.value:''; };
+  return { v:1, title:v('i-title'), problem:v('i-problem'), lane:r('lane'), often:v('i-often'), time:v('i-time'), people:v('i-people'),
+    systems:[...document.querySelectorAll('#i-sys input:checked')].map(x=>x.value), fixed:v('i-fixed'), urgent:v('i-when'), pilot:r('pilot'),
+    name: ACCT?(ACCT.name||''):v('i-name'), email: ACCT?ACCT.username:'', sent:new Date().toISOString() };
+}
+const LANE_T={field:'Field',project:'Project teams',office:'Office',foundations:'Everyone'};
+function ideaRows(d){
+  return [['Idea',d.title],['The problem today',d.problem],['Who it affects',LANE_T[d.lane]||''],['How often',d.often],['Time each time',d.time],
+    ['How many people',d.people],['Systems',d.systems.join(', ')],['What fixed looks like',d.fixed],['Urgent because',d.urgent],['Will try an early version',d.pilot],['From',d.name]].filter(r=>r[1]);
+}
+function ideaText(d){ return ideaRows(d).map(r=>r[0]+': '+r[1]).join('\n\n')+'\n\n---\nFor the roadmap tracker, please leave this line in:\nBH-IDEA-JSON:'+JSON.stringify(d)+':END-IDEA'; }
+function ideaHtml(d){
+  return '<p>A new idea from the staff AI roadmap page.</p><table cellpadding="6" style="border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:14px">'
+    +ideaRows(d).map(r=>'<tr><td style="vertical-align:top;font-weight:700;border-bottom:1px solid #e2e0e1;white-space:nowrap">'+esc(r[0])+'</td><td style="border-bottom:1px solid #e2e0e1">'+esc(r[1]).replace(/\n/g,'<br>')+'</td></tr>').join('')
+    +'</table><p style="color:#8a8d90;font-size:10px">BH-IDEA-JSON:'+esc(JSON.stringify(d))+':END-IDEA</p>';
+}
+function ideaDone(txt, acts){
+  fm.hidden=true; const dn=document.getElementById('ideaDone'); dn.hidden=false;
+  document.getElementById('doneTxt').textContent=txt;
+  const a=document.getElementById('doneActs'); a.innerHTML='';
+  (acts||[]).forEach(x=>a.appendChild(x));
+  const c=document.createElement('button'); c.type='button'; c.textContent='Close'; c.addEventListener('click',()=>{ closeIdea(); fm.reset(); }); a.appendChild(c);
+}
+fm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const m=document.getElementById('i-msg'), d=ideaData();
+  if(!d.title||!d.problem||!d.lane||(!ACCT&&!d.name)){ m.className='msg bad'; m.textContent='Fill in the name of the idea, the problem, who it affects'+(ACCT?'':' and your name')+'.'; return; }
+  m.className='msg'; m.textContent='Sending…'; document.getElementById('i-send').disabled=true;
+  const subject=IDEA_TAG+' '+d.title;
+  try{
+    if(MS && ACCT){
+      const t=await MS.acquireTokenSilent({scopes:['Mail.Send'],account:ACCT});
+      const r=await fetch('https://graph.microsoft.com/v1.0/me/sendMail',{method:'POST',headers:{Authorization:'Bearer '+t.accessToken,'Content-Type':'application/json'},
+        body:JSON.stringify({message:{subject,body:{contentType:'HTML',content:ideaHtml(d)},toRecipients:[{emailAddress:{address:IDEA_TO}}]},saveToSentItems:true})});
+      if(r.status===202){ ideaDone('Your idea was sent from your Outlook. You will find a copy in your Sent Items, and it goes straight onto the roadmap list for review.'); return; }
+      throw new Error('HTTP '+r.status);
+    }
+    throw new Error('no sign-in');
+  }catch(x){
+    /* no Mail.Send permission yet, not signed in, or not on the dashboard site: hand it to the email app */
+    const href='mailto:'+IDEA_TO+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(ideaText(d));
+    const a=document.createElement('a'); a.className='go'; a.href=href; a.textContent='Open the email';
+    const cp=document.createElement('button'); cp.type='button'; cp.textContent='Copy the text';
+    cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText('To: '+IDEA_TO+'\nSubject: '+subject+'\n\n'+ideaText(d)); cp.textContent='Copied'; }catch(y){ cp.textContent='Copy not available'; } });
+    ideaDone('One more step: open the email we filled in and press Send. If no email opens, copy the text and email it to '+IDEA_TO+' with the subject shown.', [a,cp]);
+  }finally{ document.getElementById('i-send').disabled=false; m.textContent=''; }
+});
 </script>
 </body></html>
