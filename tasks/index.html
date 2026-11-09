@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task Desk · Bailey-Harris</title>
+<link rel="icon" href="data:image/png;base64,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">
+<style>
+/* Task Desk: Tiffany's own tracker. Mail, Teams and calendar triage, an Asana-style board,
+   renewal and secret watchers, and a weekly time sheet. Shell styles come from /bh-shell.css. */
+.tk-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 40px;border-bottom:1px solid var(--bh-hairline,#e8e6e7)}
+.tk-bar .bh-input{min-width:220px}
+.tk-status{margin:0;padding:10px 40px 0;font-size:13px;color:var(--bh-ink-muted,#484b4d);min-height:20px}
+.tk-wrap{padding:6px 40px 64px}
+@media (max-width:960px){.tk-bar,.tk-status,.tk-wrap{padding-left:16px;padding-right:16px}.tk-bar .bh-input{min-width:0;flex:1 1 160px}}
+.tk-sec{margin-top:24px}
+.tk-sec>h2{display:flex;align-items:baseline;gap:10px;margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid var(--bh-black,#211e1e);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tk-sec>h2 .n{color:var(--bh-ink-muted,#484b4d);font-weight:600}
+.tk-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--bh-hairline,#e8e6e7)}
+.tk-tt{font:600 14px/1.35 var(--bh-font);background:none;border:0;padding:0;text-align:left;color:inherit;cursor:pointer;overflow-wrap:anywhere}
+.tk-tt:hover{text-decoration:underline}
+.tk-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.tk-check{width:20px;height:20px;margin:0;accent-color:#211e1e;cursor:pointer}
+.tk-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:36px}
+@media (max-width:1100px){.tk-cols{grid-template-columns:1fr}}
+.tk-mt{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid var(--bh-hairline,#e8e6e7);font-size:13.5px}
+.tk-mt .t{font-weight:600;font-variant-numeric:tabular-nums}
+.tk-mt a{overflow-wrap:anywhere}
+.tk-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--bh-hairline,#e8e6e7);border:1px solid var(--bh-hairline,#e8e6e7);margin-top:10px}
+.tk-days div{background:#fff;padding:8px;font-size:12px}
+.tk-days b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted,#484b4d)}
+.tk-days div.is-today{background:var(--bh-cream,#f2ece1)}
+.tk-board{display:grid;gap:1px;background:var(--bh-hairline,#e8e6e7);border:1px solid var(--bh-hairline,#e8e6e7);margin-top:18px}
+.tk-col{background:#fff;min-height:240px;display:flex;flex-direction:column;min-width:0}
+.tk-col h3{margin:0;padding:12px 10px 10px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid var(--bh-black,#211e1e)}
+.tk-col h3 span{color:var(--bh-ink-muted,#484b4d);font-weight:600;margin-left:4px}
+.tk-colbody{padding:8px;display:flex;flex-direction:column;gap:8px;flex:1}
+.tk-col.over .tk-colbody{background:var(--bh-cream,#f2ece1)}
+.tk-card{display:block;width:100%;border:1px solid var(--bh-hairline,#e8e6e7);background:#fff;padding:10px;cursor:grab;text-align:left;font:inherit;color:inherit;box-sizing:border-box}
+.tk-card:hover{border-color:var(--bh-black,#211e1e)}
+.tk-card.dragging{opacity:.4}
+.tk-card .tt{display:block;font-weight:600;font-size:13.5px;line-height:1.3;margin-bottom:6px;overflow-wrap:anywhere}
+.tk-card .tk-meta{justify-content:flex-start}
+@media (max-width:960px){.tk-board{grid-template-columns:1fr!important}.tk-col{min-height:0}}
+.tk-mail{border:1px solid var(--bh-hairline,#e8e6e7);border-left:3px solid var(--bh-black,#211e1e);padding:14px 16px;margin-top:12px;display:grid;gap:8px}
+.tk-mail .sub{font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
+.tk-mail .from{font-size:13px;color:var(--bh-ink-muted,#484b4d)}
+.tk-mail .pv{color:var(--bh-ink-muted,#484b4d);font-size:13px;overflow-wrap:anywhere}
+.tk-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tk-acts .bh-select,.tk-acts .bh-input{min-height:36px;font-size:13px}
+.tk-sm{min-height:36px!important;padding:0 12px!important;font-size:12px!important}
+.tk-chk{display:inline-flex;gap:6px;align-items:center;font-size:13px}
+.tk-chk input{margin:0}
+#drawer{position:fixed;inset:0;z-index:1100;background:rgba(33,30,30,.4);display:flex;justify-content:flex-end}
+.tk-dr{width:min(640px,100%);height:100%;overflow:auto;background:#fff;border-left:3px solid var(--bh-black,#211e1e);padding:20px 22px 48px;box-sizing:border-box}
+.tk-drh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.tk-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.tk-form .full{grid-column:1/-1}
+.tk-form .bh-label{display:block;margin-bottom:4px}
+.tk-form .bh-input,.tk-form .bh-select{width:100%}
+textarea.bh-input{min-height:84px;padding:10px 12px;resize:vertical;line-height:1.4}
+@media (max-width:600px){.tk-form{grid-template-columns:1fr}}
+.tk-subt{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bh-hairline,#e8e6e7);font-size:13.5px}
+.tk-subt span{flex:1;overflow-wrap:anywhere}
+.tk-subt.done span{text-decoration:line-through;color:var(--bh-ink-muted,#484b4d)}
+.tk-x{background:none;border:0;cursor:pointer;font:600 12px var(--bh-font);color:var(--bh-ink-muted,#484b4d);padding:4px 6px}
+.tk-x:hover{color:var(--bh-black,#211e1e);text-decoration:underline}
+.tk-emails a{display:block;padding:6px 0;border-bottom:1px solid var(--bh-hairline,#e8e6e7);font-size:13px;overflow-wrap:anywhere}
+#gate{position:fixed;inset:0;z-index:1200;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px}
+.tk-gatebox{max-width:560px;border-top:8px solid var(--bh-red,#ed2b30);padding:28px 4px}
+.tk-gatebox h2{margin:0 0 10px;font-size:22px;font-weight:800;text-transform:uppercase}
+.tk-gatebox p{margin:0 0 14px;line-height:1.5}
+.tk-gatebox code{font-size:12.5px;background:var(--bh-cream,#f2ece1);padding:1px 4px}
+.tk-timer{display:flex;align-items:center;gap:10px;font-size:13px}
+.tk-timer strong{font-variant-numeric:tabular-nums}
+.tk-empty{padding:22px 0;color:var(--bh-ink-muted,#484b4d);font-size:14px}
+.tk-note{font-size:12.5px;color:var(--bh-ink-muted,#484b4d);margin:8px 0 0;line-height:1.45}
+.tk-err{font-size:13px;padding:10px 12px;background:var(--bh-warn-bg,#ffeb9c);color:var(--bh-warn-ink,#9c6500);margin-top:10px}
+details.tk-more{margin-top:26px;border-top:1px solid var(--bh-hairline,#e8e6e7);padding-top:12px}
+details.tk-more summary{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.tk-regform{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;padding:16px;background:var(--bh-surface-muted,#e8e6e7);margin-top:14px}
+.tk-regform .bh-label{display:block;margin-bottom:4px}
+.tk-regform .bh-input,.tk-regform .bh-select{width:100%}
+.tk-regform .w2{grid-column:span 2}.tk-regform .w4{grid-column:1/-1}
+@media (max-width:900px){.tk-regform{grid-template-columns:1fr 1fr}.tk-regform .w2{grid-column:1/-1}}
+.bh-table td.nw{white-space:nowrap}
+.tk-tot td{font-weight:700;background:var(--bh-cream,#f2ece1)}
+</style>
+<link rel="stylesheet" href="/bh-shell.css">
+<script src="/msal-browser.min.js"></script>
+<script src="/bh-shell.js" defer></script>
+</head>
+<body class="bh-page">
+<div class="bh-topbar"></div>
+<header class="bh-header">
+  <button class="bh-menu-btn" aria-label="Open menu" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h16M2 10h16M2 15h16" stroke="currentColor" stroke-width="2"/></svg></button>
+  <a href="/" aria-label="All desks"><img class="bh-logo" src="data:image/png;base64,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" alt="Bailey-Harris"></a>
+  <div><h1 class="bh-desk-name">Task Desk</h1><div class="bh-desk-sub">Your work, your inbox, and what is about to expire</div></div>
+  <div class="bh-header-spacer"></div>
+  <div class="tk-timer" id="timerbox"></div>
+  <div class="bh-asof"><span class="bh-label">Checked</span><strong id="asof">Not yet</strong></div>
+  <button class="bh-btn" id="refresh" type="button">Check now</button>
+  <div class="bh-avatar" id="avatar">TB</div>
+</header>
+<div class="bh-layout">
+  <nav class="bh-side" id="side" aria-label="Task Desk views"></nav>
+  <button class="bh-scrim" aria-label="Close menu"></button>
+  <main class="bh-main">
+    <div class="bh-kpis" id="kpis"></div>
+    <div class="tk-bar" id="bar" hidden></div>
+    <p class="tk-status" id="status" role="status"></p>
+    <div class="tk-wrap" id="view"></div>
+  </main>
+</div>
+<div id="drawer" hidden></div>
+<div id="gate"><div class="tk-gatebox"><h2>Task Desk</h2><p>Loading.</p></div></div>
+
+<script>
+'use strict';
+/* ================= configuration ================= */
+const CFG={
+  clientId:'__BH_TASKS_CLIENT_ID__',            /* the BH Tasks app registration (NOT the shared BH Dashboards app) */
+  tenant:'848aa890-7982-4028-befa-3323d82583ce',
+  site:'baileyharris.sharepoint.com:/sites/Dashboard',
+  library:'TasksData',                         /* holds billy_reviews.json from the compliance pipeline */
+  redirect:location.origin+'/tasks/'
+};
+const SCOPES=['User.Read','Sites.Selected','Mail.ReadWrite','Calendars.Read','Chat.Read',
+  'Application.Read.All','DeviceManagementServiceConfig.Read.All','DeviceManagementApps.Read.All'];
+const LISTS={tasks:'Tasks',rules:'TriageRules',seen:'TriageSeen',time:'TimeLog',reg:'Register'};
+const BUCKETS=[['compliance','Compliance'],['it','IT & Entra'],['ai','AI & plugins'],['procore','Procore & DroneDeploy'],
+  ['desks','Desks & dashboards'],['ops','Ops & process'],['renew','Renewals & certs'],['personal','Personal']];
+const STATUS=[['next','Next'],['doing','Doing'],['waiting','Waiting on'],['later','Later'],['done','Done']];
+const RECUR=[['','Does not repeat'],['weekly','Every week'],['biweekly','Every 2 weeks'],['monthly','Every month'],['quarterly','Every quarter'],['yearly','Every year']];
+/* keyword evidence per bucket. Two or more hits = likely (pre-selected); one = weak (suggested, never pre-selected). */
+const KW={
+  compliance:['billy','coi','certificate of insurance','endorsement','additional insured','waiver of subrogation','compliance','attachment f','insurance','harvey','kennedy richter','premier design'],
+  it:['entra','intune','mfa','password','laptop','printer','vpn','gpo','screenconnect','cloudable','grit','ticket','wifi','network','mapped drive','outlook','onedrive','computer','monitor','phone'],
+  ai:['claude','chatgpt','copilot','openai','anthropic','plugin','gpt','roundtable',' ai ','prompt'],
+  procore:['procore','dronedeploy','change event','pco','commitment','rfi','submittal','drone'],
+  desks:['dashboard','desk','prequal','precon','sharepoint','power bi','ap desk','sub rating'],
+  ops:['process','sop','procedure','pay app','computerease','sage','intacct','template','form','workflow'],
+  renew:['renewal','renew','expir','subscription','auto-renew','your invoice is ready','contract end','token','certificate expires'],
+  personal:[]
+};
+const NOISE=/(no-?reply|do-?not-?reply|notifications?@|notify@|mailer-daemon|newsletter|marketing@|digest@|news@|updates?@|info@|alerts?@|bounce)/i;
+const WEEK_TARGET=32;
+const MAILH={Prefer:'IdType="ImmutableId"'};   /* message ids survive being moved between folders */
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bname=k=>(BUCKETS.find(b=>b[0]===k)||[k,'Unsorted'])[1];
+const sname=k=>(STATUS.find(b=>b[0]===k)||[k,k])[1];
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=()=>ymd(new Date());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const d10=s=>String(s||'').slice(0,10);
+function dayDiff(s){ if(!s) return null; const a=new Date(today()+'T00:00:00'), b=new Date(d10(s)+'T00:00:00'); return Math.round((b-a)/864e5); }
+const fmtD=s=>s?new Date(d10(s)+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:dayDiff(s)>300||dayDiff(s)<-300?'numeric':undefined}):'';
+const fmtDow=s=>new Date(d10(s)+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const fmtT=d=>new Date(d).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const nowIso=()=>new Date().toISOString();
+const hrs=m=>(Math.round(m/6)/10).toFixed(1);
+const store={get(k,d){try{const v=localStorage.getItem('bh-tasks-'+k);return v==null?d:JSON.parse(v);}catch(_){return d;}},
+             set(k,v){try{localStorage.setItem('bh-tasks-'+k,JSON.stringify(v));}catch(_){}}};
+const opts=(list,v)=>list.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>').join('');
+const stripHtml=h=>(new DOMParser().parseFromString(String(h||''),'text/html').body.textContent||'').replace(/\s+/g,' ').trim();
+
+const S={me:null,view:store.get('view','today'),bucket:'all',q:'',showDone:false,open:null,edit:null,
+  queue:[],excluded:[],meetings:[],watch:[],watchErr:{},billy:null,weekOff:0,busy:false,
+  errs:{},checkedAt:null,regEdit:null,drag:null};
+
+function msg(t){ $('#status').textContent=t||''; }
+function gate(title,html){
+  const g=$('#gate'); g.hidden=false;
+  g.innerHTML='<div class="tk-gatebox"><h2>'+esc(title)+'</h2>'+html+'</div>';
+  return g;
+}
+
+/* ================= auth + Graph ================= */
+let MS=null, ACCT=null;
+async function token(){
+  try{ return (await MS.acquireTokenSilent({scopes:SCOPES,account:ACCT})).accessToken; }
+  catch(e){
+    if(window.msal && e instanceof msal.InteractionRequiredAuthError){ await MS.acquireTokenRedirect({scopes:SCOPES,account:ACCT}); }
+    throw e;
+  }
+}
+async function gx(path,o={}){
+  const t=await token();
+  const url=/^https?:/.test(path)?path:('https://graph.microsoft.com/'+(o.beta?'beta':'v1.0')+path);
+  const h=Object.assign({Authorization:'Bearer '+t},o.body?{'Content-Type':'application/json'}:{},o.headers||{});
+  const r=await fetch(url,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined});
+  if(r.status===204) return null;
+  if(o.text){ if(!r.ok){ const e=new Error('HTTP '+r.status); e.status=r.status; throw e; } return r.text(); }
+  let j=null; try{ j=await r.json(); }catch(_){}
+  if(!r.ok){ const e=new Error((j&&j.error&&j.error.message)||('HTTP '+r.status)); e.status=r.status; e.code=j&&j.error&&j.error.code; throw e; }
+  return j;
+}
+async function pages(path,o,max){
+  const out=[]; let url=path;
+  while(url && out.length<(max||500)){ const j=await gx(url,o); out.push(...((j&&j.value)||[])); url=j&&j['@odata.nextLink']; }
+  return out;
+}
+function errText(e,what){
+  if(e&&e.status===403) return what+': access denied (403). Check that admin consent was granted for this permission on the BH Tasks app.';
+  if(e&&e.status===401) return what+': sign-in expired. Reload the page.';
+  return what+': '+((e&&e.message)||e);
+}
+
+/* ================= SharePoint list store (Title = id, Payload = JSON) ================= */
+let SITE=null; const LID={}; const DB={};
+async function initStore(){
+  const s=await gx('/sites/'+CFG.site); SITE=s.id;
+  const l=await gx('/sites/'+SITE+'/lists?$select=id,displayName,name&$top=200');
+  ((l&&l.value)||[]).forEach(x=>{ LID[x.displayName]=x.id; if(x.name&&!LID[x.name]) LID[x.name]=x.id; });
+  return Object.values(LISTS).filter(n=>!LID[n]);
+}
+const itemsUrl=c=>'/sites/'+SITE+'/lists/'+LID[LISTS[c]]+'/items';
+async function load(c){
+  const m=new Map();
+  const rows=await pages(itemsUrl(c)+'?$expand=fields($select=Title,Payload)&$top=999',{},100000);
+  for(const it of rows){ const f=it.fields||{}; if(!f.Payload||!f.Title) continue; try{ m.set(f.Title,{sp:it.id,data:JSON.parse(f.Payload)}); }catch(_){} }
+  DB[c]=m; return m;
+}
+async function put(c,key,data){
+  const fields={Title:String(key),Payload:JSON.stringify(data)}; const ex=DB[c].get(key);
+  if(ex){ await gx(itemsUrl(c)+'/'+ex.sp+'/fields',{method:'PATCH',body:fields}); ex.data=data; }
+  else{ const r=await gx(itemsUrl(c),{method:'POST',body:{fields}}); DB[c].set(key,{sp:r.id,data}); }
+}
+async function del(c,key){ const ex=DB[c].get(key); if(!ex) return; await gx(itemsUrl(c)+'/'+ex.sp,{method:'DELETE'}); DB[c].delete(key); }
+
+/* ================= tasks ================= */
+const tasks=()=>[...(DB.tasks||new Map()).entries()].map(([id,v])=>Object.assign({id},v.data));
+const task=id=>{ const v=DB.tasks&&DB.tasks.get(id); return v?Object.assign({id},JSON.parse(JSON.stringify(v.data))):null; };
+const openTasks=()=>tasks().filter(t=>t.status!=='done');
+async function saveTask(t){ const d=Object.assign({},t); const id=d.id; delete d.id; d.updatedAt=nowIso(); if(!d.createdAt) d.createdAt=d.updatedAt; await put('tasks',id,d); }
+function newTask(p){ return Object.assign({id:uid('t'),title:'',bucket:'',status:'next',priority:'normal',due:'',recur:'',waitOn:'',waitSince:'',subtasks:[],notes:'',links:[],emails:[],source:'manual',hasNew:false},p||{}); }
+function nextDue(d,r){
+  const x=new Date((d||today())+'T12:00:00');
+  if(r==='weekly') x.setDate(x.getDate()+7); else if(r==='biweekly') x.setDate(x.getDate()+14);
+  else if(r==='monthly') x.setMonth(x.getMonth()+1); else if(r==='quarterly') x.setMonth(x.getMonth()+3);
+  else if(r==='yearly') x.setFullYear(x.getFullYear()+1);
+  return ymd(x);
+}
+async function completeTask(id){
+  const t=task(id); if(!t) return;
+  await stopTimerFor(id);
+  t.status='done'; t.doneAt=nowIso(); t.hasNew=false;
+  await saveTask(t);
+  let synced=0;
+  for(const e of (t.emails||[])){
+    if(e.kind!=='mail'||!e.id) continue;
+    try{
+      const m=await gx('/me/messages/'+encodeURIComponent(e.id)+'?$select=flag',{headers:MAILH});
+      if(m&&m.flag&&m.flag.flagStatus==='flagged'){ await gx('/me/messages/'+encodeURIComponent(e.id),{method:'PATCH',headers:MAILH,body:{flag:{flagStatus:'complete'}}}); synced++; }
+    }catch(_){}
+  }
+  let rep='';
+  if(t.recur){
+    const nt=newTask({title:t.title,bucket:t.bucket,priority:t.priority,recur:t.recur,notes:t.notes,links:t.links||[],
+      due:nextDue(t.due||today(),t.recur),subtasks:(t.subtasks||[]).map(s=>({t:s.t,done:false}))});
+    await saveTask(nt); rep=' Next one due '+fmtD(nt.due)+'.';
+  }
+  msg('Done: '+t.title+'.'+(synced?' Outlook flag'+(synced>1?'s':'')+' marked complete.':'')+rep);
+}
+
+/* ================= time log ================= */
+const timeRows=()=>[...(DB.time||new Map()).entries()].map(([id,v])=>Object.assign({id},v.data));
+const running=()=>timeRows().find(r=>!r.end);
+async function startTimer(tid){
+  const t=task(tid); if(!t) return;
+  const r=running(); if(r) await stopTimer(r);
+  await put('time',uid('m'),{task:t.id,title:t.title,bucket:t.bucket,start:nowIso(),end:null,mins:0,note:''});
+  if(t.status==='next'||t.status==='later'){ t.status='doing'; await saveTask(t); }
+  msg('Timer started on '+t.title+'.');
+}
+async function stopTimer(r){
+  r=r||running(); if(!r) return;
+  const d=Object.assign({},r); const id=d.id; delete d.id;
+  d.end=nowIso(); d.mins=Math.max(1,Math.round((new Date(d.end)-new Date(d.start))/6e4));
+  await put('time',id,d);
+}
+async function stopTimerFor(tid){ const r=running(); if(r&&r.task===tid) await stopTimer(r); }
+async function logMins(tid,mins,date,start){
+  const t=task(tid); if(!t||!(mins>0)) return;
+  const st=new Date(date+'T'+(start||'08:00')+':00'); const en=new Date(st.getTime()+mins*6e4);
+  await put('time',uid('m'),{task:t.id,title:t.title,bucket:t.bucket,start:st.toISOString(),end:en.toISOString(),mins:Math.round(mins),note:''});
+}
+const minsFor=tid=>timeRows().filter(r=>r.task===tid).reduce((a,r)=>a+(r.end?r.mins:Math.round((Date.now()-new Date(r.start))/6e4)),0);
+function weekRange(off){
+  const d=new Date(); d.setHours(0,0,0,0); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow+off*7);
+  return [d,addDays(d,7)];
+}
+
+/* ================= mail + Teams triage ================= */
+const MSEL='id,conversationId,subject,from,toRecipients,ccRecipients,receivedDateTime,webLink,flag,bodyPreview';
+function ruleFor(addr){ const dom=addr.split('@')[1]||''; const r=DB.rules.get('from:'+addr)||DB.rules.get('dom:'+dom); return r?r.data:null; }
+function suggest(text){
+  let best='',score=0;
+  for(const [b,words] of Object.entries(KW)){ let s=0; for(const w of words) if(text.includes(w)) s++; if(s>score){score=s;best=b;} }
+  return {best,score};
+}
+function classifyMail(m,me){
+  const addr=((m.from&&m.from.emailAddress&&m.from.emailAddress.address)||'').toLowerCase();
+  const rule=ruleFor(addr);
+  const hasMe=list=>(list||[]).some(r=>((r.emailAddress&&r.emailAddress.address)||'').toLowerCase()===me);
+  const rel=hasMe(m.toRecipients)?'to':hasMe(m.ccRecipients)?'cc':'list';
+  const text=(' '+(m.subject||'')+' '+(m.bodyPreview||'')+' '+addr+' ').toLowerCase();
+  const sg=suggest(text);
+  let bucket='',ev='none';
+  if(rule&&rule.bucket){ bucket=rule.bucket; ev='exact'; }
+  else if(/billyforinsurance/.test(addr)){ bucket='compliance'; ev='exact'; }
+  else if(sg.score>=2){ bucket=sg.best; ev='likely'; }
+  else if(sg.score===1){ bucket=sg.best; ev='weak'; }
+  return {kind:'mail',id:m.id,conv:m.conversationId||'',subject:m.subject||'(no subject)',
+    from:(m.from&&m.from.emailAddress&&m.from.emailAddress.name)||addr,addr,received:m.receivedDateTime,link:m.webLink||'',
+    preview:m.bodyPreview||'',flagged:!!m._fl,due:(m.flag&&m.flag.dueDateTime&&m.flag.dueDateTime.dateTime)?d10(m.flag.dueDateTime.dateTime):'',
+    rel,bucket,ev,rule,noise:NOISE.test(addr)&&!(rule&&rule.bucket)};
+}
+const refOf=it=>({kind:it.kind,id:it.id,conv:it.conv,subject:it.subject,from:it.from,received:it.received,link:it.link});
+async function checkMail(){
+  const me=(S.me.mail||S.me.userPrincipalName||'').toLowerCase();
+  const days=store.get('window',14);
+  const since=new Date(Date.now()-days*864e5).toISOString();
+  const inbox=await pages('/me/mailFolders/inbox/messages?$filter=receivedDateTime ge '+since+'&$orderby=receivedDateTime desc&$top=100&$select='+MSEL,{headers:MAILH},500);
+  let flagged=[];
+  try{ flagged=await pages("/me/messages?$filter=flag/flagStatus eq 'flagged'&$top=100&$select="+MSEL,{headers:MAILH},300); }catch(e){ S.errs.flag=errText(e,'Flagged mail'); }
+  const all=new Map();
+  inbox.forEach(m=>all.set(m.id,m));
+  flagged.forEach(m=>{ const x=all.get(m.id)||m; x._fl=true; all.set(m.id,x); });
+  const byConv=new Map(); openTasks().forEach(t=>(t.emails||[]).forEach(e=>{ if(e.conv) byConv.set(e.conv,t.id); }));
+  const q=[],ex=[]; let attached=0, auto=0;
+  for(const m of all.values()){
+    const addr=((m.from&&m.from.emailAddress&&m.from.emailAddress.address)||'').toLowerCase();
+    if(!addr||addr===me) continue;
+    const seen=DB.seen.get(m.id);
+    if(seen && !(seen.data.state==='snooze' && seen.data.until && seen.data.until<=today())) continue;
+    const tid=m.conversationId&&byConv.get(m.conversationId);
+    if(tid){
+      const t=task(tid);
+      if(t && !(t.emails||[]).some(e=>e.id===m.id)){ t.emails=(t.emails||[]).concat([refOf(classifyMail(m,me))]); t.hasNew=true; await saveTask(t); }
+      await put('seen',m.id,{state:'attached',task:tid,at:nowIso()}); attached++; continue;
+    }
+    const it=classifyMail(m,me);
+    if(it.rule&&it.rule.action==='ignore'){ ex.push(Object.assign(it,{why:'Sender is on your ignore list'})); continue; }
+    if(it.rule&&it.rule.auto&&it.rule.bucket){
+      const t=newTask({title:cleanSubj(it.subject),bucket:it.rule.bucket,priority:it.flagged?'high':'normal',due:it.due,emails:[refOf(it)],source:'mail'});
+      await saveTask(t); await put('seen',it.id,{state:'task',task:t.id,at:nowIso()}); auto++; continue;
+    }
+    if(it.noise && !it.flagged){ ex.push(Object.assign(it,{why:'Automated sender'})); continue; }
+    q.push(it);
+  }
+  S.queue=S.queue.filter(x=>x.kind!=='mail').concat(q);
+  S.excluded=ex;
+  return {attached,auto};
+}
+async function checkTeams(){
+  const days=store.get('window',14); const since=Date.now()-days*864e5;
+  const chats=await gx('/me/chats?$top=50&$expand=lastMessagePreview&$orderby=lastMessagePreview/createdDateTime desc');
+  const recent=((chats&&chats.value)||[]).filter(c=>c.lastMessagePreview&&new Date(c.lastMessagePreview.createdDateTime)>=since).slice(0,25);
+  const q=[];
+  for(const c of recent){
+    let msgs=[]; try{ const j=await gx('/chats/'+encodeURIComponent(c.id)+'/messages?$top=30'); msgs=(j&&j.value)||[]; }catch(_){ continue; }
+    for(const m of msgs){
+      if(!m.createdDateTime||new Date(m.createdDateTime)<since) continue;
+      const fromId=m.from&&m.from.user&&m.from.user.id; if(!fromId||fromId===S.me.id) continue;
+      if(!(m.mentions||[]).some(x=>x.mentioned&&x.mentioned.user&&x.mentioned.user.id===S.me.id)) continue;
+      const key='tm:'+m.id; const seen=DB.seen.get(key);
+      if(seen && !(seen.data.state==='snooze' && seen.data.until && seen.data.until<=today())) continue;
+      const body=stripHtml(m.body&&m.body.content);
+      const sg=suggest((' '+body+' ').toLowerCase());
+      q.push({kind:'teams',id:key,conv:'chat:'+c.id,subject:c.topic||('Chat with '+((m.from.user&&m.from.user.displayName)||'someone')),
+        from:(m.from.user&&m.from.user.displayName)||'',addr:'',received:m.createdDateTime,link:m.webUrl||'',preview:body.slice(0,280),
+        flagged:false,due:'',rel:'mention',bucket:sg.score>=2?sg.best:'',ev:sg.score>=2?'likely':sg.score===1?'weak':'none',sugg:sg.best});
+    }
+  }
+  S.queue=S.queue.filter(x=>x.kind!=='teams').concat(q);
+}
+async function checkCalendar(){
+  const st=new Date(); st.setHours(0,0,0,0); const en=addDays(st,7);
+  const rows=await pages('/me/calendarView?startDateTime='+st.toISOString()+'&endDateTime='+en.toISOString()+
+    '&$select=subject,start,end,location,isAllDay,showAs,webLink,isCancelled&$orderby=start/dateTime&$top=100',
+    {headers:{Prefer:'outlook.timezone="Central Standard Time"'}},300);
+  S.meetings=rows.filter(m=>!m.isCancelled).map(m=>({subject:m.subject||'(no title)',start:String(m.start.dateTime).slice(0,19),end:String(m.end.dateTime).slice(0,19),
+    allDay:!!m.isAllDay,where:(m.location&&m.location.displayName)||'',link:m.webLink||'',showAs:m.showAs}));
+}
+const cleanSubj=s=>String(s||'').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i,'').trim()||'(no subject)';
+
+/* ================= watchers: Entra creds, Apple tokens, register, Billy ================= */
+const ENTRA_URL=a=>'https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/'+a;
+async function runWatchers(){
+  const out=[]; S.watchErr={};
+  try{
+    const apps=await pages('/applications?$select=id,appId,displayName,passwordCredentials,keyCredentials&$top=999',{},3000);
+    const seenKeys=new Set();
+    for(const a of apps){
+      for(const c of (a.passwordCredentials||[])){ seenKeys.add(c.keyId); out.push({key:'entra:'+c.keyId,name:a.displayName+' · '+(c.displayName||'client secret'),kind:'Client secret',source:'Entra app',expires:c.endDateTime,url:ENTRA_URL(a.appId),
+        how:'Add a new secret on the app, update every place that uses it (check the Register for GitHub, Cloudflare, n8n), confirm it works, then delete the old one.'}); }
+      for(const c of (a.keyCredentials||[])){ seenKeys.add(c.keyId); out.push({key:'entra:'+c.keyId,name:a.displayName+' · '+(c.displayName||'certificate'),kind:'Certificate',source:'Entra app',expires:c.endDateTime,url:ENTRA_URL(a.appId),
+        how:'Upload the renewed certificate to the app, switch whatever signs with it, then remove the old certificate.'}); }
+    }
+    try{
+      const sps=await pages('/servicePrincipals?$select=id,appId,displayName,keyCredentials,preferredSingleSignOnMode&$top=999',{},5000);
+      for(const s of sps){ if(s.preferredSingleSignOnMode!=='saml') continue;
+        for(const c of (s.keyCredentials||[])){ if(c.usage!=='Sign'||seenKeys.has(c.keyId)) continue; seenKeys.add(c.keyId);
+          out.push({key:'entra:'+c.keyId,name:s.displayName+' · SAML signing certificate',kind:'SAML certificate',source:'Entra enterprise app',expires:c.endDateTime,
+            url:'https://entra.microsoft.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/SignOn/objectId/'+s.id+'/appId/'+s.appId,
+            how:'Create a new SAML signing certificate, give the new metadata to the vendor, make it active, then remove the old one.'}); } }
+    }catch(e){ S.watchErr.sp=errText(e,'Enterprise app SAML certificates'); }
+  }catch(e){ S.watchErr.entra=errText(e,'Entra app secrets (Application.Read.All)'); }
+  try{
+    const ap=await gx('/deviceManagement/applePushNotificationCertificate');
+    if(ap&&ap.expirationDateTime) out.push({key:'apple:apns',name:'Apple MDM push certificate'+(ap.appleIdentifier?' ('+ap.appleIdentifier+')':''),kind:'Apple push certificate',source:'Intune',expires:ap.expirationDateTime,url:'https://intune.microsoft.com/',
+      how:'Intune › Devices › Enrollment › Apple › MDM Push Certificate. Renew it with the SAME Apple ID'+(ap.appleIdentifier?' ('+ap.appleIdentifier+')':'')+'. Creating a new certificate, or using a different Apple ID, means every Apple device has to re-enroll.'});
+  }catch(e){ if(e.status!==404) S.watchErr.apns=errText(e,'Apple push certificate (DeviceManagementServiceConfig.Read.All)'); }
+  try{
+    const dep=await gx('/deviceManagement/depOnboardingSettings',{beta:true});
+    ((dep&&dep.value)||[]).forEach(d=>{ if(d.tokenExpirationDateTime) out.push({key:'apple:dep:'+d.id,name:'Apple Business Manager token · '+(d.tokenName||d.appleIdentifier||'enrollment'),kind:'ABM / ADE token',source:'Intune',expires:d.tokenExpirationDateTime,url:'https://business.apple.com/',
+      how:'In Apple Business Manager, go to your account › Preferences › Your MDM Servers › the Intune server › Download Token. Then upload the .p7m in Intune › Devices › Enrollment › Apple › Enrollment program tokens › Renew token.'}); });
+  }catch(e){ if(e.status!==404) S.watchErr.dep=errText(e,'ABM enrollment token'); }
+  try{
+    const vpp=await gx('/deviceAppManagement/vppTokens');
+    ((vpp&&vpp.value)||[]).forEach(v=>{ if(v.expirationDateTime) out.push({key:'apple:vpp:'+v.id,name:'Apple VPP content token · '+(v.organizationName||v.appleId||''),kind:'VPP token',source:'Intune',expires:v.expirationDateTime,url:'https://business.apple.com/',
+      how:'In Apple Business Manager, go to Preferences › Payments and Billing › Server Tokens and download the token. Then upload it in Intune › Tenant administration › Connectors and tokens › Apple VPP tokens.'}); });
+  }catch(e){ if(e.status!==404) S.watchErr.vpp=errText(e,'Apple VPP token (DeviceManagementApps.Read.All)'); }
+  for(const [id,v] of DB.reg.entries()){
+    const r=v.data; if(!r.expires) continue;
+    out.push({key:'reg:'+id,name:r.name,kind:r.kind||'Other',source:'Register'+(r.where?' · '+r.where:''),expires:r.expires,url:r.url||'',autoRenew:!!r.autoRenew,
+      how:[r.usedBy?'Used by: '+r.usedBy:'',r.rotate?'How to renew: '+r.rotate:'',r.autoRenew?'Set to auto-renew. Confirm the card or price before it does.':''].filter(Boolean).join('\n')});
+  }
+  try{ S.billy=await readBilly(); }catch(e){ S.billy=null; if(e.status!==404) S.watchErr.billy=errText(e,'Billy reviews file'); }
+  out.sort((a,b)=>String(a.expires).localeCompare(String(b.expires)));
+  S.watch=out;
+}
+async function readBilly(){
+  const drives=await gx('/sites/'+SITE+'/drives?$select=id,name');
+  const d=((drives&&drives.value)||[]).find(x=>x.name===CFG.library);
+  if(!d){ const e=new Error('no '+CFG.library+' library'); e.status=404; throw e; }
+  const txt=await gx('/drives/'+d.id+'/root:/billy_reviews.json:/content',{text:true});
+  return JSON.parse(txt);
+}
+const stageOf=d=>d<=0?0:d<=7?7:d<=14?14:d<=30?30:d<=60?60:null;
+async function syncWatchTasks(){
+  let made=0,bumped=0;
+  for(const w of S.watch){
+    const d=dayDiff(w.expires); if(d==null) continue;
+    if(d>(w.autoRenew?30:60)||d<-30) continue;
+    const st=stageOf(d), key=w.key+'@'+d10(w.expires), pr=d<=14?'high':'normal';
+    const ex=tasks().find(t=>t.watchKey===key);
+    if(!ex){
+      const due=d>7?ymd(addDays(new Date(d10(w.expires)+'T12:00:00'),-7)):d10(w.expires);
+      await saveTask(newTask({title:(d<=0?'Expired: ':'Renew: ')+w.name,bucket:'renew',priority:pr,due,source:'watch',watchKey:key,stage:st,
+        notes:[w.kind+' · '+w.source,'Expires '+fmtD(w.expires),w.how||''].filter(Boolean).join('\n'),links:w.url?[w.url]:[]}));
+      made++;
+    }else if(ex.status!=='done' && ex.stage!=null && st<ex.stage){
+      ex.stage=st; ex.priority=pr; ex.hasNew=true; if(d<=0) ex.title=ex.title.replace(/^Renew:/,'Expired:');
+      await saveTask(ex); bumped++;
+    }
+  }
+  /* Billy (BH account only): one rolling task that tracks the review queue */
+  const items=(S.billy&&Array.isArray(S.billy.items))?S.billy.items:null;
+  if(items){
+    const open=openTasks().find(t=>t.watchKey==='billy:queue');
+    const notes='Billy · Bailey-Harris account'+(S.billy.asOf?' · as of '+fmtD(S.billy.asOf):'')+'\n'+
+      items.slice(0,40).map(i=>'- '+[i.vendor,i.project,i.document].filter(Boolean).join(' · ')+(i.submitted?' (submitted '+fmtD(i.submitted)+')':'')).join('\n');
+    if(items.length && !open){ await saveTask(newTask({title:'Billy reviews waiting ('+items.length+')',bucket:'compliance',priority:items.length>10?'high':'normal',due:today(),source:'watch',watchKey:'billy:queue',notes,links:['https://app.billyforinsurance.com/']})); made++; }
+    else if(open && items.length){ const n='Billy reviews waiting ('+items.length+')'; if(open.title!==n){ open.title=n; open.notes=notes; open.hasNew=true; await saveTask(open); bumped++; } }
+    else if(open && !items.length){ open.status='done'; open.doneAt=nowIso(); open.notes+='\nQueue cleared.'; await saveTask(open); }
+  }
+  return {made,bumped};
+}
+
+/* ================= refresh ================= */
+async function refreshAll(){
+  if(S.busy) return; S.busy=true; $('#refresh').disabled=true; S.errs={};
+  const parts=[];
+  try{
+    msg('Checking mail…');
+    try{ const r=await checkMail(); if(r.attached) parts.push(r.attached+' repl'+(r.attached===1?'y':'ies')+' added to existing tasks'); if(r.auto) parts.push(r.auto+' auto-filed'); }catch(e){ S.errs.mail=errText(e,'Mail'); }
+    if(store.get('teams',true)){ msg('Checking Teams…'); try{ await checkTeams(); }catch(e){ S.errs.teams=errText(e,'Teams chats'); } }
+    msg('Reading calendar…'); try{ await checkCalendar(); }catch(e){ S.errs.cal=errText(e,'Calendar'); }
+    msg('Checking expirations…'); try{ await runWatchers(); const w=await syncWatchTasks(); if(w.made) parts.push(w.made+' renewal task'+(w.made===1?'':'s')+' created'); if(w.bumped) parts.push(w.bumped+' escalated'); }catch(e){ S.errs.watch=errText(e,'Watchers'); }
+    S.checkedAt=new Date(); $('#asof').textContent=fmtT(S.checkedAt);
+    const nErr=Object.keys(S.errs).length+Object.keys(S.watchErr).length;
+    msg(S.queue.length+' to triage, '+S.excluded.length+' left out as automated'+(parts.length?'. '+parts.join(', '):'')+'.'+(nErr?' '+nErr+' source'+(nErr>1?'s':'')+' had a problem, see Inbox or Watchers.':''));
+  }finally{ S.busy=false; $('#refresh').disabled=false; render(); }
+}
+
+/* ================= rendering ================= */
+function chipDue(t){
+  if(!t.due||t.status==='done') return '';
+  const d=dayDiff(t.due);
+  const cls=d<0?' is-bad':d===0?' is-warn':'';
+  return '<span class="bh-chip'+cls+'">'+(d<0?'Overdue · ':d===0?'Today':'')+(d===0?'':fmtD(t.due))+'</span>';
+}
+function metaChips(t,full){
+  const c=[];
+  if(t.hasNew) c.push('<span class="bh-chip is-warn">'+(t.source==='watch'?'Escalated':'New reply')+'</span>');
+  if(t.priority==='high') c.push('<span class="bh-chip">High</span>');
+  c.push(chipDue(t));
+  if(t.status==='waiting'&&t.waitOn){ const w=t.waitSince?-dayDiff(t.waitSince):null; c.push('<span class="bh-chip'+(w!=null&&w>=7?' is-warn':'')+'">'+esc(t.waitOn)+(w!=null?' · '+w+'d':'')+'</span>'); }
+  if(full&&t.bucket) c.push('<span class="bh-chip">'+esc(bname(t.bucket))+'</span>');
+  if(t.recur) c.push('<span class="bh-chip">Repeats</span>');
+  const st=(t.subtasks||[]); if(st.length) c.push('<span class="bh-chip">'+st.filter(s=>s.done).length+'/'+st.length+'</span>');
+  if(t.emails&&t.emails.length) c.push('<span class="bh-chip">'+t.emails.length+' msg</span>');
+  const r=running(); if(r&&r.task===t.id) c.push('<span class="bh-chip is-ok">Timing</span>');
+  return c.join('');
+}
+function row(t){
+  return '<div class="tk-row"><input type="checkbox" class="tk-check" data-act="done" data-id="'+esc(t.id)+'" aria-label="Mark done"'+(t.status==='done'?' checked disabled':'')+'>'+
+    '<button class="tk-tt" data-act="open" data-id="'+esc(t.id)+'">'+esc(t.title)+'</button><div class="tk-meta">'+metaChips(t,true)+'</div></div>';
+}
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  return tasks().filter(t=>(S.bucket==='all'||t.bucket===S.bucket)&&(!q||[t.title,t.notes,t.waitOn,bname(t.bucket)].join(' ').toLowerCase().includes(q)));
+}
+const byDue=(a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||(a.priority==='high'?-1:0)-(b.priority==='high'?-1:0)||a.title.localeCompare(b.title);
+
+function renderSide(){
+  const ov=openTasks().filter(t=>t.due&&dayDiff(t.due)<=0).length;
+  const exp=S.watch.filter(w=>{const d=dayDiff(w.expires);return d!=null&&d<=30;}).length;
+  const items=[['today','Today',ov],['inbox','Inbox triage',S.queue.length],['board','Board',0],['list','List',0],['watch','Watchers',exp],['time','Time',0],['register','Register',0]];
+  $('#side').innerHTML='<button class="bh-side-close" aria-label="Close menu"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2"/></svg></button>'+
+    '<div class="bh-side-h">Views</div>'+items.map(i=>'<button class="bh-side-item" data-view="'+i[0]+'"'+(S.view===i[0]?' aria-current="page"':'')+'>'+i[1]+(i[2]?'<span class="bh-count">'+i[2]+'</span>':'')+'</button>').join('')+
+    '<div class="bh-side-divider"></div><div class="bh-side-h">Other desks</div>'+
+    '<a class="bh-side-item" href="/">All desks</a><a class="bh-side-item" href="/ap/">AP Desk</a><a class="bh-side-item" href="/prequal/">Prequal Desk</a><a class="bh-side-item" href="/precon/">Precon Desk</a>';
+}
+function renderKpis(){
+  const op=openTasks();
+  const due=op.filter(t=>t.due&&dayDiff(t.due)<=0).length;
+  const wait=op.filter(t=>t.status==='waiting').length;
+  const exp=S.watch.filter(w=>{const d=dayDiff(w.expires);return d!=null&&d<=30;}).length;
+  const [a,b]=weekRange(0); const mins=timeRows().filter(r=>new Date(r.start)>=a&&new Date(r.start)<b).reduce((s,r)=>s+(r.end?r.mins:Math.round((Date.now()-new Date(r.start))/6e4)),0);
+  const k=[['To triage',S.queue.length,''],['Due or overdue',due,due?'is-warn':''],['Waiting on others',wait,''],['Expiring in 30 days',exp,exp?'is-bad':''],['Hours this week',hrs(mins)+' / '+WEEK_TARGET,'']];
+  $('#kpis').innerHTML=k.map(x=>'<div class="bh-kpi"><div class="bh-label">'+x[0]+'</div><div class="bh-kpi-value '+x[2]+'">'+x[1]+'</div></div>').join('');
+}
+function renderTimer(){
+  const r=running();
+  $('#timerbox').innerHTML=r?'<span class="bh-label">Timer</span><strong>'+esc(r.title.slice(0,40))+' · '+Math.floor((Date.now()-new Date(r.start))/36e5)+':'+pad(Math.floor((Date.now()-new Date(r.start))/6e4)%60)+'</strong><button class="bh-btn-outline tk-sm" data-act="stoptimer">Stop</button>':'';
+}
+function renderBar(){
+  const bar=$('#bar');
+  if(!['board','list'].includes(S.view)){ bar.hidden=true; return; }
+  bar.hidden=false;
+  bar.innerHTML='<select class="bh-select" id="fbucket" aria-label="Bucket">'+opts([['all','All buckets']].concat(BUCKETS),S.bucket)+'</select>'+
+    '<input class="bh-input" id="fq" type="search" placeholder="Search tasks" value="'+esc(S.q)+'" aria-label="Search tasks">'+
+    '<label class="tk-chk"><input type="checkbox" id="fdone"'+(S.showDone?' checked':'')+'> Show done</label>'+
+    '<span style="flex:1"></span><button class="bh-btn-outline tk-sm" data-act="new">Add task</button>';
+}
+function render(){
+  if(!DB.tasks) return;
+  renderSide(); renderKpis(); renderTimer(); renderBar();
+  const v=$('#view');
+  const f={today:vToday,inbox:vInbox,board:vBoard,list:vList,watch:vWatch,time:vTime,register:vRegister}[S.view]||vToday;
+  v.innerHTML=f();
+  renderDrawer();
+}
+
+function sec(title,list,empty){
+  return '<section class="tk-sec"><h2>'+esc(title)+' <span class="n">'+list.length+'</span></h2>'+(list.length?list.map(row).join(''):'<div class="tk-empty">'+esc(empty||'Nothing here.')+'</div>')+'</section>';
+}
+function vToday(){
+  const op=openTasks();
+  const overdue=op.filter(t=>t.due&&dayDiff(t.due)<0).sort(byDue);
+  const dueT=op.filter(t=>t.due&&dayDiff(t.due)===0).sort(byDue);
+  const doing=op.filter(t=>t.status==='doing'&&!(t.due&&dayDiff(t.due)<=0)).sort(byDue);
+  const waiting=op.filter(t=>t.status==='waiting').sort((a,b)=>(a.waitSince||'').localeCompare(b.waitSince||''));
+  const newer=op.filter(t=>t.hasNew&&!(t.due&&dayDiff(t.due)<=0)&&t.status!=='doing'&&t.status!=='waiting');
+  const td=today(); const mt=S.meetings.filter(m=>d10(m.start)===td);
+  const days=[...Array(7)].map((_,i)=>ymd(addDays(new Date(),i)));
+  const exp=S.watch.filter(w=>{const d=dayDiff(w.expires);return d!=null&&d<=30;});
+  return '<div class="tk-cols"><div>'+
+    (overdue.length?sec('Overdue',overdue):'')+sec('Due today',dueT,'Nothing due today.')+
+    (newer.length?sec('New activity',newer):'')+sec('Doing',doing,'Nothing in progress. Drag something to Doing on the board, or start a timer.')+
+    sec('Waiting on others',waiting,'Not waiting on anyone.')+
+    '</div><div><section class="tk-sec"><h2>Meetings today <span class="n">'+mt.length+'</span></h2>'+
+    (S.errs.cal?'<div class="tk-err">'+esc(S.errs.cal)+'</div>':'')+
+    (mt.length?mt.map(m=>'<div class="tk-mt"><span class="t">'+(m.allDay?'All day':fmtT(m.start))+'</span><span>'+(m.link?'<a href="'+esc(m.link)+'" target="_blank" rel="noopener">'+esc(m.subject)+'</a>':esc(m.subject))+(m.where?'<br><span class="bh-caption">'+esc(m.where)+'</span>':'')+'</span></div>').join(''):'<div class="tk-empty">'+(S.checkedAt?'No meetings today.':'Not checked yet.')+'</div>')+
+    '<div class="tk-days">'+days.map(d=>{ const n=S.meetings.filter(m=>d10(m.start)===d).length, k=openTasks().filter(t=>t.due===d).length;
+      return '<div class="'+(d===td?'is-today':'')+'"><b>'+fmtDow(d).split(',')[0]+'</b>'+n+' mtg<br>'+k+' due</div>'; }).join('')+'</div></section>'+
+    '<section class="tk-sec"><h2>Expiring within 30 days <span class="n">'+exp.length+'</span></h2>'+
+    (exp.length?exp.map(w=>{const d=dayDiff(w.expires);return '<div class="tk-mt"><span class="t"><span class="bh-chip '+(d<=14?'is-bad':'is-warn')+'">'+(d<0?'Expired':d+'d')+'</span></span><span>'+esc(w.name)+'<br><span class="bh-caption">'+esc(w.kind)+'</span></span></div>';}).join(''):'<div class="tk-empty">Nothing expiring in the next 30 days.</div>')+
+    '</section></div></div>';
+}
+
+function vInbox(){
+  const errs=['mail','flag','teams'].map(k=>S.errs[k]).filter(Boolean);
+  const bopts=it=>'<option value="">Choose bucket…</option>'+BUCKETS.map(b=>'<option value="'+b[0]+'"'+(b[0]===it.bucket&&(it.ev==='exact'||it.ev==='likely')?' selected':'')+'>'+esc(b[1])+'</option>').join('');
+  const evChip=it=>it.ev==='exact'?'<span class="bh-chip is-ok">Exact · '+esc(bname(it.bucket))+'</span>':it.ev==='likely'?'<span class="bh-chip is-warn">Likely · '+esc(bname(it.bucket))+'</span>':it.ev==='weak'?'<span class="bh-chip">Maybe '+esc(bname(it.bucket||it.sugg))+'</span>':'<span class="bh-chip">No match</span>';
+  const tsel='<option value="">Add to task…</option>'+openTasks().sort((a,b)=>a.title.localeCompare(b.title)).map(t=>'<option value="'+esc(t.id)+'">'+esc(t.title.slice(0,70))+'</option>').join('');
+  const q=S.queue.slice().sort((a,b)=>(b.flagged-a.flagged)||String(b.received).localeCompare(String(a.received)));
+  let h='<div class="tk-acts" style="margin-top:12px"><span class="bh-label">Look back</span><select class="bh-select" id="win">'+opts([['3','3 days'],['7','7 days'],['14','14 days'],['30','30 days']],String(store.get('window',14)))+'</select>'+
+    '<label class="tk-chk"><input type="checkbox" id="teamsOn"'+(store.get('teams',true)?' checked':'')+'> Include Teams @mentions</label></div>'+
+    errs.map(e=>'<div class="tk-err">'+esc(e)+'</div>').join('');
+  if(!S.checkedAt) h+='<div class="tk-empty">Press Check now to pull your mail, flags, Teams mentions and calendar.</div>';
+  else if(!q.length) h+='<div class="tk-empty">Inbox clear. Nothing waiting for a decision.</div>';
+  q.forEach((it)=>{
+    const i=esc(it.id);
+    h+='<article class="tk-mail" data-qid="'+i+'"><div class="tk-meta" style="justify-content:flex-start">'+
+      (it.kind==='teams'?'<span class="bh-chip">Teams @mention</span>':'')+(it.flagged?'<span class="bh-chip is-warn">Flagged</span>':'')+(it.rel==='cc'?'<span class="bh-chip">CC</span>':it.rel==='list'?'<span class="bh-chip">Via list</span>':'')+evChip(it)+
+      (it.due?'<span class="bh-chip">Flag due '+fmtD(it.due)+'</span>':'')+'</div>'+
+      '<div class="sub">'+(it.link?'<a href="'+esc(it.link)+'" target="_blank" rel="noopener">'+esc(it.subject)+'</a>':esc(it.subject))+'</div>'+
+      '<div class="from">'+esc(it.from)+(it.addr&&it.addr!==it.from?' &lt;'+esc(it.addr)+'&gt;':'')+' · '+esc(new Date(it.received).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</div>'+
+      '<div class="pv">'+esc(it.preview.slice(0,260))+'</div>'+
+      '<div class="tk-acts"><select class="bh-select" data-f="bucket" aria-label="Bucket">'+bopts(it)+'</select>'+
+      '<button class="bh-btn-outline tk-sm" data-act="mk">Make task</button>'+
+      '<select class="bh-select" data-f="addto" aria-label="Add to existing task">'+tsel+'</select><button class="bh-btn-outline tk-sm" data-act="addto">Add</button>'+
+      '<select class="bh-select" data-f="snooze" aria-label="Snooze">'+opts([['1','Snooze 1 day'],['3','3 days'],['7','1 week']],'1')+'</select><button class="bh-btn-outline tk-sm" data-act="snooze">Snooze</button>'+
+      '<button class="tk-x" data-act="ignore">Ignore</button></div>'+
+      (it.addr?'<div class="tk-acts"><label class="tk-chk"><input type="checkbox" data-f="remember"'+(it.ev==='exact'?' disabled':'')+'> Remember: '+esc(it.addr)+' goes in this bucket</label>'+
+        '<label class="tk-chk"><input type="checkbox" data-f="auto"> and make tasks automatically</label>'+
+        '<button class="tk-x" data-act="ignoresender">Always ignore this sender</button></div>':'')+
+      '</article>';
+  });
+  if(S.excluded.length){
+    h+='<details class="tk-more"><summary>Left out: '+S.excluded.length+' automated or ignored</summary><p class="tk-note">These were filtered by sender, not deleted. If one belongs in the queue, bring it back.</p>'+
+      '<div class="bh-table-wrap"><table class="bh-table"><thead><tr><th>Received</th><th>From</th><th>Subject</th><th>Why</th><th></th></tr></thead><tbody>'+
+      S.excluded.map(x=>'<tr><td class="nw">'+fmtD(x.received)+'</td><td>'+esc(x.addr)+'</td><td>'+esc(x.subject)+'</td><td>'+esc(x.why)+'</td><td><button class="tk-x" data-act="unexclude" data-id="'+esc(x.id)+'">Bring back</button></td></tr>').join('')+
+      '</tbody></table></div></details>';
+  }
+  const rules=[...DB.rules.entries()];
+  h+='<details class="tk-more"><summary>Sender rules: '+rules.length+'</summary><p class="tk-note">Rules you have confirmed. A rule makes the match Exact, so that sender is never guessed again.</p>'+
+    (rules.length?'<div class="bh-table-wrap"><table class="bh-table"><thead><tr><th>Sender</th><th>Rule</th><th></th></tr></thead><tbody>'+
+    rules.map(([k,v])=>'<tr><td>'+esc(k.replace(/^(from|dom):/,''))+'</td><td>'+(v.data.action==='ignore'?'Ignore':esc(bname(v.data.bucket))+(v.data.auto?' · auto-task':''))+'</td><td><button class="tk-x" data-act="delrule" data-id="'+esc(k)+'">Remove</button></td></tr>').join('')+
+    '</tbody></table></div>':'<div class="tk-empty">No rules yet.</div>')+'</details>';
+  return h;
+}
+
+function vBoard(){
+  const cols=STATUS.filter(s=>s[0]!=='done'||S.showDone);
+  const vis=filtered();
+  return '<div class="tk-board" style="grid-template-columns:repeat('+cols.length+',minmax(0,1fr))">'+cols.map(([k,l])=>{
+    const g=vis.filter(t=>t.status===k).sort(k==='done'?(a,b)=>String(b.doneAt).localeCompare(String(a.doneAt)):byDue);
+    return '<div class="tk-col" data-status="'+k+'"><h3>'+l+'<span>'+g.length+'</span></h3><div class="tk-colbody">'+
+      g.slice(0,k==='done'?40:500).map(t=>'<button class="tk-card" draggable="true" data-card="'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span><span class="tk-meta">'+metaChips(t,S.bucket==='all')+'</span></button>').join('')+
+      '</div></div>';
+  }).join('')+'</div><p class="tk-note">Drag a card to another column to move it. It saves when you drop it. On a phone, open the card and change its status.</p>';
+}
+function vList(){
+  const vis=filtered().filter(t=>S.showDone||t.status!=='done');
+  if(!vis.length) return '<div class="tk-empty">'+(tasks().length?'Nothing matches.':'No tasks yet. Add one, or make tasks from the Inbox.')+'</div>';
+  return BUCKETS.concat([['','Unsorted']]).map(([k,l])=>{ const g=vis.filter(t=>(t.bucket||'')===k).sort(byDue); return g.length?sec(l,g):''; }).join('');
+}
+
+function vWatch(){
+  const errs=Object.values(S.watchErr);
+  let h=errs.map(e=>'<div class="tk-err">'+esc(e)+'</div>').join('');
+  if(!S.checkedAt) return h+'<div class="tk-empty">Press Check now to read expiry dates from Entra, Intune and your Register.</div>';
+  h+='<p class="tk-note">A renewal task is created 60 days out (30 for anything set to auto-renew). It escalates at 30, 14 and 7 days, and again on the day it expires.</p>';
+  h+='<div class="bh-table-wrap" style="margin-top:12px"><table class="bh-table"><thead><tr><th>Expires</th><th>Left</th><th>Item</th><th>Kind</th><th>Source</th><th>Task</th></tr></thead><tbody>'+
+    (S.watch.length?S.watch.map(w=>{ const d=dayDiff(w.expires); const key=w.key+'@'+d10(w.expires); const t=tasks().find(x=>x.watchKey===key);
+      const chip=d<0?'<span class="bh-chip is-bad">Expired</span>':d<=14?'<span class="bh-chip is-bad">'+d+' days</span>':d<=60?'<span class="bh-chip is-warn">'+d+' days</span>':'<span class="bh-chip is-ok">'+d+' days</span>';
+      return '<tr><td class="nw">'+fmtD(w.expires)+'</td><td>'+chip+'</td><td>'+(w.url?'<a href="'+esc(w.url)+'" target="_blank" rel="noopener">'+esc(w.name)+'</a>':esc(w.name))+'</td><td>'+esc(w.kind)+'</td><td>'+esc(w.source)+'</td><td>'+(t?'<button class="tk-x" data-act="open" data-id="'+esc(t.id)+'">'+esc(sname(t.status))+'</button>':'')+'</td></tr>'; }).join('')
+      :'<tr><td colspan="6">No expiry dates found.</td></tr>')+'</tbody></table></div>';
+  const items=S.billy&&Array.isArray(S.billy.items)?S.billy.items:null;
+  h+='<section class="tk-sec"><h2>Billy reviews needed · Bailey-Harris <span class="n">'+(items?items.length:'–')+'</span></h2>'+
+    (items?(items.length?'<div class="bh-table-wrap"><table class="bh-table"><thead><tr><th>Trade partner</th><th>Project</th><th>Document</th><th>Submitted</th></tr></thead><tbody>'+
+      items.map(i=>'<tr><td>'+(i.url?'<a href="'+esc(i.url)+'" target="_blank" rel="noopener">'+esc(i.vendor)+'</a>':esc(i.vendor))+'</td><td>'+esc(i.project||'Company level')+'</td><td>'+esc(i.document||'')+'</td><td class="nw">'+fmtD(i.submitted)+'</td></tr>').join('')+
+      '</tbody></table></div><p class="tk-note">From the compliance pipeline'+(S.billy.asOf?', as of '+esc(new Date(S.billy.asOf).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})):'')+'.</p>':'<div class="tk-empty">Nothing waiting for review.</div>')
+     :'<div class="tk-empty">No billy_reviews.json in the '+CFG.library+' library yet. It appears once the compliance pipeline starts writing it.</div>')+'</section>';
+  return h;
+}
+
+function vTime(){
+  const [a,b]=weekRange(S.weekOff);
+  const rows=timeRows().filter(r=>new Date(r.start)>=a&&new Date(r.start)<b).sort((x,y)=>String(x.start).localeCompare(String(y.start)));
+  const m=r=>r.end?r.mins:Math.round((Date.now()-new Date(r.start))/6e4);
+  const total=rows.reduce((s,r)=>s+m(r),0);
+  const chip=total/60>=WEEK_TARGET?'is-ok':(S.weekOff<0?'is-bad':'is-warn');
+  let h='<div class="tk-acts" style="margin-top:14px"><button class="bh-btn-outline tk-sm" data-act="wk" data-d="-1">Previous week</button>'+
+    '<strong>Week of '+fmtD(ymd(a))+'</strong><button class="bh-btn-outline tk-sm" data-act="wk" data-d="1"'+(S.weekOff>=0?' disabled':'')+'>Next week</button>'+
+    '<span class="bh-chip '+chip+'">'+hrs(total)+' of '+WEEK_TARGET+' hours</span><span style="flex:1"></span>'+
+    '<button class="bh-btn-outline tk-sm" data-act="copyweek">Copy for time sheet</button><button class="bh-btn-outline tk-sm" data-act="csvweek">Download CSV</button></div>';
+  if(!rows.length) return h+'<div class="tk-empty">No time logged this week. Start a timer from any task, or log minutes in its panel.</div>';
+  h+='<div class="bh-table-wrap" style="margin-top:12px"><table class="bh-table"><thead><tr><th>Date</th><th>Start</th><th>End</th><th class="num">Hours</th><th>Task</th><th>Bucket</th><th></th></tr></thead><tbody>';
+  let day='', dsum=0;
+  const flush=()=>day?'<tr class="tk-tot"><td colspan="3">'+fmtDow(day)+' total</td><td class="num">'+hrs(dsum)+'</td><td colspan="3"></td></tr>':'';
+  for(const r of rows){
+    const d=ymd(new Date(r.start));
+    if(d!==day){ h+=flush(); day=d; dsum=0; }
+    dsum+=m(r);
+    h+='<tr><td class="nw">'+fmtDow(d)+'</td><td class="nw">'+fmtT(r.start)+'</td><td class="nw">'+(r.end?fmtT(r.end):'running')+'</td><td class="num">'+hrs(m(r))+'</td><td>'+esc(r.title)+'</td><td>'+esc(bname(r.bucket))+'</td><td><button class="tk-x" data-act="deltime" data-id="'+esc(r.id)+'">Remove</button></td></tr>';
+  }
+  h+=flush()+'</tbody></table></div>';
+  return h;
+}
+function weekLines(){
+  const [a,b]=weekRange(S.weekOff);
+  return timeRows().filter(r=>r.end&&new Date(r.start)>=a&&new Date(r.start)<b).sort((x,y)=>String(x.start).localeCompare(String(y.start)))
+    .map(r=>[ymd(new Date(r.start)),fmtT(r.start),fmtT(r.end),hrs(r.mins),r.title,bname(r.bucket)]);
+}
+
+function vRegister(){
+  const rows=[...DB.reg.entries()].map(([id,v])=>Object.assign({id},v.data)).sort((a,b)=>(a.expires||'9999').localeCompare(b.expires||'9999'));
+  const e=S.regEdit||{};
+  const KINDS=[['Secret','Secret / API token'],['Certificate','Certificate'],['Contract','Vendor contract'],['License','License / seats'],['Domain','Domain'],['Other','Other']];
+  let h='<p class="tk-note" style="margin-top:14px">Anything with an expiry date that Entra and Intune can\'t report on their own: GitHub Actions secrets, Cloudflare API tokens, Procore and n8n credentials, vendor contracts, licenses and domains. <strong>Record the name and where it is stored. Never paste the secret itself.</strong></p>'+
+    '<form class="tk-regform" id="regform"><input type="hidden" name="rid" value="'+esc(e.id||'')+'">'+
+    '<label class="w2"><span class="bh-label">Name</span><input class="bh-input" name="name" required value="'+esc(e.name||'')+'" placeholder="PROCORE_CLIENT_SECRET in BH-Assets/compliance-pipeline"></label>'+
+    '<label><span class="bh-label">Kind</span><select class="bh-select" name="kind">'+opts(KINDS,e.kind||'Secret')+'</select></label>'+
+    '<label><span class="bh-label">Expires</span><input class="bh-input" type="date" name="expires" value="'+esc(d10(e.expires))+'"></label>'+
+    '<label class="w2"><span class="bh-label">Where it is stored</span><input class="bh-input" name="where" value="'+esc(e.where||'')+'" placeholder="GitHub Actions secret · Cloudflare Worker var · n8n credential"></label>'+
+    '<label class="w2"><span class="bh-label">Used by</span><input class="bh-input" name="usedBy" value="'+esc(e.usedBy||'')+'" placeholder="compliance_pull.js, bh-procore-pco Worker"></label>'+
+    '<label class="w4"><span class="bh-label">How to renew or rotate</span><input class="bh-input" name="rotate" value="'+esc(e.rotate||'')+'"></label>'+
+    '<label class="w2"><span class="bh-label">Link</span><input class="bh-input" name="url" value="'+esc(e.url||'')+'" placeholder="https://"></label>'+
+    '<label class="tk-chk" style="align-self:end"><input type="checkbox" name="autoRenew"'+(e.autoRenew?' checked':'')+'> Auto-renews</label>'+
+    '<div class="tk-acts" style="align-self:end"><button class="bh-btn-outline tk-sm" type="submit">'+(e.id?'Save changes':'Add to register')+'</button>'+(e.id?'<button class="tk-x" type="button" data-act="regcancel">Cancel</button>':'')+'</div></form>';
+  h+='<div class="bh-table-wrap" style="margin-top:16px"><table class="bh-table"><thead><tr><th>Expires</th><th>Name</th><th>Kind</th><th>Where</th><th>Used by</th><th></th></tr></thead><tbody>'+
+    (rows.length?rows.map(r=>{ const d=dayDiff(r.expires); const c=d==null?'':d<=14?'is-bad':d<=60?'is-warn':'is-ok';
+      return '<tr><td class="nw">'+(r.expires?'<span class="bh-chip '+c+'">'+fmtD(r.expires)+'</span>':'')+'</td><td>'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.name)+'</a>':esc(r.name))+(r.autoRenew?' <span class="bh-chip">Auto</span>':'')+'</td><td>'+esc(r.kind)+'</td><td>'+esc(r.where||'')+'</td><td>'+esc(r.usedBy||'')+'</td>'+
+        '<td class="nw"><button class="tk-x" data-act="regedit" data-id="'+esc(r.id)+'">Edit</button><button class="tk-x" data-act="regdel" data-id="'+esc(r.id)+'">Delete</button></td></tr>'; }).join('')
+    :'<tr><td colspan="6">Nothing in the register yet.</td></tr>')+'</tbody></table></div>';
+  return h;
+}
+
+/* ================= task drawer ================= */
+function renderDrawer(){
+  const dr=$('#drawer');
+  if(!S.open||!S.edit){ dr.hidden=true; dr.innerHTML=''; return; }
+  if(dr.dataset.k===S.open+'|'+S.edit._v) return;   /* unchanged: keep what is being typed */
+  dr.dataset.k=S.open+'|'+S.edit._v;
+  const t=S.edit, isNew=!DB.tasks.has(t.id);
+  const mins=isNew?0:minsFor(t.id), r=running();
+  dr.hidden=false;
+  dr.innerHTML='<div class="tk-dr" role="dialog" aria-label="Task"><div class="tk-drh"><span class="bh-section-title">'+(isNew?'New task':'Task')+'</span><button class="bh-btn-outline tk-sm" data-act="close">Close</button></div>'+
+  '<form class="tk-form" id="tform">'+
+  '<label class="full"><span class="bh-label">Task</span><input class="bh-input" name="title" required value="'+esc(t.title)+'"></label>'+
+  '<label><span class="bh-label">Bucket</span><select class="bh-select" name="bucket"><option value="">Unsorted</option>'+opts(BUCKETS,t.bucket)+'</select></label>'+
+  '<label><span class="bh-label">Status</span><select class="bh-select" name="status">'+opts(STATUS,t.status)+'</select></label>'+
+  '<label><span class="bh-label">Due</span><input class="bh-input" type="date" name="due" value="'+esc(t.due||'')+'"></label>'+
+  '<label><span class="bh-label">Priority</span><select class="bh-select" name="priority">'+opts([['high','High'],['normal','Normal'],['low','Low']],t.priority||'normal')+'</select></label>'+
+  '<label><span class="bh-label">Waiting on</span><input class="bh-input" name="waitOn" value="'+esc(t.waitOn||'')+'" placeholder="Name"></label>'+
+  '<label><span class="bh-label">Since</span><input class="bh-input" type="date" name="waitSince" value="'+esc(t.waitSince||'')+'"></label>'+
+  '<label class="full"><span class="bh-label">Repeats</span><select class="bh-select" name="recur">'+opts(RECUR,t.recur||'')+'</select></label>'+
+  '<div class="full"><span class="bh-label">Subtasks</span>'+(t.subtasks||[]).map((s,i)=>'<div class="tk-subt'+(s.done?' done':'')+'"><input type="checkbox" data-act="subtog" data-i="'+i+'"'+(s.done?' checked':'')+'><span>'+esc(s.t)+'</span><button type="button" class="tk-x" data-act="subdel" data-i="'+i+'">Remove</button></div>').join('')+
+    '<div class="tk-acts" style="margin-top:6px"><input class="bh-input" id="subnew" placeholder="Add a subtask" style="flex:1"><button type="button" class="bh-btn-outline tk-sm" data-act="subadd">Add</button></div></div>'+
+  '<label class="full"><span class="bh-label">Notes</span><textarea class="bh-input" name="notes">'+esc(t.notes||'')+'</textarea></label>'+
+  '<label class="full"><span class="bh-label">Links, one per line</span><textarea class="bh-input" name="links" style="min-height:56px">'+esc((t.links||[]).join('\n'))+'</textarea></label>'+
+  ((t.links||[]).length?'<div class="full tk-emails">'+t.links.map(l=>'<a href="'+esc(l)+'" target="_blank" rel="noopener">'+esc(l)+'</a>').join('')+'</div>':'')+
+  ((t.emails||[]).length?'<div class="full"><span class="bh-label">Messages</span><div class="tk-emails">'+t.emails.map(e=>'<a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+(e.kind==='teams'?'Teams · ':'')+esc(e.subject)+' · '+esc(e.from)+' · '+fmtD(e.received)+'</a>').join('')+'</div></div>':'')+
+  (isNew?'':'<div class="full"><span class="bh-label">Time · '+hrs(mins)+' h logged</span><div class="tk-acts" style="margin-top:6px">'+
+    (r&&r.task===t.id?'<button type="button" class="bh-btn-outline tk-sm" data-act="stoptimer">Stop timer</button>':'<button type="button" class="bh-btn-outline tk-sm" data-act="starttimer">Start timer</button>')+
+    '<input class="bh-input" id="lgm" type="number" min="1" step="5" placeholder="Minutes" style="width:100px"><input class="bh-input" id="lgd" type="date" value="'+today()+'"><input class="bh-input" id="lgs" type="time" value="08:00"><button type="button" class="bh-btn-outline tk-sm" data-act="logtime">Log</button></div></div>')+
+  '<div class="full tk-acts" style="margin-top:6px"><button class="bh-btn" type="submit">Save</button>'+
+    (isNew?'':(t.status!=='done'?'<button type="button" class="bh-btn-outline tk-sm" data-act="donedr">Mark done</button>':'')+'<button type="button" class="tk-x" data-act="deltask">Delete</button>')+'</div>'+
+  '</form></div>';
+}
+function openTask(id){ const t=id==='__new'?newTask({bucket:S.bucket==='all'?'':S.bucket}):task(id); if(!t) return; t._v=1; S.open=t.id; S.edit=t;
+  if(t.hasNew&&DB.tasks.has(t.id)){ const x=task(t.id); x.hasNew=false; saveTask(x).catch(()=>{}); S.edit.hasNew=false; }
+  render(); setTimeout(()=>{ const i=document.querySelector('#tform [name=title]'); if(i&&!t.title) i.focus(); },0); }
+function closeTask(){ S.open=null; S.edit=null; $('#drawer').dataset.k=''; render(); }
+function readForm(){
+  const f=$('#tform'); if(!f) return S.edit;
+  const g=n=>(f.elements[n]&&f.elements[n].value||'').trim();
+  Object.assign(S.edit,{title:g('title'),bucket:g('bucket'),status:g('status'),due:g('due'),priority:g('priority'),waitOn:g('waitOn'),waitSince:g('waitSince'),recur:g('recur'),notes:f.elements.notes.value,
+    links:g('links').split(/\n+/).map(s=>s.trim()).filter(Boolean)});
+  if(S.edit.status==='waiting'&&S.edit.waitOn&&!S.edit.waitSince) S.edit.waitSince=today();
+  return S.edit;
+}
+function bump(){ S.edit._v=(S.edit._v||0)+1; renderDrawer(); }
+
+/* ================= events ================= */
+async function act(fn,okMsg){ try{ await fn(); if(okMsg) msg(okMsg); }catch(e){ msg('Not saved: '+((e&&e.message)||e)); } render(); }
+function qItem(el){ const a=el.closest('[data-qid]'); if(!a) return null; const it=S.queue.find(x=>x.id===a.dataset.qid); return it?{it,a,v:n=>{const x=a.querySelector('[data-f="'+n+'"]');return x?(x.type==='checkbox'?x.checked:x.value):'';}}:null; }
+const dropQ=id=>{ S.queue=S.queue.filter(x=>x.id!==id); };
+
+document.addEventListener('click',async e=>{
+  const sv=e.target.closest('[data-view]'); if(sv){ S.view=sv.dataset.view; store.set('view',S.view); closeTask(); return; }
+  if(e.target.id==='drawer'){ closeTask(); return; }
+  const b=e.target.closest('[data-act]'); if(!b) { const c=e.target.closest('.tk-card'); if(c) openTask(c.dataset.card); return; }
+  const a=b.dataset.act, id=b.dataset.id;
+  if(a==='open') return openTask(id);
+  if(a==='new') return openTask('__new');
+  if(a==='close') return closeTask();
+  if(a==='done'){ b.disabled=true; return act(()=>completeTask(id)); }
+  if(a==='stoptimer') return act(()=>stopTimer(),'Timer stopped.');
+  if(a==='wk'){ S.weekOff=Math.min(0,S.weekOff+Number(b.dataset.d)); return render(); }
+  if(a==='copyweek'){ const L=weekLines(); const txt=['Date\tStart\tEnd\tHours\tTask\tBucket'].concat(L.map(r=>r.join('\t'))).join('\n');
+    try{ await navigator.clipboard.writeText(txt); msg('Copied '+L.length+' entries, in time order.'); }catch(_){ msg('Could not copy in this browser. Use Download CSV.'); } return; }
+  if(a==='csvweek'){ const L=weekLines(); const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+    const csv=['Date,Start,End,Hours,Task,Bucket'].concat(L.map(r=>r.map(q).join(','))).join('\r\n');
+    const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); const l=document.createElement('a'); l.href=u; l.download='time-week-of-'+ymd(weekRange(S.weekOff)[0])+'.csv'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); return; }
+  if(a==='deltime') return act(()=>del('time',id),'Entry removed.');
+  if(a==='delrule') return act(()=>del('rules',id),'Rule removed.');
+  if(a==='unexclude'){ const x=S.excluded.find(z=>z.id===id); if(x){ S.excluded=S.excluded.filter(z=>z.id!==id); x.noise=false; S.queue.push(x); if(x.rule&&x.rule.action==='ignore'){ const k=DB.rules.has('from:'+x.addr)?'from:'+x.addr:'dom:'+x.addr.split('@')[1]; await del('rules',k).catch(()=>{}); } } return render(); }
+  if(a==='regedit'){ const v=DB.reg.get(id); S.regEdit=v?Object.assign({id},v.data):null; render(); window.scrollTo(0,0); return; }
+  if(a==='regcancel'){ S.regEdit=null; return render(); }
+  if(a==='regdel'){ if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.textContent='Delete for good?'; return; } return act(()=>del('reg',id),'Removed from register.'); }
+  /* inbox actions */
+  const Q=qItem(b);
+  if(Q){
+    const {it,v}=Q;
+    if(a==='mk'){
+      const bucket=v('bucket'); if(!bucket){ msg('Pick a bucket first.'); return; }
+      return act(async()=>{
+        const t=newTask({title:cleanSubj(it.subject),bucket,priority:it.flagged?'high':'normal',due:it.due,emails:[refOf(it)],source:it.kind});
+        await saveTask(t); await put('seen',it.id,{state:'task',task:t.id,at:nowIso()});
+        if(v('remember')&&it.addr) await put('rules','from:'+it.addr,{bucket,action:'task',auto:!!v('auto')});
+        dropQ(it.id);
+      },'Task made: '+cleanSubj(it.subject)+'.');
+    }
+    if(a==='addto'){
+      const tid=v('addto'); if(!tid){ msg('Pick the task to add it to.'); return; }
+      return act(async()=>{ const t=task(tid); t.emails=(t.emails||[]).concat([refOf(it)]); await saveTask(t); await put('seen',it.id,{state:'attached',task:tid,at:nowIso()}); dropQ(it.id); },'Added to '+(task(tid)||{}).title+'.');
+    }
+    if(a==='snooze'){ const n=Number(v('snooze')||1); return act(async()=>{ await put('seen',it.id,{state:'snooze',until:ymd(addDays(new Date(),n)),at:nowIso()}); dropQ(it.id); },'Snoozed until '+fmtD(ymd(addDays(new Date(),n)))+'.'); }
+    if(a==='ignore') return act(async()=>{ await put('seen',it.id,{state:'ignored',at:nowIso()}); dropQ(it.id); });
+    if(a==='ignoresender') return act(async()=>{ await put('rules','from:'+it.addr,{action:'ignore'}); for(const x of S.queue.filter(z=>z.addr===it.addr)){ await put('seen',x.id,{state:'ignored',at:nowIso()}); dropQ(x.id); } },'Ignoring '+it.addr+' from now on.');
+  }
+  /* drawer actions */
+  if(S.edit){
+    if(a==='subadd'){ readForm(); const i=$('#subnew'); const v=i&&i.value.trim(); if(v){ S.edit.subtasks=(S.edit.subtasks||[]).concat([{t:v,done:false}]); bump(); const n=$('#subnew'); if(n) n.focus(); } return; }
+    if(a==='subtog'){ readForm(); const s=S.edit.subtasks[+b.dataset.i]; s.done=!s.done; return bump(); }
+    if(a==='subdel'){ readForm(); S.edit.subtasks.splice(+b.dataset.i,1); return bump(); }
+    if(a==='starttimer') return act(async()=>{ readForm(); await saveEdit(true); await startTimer(S.edit.id); S.edit=Object.assign(task(S.edit.id),{_v:(S.edit._v||0)+1}); });
+    if(a==='logtime'){ const m=Number(($('#lgm')||{}).value); if(!(m>0)){ msg('Enter minutes to log.'); return; }
+      return act(async()=>{ readForm(); await saveEdit(true); await logMins(S.edit.id,m,$('#lgd').value||today(),$('#lgs').value); S.edit._v++; },'Logged '+m+' minutes.'); }
+    if(a==='donedr') return act(async()=>{ readForm(); await saveEdit(true); await completeTask(S.edit.id); closeTask(); });
+    if(a==='deltask'){ if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.textContent='Delete for good?'; return; } return act(async()=>{ await stopTimerFor(S.edit.id); await del('tasks',S.edit.id); closeTask(); },'Task deleted.'); }
+  }
+});
+async function saveEdit(quiet){
+  const t=readForm(); if(!t.title){ throw new Error('give the task a name first'); }
+  const d=Object.assign({},t); delete d._v;
+  if(d.status==='done'&&!d.doneAt) d.doneAt=nowIso();
+  await saveTask(d);
+  if(!quiet) msg('Saved.');
+}
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='tform') return act(async()=>{ const wasDone=(task(S.edit.id)||{}).status==='done'; readForm();
+    if(S.edit.status==='done'&&!wasDone&&DB.tasks.has(S.edit.id)){ S.edit.status=(task(S.edit.id)||{}).status||'next'; await saveEdit(true); await completeTask(S.edit.id); }
+    else await saveEdit(); closeTask(); });
+  if(e.target.id==='regform') return act(async()=>{ const f=e.target, g=n=>(f.elements[n].value||'').trim();
+    const id=g('rid')||uid('r'); const rec={name:g('name'),kind:g('kind'),expires:g('expires'),where:g('where'),usedBy:g('usedBy'),rotate:g('rotate'),url:g('url'),autoRenew:f.elements.autoRenew.checked,updatedAt:nowIso()};
+    if(!rec.name) throw new Error('name is required');
+    await put('reg',id,rec); S.regEdit=null; },'Register saved. Press Check now to update renewal tasks.');
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='fbucket'){ S.bucket=t.value; render(); }
+  else if(t.id==='fdone'){ S.showDone=t.checked; render(); }
+  else if(t.id==='win'){ store.set('window',Number(t.value)); msg('Look-back set to '+t.value+' days. Press Check now.'); }
+  else if(t.id==='teamsOn'){ store.set('teams',t.checked); }
+});
+document.addEventListener('input',e=>{ if(e.target.id==='fq'){ S.q=e.target.value; const pos=e.target.selectionStart; render(); const n=$('#fq'); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } } });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.open){ closeTask(); }
+  if(e.key==='Enter'&&e.target.id==='subnew'){ e.preventDefault(); const b=document.querySelector('[data-act="subadd"]'); if(b) b.click(); }
+});
+document.addEventListener('dragstart',e=>{ const c=e.target.closest&&e.target.closest('.tk-card'); if(!c) return; S.drag=c.dataset.card; c.classList.add('dragging'); try{ e.dataTransfer.setData('text/plain',S.drag); e.dataTransfer.effectAllowed='move'; }catch(_){} });
+document.addEventListener('dragend',()=>{ S.drag=null; document.querySelectorAll('.dragging,.over').forEach(x=>x.classList.remove('dragging','over')); });
+document.addEventListener('dragover',e=>{ const c=e.target.closest&&e.target.closest('.tk-col'); if(!c||!S.drag) return; e.preventDefault(); document.querySelectorAll('.tk-col.over').forEach(x=>{ if(x!==c) x.classList.remove('over'); }); c.classList.add('over'); });
+document.addEventListener('drop',e=>{ const c=e.target.closest&&e.target.closest('.tk-col'); if(!c||!S.drag) return; e.preventDefault(); const id=S.drag; S.drag=null; c.classList.remove('over');
+  const st=c.dataset.status, t=task(id); if(!t||t.status===st) return;
+  if(st==='done') return act(()=>completeTask(id));
+  t.status=st; if(st==='waiting'&&!t.waitSince) t.waitSince=today();
+  act(()=>saveTask(t),'Moved to '+sname(st)+'.'); });
+$('#refresh').addEventListener('click',refreshAll);
+
+/* ================= start ================= */
+(async function(){
+  if(CFG.clientId.indexOf('__')===0) return gate('Setup needed','<p>Paste the <strong>BH Tasks</strong> app registration\'s client ID into <code>CFG.clientId</code> near the top of the script in <code>tasks/index.html</code>, then commit.</p>');
+  if(typeof msal==='undefined') return gate('Sign-in library did not load','<p>/msal-browser.min.js could not be loaded. Reload the page.</p>');
+  MS=new msal.PublicClientApplication({auth:{clientId:CFG.clientId,authority:'https://login.microsoftonline.com/'+CFG.tenant,redirectUri:CFG.redirect,navigateToLoginRequestUrl:false},
+    cache:{cacheLocation:'localStorage',storeAuthStateInCookie:false}});
+  await MS.initialize();
+  try{ const r=await MS.handleRedirectPromise(); if(r&&r.account) MS.setActiveAccount(r.account); }
+  catch(e){ return gate('Sign-in was rejected','<p>'+esc((e&&(e.errorCode||e.name))||'')+' '+esc((e&&e.errorMessage)||e)+'</p><p>If it mentions assignment, add yourself under the BH Tasks enterprise app › Users and groups.</p>'); }
+  ACCT=MS.getActiveAccount()||MS.getAllAccounts()[0];
+  if(!ACCT){ const g=gate('Sign in','<p>Task Desk is personal. Only the account assigned to the BH Tasks app can open it.</p><button class="bh-btn" id="si">Sign in with Microsoft</button>');
+    g.querySelector('#si').addEventListener('click',()=>MS.loginRedirect({scopes:SCOPES})); return; }
+  MS.setActiveAccount(ACCT);
+  try{ S.me=await gx('/me?$select=id,displayName,mail,userPrincipalName'); }
+  catch(e){ return gate('Could not sign you in','<p>'+esc(errText(e,'Profile'))+'</p>'); }
+  $('#avatar').textContent=(S.me.displayName||'').split(/\s+/).map(s=>s[0]).join('').slice(0,2).toUpperCase()||'TB';
+  try{
+    const miss=await initStore();
+    if(miss.length) return gate('Lists missing','<p>These lists were not found on /sites/Dashboard: <strong>'+esc(miss.join(', '))+'</strong>.</p><p>Each needs the built-in Title column (indexed) and a <em>Multiple lines of text, plain text</em> column named Payload.</p>');
+    await Promise.all(Object.keys(LISTS).map(load));
+  }catch(e){ return gate('No access to the task lists','<p>'+esc(errText(e,'SharePoint'))+'</p><p>Check two things. The BH Tasks app needs a Sites.Selected <em>write</em> grant on /sites/Dashboard, and your own account needs Contribute on the five lists.</p>'); }
+  $('#gate').hidden=true;
+  render();
+  refreshAll();
+  setInterval(()=>{ renderTimer(); },30000);
+  setInterval(()=>{ if(!S.open&&document.visibilityState==='visible') refreshAll(); },15*60000);
+})();
+</script>
+</body>
+</html>
