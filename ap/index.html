@@ -147,6 +147,40 @@ body.no-pane .ap-pane{display:none}
 .amt-pop .cn{color:var(--bh-ink-muted);margin-bottom:3px}
 .bulk .bh-input{width:200px;background:#fff}
 @media (max-width:960px){.ap-colh{display:none}.ap-sec-h{display:flex;gap:12px}.ap-sec-h .sum{margin-left:auto}}
+/* quick triage (9 Nov 2026) */
+.ap-row.has-tq{border-bottom:0;padding-bottom:4px}
+.tq{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:0 8px 12px 58px;border-bottom:1px solid var(--bh-hairline)}
+.tq.in-dlg{padding:12px 0 0;border-bottom:0;border-top:1px solid var(--bh-hairline);margin-top:12px}
+.tq-l{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted);margin-right:2px}
+.tq-p{font:600 12.5px var(--bh-font);color:var(--bh-ink);background:#fff;border:1px solid var(--bh-slate);padding:5px 9px;cursor:pointer;white-space:nowrap}
+.tq-p b{font-size:10.5px;letter-spacing:.06em;margin-right:5px;color:var(--bh-ink-muted)}
+.tq-p:hover{border-color:var(--bh-black)}
+.tq-p[aria-pressed="true"]{background:var(--bh-black);border-color:var(--bh-black);color:#fff}
+.tq-p[aria-pressed="true"] b{color:#fff}
+.tq-none{font-size:12.5px;color:var(--bh-ink-muted)}
+.tq-o{min-height:32px;font-size:13px;min-width:220px;max-width:320px}
+.tq-o.on{border-color:var(--bh-black);font-weight:700}
+.tq-go{min-height:32px;padding:0 14px}
+.tq-go:disabled{opacity:.45;cursor:default}
+.tq-a{border:0;background:none;padding:4px 2px;font:600 12.5px var(--bh-font);color:var(--bh-ink);text-decoration:underline;cursor:pointer}
+.tq-p:focus-visible,.tq-a:focus-visible,.tq-go:focus-visible{outline:2px solid var(--bh-black);outline-offset:2px}
+#tqDlg{position:fixed;inset:0;z-index:80;background:rgba(33,30,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+#tqDlg[hidden]{display:none}
+.tqd-in{background:#fff;width:min(1200px,100%);max-height:calc(100vh - 32px);overflow:auto;border-top:4px solid #ed2b30;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.tqd-h{display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-bottom:1px solid var(--bh-hairline)}
+.tqd-h h2{margin:0;font-size:18px;font-weight:800;line-height:1.2}
+.tqd-h .sub{font-size:12.5px;color:var(--bh-ink-muted);margin-top:2px}
+.tqd-x{margin-left:auto;border:1px solid var(--bh-slate);background:#fff;font:700 12px var(--bh-font);padding:6px 10px;cursor:pointer}
+.tqd-b{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:20px;padding:16px 20px 20px}
+.tqd-b .iv-pdf{height:calc(100vh - 170px);min-height:420px}
+.tqd-dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 12px;margin:0;font-size:13px}
+.tqd-dl dt{color:var(--bh-ink-muted);font-weight:600}
+.tqd-dl dd{margin:0;overflow-wrap:anywhere}
+.tqd-fl{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--bh-bad-ink);background:var(--bh-bad-bg);font-size:12.5px}
+.tqd-fl.warn{border-left-color:var(--bh-warn-ink);background:var(--bh-warn-bg)}
+.tqd-fl ul{margin:4px 0 0;padding-left:18px}
+@media (max-width:900px){.tqd-b{grid-template-columns:1fr}.tqd-b .iv-pdf{height:55vh}}
+@media (max-width:760px){.tq{padding-left:8px}}
 .ap-row{display:grid;grid-template-columns:36px minmax(170px,1.5fr) minmax(130px,1.1fr) 110px 56px minmax(150px,1.2fr) 34px;align-items:center;gap:14px;padding:11px 8px;border-bottom:1px solid var(--bh-hairline);cursor:pointer;font-size:13px}
 .ap-row:hover{background:#faf8f4}
 .ap-row.is-sel{background:var(--bh-cream)}
@@ -370,7 +404,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
     <span class="ap-fm" id="tType" role="menu" hidden><button class="ap-fo" role="menuitemradio" data-ty="" aria-checked="true">All<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Pay app" aria-checked="false">Pay apps<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Invoice" aria-checked="false">Invoices<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Message" aria-checked="false">Emails<span class="c"></span></button></span></span>
   <span class="ap-sp"></span>
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
-  <button class="ap-tog" id="refresh">Refresh</button>
+  <button class="ap-tog" id="refresh" title="Reloads the desk. For Accounting it also checks payables@ and starts the pull when there are new emails.">Refresh</button>
   <label class="ap-as"><span class="bh-label">Viewing as</span><select class="bh-select" id="who"></select></label>
   <span class="ap-filt" id="xWrap"><button class="ap-tog" id="xBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
     <span class="ap-fm ap-xm" id="xMenu" role="menu" hidden><span class="bh-label">Excel, laid out like CE</span><button class="ap-fo" role="menuitem" data-x="open">A/P open invoices</button><button class="ap-fo" role="menuitem" data-x="sub">Subcontractor detail by vendor</button><label class="ap-xj">Jobs <input class="bh-input" id="xJobs" autocomplete="off"></label><span class="ap-xn">Blank = every job with a pay app open on the desk (approvers: your jobs only)</span></span></span>
@@ -382,6 +416,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   <aside class="ap-pane" id="pane" aria-label="Invoice detail"></aside>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div id="tqDlg" hidden></div>
 <script>
 /* =============================================================================
    AP Desk v2 (Oct 2026) - triage layout on the live AP Pay Applications list.
@@ -498,6 +533,9 @@ async function loadLive(){
     const pn = String(c.project_number||'').trim();
     if (pn && !LIVE.jobs[pn]) LIVE.jobs[pn] = { n: c.project || pn, team: (c.pm_team||[]).map(lc) };
   }
+  /* job_teams (9 Nov 2026): every job's PM / APM / PE from Procore, for Triage's Send to */
+  LIVE.jobTeams = (cm.job_teams && typeof cm.job_teams === 'object') ? cm.job_teams : null;
+  if (LIVE.jobTeams) for (const pn in LIVE.jobTeams) for (const m of (LIVE.jobTeams[pn] || [])) { const e = lc(m.email); if (e && m.name && !LIVE.pmName[e]) LIVE.pmName[e] = m.name; }
   LIVE.billing = {};
   for (const b of ((LIVE.expected && LIVE.expected.rows) || [])) LIVE.billing[String(b.commitment||'').trim().toUpperCase()] = b;
   LIVE.queue = await loadQueue(tok);
@@ -1061,7 +1099,8 @@ function draw(){
         if (i.sec === 'ready' && s.k === 'ready') { const ab = i.f.ApprovedBy ? P(lc(i.f.ApprovedBy)).n : '';
           chips.unshift('<span class="bh-chip is-ok sm"' + (ab ? ' title="Approved by ' + esc(ab) + '"' : '') + '>✓ Approved</span>');
           if (!ceK && i.type === 'Invoice' && i.f.CostCode) chips.push('<span class="bh-chip sm" title="' + esc(i.f.CostCode) + '">' + esc(String(i.f.CostCode).split(';')[0].replace(/\s+\$[\d,.-]+$/, '')) + (/;/.test(i.f.CostCode) ? ' +' + (String(i.f.CostCode).split(';').length - 1) : '') + '</span>'); }
-        h += '<div class="ap-row' + (ceK ? ' ce' : '') + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
+        const tqOn = s.k === 'triage' && acctSeat() && !i.isMsg;
+        h += '<div class="ap-row' + (ceK ? ' ce' : '') + (tqOn ? ' has-tq' : '') + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
           + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + (bulkReady(i) ? '' : ' title="Flagged pay apps can be selected, but are routed one at a time from their Triage decision"') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
@@ -1069,7 +1108,8 @@ function draw(){
           + '<div class="ap-age' + (isStale(i) ? ' old' : '') + '"><button type="button" class="age-btn" data-age="' + i.id + '" aria-expanded="' + (AGE === i.id) + '" title="Days in this stage — click for the full aging history">' + i.age + 'd</button>' + (isStale(i) ? '<span class="st" title="' + esc(staleText(i)) + '">stale</span>' : '') + (AGE === i.id ? agePop(i) : '') + '</div>'
           + '<div class="ap-nx">' + (s.k === 'triage' ? triageCheck(i)
               : noteCell(i) + (chips.length ? '<div class="chips">' + chips.join('') + '</div>' : '')) + '</div>'
-          + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>';
+          + '<div class="ap-av" title="' + esc(who.n) + '">' + esc(who.i) + '</div></div>'
+          + (tqOn ? tqStrip(i, false) : '');
       });
     }
     h += '</section>';
@@ -1263,17 +1303,24 @@ function entBar(){
 function bulkBar(){
   if (!acctSeat() || !BULK.size) return '';
   const sel = INV.filter(i => BULK.has(i.id)), ok = sel.filter(bulkReady), msgs = sel.filter(i => i.isMsg), comp = msgs.filter(i => msgKind(i) === 'comp'), held = sel.length - ok.length - msgs.length;
-  const jobs = [...new Set(ok.map(i => i.job))], oneJob = jobs.length === 1 && JOBS[jobs[0]] && JOBS[jobs[0]].team.length ? jobs[0] : null;
   const tot = ok.reduce((a,i) => a + i.amt, 0);
+  /* 9 Nov 2026: "Each job's PM / APM / PE" sends every item to its own job's person; or one
+     person from any selected job's team; or a department head. */
+  let opts = '';
+  if (ok.length) {
+    const roles = ['PM', 'APM', 'PE'].map(r => [r, ok.filter(i => jobRoster(i.job).some(m => m.r === r)).length]).filter(x => x[1]);
+    if (roles.length) opts += '<optgroup label="Each to its own job">' + roles.map(([r, n]) => '<option value="role:' + r + '">Each job’s ' + r + (n < ok.length ? ' (' + n + ' of ' + ok.length + ')' : '') + '</option>').join('') + '</optgroup>';
+    const jobs = [...new Set(ok.map(i => i.job).filter(Boolean))];
+    for (const j of jobs) { const R = jobRoster(j); if (R.length) opts += '<optgroup label="' + esc(j) + ' PM team">' + R.map(m => '<option value="' + esc(m.e) + '">' + ROLE_LABEL[m.r] + ' — ' + esc(m.n) + '</option>').join('') + '</optgroup>'; }
+    opts += '<optgroup label="Department heads">' + DEPTS.map(d => '<option value="' + esc(d[0]) + '">' + esc(d[1]) + ' — ' + esc(P(d[0]).n) + '</option>').join('') + '</optgroup>';
+  }
   return '<div class="bulk"><b>' + sel.length + ' selected</b>' + (ok.length ? '<span>' + money(tot) + '</span>' : '')
-    + (!ok.length ? '' : '<select class="bh-select" id="bAssign"><option value="">Assign to…</option>'
-    + (oneJob ? '<optgroup label="PM team · ' + esc(oneJob) + '">' + JOBS[oneJob].team.map(k => '<option value="' + esc(k) + '">' + esc(P(k).n) + '</option>').join('') + '</optgroup>' : '')
-    + '<optgroup label="Department heads">' + DEPTS.map(d => '<option value="' + esc(d[0]) + '">' + esc(d[1]) + ' — ' + esc(P(d[0]).n) + '</option>').join('') + '</optgroup></select>')
+    + (!ok.length ? '' : '<select class="bh-select" id="bAssign" aria-label="Route to"><option value="">Route to…</option>' + opts + '</select>')
     + (ok.length ? '<button class="bh-btn" data-do="bulkroute"' + (BUSY ? ' disabled' : '') + '>Route ' + ok.length + '</button>' : '')
     + (comp.length ? '<button class="bh-btn" data-do="bulkfwd"' + (BUSY ? ' disabled' : '') + '>Forward ' + comp.length + ' to compliance</button>' : '')
     + (msgs.length ? '<button class="bh-btn" data-do="bulkdismiss"' + (BUSY ? ' disabled' : '') + '>Dismiss ' + msgs.length + ' email' + (msgs.length > 1 ? 's' : '') + '</button>' : '')
     + '<button class="bh-btn-outline" data-do="bulkclear">Clear</button>'
-    + (held ? '<span class="held">' + held + ' pay app' + (held > 1 ? 's' : '') + ' with flags or missing details left out — open them one at a time</span>' : '')
+    + (held ? '<span class="held">' + held + ' pay app' + (held > 1 ? 's' : '') + ' with flags or missing details left out — send them one at a time</span>' : '')
     + '</div>';
 }
 
@@ -2118,6 +2165,104 @@ function assignOptions(i, cur){
     + '<optgroup label="Department heads">' + DEPTS.map(d => '<option value="' + esc(d[0]) + '"' + (cur === d[0] ? ' selected' : '') + '>' + esc(d[1]) + ' — ' + esc(P(d[0]).n) + '</option>').join('') + '</optgroup>'
     + (others.length ? '<optgroup label="Other approvers">' + others.map(k => '<option value="' + esc(k) + '"' + (cur === k ? ' selected' : '') + '>' + esc(P(k).n) + '</option>').join('') + '</optgroup>' : '');
 }
+/* ---- Quick triage (9 Nov 2026) ------------------------------------------------------------
+   Drew only routes. Pay apps go to someone on the job's PM team (PM, APM or PE in Procore);
+   invoices go to the job's PM team or, with no job, a department head. One click picks the
+   person, Send routes it (same write as Route for approval). Details opens a pop-up with the
+   PDF; Reject or add notes opens the full pane. */
+const ROLE_ORDER = { PM: 0, APM: 1, PE: 2, Team: 3 };
+const ROLE_LABEL = { PM: 'PM', APM: 'APM', PE: 'PE', Team: 'PM team' };
+function jobRoster(job){
+  if (!job || job === 'OH') return [];
+  const jt = LIVE.jobTeams && LIVE.jobTeams[job];
+  const R = (jt && jt.length)
+    ? jt.map(m => ({ e: lc(m.email), n: m.name || P(lc(m.email)).n, r: ROLE_LABEL[m.role] ? m.role : 'Team', t: m.title || '' }))
+    : ((JOBS[job] && JOBS[job].team) || []).map(e => ({ e: lc(e), n: P(lc(e)).n, r: 'Team', t: '' }));
+  return R.filter(m => m.e).sort((a, b) => ROLE_ORDER[a.r] - ROLE_ORDER[b.r] || a.n.localeCompare(b.n));
+}
+function tqPick(i){
+  if (i.tqPick != null) return i.tqPick;
+  const saved = lc(i.f.AssignedApprover); if (saved) return saved;
+  if (i.rev > 1 && i.approver) return i.approver;
+  const R = jobRoster(i.job), pm = R.filter(m => m.r === 'PM');
+  if (pm.length === 1) return pm[0].e;
+  return R.length === 1 ? R[0].e : '';
+}
+function tqStrip(i, inDlg){
+  const R = jobRoster(i.job), inv = isInv(i), pick = tqPick(i), inR = new Set(R.map(m => m.e));
+  const issues = i.flags.length + i.missing.length;
+  const others = Object.keys(LIVE.pmName || {}).map(lc).filter(e => !inR.has(e) && !DEPTS.some(d => d[0] === e)).sort((a, b) => P(a).n.localeCompare(P(b).n));
+  const o = (v, t) => '<option value="' + esc(v) + '"' + (pick === v ? ' selected' : '') + '>' + t + '</option>';
+  let h = '<div class="tq' + (inDlg ? ' in-dlg' : '') + '">'
+    + '<select class="bh-select tq-o' + (pick ? ' on' : '') + '" data-tqo="' + i.id + '" aria-label="Route to"><option value="">Route to…</option>'
+    + (R.length ? '<optgroup label="' + esc(i.job) + ' PM team">' + R.map(m => o(m.e, ROLE_LABEL[m.r] + ' — ' + esc(m.n))).join('') + '</optgroup>' : '')
+    + (inv || !R.length ? '<optgroup label="Department heads">' + DEPTS.map(d => o(d[0], esc(d[1]) + ' — ' + esc(P(d[0]).n))).join('') + '</optgroup>' : '')
+    + (others.length ? '<optgroup label="Other approvers">' + others.map(e => o(e, esc(P(e).n))).join('') + '</optgroup>' : '')
+    + '</select>';
+  if (!R.length) h += '<span class="tq-none">' + (i.job ? 'No PM team in Procore for ' + esc(i.job) : 'No job on this ' + (inv ? 'invoice' : 'pay app')) + '</span>';
+  const first = pick ? String(P(pick).n).split(' ')[0] : '';
+  h += '<button type="button" class="bh-btn tq-go" data-tqgo="' + i.id + '"' + (!pick || BUSY ? ' disabled' : '') + (issues ? ' title="' + esc(i.flags.concat(i.missing.map(m => 'Missing ' + m)).join('\n')) + '"' : '') + '>'
+    + (pick ? 'Send to ' + esc(first) + (issues ? ' · ' + issues + ' flag' + (issues > 1 ? 's' : '') : '') : 'Send') + '</button>';
+  if (!inDlg) h += '<button type="button" class="tq-a" data-tqdet="' + i.id + '">Details</button>';
+  h += '<button type="button" class="tq-a" data-tqmore="' + i.id + '">Reject or add notes</button>';
+  return h + '</div>';
+}
+function tqSend(i){
+  const a = tqPick(i); if (!a) { toast('Pick who it goes to'); return; }
+  const oh = !i.job && DEPTS.some(d => d[0] === a);
+  const m = jobRoster(i.job).find(x => x.e === a), role = m ? ROLE_LABEL[m.r] : (P(a).dept ? P(a).dept + ' department head' : '');
+  run(async () => {
+    if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:a, DocType: isInv(i) ? 'invoice' : 'pay app', BlockingIssues: JSON.stringify(i.flags) }, oh ? { JobNumber:'GL' } : {}),
+      { s:'with PM', note:'Routed to ' + P(a).n + (role ? ' (' + role + ')' : '') + ' from Triage' + (i.flags.length ? ' with flags: ' + i.flags.join('; ') : '') + '. No CE entry created.' })) {
+      i.tqPick = null; if (TQD === i.id) tqClose(); toast('Sent to ' + P(a).n); }
+  });
+}
+/* the Details pop-up */
+let TQD = null;
+function tqClose(){ TQD = null; const d = document.getElementById('tqDlg'); if (d) { d.hidden = true; d.innerHTML = ''; } }
+function tqDialog(){
+  const d = document.getElementById('tqDlg'); const i = INV.find(x => x.id === TQD);
+  if (!d || !i || i.sec !== 'triage') { tqClose(); return; }
+  if (i.f.PdfPath && !PDFS[i.id]) loadPdf(i).then(() => { if (TQD === i.id) tqDialog(); });
+  const f = i.f, inv = isInv(i), dl = [];
+  const add = (k, v) => { if (v != null && String(v).trim() !== '') dl.push('<dt>' + k + '</dt><dd>' + v + '</dd>'); };
+  add('Type', esc(i.type));
+  add('Job', i.job ? '<b>' + esc(i.job) + '</b> · ' + esc(jobName(i.job)) : '<span class="bh-chip is-warn sm">No job</span>');
+  add(inv ? 'PO #' : 'Subcontract #', i.po ? esc(i.po) + (i.c ? ' · ' + esc(i.c.vendor) : ' <span class="bh-chip is-warn sm">not on the Procore roster</span>') : '');
+  add(inv ? 'Invoice #' : 'Pay request #', esc(f.PayRequest || i.no || ''));
+  add(inv ? 'Invoice date' : 'Period ending', esc(inv ? (f.InvoiceDate ? usDate(String(f.InvoiceDate).slice(0, 10)) : '') : (f.PeriodEnding ? usDate(String(f.PeriodEnding).slice(0, 10)) : '')));
+  add('Balance due', i.amtKnown ? '<b>' + money(i.amt) + '</b>' : 'not read');
+  add('Description', esc(f.InvoiceDescription || f.Description || ''));
+  add('Received', esc(fmtTime(f.ReceivedAt || '')));
+  const issues = i.flags.concat(i.missing.map(m => 'Missing ' + m));
+  const links = [i.pdf ? '<a href="' + esc(i.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '', i.mail ? '<a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a>' : ''].filter(Boolean).join(' · ');
+  d.innerHTML = '<div class="tqd-in" role="dialog" aria-modal="true" aria-label="' + esc(i.v) + ' details">'
+    + '<div class="tqd-h"><div><h2>' + esc(i.v) + '</h2><div class="sub">' + esc(i.type) + ' · ' + esc(i.no || '') + ' · ' + esc(i.id) + '</div></div><button type="button" class="tqd-x" data-tqx="1">Close</button></div>'
+    + '<div class="tqd-b"><div>' + pdfBox(i) + '</div><div>'
+    + '<dl class="tqd-dl">' + dl.join('') + '</dl>'
+    + (issues.length ? '<div class="tqd-fl"><b>' + issues.length + ' flag' + (issues.length > 1 ? 's' : '') + '</b><ul>' + issues.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : (inv ? '' : '<div class="tqd-fl warn" style="border-left-color:var(--bh-ok-ink);background:var(--bh-ok-bg)">Pay app figures agree with Procore and CE.</div>'))
+    + (i.note ? '<div class="tqd-fl warn">' + esc(i.note) + '</div>' : '')
+    + (links ? '<p class="note" style="margin-top:12px">' + links + '</p>' : '')
+    + tqStrip(i, true) + '</div></div></div>';
+  d.hidden = false;
+  if (PDFS[i.id] === 'loading') setTimeout(() => { if (TQD === i.id && PDFS[i.id] !== 'loading') tqDialog(); }, 800);
+}
+function tqClick(e){
+  if (e.target.closest('[data-tqx]') || e.target.id === 'tqDlg') { tqClose(); return true; }
+  const pb = e.target.closest('[data-tqp]');
+  if (pb) { const i = INV.find(x => x.id === pb.dataset.tqp); if (i) { i.tqPick = pb.dataset.e; draw(); if (TQD) tqDialog(); } return true; }
+  const go = e.target.closest('[data-tqgo]');
+  if (go) { const i = INV.find(x => x.id === go.dataset.tqgo); if (i && acctSeat()) tqSend(i); return true; }
+  const dt = e.target.closest('[data-tqdet]');
+  if (dt) { TQD = dt.dataset.tqdet; tqDialog(); const x = document.querySelector('#tqDlg .tqd-x'); if (x) x.focus(); return true; }
+  const mo = e.target.closest('[data-tqmore]');
+  if (mo) { const id = mo.dataset.tqmore; tqClose(); openPane(id); return true; }
+  if (e.target.closest('#tqDlg') || e.target.closest('.tq')) return !!e.target.closest('#tqDlg') && !e.target.closest('a');
+  return false;
+}
+document.addEventListener('change', e => { const o = e.target.dataset && e.target.dataset.tqo; if (!o) return;
+  const i = INV.find(x => x.id === o); if (!i) return; i.tqPick = e.target.value || null; draw(); if (TQD) tqDialog(); });
+
 function triageBox(i){
   /* Three decisions (22 Oct 2026): reject to the trade partner, route to the PM with notes
      (emailed to the PM from payables@), or route to the PM for approval. */
@@ -2486,10 +2631,16 @@ function act(k){
     const a = (document.getElementById('bAssign') || {}).value; if (!a) { toast('Choose who they go to'); return; }
     const ok = INV.filter(i => BULK.has(i.id) && bulkReady(i));
     if (!ok.length) { toast('None of these can be bulk-routed — pay apps with flags or missing details are routed one at a time from their Triage decision'); return; }
-    run(async () => { let n = 0;
-      for (const i of ok) { const oh = !i.job && DEPTS.some(d => d[0] === a);
-        if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:a }, oh ? { JobNumber:'GL' } : {}), { s:'with PM', note:'Routed to ' + P(a).n + (P(a).dept ? ' (' + P(a).dept + ' department head)' : '') + ' — bulk, ' + ok.length + ' invoices. No CE entry created.' })) { n++; BULK.delete(i.id); } }
-      toast(n + ' routed to ' + P(a).n); });
+    const role = a.startsWith('role:') ? a.slice(5) : '';
+    run(async () => { let n = 0, skip = 0; const to = new Set();
+      for (const i of ok) {
+        let who = a, label = '';
+        if (role) { const m = jobRoster(i.job).find(x => x.r === role); if (!m) { skip++; continue; } who = m.e; label = role; }
+        else { const m = jobRoster(i.job).find(x => x.e === a); label = m ? ROLE_LABEL[m.r] : (P(a).dept ? P(a).dept + ' department head' : ''); }
+        const oh = !i.job && DEPTS.some(d => d[0] === who);
+        if (await saveRow(i, Object.assign({ Status:'with PM', AssignedApprover:who, DocType: isInv(i) ? 'invoice' : 'pay app', BlockingIssues: JSON.stringify(i.flags) }, oh ? { JobNumber:'GL' } : {}),
+          { s:'with PM', note:'Routed to ' + P(who).n + (label ? ' (' + label + ')' : '') + ' — bulk, ' + ok.length + ' items. No CE entry created.' })) { n++; to.add(P(who).n); BULK.delete(i.id); } }
+      toast(n + ' routed' + (to.size === 1 ? ' to ' + [...to][0] : to.size ? ' to ' + to.size + ' people' : '') + (skip ? ' · ' + skip + ' left selected: no ' + role + ' on that job' : '')); });
     return;
   }
   const i = INV.find(x => x.id === SEL); if (!i) return;
@@ -2751,7 +2902,7 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.hidden = false; c
    BH-invoice-capture "AP pay apps"). The Worker allows one start per 10 minutes, and the
    desk never starts it twice for the same mail. */
 const SYNC_WORKER_URL = 'https://bh-compliance-sync.soft-math-3331.workers.dev';
-const PW = { n: 0, more: false, newest: '', st: null, busy: false, at: '', status: null, tag: '[AP TEST]' };
+const PW = { n: 0, more: false, newest: '', st: null, busy: false, at: '', status: null, tag: '[AP TEST]', pullN: 0 };
 /* The pull's own subject filter, from the status file it writes after each run (beside the
    PDFs on the queue site). Until it has written one, assume its default: test mode, [AP TEST]. */
 async function pullStatus(){
@@ -2772,6 +2923,14 @@ async function workerCall(body){
   catch (e) { return null; }
 }
 async function pwStatus(){ const st = await workerCall({ action: 'sync_status' }); PW.st = st && st.datasets ? st.datasets.payables || null : null; }
+/* A pull is running when the Worker started one after the last pull finished (and not long
+   ago - a run that died never writes its status, so give up on it after 20 minutes). */
+function pwPulling(){
+  const st = PW.st, fin = PW.status && PW.status.finished_at;
+  return !!(st && st.last && (!fin || st.last > fin) && Date.now() - Date.parse(st.last) < 20 * 60e3);
+}
+/* auto = the 5-minute timer; false = the Refresh button. Both start the pull when there is
+   mail it has not been started for; only Refresh says so when it cannot. */
 async function payablesWatch(auto){
   if (!LIVE.me || !LIVE.me.isAccounting || PW.busy) return;
   const tok = await mailToken(); if (!tok) return;
@@ -2786,30 +2945,33 @@ async function payablesWatch(auto){
   const msgs = all.filter(m => !m.isDraft && lc(((m.from || {}).emailAddress || {}).address) !== PAYABLES && pullWants(m, PW.tag, PW.status && PW.status.not_before));
   PW.n = msgs.length; PW.newest = msgs.length ? msgs[0].receivedDateTime : ''; PW.at = new Date().toISOString();
   await pwStatus();
-  if (auto && PW.n && PW.st && PW.st.can_sync && (!PW.st.last || PW.newest > PW.st.last)) await pullNow(true);
-  else header();
+  if (!pwPulling()) PW.pullN = 0;
+  if (PW.n && PW.st && PW.st.can_sync && (!PW.st.last || PW.newest > PW.st.last)) await pullNow(auto);
+  else { if (!auto && PW.n && !pwPulling()) toast('Refreshed — ' + PW.n + ' new email' + (PW.n === 1 ? '' : 's') + ' not pulled: ' + ((PW.st && PW.st.reason) || 'the pull could not be started')); header(); }
 }
 async function pullNow(auto){
   if (PW.busy) return; PW.busy = true;
   const j = await workerCall({ action: 'sync', dataset: 'payables' });
   PW.busy = false;
   if (j && j.ok) {
-    if (!auto) toast('Pulling payables@ — new items show up in a few minutes');
-    const again = () => run(async () => { await loadLive(); rebuild(); header(); draw(); if (SEL) pane(); });
+    PW.pullN = PW.n;
+    if (!auto) toast('Refreshed — pulling ' + PW.n + ' new email' + (PW.n === 1 ? '' : 's') + ' from payables@');
+    const again = () => run(async () => { await loadLive(); rebuild(); header(); draw(); if (SEL) pane(); payablesWatch(true); });
     setTimeout(again, 4 * 60e3); setTimeout(again, 9 * 60e3);
-  } else if (!auto) toast((j && j.error) || 'Could not start the pull — the Worker did not answer');
+  } else if (!auto) toast('Refreshed — could not start the pull: ' + ((j && j.error) || 'the Worker did not answer'));
   await pwStatus(); header();
 }
 function pwLine(){
   if (!LIVE.me || !LIVE.me.isAccounting) return '';
   const st = PW.st;
   const test = PW.tag && PW.tag !== '*';
-  return (PW.n ? ' · <b class="pw-new">' + PW.n + (PW.more && !test ? '+' : '') + ' new ' + (test ? esc(PW.tag) + ' ' : '') + 'email' + (PW.n === 1 ? '' : 's') + ' in payables@ not pulled yet</b>' : '')
+  const n = PW.pullN || PW.n, kind = ' new ' + (test ? esc(PW.tag) + ' ' : '') + 'email';
+  return (pwPulling() ? ' · <b class="pw-new">pulling ' + (n ? n + kind + (n === 1 ? '' : 's') : 'new emails') + ' — back in a few minutes</b>'
+      : PW.n ? ' · <b class="pw-new">' + PW.n + (PW.more && !test ? '+' : '') + kind + (PW.n === 1 ? '' : 's') + ' in payables@ not pulled yet</b>'
+        + (st && !st.can_sync && st.reason ? ' <span class="note">(' + esc(st.reason) + ')</span>' : '') : '')
     + (test ? ' · <span title="The pull only files mail whose subject contains ' + esc(PW.tag) + ' (repo variable AP_SUBJECT_TAG). Set it to * to go live.">test mode</span>' : '')
-    + (PW.status && PW.status.finished_at ? ' · last pull finished ' + esc(fmtTime(PW.status.finished_at)) : st && st.last ? ' · pull started ' + esc(fmtTime(st.last)) : '')
-    + ' · <a href="#" id="pullNow"' + (st && !st.can_sync ? ' title="' + esc(st.reason || '') + '"' : '') + '>Pull now</a>';
+    + (PW.status && PW.status.finished_at ? ' · last pull finished ' + esc(fmtTime(PW.status.finished_at)) : '');
 }
-document.addEventListener('click', e => { if (e.target && e.target.id === 'pullNow') { e.preventDefault(); pullNow(false); } });
 setInterval(() => { if (document.visibilityState === 'visible') payablesWatch(true); }, 5 * 60e3);
 setTimeout(() => payablesWatch(true), 8000);
 function header(){
@@ -2832,6 +2994,7 @@ function header(){
 
 /* ---- events --------------------------------------------------------------------------- */
 document.addEventListener('click', e => {
+  if (tqClick(e)) return;
   const s = e.target.closest('[data-sec]'); if (s) { const k = s.dataset.sec; OPEN[k] = s.getAttribute('aria-expanded') !== 'true'; draw(); return; }
   const ec = e.target.closest('.esel'); if (ec) { if (ec.checked) ENT.add(ec.dataset.eid); else ENT.delete(ec.dataset.eid); draw(); return; }
   if (e.target.closest('.amt-pop')) return;
@@ -3144,9 +3307,11 @@ $('#tType').addEventListener('click', e => { e.stopPropagation(); const b = e.ta
 document.addEventListener('click', () => { const m = $('#tType'); if (m && !m.hidden) typeMenu(false); });
 $('#tMine').addEventListener('click', () => { MINE = !MINE; $('#tMine').setAttribute('aria-pressed', MINE); draw(); });
 $('#tChg').addEventListener('click', () => { CHG = !CHG; $('#tChg').setAttribute('aria-pressed', CHG); draw(); });
-$('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed'); payablesWatch(false); }));
+$('#refresh').addEventListener('click', () => run(async () => { await loadLive(); rebuild(); header(); toast('Refreshed');
+  if (LIVE.me && LIVE.me.isAccounting) await payablesWatch(false); }));
 $('#who').addEventListener('change', e => { WHO = e.target.value; MINE = false; BULK.clear(); $('#tMine').setAttribute('aria-pressed', false); MENU = false; CF = false; draw(); if (SEL) { if (INV.some(x => x.id === SEL && inScope(x))) pane(); else closePane(); } });
 document.addEventListener('keydown', e => {
+  if (TQD) { if (e.key === 'Escape') tqClose(); return; }
   if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { if (e.key === 'Escape') document.activeElement.blur(); return; }
   const rows = [...document.querySelectorAll('.ap-row')]; const ix = rows.findIndex(r => r.dataset.id === SEL);
   if (e.key === 'j' || e.key === 'ArrowDown') { const n = rows[Math.min(rows.length - 1, ix + 1)]; if (n) { openPane(n.dataset.id); const el = document.querySelector('.ap-row[data-id="' + n.dataset.id + '"]'); if (el) el.focus(); } e.preventDefault(); }
