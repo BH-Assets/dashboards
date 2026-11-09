@@ -194,6 +194,8 @@ a.wxc:hover{background:var(--cream)}
 .rmstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;font-size:13px;color:var(--muted)}
 .rmstrip b{font-size:20px;font-weight:800;color:var(--ink);margin-right:5px}
 .rmstrip .rmgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap;border-bottom:2px solid var(--brand-red)}
+.rmstrip .rmidea{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--brand-red);white-space:nowrap}
+.rmstrip .rmidea + .rmgo{margin-left:0}
 .rmbar{display:flex;height:8px;margin-top:12px;background:var(--gray)}
 .rmbar span{display:block;height:100%}
 .rmnow{margin-top:10px;font-size:12.5px;color:var(--muted)}
@@ -1261,7 +1263,7 @@ async function loadRoadmap(){
     const tot = Math.max(1, counts.reduce((a, c) => a + c[2], 0));
     const now = items.filter(i => i.stage === "building").slice(0, 3).map(i => esc(i.title));
     grid.innerHTML = '<div class="rmstrip">' + counts.map(([k, t, n]) => '<span><b>' + n + '</b>' + esc(t.toLowerCase()) + '</span>').join("") +
-      '<a class="rmgo" href="roadmap/">See the full roadmap</a></div>' +
+      '<a class="rmidea" href="roadmap/#suggest">Suggest an idea</a><a class="rmgo" href="roadmap/">See the full roadmap</a></div>' +
       '<div class="rmbar" aria-hidden="true">' + counts.map(([k, t, n]) => '<span style="width:' + (100 * n / tot).toFixed(1) + '%;background:' + RM_COL[k] + '"></span>').join("") + '</div>' +
       (now.length ? '<div class="rmnow"><b>Being built:</b> ' + now.join(" · ") + '</div>' : '');
     if (j.updated) { const dt = new Date(j.updated + "T12:00:00"); if (!isNaN(dt)) $("#rmcap").textContent = "What we are building for the field, project teams and the office · updated " + dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
@@ -1835,8 +1837,18 @@ async function main(){
     token = r.accessToken;
     log("token", "acquired");
   } catch (e) {
-    if (e instanceof msal.InteractionRequiredAuthError) return app.acquireTokenRedirect({ scopes: SCOPES });
-    log("token", "failed — " + ((e && e.errorCode) || "") + " " + ((e && e.errorMessage) || e));
+    /* 9 Nov 2026: a silent renewal that times out in its hidden frame (monitor_window_timeout,
+       usually blocked third-party cookies once the 24-hour sign-in lapses) needs the same
+       full-page sign-in as interaction_required. At most once a minute, so it can never loop. */
+    const code = String((e && e.errorCode) || "");
+    const redo = e instanceof msal.InteractionRequiredAuthError || /monitor_window_timeout|timed_out|iframe_closed_prematurely|login_required|consent_required|interaction_required|no_tokens_found|token_renewal/i.test(code);
+    let last = 0; try { last = Number(sessionStorage.getItem("bh.tokredir") || 0); } catch(_) {}
+    if (redo && Date.now() - last > 60000) {
+      try { sessionStorage.setItem("bh.tokredir", String(Date.now())); } catch(_) {}
+      log("token", "silent renewal failed (" + code + ") — signing in again");
+      return app.acquireTokenRedirect({ scopes: SCOPES, account: acct });
+    }
+    log("token", "failed — " + code + " " + ((e && e.errorMessage) || e));
   }
 
   if (!token){
@@ -2159,7 +2171,10 @@ $("#copy").addEventListener("click", async () => {
   } catch(_) {}
 });
 
-main().catch(e => {
+/* MSAL's hidden sign-in frame loads this page with #code= or #error=: don't run the whole
+   page inside it (that is what made the frame time out) */
+if (window.self !== window.top && /[#&](code|error|state)=/.test(location.hash)) { /* sign-in frame */ }
+else main().catch(e => {
   $("#app").hidden = false;
   fatal("Unexpected failure", (e && e.stack) || String(e));
 });
