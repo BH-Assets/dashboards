@@ -164,6 +164,22 @@ body.no-pane .ap-pane{display:none}
 .tq-go:disabled{opacity:.45;cursor:default}
 .tq-a{border:0;background:none;padding:4px 2px;font:600 12.5px var(--bh-font);color:var(--bh-ink);text-decoration:underline;cursor:pointer}
 .tq-p:focus-visible,.tq-a:focus-visible,.tq-go:focus-visible{outline:2px solid var(--bh-black);outline-offset:2px}
+#addDlg{position:fixed;inset:0;z-index:81;background:rgba(33,30,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+#addDlg[hidden]{display:none}
+#addDlg .tqd-in{width:min(760px,100%)}
+.ad-f{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:16px 20px 20px}
+.ad-f .full{grid-column:1/-1}
+.ad-f label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bh-ink-muted);margin-bottom:4px}
+.ad-f label small{font-weight:400;text-transform:none;letter-spacing:0}
+.ad-f input,.ad-f select,.ad-f textarea{width:100%;box-sizing:border-box;font:14px var(--bh-font);padding:8px 10px;border:1px solid var(--bh-slate);background:#fff;color:var(--bh-ink)}
+.ad-f textarea{min-height:60px;resize:vertical}
+.ad-drop{border:1px dashed var(--bh-slate);padding:14px;text-align:center;font-size:13px;color:var(--bh-ink-muted);background:var(--bh-surface-muted)}
+.ad-drop.has{border-style:solid;color:var(--bh-ink);background:#fff}
+.ad-drop.over{border-color:var(--bh-black);background:var(--bh-cream)}
+.ad-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ad-msg{font-size:13px;color:var(--bh-ink-muted)}
+.ad-msg.bad{color:var(--bh-bad-ink);font-weight:700}
+@media (max-width:640px){.ad-f{grid-template-columns:1fr}}
 #tqDlg{position:fixed;inset:0;z-index:80;background:rgba(33,30,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
 #tqDlg[hidden]{display:none}
 .tqd-in{background:#fff;width:min(1200px,100%);max-height:calc(100vh - 32px);overflow:auto;border-top:4px solid #ed2b30;box-shadow:0 12px 40px rgba(0,0,0,.25)}
@@ -404,6 +420,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
     <span class="ap-fm" id="tType" role="menu" hidden><button class="ap-fo" role="menuitemradio" data-ty="" aria-checked="true">All<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Pay app" aria-checked="false">Pay apps<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Invoice" aria-checked="false">Invoices<span class="c"></span></button><button class="ap-fo" role="menuitemradio" data-ty="Message" aria-checked="false">Emails<span class="c"></span></button></span></span>
   <span class="ap-sp"></span>
   <span class="ap-pull" id="pull" title="The invoice-capture pull reads payables@ and files each pay application or invoice here"></span>
+  <button class="ap-tog" id="addInv" title="Add an invoice or bill that came by mail or by hand">+ Add an invoice</button>
   <button class="ap-tog" id="refresh" title="Reloads the desk. For Accounting it also checks payables@ and starts the pull when there are new emails.">Refresh</button>
   <label class="ap-as"><span class="bh-label">Viewing as</span><select class="bh-select" id="who"></select></label>
   <span class="ap-filt" id="xWrap"><button class="ap-tog" id="xBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
@@ -417,6 +434,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
 </div>
 <div class="toast" id="toast" hidden></div>
 <div id="tqDlg" hidden></div>
+<div id="addDlg" hidden></div>
 <script>
 /* =============================================================================
    AP Desk v2 (Oct 2026) - triage layout on the live AP Pay Applications list.
@@ -1565,7 +1583,8 @@ async function loadPdf(i){
     if (!tok || !q || !q.siteId) throw 0;
     const r = await fetch(GRAPH + '/sites/' + q.siteId + '/drive/root:/' + encodeURI(i.f.PdfPath) + ':/content', { headers: { Authorization: 'Bearer ' + tok } });
     if (!r.ok) throw r.status;
-    PDFS[i.id] = URL.createObjectURL(new Blob([await r.arrayBuffer()], { type: 'application/pdf' }));
+    const ext = String(i.f.PdfPath).toLowerCase().split('.').pop();
+    PDFS[i.id] = URL.createObjectURL(new Blob([await r.arrayBuffer()], { type: ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : ext === 'heic' ? 'image/heic' : 'application/pdf' }));
   } catch (e) { PDFS[i.id] = 'error'; }
   if (SEL === i.id) pane();
 }
@@ -2262,6 +2281,120 @@ function tqClick(e){
 }
 document.addEventListener('change', e => { const o = e.target.dataset && e.target.dataset.tqo; if (!o) return;
   const i = INV.find(x => x.id === o); if (!i) return; i.tqPick = e.target.value || null; draw(); if (TQD) tqDialog(); });
+
+/* ---- Add an invoice (9 Nov 2026) --------------------------------------------------------- */
+let ADD = null;   // the open form's state
+function addOpen(){ ADD = { file: null, vendor: '', no: '', date: '', due: '', amt: '', job: '', po: '', desc: '', how: 'Mail', route: '', dupOk: false, msg: '', bad: false }; addRender(); const v = document.getElementById('adVendor'); if (v) v.focus(); }
+function addClose(){ ADD = null; const d = document.getElementById('addDlg'); if (d) { d.hidden = true; d.innerHTML = ''; } }
+function addRead(){
+  if (!ADD) return; const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  Object.assign(ADD, { vendor: v('adVendor'), no: v('adNo'), date: v('adDate'), due: v('adDue'), amt: v('adAmt'), job: v('adJob'), po: v('adPo'), desc: v('adDesc'), how: v('adHow') || 'Mail', route: v('adRoute') });
+}
+function addRender(){
+  const d = document.getElementById('addDlg'); if (!d || !ADD) return;
+  const A = ADD, o = (v, t, cur) => '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>' + t + '</option>';
+  const vendors = [...new Set((LIVE.commitments || []).map(c => String(c.vendor || '').trim()).concat((ALLH || []).map(i => String(i.v || '').trim())).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const jobs = Object.keys(JOBS).filter(k => k !== 'OH').sort();
+  let route = '';
+  if (acctSeat()) {
+    const R = jobRoster(A.job), inR = new Set(R.map(m => m.e));
+    const others = Object.keys(LIVE.pmName || {}).map(lc).filter(e => !inR.has(e) && !DEPTS.some(x => x[0] === e)).sort((a, b) => P(a).n.localeCompare(P(b).n));
+    route = '<div class="full"><label for="adRoute">Route to <small>(optional — leave blank to put it in Triage)</small></label><select id="adRoute"><option value="">Leave in Triage</option>'
+      + (R.length ? '<optgroup label="' + esc(A.job) + ' PM team">' + R.map(m => o(m.e, ROLE_LABEL[m.r] + ' — ' + esc(m.n), A.route)).join('') + '</optgroup>' : '')
+      + '<optgroup label="Department heads">' + DEPTS.map(x => o(x[0], esc(x[1]) + ' — ' + esc(P(x[0]).n), A.route)).join('') + '</optgroup>'
+      + (others.length ? '<optgroup label="Other approvers">' + others.map(e => o(e, esc(P(e).n), A.route)).join('') + '</optgroup>' : '') + '</select></div>';
+  }
+  d.innerHTML = '<div class="tqd-in" role="dialog" aria-modal="true" aria-labelledby="adH">'
+    + '<div class="tqd-h"><div><h2 id="adH">Add an invoice</h2><div class="sub">For a bill that came by mail or by hand. It goes into Triage' + (acctSeat() ? ', or straight to someone if you pick them below' : ' for Accounting to route') + '.</div></div><button type="button" class="tqd-x" data-adx="1">Close</button></div>'
+    + '<form class="ad-f" id="adForm" novalidate>'
+    + '<div class="full"><label for="adFile">The invoice <small>(PDF, or a photo from your phone)</small></label>'
+    + '<div class="ad-drop' + (A.file ? ' has' : '') + '" id="adDrop">' + (A.file ? '<b>' + esc(A.file.name) + '</b> · ' + Math.max(1, Math.round(A.file.size / 1024)) + ' KB · <a href="#" data-adclear="1">Remove</a>' : 'Drop the file here, or <label for="adFile" style="display:inline;text-transform:none;font-size:13px;letter-spacing:0;color:var(--bh-ink);text-decoration:underline;cursor:pointer">choose a file</label>') + '</div>'
+    + '<input type="file" id="adFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" style="position:absolute;left:-9999px"></div>'
+    + '<div class="full"><label for="adVendor">Vendor</label><input id="adVendor" list="adVendors" autocomplete="off" value="' + esc(A.vendor) + '" placeholder="e.g. Point Broadband"><datalist id="adVendors">' + vendors.map(v => '<option value="' + esc(v) + '">').join('') + '</datalist></div>'
+    + '<div><label for="adNo">Invoice or account #</label><input id="adNo" value="' + esc(A.no) + '"></div>'
+    + '<div><label for="adAmt">Amount due</label><input id="adAmt" inputmode="decimal" value="' + esc(A.amt) + '" placeholder="0.00"></div>'
+    + '<div><label for="adDate">Invoice date</label><input id="adDate" type="date" value="' + esc(A.date) + '"></div>'
+    + '<div><label for="adDue">Due date <small>(optional)</small></label><input id="adDue" type="date" value="' + esc(A.due) + '"></div>'
+    + '<div><label for="adJob">Job</label><select id="adJob">' + o('', 'Not sure — Accounting will pick', A.job) + o('OH', 'Overhead · no job (office, utilities…)', A.job)
+      + '<optgroup label="Jobs">' + jobs.map(k => o(k, esc(k) + ' · ' + esc(jobName(k)), A.job)).join('') + '</optgroup></select></div>'
+    + '<div><label for="adPo">PO # <small>(optional)</small></label><input id="adPo" value="' + esc(A.po) + '"></div>'
+    + '<div class="full"><label for="adDesc">What it is for</label><input id="adDesc" value="' + esc(A.desc) + '" placeholder="e.g. Internet, Auburn office, November"></div>'
+    + '<div><label for="adHow">How it came in</label><select id="adHow">' + ['Mail', 'Hand-delivered', 'Emailed to me, not payables@', 'Other'].map(x => o(x, x, A.how)).join('') + '</select></div>'
+    + '<div></div>' + route
+    + '<div class="ad-acts"><button type="submit" class="bh-btn" style="min-height:38px"' + (BUSY ? ' disabled' : '') + '>' + (A.dupOk ? 'Add it anyway' : 'Add invoice') + '</button><button type="button" class="bh-btn-outline" style="min-height:38px" data-adx="1">Cancel</button><span class="ad-msg' + (A.bad ? ' bad' : '') + '" role="status">' + esc(A.msg) + '</span></div>'
+    + '</form></div>';
+  d.hidden = false;
+}
+function addSetFile(f){
+  if (!ADD || !f) return;
+  if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) { ADD.msg = 'Use a PDF, JPG or PNG file.'; ADD.bad = true; addRender(); return; }
+  if (f.size > 25 * 1024 * 1024) { ADD.msg = 'That file is over 25 MB. Scan it at a lower resolution.'; ADD.bad = true; addRender(); return; }
+  addRead(); ADD.file = f; ADD.msg = ''; ADD.bad = false; addRender();
+}
+async function addSave(){
+  addRead(); const A = ADD; if (!A || BUSY) return;
+  const amt = A.amt.replace(/[$,\s]/g, '');
+  const bad = t => { A.msg = t; A.bad = true; addRender(); };
+  if (!A.file) return bad('Attach the invoice (PDF or photo).');
+  if (!A.vendor) return bad('Enter the vendor.');
+  if (!/^-?\d+(\.\d{1,2})?$/.test(amt)) return bad('Enter the amount due in dollars, e.g. 129.99.');
+  const dup = A.no && (ALLH || []).find(i => lc(i.v) === lc(A.vendor) && lc(String(i.no || '')).replace(/^inv\s*/, '') === lc(A.no));
+  if (dup && !A.dupOk) { A.dupOk = true; return bad('This looks like ' + dup.id + ' (' + dup.v + ' ' + dup.no + '), already on the desk. Check it isn’t a duplicate, then press Add it anyway.'); }
+  const q = LIVE.queue; if (!q || !q.siteId || !q.listId) return bad('The queue list is not loaded. Refresh and try again.');
+  BUSY = true; A.msg = 'Uploading the file…'; A.bad = false; addRender();
+  try {
+    const tok = await token(); if (!tok) throw new Error('Sign-in expired. Refresh the page.');
+    const now = new Date(), stamp = now.toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+    const safe = A.file.name.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').slice(-80);
+    const path = 'manual/' + now.toISOString().slice(0, 7) + '/' + stamp + '-' + safe;
+    const base = GRAPH + '/sites/' + q.siteId + '/drive/root:/' + encodeURI(path);
+    let up;
+    if (A.file.size <= 4 * 1024 * 1024) {
+      up = await fetch(base + ':/content', { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': A.file.type || 'application/octet-stream' }, body: A.file });
+    } else {
+      const ss = await fetch(base + ':/createUploadSession', { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ item: { '@microsoft.graph.conflictBehavior': 'rename' } }) });
+      if (!ss.ok) throw new Error('Could not start the upload (HTTP ' + ss.status + ')');
+      const url = (await ss.json()).uploadUrl;
+      up = await fetch(url, { method: 'PUT', headers: { 'Content-Range': 'bytes 0-' + (A.file.size - 1) + '/' + A.file.size }, body: A.file });
+    }
+    if (!up.ok) throw new Error('The file did not upload (HTTP ' + up.status + (up.status === 403 ? ' — you need Contribute on the AP Desk site' : '') + ')');
+    A.msg = 'Adding it to the desk…'; addRender();
+    const who = LIVE.me.name, at = now.toISOString(), job = A.job === 'OH' ? 'GL' : A.job;
+    const routed = acctSeat() && A.route ? A.route : '';
+    const log = [{ s: 'received', at, by: who, manual: true, note: 'Added by hand — came in by ' + A.how.toLowerCase() + '.' }];
+    if (routed) { const m = jobRoster(A.job).find(x => x.e === routed); log.push({ s: 'with PM', at, by: who, note: 'Routed to ' + P(routed).n + (m ? ' (' + ROLE_LABEL[m.r] + ')' : P(routed).dept ? ' (' + P(routed).dept + ' department head)' : '') + ' when added. No CE entry created.' }); }
+    const fields = { Title: 'manual|' + stamp + '|' + Math.random().toString(36).slice(2, 7), Status: routed ? 'with PM' : 'received', DocType: 'invoice',
+      Vendor: A.vendor, PayRequest: A.no, BalanceDue: Number(amt), ReceivedAt: at, StatusChangedAt: at, PdfPath: path,
+      Description: 'Added by ' + who + ' · ' + A.how + (A.desc ? ' · ' + A.desc : ''), StatusLog: JSON.stringify(log) };
+    if (job) fields.JobNumber = job;
+    if (A.date) fields.InvoiceDate = A.date;
+    if (A.due) fields.DueDate = A.due;
+    if (A.desc) fields.InvoiceDescription = A.desc;
+    if (A.po) fields.Subcontract = A.po;
+    if (routed) fields.AssignedApprover = routed;
+    const r = await fetch(GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId + '/items', { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) });
+    if (!r.ok) { let why = 'HTTP ' + r.status; try { why += ' ' + ((await r.json()).error.message || ''); } catch (_) {} throw new Error('The invoice was not added (' + why + '). The file is in Shared Documents/' + path + '.'); }
+    BUSY = false; addClose();
+    toast(routed ? 'Added and sent to ' + P(routed).n : 'Added to Triage');
+    await reloadLive();
+  } catch (e) { BUSY = false; if (ADD) { ADD.msg = e.message || String(e); ADD.bad = true; addRender(); } }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#addInv')) { addOpen(); return; }
+  if (!ADD) return;
+  if (e.target.closest('[data-adx]') || e.target.id === 'addDlg') { addClose(); return; }
+  if (e.target.closest('[data-adclear]')) { e.preventDefault(); addRead(); ADD.file = null; addRender(); return; }
+});
+document.addEventListener('change', e => {
+  if (!ADD) return;
+  if (e.target.id === 'adFile') addSetFile(e.target.files && e.target.files[0]);
+  else if (e.target.id === 'adJob') { addRead(); ADD.route = ''; addRender(); }
+  else if (e.target.id === 'adVendor' || e.target.id === 'adNo') { ADD.dupOk = false; }
+});
+document.addEventListener('submit', e => { if (e.target.id === 'adForm') { e.preventDefault(); addSave(); } });
+document.addEventListener('dragover', e => { const z = e.target.closest && e.target.closest('#adDrop'); if (!z) return; e.preventDefault(); z.classList.add('over'); });
+document.addEventListener('dragleave', e => { const z = e.target.closest && e.target.closest('#adDrop'); if (z) z.classList.remove('over'); });
+document.addEventListener('drop', e => { const z = e.target.closest && e.target.closest('#adDrop'); if (!z) return; e.preventDefault(); addSetFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 
 function triageBox(i){
   /* Three decisions (22 Oct 2026): reject to the trade partner, route to the PM with notes
@@ -3311,6 +3444,7 @@ $('#refresh').addEventListener('click', () => run(async () => { await loadLive()
   if (LIVE.me && LIVE.me.isAccounting) await payablesWatch(false); }));
 $('#who').addEventListener('change', e => { WHO = e.target.value; MINE = false; BULK.clear(); $('#tMine').setAttribute('aria-pressed', false); MENU = false; CF = false; draw(); if (SEL) { if (INV.some(x => x.id === SEL && inScope(x))) pane(); else closePane(); } });
 document.addEventListener('keydown', e => {
+  if (ADD) { if (e.key === 'Escape') addClose(); return; }
   if (TQD) { if (e.key === 'Escape') tqClose(); return; }
   if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { if (e.key === 'Escape') document.activeElement.blur(); return; }
   const rows = [...document.querySelectorAll('.ap-row')]; const ix = rows.findIndex(r => r.dataset.id === SEL);
