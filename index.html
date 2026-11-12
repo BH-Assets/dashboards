@@ -461,6 +461,130 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
 @media (max-width:960px){.teamnav button .l2{display:none}}
 @media (max-width:640px){.teamnav button{padding:7px 8px;font-size:10px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== role-based home (12 Nov 2026): short hero, today strip, "Today for you" cards ===== */
+.hero{min-height:0}
+.hero .deco{right:40px;top:26px;bottom:auto;gap:14px}
+.hero .deco .dots{grid-template-columns:repeat(4,10px);gap:7px}
+.hero .deco .dots i{width:10px;height:10px}
+.hero .deco .sq{width:44px;height:44px}
+.hero-row{position:relative;display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;min-height:200px;padding-top:30px;padding-bottom:26px}
+.hero-txt{flex:1 1 420px;min-width:0}
+.hero .today{font-size:11.5px;letter-spacing:.12em}
+.hero .greet{margin:4px 0 6px;font-size:34px;line-height:1.1;font-weight:500;text-transform:none;letter-spacing:-.01em}
+.hero .greet .nm{display:inline;font-weight:800}
+.hsum{margin:0;font-size:15px;color:#fff;max-width:760px}
+.hsum strong{background:var(--ink);padding:0 5px;font-weight:700}
+.hsum:empty{display:none}
+.hero .acts{margin-top:14px;gap:8px}
+.hero .acts a,.hero .acts a.bh-btn,.hero .acts a.bh-btn-outline{min-height:34px;padding:7px 12px;font-size:12px;background:#fff!important;color:var(--ink)!important;border:1px solid #fff!important;box-shadow:none}
+.hero .acts a:hover,.hero .acts a:focus-visible{background:var(--cream)!important;border-color:var(--cream)!important}
+.hero .caption{bottom:8px;right:12px}
+/* weather sits in the hero: current conditions plus the next two days */
+.hero .wxstrip{flex:0 1 auto;display:flex;align-items:stretch;border:0;background:rgba(33,30,30,.5);color:#fff;margin-bottom:14px;min-width:0}
+.hero .wxnow{border-right:1px solid rgba(255,255,255,.18);border-bottom:0}
+.hero a.wxmain{color:#fff;padding:8px 14px;gap:10px}
+.hero a.wxmain:hover{background:rgba(33,30,30,.35)}
+.hero .wxnow .tp{font-size:22px}
+.hero .wxnow .cd,.hero .wxd .hl,.hero .wxd .rn{color:rgba(255,255,255,.82)}
+.hero .wxnow .pl{max-width:170px}
+.hero .wxnow svg,.hero .wxd svg{stroke:#fff}
+.hero .wxnow svg .drop,.hero .wxd svg .drop{fill:#fff}
+.hero .wxsel{display:flex;align-items:center;padding:0 8px 0 0}
+.hero .wxsel select{max-width:26px;opacity:.85}
+.hero .wxd{padding:8px 12px;border-right:1px solid rgba(255,255,255,.18)}
+.hero .wxd:last-child{border-right:0}
+.hero .wxd:nth-of-type(n+3){display:none}
+.hero .wxd .hl b{color:#fff;font-size:15px}
+.hero .wxd svg{width:22px;height:22px}
+/* meetings and active jobs under the hero */
+.daystrip{background:#fff;border-bottom:1px solid var(--line)}
+.ds{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.ds > *{padding:11px 0;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;font-size:13px;min-width:0}
+.dsl{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.dsl em{font-style:normal;background:var(--gray);padding:1px 6px;margin-left:4px;font-size:11px}
+#meet{list-style:none;margin:0;padding:0;display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+#meet li{display:flex;gap:8px;align-items:baseline;border:1px solid var(--line);padding:5px 10px;min-width:0;max-width:100%}
+#meet li .t{font-weight:700;white-space:nowrap}
+#meet li .s{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#meet li.now{border-color:var(--ink)}
+#meet li a.j{font-size:11.5px;font-weight:700;color:var(--maroon);text-transform:uppercase;text-decoration:none}
+#meet li.none{border:0;padding:0;color:var(--muted)}
+#meet li.none button{font:inherit;font-weight:700;border:1px solid var(--charcoal);background:#fff;padding:3px 8px;cursor:pointer;margin-left:6px}
+.jobstrip.dsj{background:none;border:0;border-left:1px solid var(--line);padding-left:22px;gap:6px 14px}
+.jobstrip .jsin{display:contents}
+@media (max-width:1000px){.ds{grid-template-columns:minmax(0,1fr)}.jobstrip.dsj{border-left:0;border-top:1px solid var(--line);padding-left:0}}
+/* sections */
+.wrap.page{padding-top:26px}
+.h-sh{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;flex-wrap:wrap}
+.h-sh h2{font-size:13px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;display:flex;align-items:center;gap:9px}
+.h-sh h2::before{content:"";width:10px;height:10px;background:var(--brand-red)}
+.h-sh span{font-size:12.5px;color:var(--muted)}
+.h-sh a{margin-left:auto;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+#sec-today{margin-bottom:24px}
+.h-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:1000px){.h-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.h-cards{grid-template-columns:minmax(0,1fr)}}
+.h-wait{grid-column:1 / -1;color:var(--muted);font-size:13px;padding:6px 0}
+.h-tc{min-width:0;background:#fff;border:1px solid var(--line);border-left:5px solid var(--ink);padding:14px 16px 12px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:6px;min-height:150px}
+.h-tc:hover{border-color:var(--ink)}
+.h-tc.bad{border-left-color:var(--crit)} .h-tc.warn{border-left-color:#c99a00} .h-tc.first{border-left-color:var(--brand-red)}
+.h-tc .lbl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.h-tc .n{display:flex;align-items:baseline;gap:8px;min-width:0}
+.h-tc .n b{font-size:38px;font-weight:700;line-height:1}
+.h-tc .n span{font-size:13.5px;min-width:0}
+.h-tc ul{margin:0;padding:0;list-style:none;font-size:12.5px;color:var(--muted)}
+.h-tc li{padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-tc .go{margin-top:auto;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:9px}
+.h-chip{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;margin-right:4px;background:var(--gray);color:var(--ink)}
+.h-chip.bad{background:var(--crit-soft);color:var(--crit)} .h-chip.warn{background:var(--warn-soft);color:var(--warn)} .h-chip.ok{background:var(--ok-soft);color:var(--ok)}
+.h-clear{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.h-clear b{color:var(--ok)}
+.mdnote{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+#sec-desks{margin-bottom:6px}
+.h-desks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.h-dk{background:var(--ink);color:#fff;text-decoration:none;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:116px;min-width:0}
+.h-dk:hover{background:var(--charcoal)}
+.h-dk h3{font-size:15px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.h-dk p{margin:0;font-size:12.5px;opacity:.82;line-height:1.4}
+.h-dk .go{margin-top:auto;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.h-dk.new{background:var(--maroon)}
+.h-dk.soon,.h-dk.locked{background:#fff;color:var(--ink);border:1px dashed var(--charcoal)}
+.h-dk.soon p,.h-dk.locked p{opacity:1;color:var(--muted)}
+.h-alld{font-size:12.5px;margin:12px 0 26px;color:var(--muted);line-height:1.8}
+.h-alld a{font-weight:600;color:var(--ink)}
+.h-alld .lk{color:var(--faint)}
+.h-jobswrap{overflow-x:auto;margin-bottom:8px}
+table.h-jobs{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);font-size:13px}
+table.h-jobs th{background:var(--charcoal);color:#fff;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;text-align:left;padding:8px 10px;white-space:nowrap}
+table.h-jobs td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+table.h-jobs .r{text-align:right;white-space:nowrap}
+table.h-jobs td.up{color:var(--crit);font-weight:600} table.h-jobs td.down{color:var(--ok)} table.h-jobs td.nr{color:var(--faint)}
+table.h-jobs a{text-decoration:none} table.h-jobs a b{text-decoration:underline}
+.h-note{font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.45}
+.h-notes{margin:0 0 26px}
+.h-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:26px}
+@media (max-width:760px){.h-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.h-kpi{background:#fff;padding:14px 16px;min-width:0}
+.h-kpi .l{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.h-kpi .v{font-size:24px;font-weight:700;margin-top:4px}
+.h-kpi .s{font-size:12px;color:var(--muted)}
+.h-apps{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.h-apps a{background:#fff;border:1px solid var(--line);padding:8px 12px;font-size:13px;text-decoration:none;font-weight:600}
+.h-apps a:hover{border-color:var(--charcoal)}
+@media (max-width:960px){
+  .hero-row{padding-left:20px;padding-right:20px}
+  .hero .wxstrip{display:flex}
+}
+@media (max-width:640px){
+  .hero-row{min-height:0;padding-top:22px;padding-bottom:18px}
+  .hero .greet{font-size:26px}
+  .hsum{font-size:14px}
+  .hero .wxstrip{width:100%;margin-bottom:0}
+  .hero .wxnow{flex:1 1 auto;border-right:0}
+  .hero .wxd{display:none}
+  .h-tc .n b{font-size:32px}
+}
 </style>
 <link rel="stylesheet" href="/bh-shell.css">
 </head>
@@ -517,61 +641,63 @@ pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto
     <section class="hero" aria-label="Welcome">
       <div class="hero-photo"></div>
       <div class="hero-wash"></div>
-      <div class="hero-in">
-        <p id="tagline" class="eyebrow">BH Employee Home</p>
-        <div class="today" id="today">&nbsp;</div>
-        <h1 class="greet"><span id="greet">Good morning</span><span class="nm" id="greetname"></span></h1>
-        <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
-      </div>
-      <div class="hero-card">
-        <nav class="acts" id="acts" aria-label="Quick actions"></nav>
+      <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
+      <div class="wrap hero-row">
+        <div class="hero-txt">
+          <div class="today" id="today">&nbsp;</div>
+          <h1 class="greet"><span id="greet">Good morning</span> <span class="nm" id="greetname"></span></h1>
+          <p class="hsum" id="hsum"></p>
+          <nav class="acts" id="acts" aria-label="Quick actions"></nav>
+        </div>
+        <nav class="wxstrip" id="wx" aria-label="Weather" hidden></nav>
       </div>
       <div class="caption" id="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
     </section>
 
-    <nav class="wxstrip" id="wx" aria-label="Weather at the offices" hidden></nav>
-    <nav class="jobstrip" id="jobstrip" aria-label="Active jobs" hidden></nav>
+    <section class="daystrip" aria-label="Today">
+      <div class="wrap ds">
+        <div class="dsm"><span class="dsl">Meetings today <em id="mc">&ndash;</em></span><ul id="meet"><li class="none">Loading your calendar&hellip;</li></ul></div>
+        <nav class="jobstrip dsj" id="jobstrip" aria-label="Active jobs" hidden></nav>
+      </div>
+    </section>
     <div class="safety" id="safety" hidden></div>
 
-    <div class="wrap page">
+    <div class="wrap page" id="layout">
       <div id="fatal" class="banner" hidden></div>
       <div id="degraded" class="banner" hidden></div>
 
-      <div class="layout" id="layout">
-        <div class="main">
-          <section class="fold" id="sec-apps" data-fold="apps">
-            <button class="fh" type="button" aria-expanded="true"><span class="t">Applications</span><span class="s">grouped, one tab at a time</span><span class="chev"></span></button>
-            <div class="fb">
-              <div class="apptabs" id="apptabs" role="tablist" aria-label="Application groups"></div>
-              <div id="appsections"></div>
-            </div>
-          </section>
+      <section id="sec-today" aria-label="Today for you">
+        <div class="h-sh"><h2>Today for you</h2><span id="tsub">Only what is waiting on you, most urgent first</span></div>
+        <div class="h-cards" id="tcards"><div class="h-wait">Reading what is waiting on you&hellip;</div></div>
+        <p class="h-clear" id="tclear" hidden></p>
+        <p class="mdnote" id="mdnote" hidden></p>
+      </section>
 
-          <section class="fold" id="sec-desks" data-fold="desks">
-            <button class="fh" type="button" aria-expanded="true"><span class="t">Desks</span><span class="s">Open to you through your Bailey-Harris Microsoft account</span><span class="chev"></span></button>
-            <div class="fb"><div class="tiles" id="tiles"></div></div>
-          </section>
+      <section id="sec-desks">
+        <div class="h-sh"><h2>Your desks</h2><span id="dsub"></span></div>
+        <div class="h-desks" id="tiles"></div>
+        <p class="h-alld" id="alld"></p>
+      </section>
 
-          <section class="fold" id="sec-roadmap" data-fold="roadmap" hidden>
-            <button class="fh" type="button" aria-expanded="true"><span class="t">AI roadmap</span><span class="s" id="rmcap">What we are building for the field, project teams and the office</span><span class="chev"></span></button>
-            <div class="fb"><div id="rmgrid"></div></div>
-          </section>
-          <p class="empty" id="noresults" hidden>Nothing matches that.</p>
+      <div id="extra"></div>
+
+      <section class="fold" id="sec-apps" data-fold="apps">
+        <button class="fh" type="button" aria-expanded="true"><span class="t">Applications</span><span class="s" id="appcap">picked for you first, then every group</span><span class="chev"></span></button>
+        <div class="fb">
+          <div class="h-apps" id="picked" hidden></div>
+          <div class="apptabs" id="apptabs" role="tablist" aria-label="Application groups"></div>
+          <div id="appsections"></div>
         </div>
+      </section>
 
-        <aside class="side" aria-label="My day">
-          <section id="sec-myday" hidden>
-            <div class="sidehead"><span class="t">My day</span><span class="cap" id="mdcap"></span>
-              <button class="mdhide" id="mdhide" type="button" aria-pressed="false">Hide details</button></div>
-            <div class="md" id="mdgrid"></div>
-            <p class="mdnote" id="mdnote" hidden></p>
-          </section>
-          <div class="pulse" id="pulse" hidden>
-            <div class="pstats" id="pstats" hidden></div>
-            <section class="panel" id="peoplepanel" hidden></section>
-          </div>
-        </aside>
-      </div>
+      <section class="fold" id="sec-roadmap" data-fold="roadmap" hidden>
+        <button class="fh" type="button" aria-expanded="true"><span class="t">AI roadmap</span><span class="s" id="rmcap">What we are building for the field, project teams and the office</span><span class="chev"></span></button>
+        <div class="fb"><div id="rmgrid"></div></div>
+      </section>
+      <p class="empty" id="noresults" hidden>Nothing matches that.</p>
+
+      <!-- kept for the older panels' code; never shown -->
+      <div hidden><div id="pulse"><div id="pstats"></div><section id="peoplepanel"></section></div><div id="sec-myday"><span id="mdcap"></span><div id="mdgrid"></div></div></div>
 
       <section class="sec" id="rail" hidden>
         <div class="sechead"><span class="blk dark">This week</span></div>
@@ -796,6 +922,7 @@ function badgeClass(name){
 /* applications: one tab per links.json group; a search looks across every group (4 Nov 2026) */
 let APPTAB = null;
 function renderApps(doc){
+  APP_LIST = doc;
   const host = $("#appsections"), tabs = $("#apptabs");
   host.innerHTML = "";
   let n = 0;
@@ -851,12 +978,12 @@ function applyFilter(){
   const anyApp = $$("#appsections .app").some(a => !a.hidden);
   $("#sec-apps").hidden = !anyApp && !!q;
 
-  $$("#tiles .tile").forEach(t => {
+  $$("#tiles .h-dk").forEach(t => {
     const hit = !q || (t.dataset.find || "").includes(q);
     t.hidden = !hit;
     if (hit) shown++;
   });
-  const anyDesk = $$("#tiles .tile").some(t => !t.hidden);
+  const anyDesk = $$("#tiles .h-dk").some(t => !t.hidden);
   $("#sec-desks").hidden = !anyDesk;
 
   $("#noresults").hidden = shown > 0;
@@ -948,7 +1075,7 @@ function wxRemember(v){ try { localStorage.setItem("bh.wx", v); } catch(_) {} }
      or an Accounting department): the Accounting intake queue, counted the way AP
      Desk counts it. Opens Accounting intake.
    Both sit after the second quick action, before IT help. */
-let apReviewCount = 0, apQueueCount = 0, lastActions = [];
+let apReviewCount = 0, apQueueCount = 0, lastActions = [], apRowsAll = null;
 const AP_SITE = "/sites/APDesk", AP_LIST = "AP Pay Applications";
 const AP_ACCOUNTING_PEOPLE = ["tiffany.blackmon@baileyharris.com", "hdatb@baileyharris.com"];
 const AP_ACCOUNTING_DEPTS = ["accounting - executives", "accounting - personnel", "executive", "directors"];
@@ -1001,16 +1128,18 @@ async function apIntakeCount(rows, drives){
       } catch(_) { log("ap queue", "ap_ce_invoices.json parse failed"); }
     } else log("ap queue", "ap_ce_invoices.json HTTP " + f.status);
   }
-  return open.filter(r => !held.has(r)).length;
+  H.apIntake = open.filter(r => !held.has(r));
+  return H.apIntake.length;
 }
 
 async function loadApQueues(email, dept, drives){
   if (!email) return;
   const rows = await apListRows();
+  apRowsAll = rows;
   if (!rows) return;
   apReviewCount = rows.filter(r => r.f.Status === "with PM" &&
     String(r.f.AssignedApprover || "").trim().toLowerCase() === email).length;
-  const acct = AP_ACCOUNTING_PEOPLE.includes(email) || AP_ACCOUNTING_DEPTS.includes(String(dept || "").trim().toLowerCase());
+  const acct = AP_ACCOUNTING_PEOPLE.includes(email) || AP_ACCOUNTING_DEPTS.includes(String(dept || "").trim().toLowerCase()) || /^accounting/i.test(String(dept || "").trim());
   if (acct) apQueueCount = await apIntakeCount(rows, drives);
   log("ap queue", apReviewCount + " waiting on " + email + (acct ? ", " + apQueueCount + " at Accounting intake" : ""));
   renderActions(lastActions);
@@ -1020,6 +1149,7 @@ function renderActions(items){
   const host = $("#acts");
   if (!host) return;
   lastActions = items || [];
+  try { localStorage.setItem("bh.acts", JSON.stringify(lastActions)); } catch(_) {}
   const ok = lastActions.map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
   const queue = [];
   if (apReviewCount > 0) queue.push({ name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
@@ -1229,12 +1359,12 @@ async function loadPulse(){
   const js=$("#jobstrip");
   if (js){
     const cell=(n,l,strong)=>'<span class="jc'+(strong?' big':'')+'"><b>'+n0(n)+'</b>'+esc(l)+'</span>';
-    js.innerHTML='<div class="wrap">'
+    js.innerHTML='<div class="jsin">'
       + '<span class="jt">Active jobs</span>'
       + cell(active.length,'active',true)
       + counts.map(([label,n])=>cell(n,label)).join('')
       + cell(closing,'closing this month') + cell(warranty,'in warranty')
-      + '<a class="jgo" href="https://projects.baileyharris.com" rel="noopener">Project Information &rarr;</a>'
+      + '<a class="jgo" href="https://projects.baileyharris.com" rel="noopener">All jobs &rarr;</a>'
       + (when ? '<span class="jasof">as of '+esc(new Date(when).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</span>' : '')
       + '</div>';
     js.hidden=false;
@@ -1540,35 +1670,9 @@ function cardWaiting(){
 
 /* ---------- the section ---------- */
 function renderMyDay(){
-  const sec = $("#sec-myday"); if (!sec) return;
-  /* order: what needs action first (waiting, tasks), then the day (calendar, inbox) */
-  const cards = [cardWaiting(), cardTasks(), cardCalendar(), cardMail()].filter(Boolean);
-  $("#mdgrid").innerHTML = cards.join("");
-  /* each card folds from its heading; the inbox starts folded (4 Nov 2026) */
-  $$("#mdgrid .mdc").forEach(c => {
-    const h = c.querySelector(":scope > h2"); if (!h) return;
-    const k = "md-" + String((h.firstChild && h.firstChild.textContent) || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    c.dataset.fold = k; h.tabIndex = 0; h.setAttribute("role", "button");
-    foldApply(c, k, k === "md-inbox");
-  });
-  const note = $("#mdnote");
-  if (MD.connect || MD.off){
-    note.innerHTML = MD.connect
-      ? 'Your meetings, email and tasks can show here too. <button type="button" id="mdconnect">Connect Outlook and To Do</button>'
-      : 'Meetings, email and tasks will show here once IT turns them on for the launcher.';
-    note.hidden = false;
-    const b = $("#mdconnect");
-    if (b) b.addEventListener("click", () => app.acquireTokenRedirect({ scopes: MY_SCOPES, account: myAcct }));
-  } else note.hidden = true;
-  /* one line under the heading: what the day holds, in counts */
-  const bits = [], now = new Date(), t = todayYmd();
-  if (MD.cal){ const n = MD.cal.filter(x => x.allDay || !(x.end && x.end <= now)).length; bits.push(n + " meeting" + (n === 1 ? "" : "s") + " left today"); }
-  if (MD.mail && MD.mail.unread != null) bits.push(n0(MD.mail.unread) + " unread");
-  if (MD.tasks){ const o = MD.tasks.filter(x => x.due && x.due < t).length; if (o) bits.push(o + " task" + (o === 1 ? "" : "s") + " overdue"); }
-  if (MD.waiting && MD.waiting.ap) bits.push(MD.waiting.ap + " invoice" + (MD.waiting.ap === 1 ? "" : "s") + " to approve");
-  $("#mdcap").textContent = bits.join(" · ");
-  sec.hidden = !(cards.length || !note.hidden);
-  log("my day", cards.length + " card(s)");
+  /* 12 Nov 2026: the My day panel is gone; its data feeds the meetings strip and the Today cards */
+  log("my day", "cal " + (MD.cal ? MD.cal.length : "-") + ", tasks " + (MD.tasks ? MD.tasks.length : "-") + ", mail " + (MD.mail ? "read" : "-"));
+  renderHome();
 }
 
 async function refreshPersonal(){
@@ -1591,12 +1695,6 @@ function startMyDay(acct){
   return r;
 }
 
-function mdPrivacy(on){
-  const g = $("#mdgrid"), b = $("#mdhide");
-  if (g) g.classList.toggle("priv", on);
-  if (b){ b.textContent = on ? "Show details" : "Hide details"; b.setAttribute("aria-pressed", on ? "true" : "false"); }
-  try { localStorage.setItem("bh.mdpriv", on ? "1" : "0"); } catch(_) {}
-}
 
 /* ============ boot ============ */
 let pipelinePeople = null;
@@ -1776,6 +1874,7 @@ async function spResolve(fresh){
 }
 
 async function main(){
+  try { const c = JSON.parse(localStorage.getItem("bh.acts") || "null"); if (Array.isArray(c) && c.length) renderActions(c); } catch(_) {}
   $("#greet").textContent = greeting();
   paintClock();
   setInterval(paintClock, 15000);
@@ -1865,7 +1964,7 @@ async function main(){
 
   /* job title and office under the name, from the profile User.Read already covers */
   /* profile, group overage and the site lookup do not depend on each other (4 Nov 2026) */
-  const meP  = graph("/me?$select=displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
+  const meP  = graph("/me?$select=id,displayName,jobTitle,officeLocation,mail,userPrincipalName,department");
   const grpP = overage ? graph("/me/transitiveMemberOf/microsoft.graph.group?$select=id&$top=999") : null;
   const siteP = spResolve(false);
   const me = await meP;
@@ -1972,64 +2071,11 @@ async function main(){
   ]);
   try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
   try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
-  renderMyDay();   /* the Outlook half renders itself whenever it lands; the desks do not wait for it */
+  H.dashSite = siteId;
+  /* the home reads its own files and draws itself as they land; nothing below waits for it */
+  homeLoad(me.body, myGroups, links && links.site).catch(e => log("home", "failed " + ((e && e.stack) || e)));
+  renderMyDay();
   void personal;
-
-  /* ---- the desks ---- */
-  const host = $("#tiles");
-  host.innerHTML = "";
-  for (const desk of DESKS){
-    const allowed = !desk.group || myGroups.has(desk.group);
-    if (!allowed){ host.append(lockedTile(desk)); log("tile " + desk.key, "locked"); continue; }
-
-    let big = "\u2014", blurb = desk.blurb, msg = "";
-    if (desk.library && siteId){
-      const driveId = drives[desk.library];
-      const f = driveId ? await (deskReads[desk.key] || graphRaw("/drives/" + driveId + "/root:/" + desk.file + ":/content")) : { ok: false, status: "no library" };
-      if (f.ok){
-        try {
-          const data = JSON.parse(f.text);
-          big = n0(desk.count(data));
-          if (desk.blurbFor) blurb = desk.blurbFor(data);
-          log("tile " + desk.key, desk.file + " read");
-        } catch (e) {
-          if (!desk.quiet){ big = chip("bad", "bad file"); msg = esc(desk.file) + " is not valid JSON."; }
-          log("tile " + desk.key, desk.file + " parse failed");
-        }
-      } else if (desk.quiet){
-        log("tile " + desk.key, desk.file + " HTTP " + f.status + " (shown as a dash)");
-      } else if (f.status === "no library"){
-        big = chip("bad", "no library");
-        msg = 'No document library called <span class="mono">' + esc(desk.library) + '</span> on the site.';
-        log("tile " + desk.key, "library missing");
-      } else if (f.status === 403){
-        big = chip("bad", "403");
-        msg = 'You are in <span class="mono">' + esc(desk.groupName) + '</span> but SharePoint denied the read. ' +
-              'The group has not been granted on the <span class="mono">' + esc(desk.library) + '</span> library.';
-        log("tile " + desk.key, "403 \u2014 Entra membership without a SharePoint grant");
-      } else if (f.status === 404){
-        big = chip("warn", "no data");
-        msg = esc(desk.file) + ' has not been uploaded to <span class="mono">' + esc(desk.library) + '</span> yet.';
-        log("tile " + desk.key, desk.file + " 404");
-      } else {
-        big = chip("bad", "HTTP " + f.status);
-        log("tile " + desk.key, "HTTP " + f.status);
-      }
-    }
-    const el = document.createElement("article");
-    el.className = "tile";
-    el.dataset.find = (desk.title + " " + desk.blurb + " " + (desk.audience || desk.groupName || "")).replace(/&amp;/g, "&").toLowerCase();
-    el.innerHTML =
-      '<h3>' + desk.title + '</h3>' +
-      (/bh-chip/.test(big) ? '<div class="big">' + big + '</div>' : '') +
-      '<p>' + esc(blurb) + '</p>' +
-      (msg ? '<p class="msg">' + msg + '</p>' : '') +
-      (desk.links ? '<div class="sublinks">' + desk.links.map(l => '<a href="' + esc(l.href) + '">' + l.label + '</a>').join("") + '</div>' : '') +
-      '<div class="foot"><span class="bh-chip">' + esc(desk.audience || desk.groupName) + '</span>' +
-      '<a class="go" href="' + esc(desk.href) + '"' + (desk.external ? ' rel="noopener"' : '') +
-      ' aria-label="Open ' + desk.title + '">Open</a></div>';
-    host.append(el);
-  }
 
   $("#asof").textContent = "Read " + new Date().toLocaleString("en-US") + ".";
   applyFilter();
@@ -2111,9 +2157,8 @@ function lockedTile(desk, why){
 }
 
 function renderDesksUnavailable(){
-  const host = $("#tiles");
-  host.innerHTML = "";
-  DESKS.forEach(desk => host.append(lockedTile(desk, "Sign-in has to succeed before this can open.")));
+  if (!H.role) H.role = "office";
+  renderDesks();
 }
 
 /* ============ folding sections (4 Nov 2026) ============ */
@@ -2150,11 +2195,524 @@ $("#apptabs").addEventListener("click", e => {
   applyFilter();
 });
 
+
+/* ============ role-based home (12 Nov 2026) ============
+   One page, four views: project managers, Accounting, the office, leadership.
+   The view is picked automatically (pickRole). Each "Today for you" card is built
+   only from a file or list the page can actually read; a card whose source cannot
+   be read is left off, never filled in. The numbers in HOME_RULES are the Job Page's
+   JP_RULES, so a job flagged here is flagged there. Cost check (agreed 12 Nov):
+   projected cost up more than $25,000 between the last two projection periods
+   (final revision of each, by its label) and not matched by contract growth. */
+const HOME_RULES = { costUp: 25000, underBilledPct: 0.02, underBilledMin: 50000, ownerCoDays: 30, ownerCoLeader: 50000,
+  buyoutDurationPct: 0.25, buyoutNtpDays: 60, buyoutLeaderDays: 30, rfiSoonDays: 8, expireDays: 30, ideaDays: 14 };
+/* who sees which view when the rules would pick wrong; links.json site.roles adds to this */
+const ROLE_OVERRIDE = { "tiffany.blackmon@baileyharris.com": "office" };
+const ROLE_LABEL = { pm: "project managers", acct: "Accounting", office: "the office", exec: "leadership" };
+const EXEC_TITLE = /\b(president|ceo|coo|cfo|cio|chief|vice president|vp)\b/i;
+const PM_TITLE = /\b(project manager|project executive|assistant project manager)\b/i;
+const ACCT_TITLE = /\b(accountant|accounting|controller|payroll|accounts payable|bookkeep)/i;
+const PM_ROLE = /^(project manager|project management team)$/i;
+const H = { role: null, why: "", me: null, email: "", groups: new Set(), cache: {}, mine: [], P: {}, CE: {}, costs: {},
+  tasks: undefined, ideas: undefined, ready: false, siteRoles: {} };
+
+const money = v => v == null || isNaN(v) ? "—" : (v < 0 ? "-$" : "$") + Math.round(Math.abs(v)).toLocaleString("en-US");
+const moneyK = v => { if (v == null || isNaN(v)) return "—"; const a = Math.abs(v), s = v < 0 ? "-" : "";
+  return a >= 1e6 ? s + "$" + (a / 1e6).toFixed(1) + "M" : a >= 1e4 ? s + "$" + Math.round(a / 1e3) + "K" : s + "$" + Math.round(a).toLocaleString("en-US"); };
+const numv = v => { const n = Number(v); return isFinite(n) ? n : 0; };
+const dayOf = d => { if (!d) return null; const t = new Date(String(d).slice(0, 10) + "T12:00:00"); return isNaN(t) ? null : t; };
+const fmtDay = d => d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+const plural = (n, w, p) => n + " " + (n === 1 ? w : (p || w + "s"));
+const isActive = r => r && (r.group ? r.group === "active" : !/warranty|closed|complete|bid|lost/i.test(String(r.stage || "")));
+
+function myPmJobs(email){
+  if (!projRows || !email) return [];
+  return projRows.filter(r => isActive(r) && !/\bFY\s?\d{2,4}\b/i.test((r.project || "") + " " + (r.project_number || "")) &&
+    (r.team || []).some(t => String(t.email || "").trim().toLowerCase() === email && PM_ROLE.test(String(t.role || "").trim())))
+    .map(r => String(r.project_number));
+}
+
+function pickRole(me, email){
+  const set = (H.siteRoles && H.siteRoles[email]) || ROLE_OVERRIDE[email];
+  if (set && ROLE_LABEL[set]) return [set, "set for this person"];
+  const t = String((me && me.jobTitle) || ""), d = String((me && me.department) || "").trim().toLowerCase();
+  if (EXEC_TITLE.test(t) && !/project executive/i.test(t)) return ["exec", "job title “" + t + "”"];
+  if (d === "executive") return ["exec", "department “" + d + "”"];
+  if (/^accounting/.test(d)) return ["acct", "department “" + d + "”"];
+  if (ACCT_TITLE.test(t)) return ["acct", "job title “" + t + "”"];
+  const n = myPmJobs(email).length;
+  if (n) return ["pm", "Project Manager or PM Team on " + plural(n, "active job") + " in Procore"];
+  if (PM_TITLE.test(t)) return ["pm", "job title “" + t + "”"];
+  return ["office", "no other view matched"];
+}
+
+/* a file the pipelines write to Resources > Compliance Dashboard, read once */
+async function resJson(name){
+  if (name in H.cache) return H.cache[name];
+  H.cache[name] = null;
+  if (!projSiteId){ log("home", name + ": Resources site not resolved"); return null; }
+  const p = ["Compliance Dashboard"].concat(name.split("/")).map(encodeURIComponent).join("/");
+  const f = await graphRaw("/sites/" + projSiteId + "/drive/root:/" + p + ":/content").catch(() => ({ ok: false, status: "network" }));
+  if (f.ok){ try { H.cache[name] = JSON.parse(f.text); } catch(_) { log("home", name + " parse failed"); } }
+  else log("home", name + " HTTP " + f.status);
+  return H.cache[name];
+}
+async function inBatches(list, n, fn){ for (let i = 0; i < list.length; i += n) await Promise.all(list.slice(i, i + n).map(fn)); }
+
+/* ---------- projected cost movement between the last two projection periods ---------- */
+const MONTHS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+function periodOf(s){
+  const lab = String(s.label || ""), m = lab.toLowerCase().match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/);
+  const made = String(s.month || "").match(/^(\d{4})-(\d{2})/);
+  const y = lab.match(/\b(20\d\d)\b/);
+  let mi, yr;
+  if (m){ mi = MONTHS.findIndex(x => x.startsWith(m[1]));
+    yr = y ? Number(y[1]) : made ? Number(made[1]) - (mi > Number(made[2]) - 1 ? 1 : 0) : null; }
+  else if (made){ mi = Number(made[2]) - 1; yr = Number(made[1]); }
+  if (mi == null || mi < 0 || yr == null) return null;
+  const rv = lab.match(/\bR\s*(\d+)\b/i);
+  return { key: yr * 12 + mi, ym: yr + "-" + String(mi + 1).padStart(2, "0"), rev: rv ? Number(rv[1]) : 0 };
+}
+const eacOf = rows => Object.values(rows || {}).reduce((t, v) => t + numv(Array.isArray(v) ? v[3] : 0), 0);
+function costMove(job, f, hist){
+  const snaps = (f && Array.isArray(f.snapshots)) ? f.snapshots : [];
+  const best = {};
+  snaps.forEach((s, i) => { const p = periodOf(s); if (!p || !s.rows) return;
+    const b = best[p.key]; if (!b || p.rev > b.p.rev || (p.rev === b.p.rev && i > b.i)) best[p.key] = { s, p, i }; });
+  const keys = Object.keys(best).map(Number).sort((a, b) => a - b);
+  if (keys.length < 2) return null;
+  const A = best[keys[keys.length - 2]], B = best[keys[keys.length - 1]];
+  const from = eacOf(A.s.rows), to = eacOf(B.s.rows);
+  const codes = Array.from(new Set(Object.keys(A.s.rows).concat(Object.keys(B.s.rows))))
+    .map(c => [String(c).replace(/^[\w.-]+\s+-\s+/, ""), numv((B.s.rows[c] || [])[3]) - numv((A.s.rows[c] || [])[3])])
+    .filter(x => Math.abs(x[1]) >= 1);
+  let contractUp = null;
+  const H2 = hist && hist.snapshots;
+  if (H2){ const row = ym => { const s = H2[ym]; const j = s && (s.jobs || []).find(x => String(x.job_code || x.job_no) === job); return j && j.contract != null ? numv(j.contract) : null; };
+    const a = row(A.p.ym), b = row(B.p.ym); if (a != null && b != null) contractUp = b - a; }
+  return { fromLabel: A.s.label || A.p.ym, toLabel: B.s.label || B.p.ym, from, to, delta: to - from, contractUp,
+    up: codes.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3),
+    down: codes.filter(x => x[1] < 0).sort((a, b) => a[1] - b[1]).slice(0, 3) };
+}
+const uncovered = m => m ? m.delta - Math.max(0, m.contractUp || 0) : 0;
+
+/* ---------- what is wrong on one job ---------- */
+function jobChecks(r){
+  const job = String(r.project_number), out = [], today = new Date();
+  const add = (k, sev, txt, decide, leader) => out.push({ k, sev, txt, decide: !!decide, leader: !!leader });
+  if (r.projected_margin != null && numv(r.projected_cost) && numv(r.projected_margin) < 0)
+    add("loss", "bad", "projected loss " + money(-numv(r.projected_margin)), true, true);
+  const m = H.costs[job];
+  if (m && uncovered(m) > HOME_RULES.costUp)
+    add("cost", "bad", "projected cost up " + money(m.delta) + " since " + m.fromLabel + (m.contractUp ? " (contract up " + money(m.contractUp) + ")" : ""), true, true);
+  const ce = H.CE[job];
+  if (ce && ce.ce_over_under_billed != null){
+    const ou = numv(ce.ce_over_under_billed), c = numv(ce.ce_contract) || numv(r.revised_contract) || numv(r.contract_amount);
+    const lim = Math.max(HOME_RULES.underBilledPct * c, HOME_RULES.underBilledMin);
+    if (ou < -lim) add("bill", "bad", "under-billed " + money(-ou), true, true);
+  }
+  const cl = H.cache["commitment_lines.json"], jc = cl && cl.projects && cl.projects[job];
+  const st = dayOf(r.start_date), cp = dayOf(r.completion_date);
+  if (jc && st && cp && cp > st){
+    const due = new Date(Math.min(st.getTime() + HOME_RULES.buyoutDurationPct * (cp - st), st.getTime() + HOME_RULES.buyoutNtpDays * 864e5));
+    const subs = (jc.commitments || []).filter(c => c.kind !== "PO" && !/draft|void|terminat/i.test(String(c.status || "")));
+    const open = subs.filter(c => !c.executed), late = Math.floor((today - due) / 864e5);
+    if (late > 0 && (open.length || !subs.length))
+      add("buy", "bad", open.length ? open.length + " of " + plural(subs.length, "subcontract") + " not executed" : "no subcontracts yet, past PAS date", true, late > HOME_RULES.buyoutLeaderDays);
+  }
+  const chg = H.cache["changes_data.json"], c = chg && chg.projects && chg.projects[job];
+  if (c){ const old = [].concat(c.pcco || [], c.pco || []).filter(x => x.days_open != null && x.days_open > HOME_RULES.ownerCoDays);
+    if (old.length) add("co", "warn", plural(old.length, "owner change order") + " over " + HOME_RULES.ownerCoDays + " days", false,
+      old.some(x => Math.abs(numv(x.amount)) > HOME_RULES.ownerCoLeader)); }
+  if (r.compliance && numv(r.compliance.noncompliant) > 0) add("comp", "bad", plural(numv(r.compliance.noncompliant), "non-compliant trade partner"));
+  if (cp && cp < today && isActive(r)) add("late", "warn", "completion date passed");
+  const od = (r.rfis_open_list || []).filter(x => { const d = dayOf(x.due); return d && d < today; }).length;
+  if (od) add("rfi", "warn", plural(od, "overdue RFI"));
+  return out;
+}
+
+/* ---------- loading, per view ---------- */
+async function homeLoad(me, groups, siteLinks){
+  H.me = me || {}; H.groups = groups || new Set(); H.siteRoles = (siteLinks && siteLinks.roles) || {};
+  H.email = String(H.me.mail || H.me.userPrincipalName || myEmail || "").trim().toLowerCase();
+  [H.role, H.why] = pickRole(H.me, H.email);
+  log("home view", H.role + " (" + H.why + ")");
+  H.mine = myPmJobs(H.email);
+  renderHome();
+  const want = { pm: ["projects_data.json", "ce_data.json", "changes_data.json", "commitment_lines.json", "cost_history.json"],
+    exec: ["projects_data.json", "ce_data.json", "changes_data.json", "commitment_lines.json", "cost_history.json"],
+    acct: ["compliance_data.json", "changes_data.json"], office: [] }[H.role];
+  await Promise.all(want.map(resJson));
+  const pd = H.cache["projects_data.json"], ce = H.cache["ce_data.json"];
+  (pd && pd.projects || []).forEach(r => { H.P[String(r.project_number)] = r; });
+  (ce && ce.jobs || []).forEach(j => { H.CE[String(j.job_code)] = j; });
+  if (H.role === "pm" || H.role === "exec"){
+    const jobs = H.role === "pm" ? H.mine.filter(j => H.P[j]) : Object.values(H.P).filter(isActive).map(r => String(r.project_number));
+    await inBatches(jobs, 6, async j => { const f = await resJson("snapshot_lines/" + j + ".json");
+      try { H.costs[j] = costMove(j, f, H.cache["cost_history.json"]); } catch(e){ log("home cost " + j, e.message); } });
+    log("home", Object.values(H.costs).filter(Boolean).length + " of " + jobs.length + " jobs with two projection periods");
+  }
+  if (H.role === "office") await loadTaskDesk();
+  H.ready = true;
+  renderHome();
+}
+
+/* the Task Desk's own SharePoint list; only items the signed-in person created */
+async function loadTaskDesk(){
+  H.tasks = null;
+  const ds = H.dashSite; if (!ds) return;
+  const out = []; let url = "/sites/" + ds + "/lists/Tasks/items?$expand=fields($select=Title,Payload)&$select=id,createdBy&$top=999", pages = 0;
+  while (url && pages < 10){
+    const r = await graph(url);
+    if (!r.ok){ log("home task desk", "HTTP " + r.status); return; }
+    (r.body.value || []).forEach(x => { const by = x.createdBy && x.createdBy.user;
+      if (!by || !(by.id === H.me.id || String(by.email || "").toLowerCase() === H.email)) return;
+      try { const d = JSON.parse((x.fields || {}).Payload || "null"); if (d && d.status !== "done") out.push(d); } catch(_) {} });
+    const nx = r.body["@odata.nextLink"]; url = nx ? nx.replace("https://graph.microsoft.com/v1.0", "") : null; pages++;
+  }
+  H.tasks = out;
+  log("home task desk", out.length + " open");
+}
+async function loadIdeas(){
+  H.ideas = null;
+  if (!myTok) return;
+  const since = new Date(Date.now() - HOME_RULES.ideaDays * 864e5).toISOString();
+  const r = await gMy("/me/messages?$filter=" + encodeURIComponent("receivedDateTime ge " + since + " and startswith(subject,'[BH roadmap idea]')") +
+    "&$orderby=receivedDateTime%20desc&$top=20&$select=subject,receivedDateTime,webLink");
+  if (!r.ok){ log("home ideas", "HTTP " + r.status); return; }
+  H.ideas = (r.body.value || []).map(m => ({ t: String(m.subject || "").replace(/^\[BH roadmap idea\]\s*/i, ""), at: m.receivedDateTime }));
+  renderHome();
+}
+
+/* ---------- the AP list, by Desk stage (one row per document, latest revision) ---------- */
+function apHeads(){
+  if (!apRowsAll) return null;
+  const g = {};
+  apRowsAll.forEach(r => { const k = String(r.f.OriginalTitle || r.f.Title || "").trim(); (g[k] = g[k] || []).push(r); });
+  return Object.values(g).map(x => x.sort((a, b) => (numv(a.f.Revision || 1) - numv(b.f.Revision || 1)) || (a.id - b.id))[x.length - 1]);
+}
+
+/* ---------- cards ---------- */
+const card = (o) => o;   /* {l, n, s, li[], go, href, sev} */
+function cardHtml(c, i){
+  const ext = /^https?:/i.test(c.href || "") && !String(c.href).startsWith(location.origin);
+  return '<a class="h-tc ' + (i === 0 ? "first" : (c.sev || "")) + '" href="' + esc(safeUrl(c.href) || "#") + '"' + (ext ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+    '<div class="lbl">' + esc(c.l) + '</div><div class="n"><b>' + n0(c.n) + '</b><span>' + esc(c.s || "") + '</span></div>' +
+    '<ul>' + (c.li || []).slice(0, 4).map(x => '<li>' + x + '</li>').join("") + '</ul>' +
+    '<div class="go"><span>' + esc(c.go) + '</span><span>&rarr;</span></div></a>';
+}
+const more = (arr, k, txt) => arr.length > k ? ["+" + (arr.length - k) + " " + (txt || "more")] : [];
+
+function cardsCommon(){
+  const out = [];
+  if (apReviewCount > 0) out.push(card({ l: "Invoices to code and approve", n: apReviewCount, s: "pay apps and invoices routed to you",
+    li: (apHeads() || []).filter(r => r.f.Status === "with PM" && String(r.f.AssignedApprover || "").trim().toLowerCase() === H.email).slice(0, 3).map(r => esc(r.f.Title || "")),
+    go: "AP Desk, PM review", href: "/ap/#review", sev: "bad" }));
+  return out;
+}
+function cardTodo(){
+  const ts = MD.tasks; if (!ts) return null;
+  const t = todayYmd(), due = ts.filter(x => x.due && x.due <= t);
+  if (!due.length) return null;
+  const over = due.filter(x => x.due < t).length;
+  return card({ l: "To Do tasks", n: due.length, s: "due today" + (over ? " · " + over + " overdue" : ""),
+    li: due.slice(0, 3).map(x => (x.due < t ? '<span class="h-chip bad">Overdue</span>' : '') + esc(x.title)).concat(more(due, 3)),
+    go: "Microsoft To Do", href: OUTLOOK.todo, sev: over ? "bad" : "warn" });
+}
+
+function cardsPM(){
+  const out = cardsCommon(), jobs = H.mine.map(j => H.P[j] || (projRows || []).find(r => String(r.project_number) === j)).filter(Boolean);
+  const w = MD.waiting;
+  if (w && w.read){ const bad = w.bad || [];
+    out.push(card({ l: "Non-compliant trade partners", n: bad.length, s: "on your jobs · payment on hold",
+      li: bad.slice(0, 3).map(r => esc((r.vendor || "") + " · " + (r.project_number || ""))).concat(more(bad, 3, "more on the Compliance Desk")),
+      go: "Compliance Desk", href: "https://compliance.baileyharris.com", sev: "bad", zero: "no non-compliant trade partners" })); }
+  if (H.cache["projects_data.json"]){
+    const dec = jobs.map(r => [r, jobChecks(r).filter(x => x.decide)]).filter(x => x[1].length);
+    out.push(card({ l: "Jobs needing a decision", n: dec.length, s: "of your " + plural(jobs.length, "active job"),
+      li: dec.slice(0, 3).map(([r, a]) => esc(r.project_number + " · " + a.map(x => x.txt).join("; "))).concat(more(dec, 3)),
+      go: "Job Page", href: "/job/" + (dec[0] ? "?job=" + encodeURIComponent(dec[0][0].project_number) : ""), sev: "bad", zero: "no job needs a decision" }));
+  }
+  const chg = H.cache["changes_data.json"];
+  if (chg){
+    const items = [];
+    H.mine.forEach(j => { const c = chg.projects && chg.projects[j]; if (!c) return;
+      [["PCCO", c.pcco], ["PCO", c.pco]].forEach(([k, a]) => (a || []).forEach(x => { if (x.days_open != null && x.days_open > HOME_RULES.ownerCoDays) items.push(Object.assign({ job: j, k }, x)); })); });
+    items.sort((a, b) => b.days_open - a.days_open);
+    out.push(card({ l: "Owner change orders", n: items.length, s: "waiting over " + HOME_RULES.ownerCoDays + " days · " + money(items.reduce((t, x) => t + numv(x.amount), 0)),
+      li: items.slice(0, 3).map(x => esc(x.job + " · " + x.k + " #" + (x.number || "") + " " + (x.title || "") + " · " + money(numv(x.amount)) + " · " + x.days_open + " days")),
+      go: "Job Page, open items", href: "/job/" + (items[0] ? "?job=" + encodeURIComponent(items[0].job) + "#open" : ""), sev: "", zero: "no owner change orders over " + HOME_RULES.ownerCoDays + " days" }));
+  }
+  if (H.cache["projects_data.json"]){
+    const today = dayOf(todayYmd()), soonEnd = new Date(today.getTime() + HOME_RULES.rfiSoonDays * 864e5), over = [], soon = [];
+    jobs.forEach(r => (r.rfis_open_list || []).forEach(x => { const d = dayOf(x.due); if (!d) return;
+      const o = Object.assign({ job: r.project_number, d }, x); if (d < today) over.push(o); else if (d <= soonEnd) soon.push(o); }));
+    over.sort((a, b) => a.d - b.d); soon.sort((a, b) => a.d - b.d);
+    const show = over.concat(soon), n = over.length || soon.length;
+    out.push(card({ l: "RFIs", n, s: over.length ? "overdue" + (soon.length ? " · " + soon.length + " more due in " + HOME_RULES.rfiSoonDays + " days" : "") : "due in the next " + HOME_RULES.rfiSoonDays + " days",
+      li: show.slice(0, 3).map(x => esc("RFI " + (x.number || "") + " · " + (x.subject || "") + (x.ball ? " · " + x.ball : "") + " · due " + x.d.toLocaleDateString("en-US", { month: "short", day: "numeric" }))),
+      go: "Procore RFIs", href: (show[0] && safeUrl(show[0].link)) || "https://app.procore.com", sev: over.length ? "warn" : "", zero: "no RFIs overdue or due this week" }));
+  }
+  const today = new Date(), late = jobs.filter(r => { const d = dayOf(r.completion_date); return d && d < today; });
+  out.push(card({ l: "Completion dates passed", n: late.length, s: "jobs still active past completion",
+    li: late.slice(0, 3).map(r => esc(r.project_number + " · " + fmtDay(dayOf(r.completion_date)))),
+    go: "Procore, update dates", href: "https://app.procore.com", sev: "warn", zero: "no completion dates passed" }));
+  const td = cardTodo(); if (td) out.push(td);
+  return out;
+}
+
+function cardsAcct(){
+  const out = [], heads = apHeads();
+  if (heads){
+    const by = st => heads.filter(r => (AP_STAGE[r.f.Status] || "Intake") === st);
+    const intake = H.apIntake || by("Intake"), ready = by("Ready for entry"), fix = by("Correction needed"), pm = by("PM review");
+    out.push(card({ l: "AP intake", n: intake.length, s: "not yet routed", li: intake.slice(0, 3).map(r => esc(r.f.Title || "")).concat(more(intake, 3)),
+      go: "AP Desk, intake", href: "/ap/#intake", sev: "", zero: "AP intake is empty" }));
+    out.push(card({ l: "Ready for entry in CE", n: ready.length, s: "approved by the PM", li: ready.slice(0, 3).map(r => esc(r.f.Title || "")).concat(more(ready, 3)),
+      go: "AP Desk, ready for entry", href: "/ap/#ready", sev: "", zero: "nothing waiting for entry" }));
+    out.push(card({ l: "Corrections needed", n: fix.length, s: "sent back by PMs", li: fix.slice(0, 3).map(r => esc(r.f.Title || "")).concat(more(fix, 3)),
+      go: "AP Desk, corrections", href: "/ap/#corrections", sev: "warn", zero: "no corrections waiting" }));
+    out.push(card({ l: "With project managers", n: pm.length, s: "waiting on PM review", li: pm.slice(0, 3).map(r => esc((r.f.Title || "") + (r.f.AssignedApprover ? " · " + String(r.f.AssignedApprover).split("@")[0] : ""))).concat(more(pm, 3)),
+      go: "AP Desk, PM review", href: "/ap/#review", sev: "", zero: "nothing with the PMs" }));
+  }
+  const comp = H.cache["compliance_data.json"];
+  if (comp){
+    const seen = new Set(), hold = (comp.rows || []).filter(r => String(r.contract_active || "Yes") === "Yes" && r.status === "Non-Compliant" && r.payment_ok !== true)
+      .filter(r => { const k = (r.vendor || "") + "|" + (r.project_number || ""); if (seen.has(k)) return false; seen.add(k); return true; });
+    out.push(card({ l: "Payment holds", n: hold.length, s: "non-compliant trade partners on active contracts",
+      li: hold.slice(0, 3).map(r => esc((r.vendor || "") + " · " + (r.project_number || ""))).concat(more(hold, 3)),
+      go: "Compliance Desk", href: "https://compliance.baileyharris.com", sev: "bad", zero: "no payment holds" }));
+  }
+  const chg = H.cache["changes_data.json"];
+  if (chg && chg.projects){
+    const rec = []; Object.entries(chg.projects).forEach(([j, c]) => (c.recon || []).forEach(x => rec.push(Object.assign({ job: j }, x))));
+    out.push(card({ l: "Procore and CE out of step", n: rec.length, s: "change items to reconcile",
+      li: rec.slice(0, 3).map(x => esc(x.job + " · " + [x.number, x.title || x.issue || x.note].filter(Boolean).join(" "))).concat(more(rec, 3)),
+      go: "Project Information, Sync", href: "https://projects.baileyharris.com", sev: "", zero: "Procore and CE agree on change items" }));
+  }
+  const td = cardTodo(); if (td) out.push(td);
+  return cardsCommon().concat(out);
+}
+
+function cardsOffice(){
+  const out = [], t = todayYmd();
+  if (Array.isArray(H.tasks)){
+    const due = H.tasks.filter(x => x.due && x.due <= t && x.bucket !== "renew"), over = due.filter(x => x.due < t);
+    due.sort((a, b) => a.due.localeCompare(b.due));
+    out.push(card({ l: "My tasks", n: due.length, s: "due today" + (over.length ? " · " + over.length + " overdue" : ""),
+      li: due.slice(0, 3).map(x => (x.due < t ? '<span class="h-chip bad">Overdue</span>' : '') + esc(x.title || "")).concat(more(due, 3)),
+      go: "Task Desk", href: "/tasks/", sev: over.length ? "bad" : "", zero: "no tasks due today" }));
+    const lim = ymd(new Date(Date.now() + HOME_RULES.expireDays * 864e5));
+    const exp = H.tasks.filter(x => (x.bucket === "renew" || /^(renew|expired):/i.test(x.title || "")) && x.due && x.due <= lim).sort((a, b) => a.due.localeCompare(b.due));
+    out.push(card({ l: "About to expire", n: exp.length, s: "in the next " + HOME_RULES.expireDays + " days",
+      li: exp.slice(0, 3).map(x => esc(String(x.title || "").replace(/^(renew|expired):\s*/i, "") + " · " + new Date(x.due + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }))).concat(more(exp, 3)),
+      go: "Task Desk, renewals", href: "/tasks/", sev: "warn", zero: "nothing expiring in " + HOME_RULES.expireDays + " days" }));
+  } else { const td = cardTodo(); if (td) out.push(td); }
+  if (apQueueCount > 0) out.push(card({ l: "AP intake", n: apQueueCount, s: "not yet routed", li: ["You are on the Accounting list"], go: "AP Desk, intake", href: "/ap/#intake", sev: "" }));
+  if (Array.isArray(H.ideas)) out.push(card({ l: "Roadmap ideas", n: H.ideas.length, s: "suggested in the last " + HOME_RULES.ideaDays + " days",
+    li: H.ideas.slice(0, 3).map(x => esc(x.t)).concat(more(H.ideas, 3)), go: "AI roadmap", href: "/roadmap/", sev: "", zero: "no new roadmap ideas" }));
+  if (MD.mail && MD.mail.flagOk){ const fl = MD.mail.flagged || [];
+    out.push(card({ l: "Flagged email", n: fl.length, s: "flagged in Outlook", li: fl.slice(0, 3).map(x => esc(x.subject + (x.from ? " · " + x.from : ""))).concat(more(fl, 3)),
+      go: "Outlook", href: OUTLOOK.mail, sev: "", zero: "no flagged email" })); }
+  if (typeof TEAM !== "undefined" && TEAM){ const n = (TEAM.cele || []).length + (TEAM.upd || []).length;
+    out.push(card({ l: "Team updates", n, s: "birthdays, anniversaries and news", li: (TEAM.cele || []).concat(TEAM.upd || []).slice(0, 3).map(x => esc(x.name + (x.kind ? " · " + x.kind : ""))),
+      go: "Team drawer", href: "#team", sev: "", zero: "no team updates", team: true })); }
+  return cardsCommon().concat(out);
+}
+
+function cardsExec(){
+  const out = cardsCommon(), act = Object.values(H.P).filter(isActive);
+  if (H.cache["projects_data.json"]){
+    const dec = act.map(r => [r, jobChecks(r).filter(x => x.decide && x.leader)]).filter(x => x[1].length);
+    out.unshift(card({ l: "Jobs needing a decision", n: dec.length, s: "of " + plural(act.length, "active job"),
+      li: dec.slice(0, 3).map(([r, a]) => esc(r.project_number + " · " + a.map(x => x.txt).join("; "))).concat(more(dec, 3)),
+      go: "Job Page", href: "/job/" + (dec[0] ? "?job=" + encodeURIComponent(dec[0][0].project_number) : ""), sev: "bad", zero: "no job needs a leadership decision" }));
+    const ub = act.map(r => [r, H.CE[String(r.project_number)]]).filter(([r, ce]) => { if (!ce || ce.ce_over_under_billed == null) return false;
+      const c = numv(ce.ce_contract) || numv(r.revised_contract); return numv(ce.ce_over_under_billed) < -Math.max(HOME_RULES.underBilledPct * c, HOME_RULES.underBilledMin); })
+      .sort((a, b) => numv(a[1].ce_over_under_billed) - numv(b[1].ce_over_under_billed));
+    out.push(card({ l: "Under-billed", n: ub.length, s: "over the limit · " + money(-ub.reduce((t, x) => t + numv(x[1].ce_over_under_billed), 0)),
+      li: ub.slice(0, 3).map(([r, ce]) => esc(r.project_number + " · " + money(-numv(ce.ce_over_under_billed)))).concat(more(ub, 3)),
+      go: "Project Information, WIP", href: "https://projects.baileyharris.com", sev: "bad", zero: "no job under-billed over the limit" }));
+  }
+  const chg = H.cache["changes_data.json"];
+  if (chg && chg.projects){
+    const big = []; Object.entries(chg.projects).forEach(([j, c]) => [["PCCO", c.pcco], ["PCO", c.pco]].forEach(([k, a]) => (a || []).forEach(x => {
+      if (x.days_open != null && x.days_open > HOME_RULES.ownerCoDays && Math.abs(numv(x.amount)) > HOME_RULES.ownerCoLeader) big.push(Object.assign({ job: j, k }, x)); })));
+    big.sort((a, b) => numv(b.amount) - numv(a.amount));
+    out.push(card({ l: "Owner change orders over " + moneyK(HOME_RULES.ownerCoLeader), n: big.length, s: "waiting over " + HOME_RULES.ownerCoDays + " days · " + money(big.reduce((t, x) => t + numv(x.amount), 0)),
+      li: big.slice(0, 3).map(x => esc(x.job + " · " + x.k + " #" + (x.number || "") + " · " + money(numv(x.amount)) + " · " + x.days_open + " days")).concat(more(big, 3)),
+      go: "Job Page, open items", href: "/job/" + (big[0] ? "?job=" + encodeURIComponent(big[0].job) + "#open" : ""), sev: "warn", zero: "no large owner change orders waiting" }));
+  }
+  if (H.cache["projects_data.json"]){
+    const noCe = act.filter(r => !H.CE[String(r.project_number)]), noPm = act.filter(r => !(r.team || []).some(t => PM_ROLE.test(String(t.role || "").trim()))), noDate = act.filter(r => !r.completion_date);
+    const n = new Set(noCe.concat(noPm, noDate)).size;
+    out.push(card({ l: "Data health", n, s: "active jobs with missing data",
+      li: [noCe.length ? plural(noCe.length, "job") + " with no CE match" : "", noPm.length ? plural(noPm.length, "job") + " with no PM in Procore" : "", noDate.length ? plural(noDate.length, "job") + " with no completion date" : ""].filter(Boolean),
+      go: "Project Information", href: "https://projects.baileyharris.com", sev: "", zero: "every active job has a CE match, a PM and a completion date" }));
+  }
+  const td = cardTodo(); if (td) out.push(td);
+  return out;
+}
+
+/* ---------- desks, apps and the extras under them ---------- */
+const DESK_LINKS = {
+  job: ["Job Page", "/job/", "Health, changes, money and buyout for one job at a time"],
+  ap: ["AP Desk", "/ap/", "Pay applications and invoices, intake to entry"],
+  comp: ["Compliance Desk", "https://compliance.baileyharris.com", "Trade partner COIs and coverage"],
+  proj: ["Project Information", "https://projects.baileyharris.com", "Every job: financials, WIP, projections and sync"],
+  precon: ["Precon Desk", "/precon/", "Price a job against what we have built"],
+  prequal: ["Prequal & Sub Rating", "/prequal/", "Trade partner ratings"],
+  tasks: ["Task Desk", "/tasks/", "Your work, your inbox, and what is about to expire"],
+  roadmap: ["AI roadmap", "/roadmap/", "Ideas, what is being built and what is live"],
+  controls: ["Controls desk", "", "WIP, projections, Procore-to-CE sync and data health"],
+  portfolio: ["Portfolio", "", "Every job: what needs a decision, backlog and fee"]
+};
+const ROLE_DESKS = {
+  pm: [["job", "new", "Health, changes, money and buyout for your jobs"], ["ap", "", "Code and approve the invoices routed to you"], ["comp", "", "Trade partner COIs on your jobs"]],
+  acct: [["ap", "", "Intake, routing, PM review and entry"], ["controls", "soon"], ["comp", "", "Holds and COIs on trade partners being paid"]],
+  office: [["tasks", ""], ["ap", "", "Intake and the Accounting queue"], ["roadmap", ""]],
+  exec: [["portfolio", "soon"], ["controls", "soon"], ["job", "new", "Drill into any one job"]]
+};
+const ROLE_APPS = {
+  pm: ["Procore", "DroneDeploy", "Bluebeam", "DocuSign", "Outlook", "Teams"],
+  acct: ["Spark", "ServisFirst", "Billy", "DocuSign", "Bamboo HR", "FieldEase"],
+  office: ["Entra admin", "Cloudflare", "GitHub", "Procore", "Mailchimp", "Outlook"],
+  exec: ["Procore", "Spark", "Power BI", "Outlook", "Teams"]
+};
+/* only apps with a known public sign-in page; anything else must come from links.json */
+const KNOWN_APPS = { "Outlook": "https://outlook.office.com/mail/", "Teams": "https://teams.microsoft.com", "Entra admin": "https://entra.microsoft.com",
+  "Cloudflare": "https://dash.cloudflare.com", "GitHub": "https://github.com", "Power BI": "https://app.powerbi.com", "Mailchimp": "https://login.mailchimp.com",
+  "Bluebeam": "https://studio.bluebeam.com", "Training & Resources": "https://" + SP_HOST + "/sites/Resources" };
+let APP_LIST = null;
+function deskLocked(k){ const d = DESKS.find(x => x.key === k); return !!(d && d.group && !H.groups.has(d.group)); }
+function renderDesks(){
+  const host = $("#tiles"); if (!host) return;
+  const role = H.role || "office";
+  host.innerHTML = (ROLE_DESKS[role] || []).map(([k, cls, blurb]) => {
+    const d = DESK_LINKS[k], soon = cls === "soon" || !d[1];
+    const ext = /^https?:/i.test(d[1]);
+    return (soon ? '<div class="h-dk soon"' : '<a class="h-dk ' + cls + '" href="' + esc(d[1]) + '"' + (ext ? ' rel="noopener"' : '')) +
+      ' data-find="' + esc((d[0] + " " + (blurb || d[2])).toLowerCase()) + '"><h3>' + esc(d[0]) + '</h3><p>' + esc(blurb || d[2]) + '</p><span class="go">' +
+      (soon ? "Coming next" : "Open &rarr;") + '</span>' + (soon ? '</div>' : '</a>');
+  }).join("");
+  $("#dsub").textContent = role === "office" ? "Picked for the office" : "Picked for " + ROLE_LABEL[role];
+  const all = ["ap", "comp", "job", "proj", "precon", "prequal", "tasks", "roadmap"];
+  $("#alld").innerHTML = "All desks: " + all.map(k => { const d = DESK_LINKS[k];
+    return deskLocked(k) ? '<span class="lk" title="Ask IT for access">' + esc(d[0]) + ' (no access)</span>'
+      : '<a href="' + esc(d[1]) + '">' + esc(d[0]) + '</a>'; }).join(" · ");
+}
+function renderPicked(){
+  const host = $("#picked"); if (!host) return;
+  const items = []; (APP_LIST && APP_LIST.groups || []).forEach(g => (g.items || []).forEach(i => items.push(i)));
+  const names = (ROLE_APPS[H.role || "office"] || []).concat(["Training & Resources"]);
+  const got = [], seen = new Set();
+  names.forEach(n => { const it = items.find(i => String(i.name || "").toLowerCase() === n.toLowerCase()) ||
+      items.find(i => String(i.name || "").toLowerCase().startsWith(n.toLowerCase()));
+    const raw = it ? it.url : KNOWN_APPS[n], u = raw ? safeUrl(raw) : null; if (!u || seen.has(u)) return; seen.add(u);
+    got.push('<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(n === "Training & Resources" ? "Training & Resources (SharePoint)" : (it ? it.name : n)) + '</a>'); });
+  host.innerHTML = got.join(""); host.hidden = !got.length;
+}
+
+function renderExtra(){
+  const el = $("#extra"); if (!el) return;
+  if (H.role === "pm" && H.cache["projects_data.json"] && H.mine.length){
+    const rows = H.mine.map(j => H.P[j]).filter(Boolean);
+    const notes = [];
+    const body = rows.map(r => {
+      const j = String(r.project_number), a = jobChecks(r), bad = a.length, cp = dayOf(r.completion_date), m = H.costs[j];
+      if (m) notes.push('<p class="h-note"><b>' + esc(j) + '</b> projected cost, ' + esc(m.fromLabel) + ' to ' + esc(m.toLabel) + ': ' + money(m.from) + ' to ' + money(m.to) + '.' +
+        (m.up.length ? ' Up: ' + m.up.map(x => esc(x[0]) + ' +' + money(x[1])).join(", ") + '.' : '') +
+        (m.down.length ? ' Down: ' + m.down.map(x => esc(x[0]) + ' −' + money(-x[1])).join(", ") + '.' : '') +
+        (m.contractUp != null ? ' Contract ' + (m.contractUp >= 0 ? 'up ' : 'down ') + money(Math.abs(m.contractUp)) + ' in the same period.' : ' Contract change for the period not on file.') + '</p>');
+      const cell = !m ? '<td class="r nr">not read</td>' : '<td class="r ' + (m.delta > 0 ? 'up' : 'down') + '">' + (m.delta > 0 ? 'up ' : 'down ') + money(Math.abs(m.delta)) + '</td>';
+      return '<tr><td><a href="/job/?job=' + encodeURIComponent(j) + '"><b>' + esc(j) + '</b> ' + esc(r.project || "") + '</a></td>' +
+        '<td>' + (bad ? '<span class="h-chip bad" title="' + esc(a.map(x => x.txt).join("; ")) + '">' + bad + ' to act</span>' : '<span class="h-chip ok">OK</span>') + '</td>' +
+        '<td>' + (cp ? '<span class="h-chip' + (cp < new Date() ? ' warn' : '') + '">' + esc(fmtDay(cp)) + '</span>' : '—') + '</td>' +
+        '<td class="r">' + money(r.projected_margin) + '</td>' + cell + '</tr>';
+    }).join("");
+    el.innerHTML = '<div class="h-sh"><h2>My jobs</h2><span>the same checks as the Job Page</span><a href="/job/">Open Job Page &rarr;</a></div>' +
+      '<div class="h-jobswrap"><table class="h-jobs"><thead><tr><th>Job</th><th>To act on</th><th>Completion</th><th class="r">Projected fee</th><th class="r">Projected cost vs last projection</th></tr></thead><tbody>' +
+      body + '</tbody></table></div><div class="h-notes">' + notes.join("") + '</div>';
+    return;
+  }
+  if (H.role === "exec" && H.cache["projects_data.json"]){
+    const act = Object.values(H.P).filter(isActive);
+    const contract = act.reduce((t, r) => t + numv(r.revised_contract || r.contract_amount), 0);
+    const backlog = act.reduce((t, r) => t + numv(r.revised_contract || r.contract_amount) * (1 - Math.min(100, Math.max(0, numv(r.pct_complete))) / 100), 0);
+    const withM = act.filter(r => r.projected_margin != null && numv(r.revised_contract) > 0);
+    const fee = withM.reduce((t, r) => t + numv(r.projected_margin), 0), base = withM.reduce((t, r) => t + numv(r.revised_contract), 0);
+    const ceRows = act.map(r => H.CE[String(r.project_number)]).filter(x => x && x.ce_over_under_billed != null);
+    const net = ceRows.reduce((t, x) => t + numv(x.ce_over_under_billed), 0);
+    el.innerHTML = '<div class="h-sh"><h2>Portfolio</h2><span>active jobs, from Procore and ComputerEase</span><a href="https://projects.baileyharris.com">Project Information &rarr;</a></div>' +
+      '<div class="h-kpis"><div class="h-kpi"><div class="l">Contract value</div><div class="v">' + moneyK(contract) + '</div><div class="s">' + plural(act.length, "active job") + '</div></div>' +
+      '<div class="h-kpi"><div class="l">Backlog to earn</div><div class="v">' + moneyK(backlog) + '</div><div class="s">contract less percent complete</div></div>' +
+      '<div class="h-kpi"><div class="l">Projected fee</div><div class="v">' + (base ? (fee / base * 100).toFixed(1) + "%" : "—") + '</div><div class="s">' + moneyK(fee) + ', weighted across ' + plural(withM.length, "job") + '</div></div>' +
+      '<div class="h-kpi"><div class="l">Net billing</div><div class="v">' + (net < 0 ? "(" + moneyK(-net) + ")" : moneyK(net)) + '</div><div class="s">' + (net < 0 ? "under-billed overall" : "over-billed overall") + ', ' + plural(ceRows.length, "job") + ' in CE</div></div></div>';
+    return;
+  }
+  el.innerHTML = "";
+}
+
+/* ---------- meetings strip ---------- */
+function renderMeetings(){
+  const ul = $("#meet"), mc = $("#mc"); if (!ul) return;
+  if (MD.connect || MD.off){
+    mc.textContent = "–";
+    ul.innerHTML = MD.connect ? '<li class="none">Your meetings can show here.<button type="button" id="mdconnect">Connect Outlook</button></li>'
+      : '<li class="none">Meetings show here once IT turns on calendar access for the launcher.</li>';
+    const b = $("#mdconnect"); if (b) b.addEventListener("click", () => app.acquireTokenRedirect({ scopes: MY_SCOPES, account: myAcct }));
+    return;
+  }
+  if (!MD.cal) return;
+  const now = new Date(), ahead = MD.cal.filter(x => x.allDay || !(x.end && x.end <= now));
+  mc.textContent = ahead.length;
+  ul.innerHTML = ahead.length ? ahead.slice(0, 4).map(x => {
+    const live = !x.allDay && x.start && x.start <= now, j = x.join && safeUrl(x.join), l = safeUrl(x.link);
+    return '<li' + (live ? ' class="now"' : '') + '><span class="t">' + (x.allDay ? "All day" : live ? "Now" : esc(hm(x.start))) + '</span>' +
+      '<span class="s">' + (l ? '<a href="' + esc(l) + '" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">' + esc(x.subject) + '</a>' : esc(x.subject)) + '</span>' +
+      (j ? '<a class="j" href="' + esc(j) + '" target="_blank" rel="noopener noreferrer">Join</a>' : '') + '</li>';
+  }).join("") + (ahead.length > 4 ? '<li class="none">+' + (ahead.length - 4) + ' more</li>' : '')
+    : '<li class="none">' + (MD.cal.length ? "Nothing else on your calendar today." : "No meetings today.") + '</li>';
+}
+
+/* ---------- the whole home ---------- */
+function renderHome(){
+  try {
+    renderMeetings();
+    if (!H.role) return;
+    renderDesks(); renderPicked();
+    if (H.role === "office" && myTok && H.ideas === undefined){ H.ideas = null; loadIdeas().catch(e => log("home ideas", e.message)); }
+    const all = ({ pm: cardsPM, acct: cardsAcct, office: cardsOffice, exec: cardsExec }[H.role])();
+    const live = all.filter(c => c.n > 0), clear = all.filter(c => !(c.n > 0) && c.zero);
+    const host = $("#tcards");
+    if (live.length) host.innerHTML = live.map(cardHtml).join("");
+    else host.innerHTML = '<div class="h-wait">' + (H.ready ? "Nothing is waiting on you right now." : "Reading what is waiting on you…") + '</div>';
+    $$("#tcards a.h-tc[href='#team']").forEach(a => a.addEventListener("click", e => { e.preventDefault(); const b = $('#teamnav button[data-tp="cele"]'); if (b) b.click(); }));
+    const notes = [];
+    if (clear.length) notes.push("<b>Clear:</b> " + clear.map(c => esc(c.zero)).join(" · "));
+    if (H.ready && (H.role === "exec" || H.role === "pm")) notes.push("Projection approval is not checked yet: every monthly projection on file is still marked “under review” in Procore.");
+    const tc = $("#tclear"); tc.innerHTML = notes.join("<br>"); tc.hidden = !notes.length;
+    $("#tsub").textContent = "Only what is waiting on you, most urgent first";
+    renderExtra();
+    /* the line under the greeting */
+    const meet = MD.cal ? MD.cal.filter(x => x.allDay || !(x.end && x.end <= new Date())).length : null;
+    const mtxt = meet == null ? "" : plural(meet, "meeting") + " left today";
+    let sum = "";
+    if (H.role === "pm"){ const dec = live.find(c => c.l === "Jobs needing a decision");
+      sum = '<strong>' + plural(H.mine.length, "active job") + '</strong>' + (dec ? ", " + dec.n + " with something to decide" : "") + (mtxt ? ", and " + mtxt : "") + "."; }
+    else if (H.role === "exec"){ const dec = live.find(c => c.l === "Jobs needing a decision");
+      sum = dec ? '<strong>' + plural(dec.n, "job") + '</strong> need' + (dec.n === 1 ? "s" : "") + ' a decision' + (mtxt ? ", and " + mtxt : "") + "." : (mtxt ? mtxt.charAt(0).toUpperCase() + mtxt.slice(1) + "." : ""); }
+    else if (H.role === "acct"){ const q = live.filter(c => /^(AP intake|Ready for entry|Corrections needed)/.test(c.l)).length;
+      sum = '<strong>' + plural(q, "queue") + '</strong> ' + (q === 1 ? "has" : "have") + ' work in ' + (q === 1 ? "it" : "them") + (mtxt ? ", and " + mtxt : "") + "."; }
+    else { const t = live.find(c => c.l === "My tasks" || c.l === "To Do tasks");
+      sum = t ? '<strong>' + plural(t.n, "task") + '</strong> due today' + (mtxt ? ", and " + mtxt : "") + "." : (mtxt ? mtxt.charAt(0).toUpperCase() + mtxt.slice(1) + "." : ""); }
+    $("#hsum").innerHTML = H.ready || H.role === "office" ? sum : "";
+  } catch(e){ log("home render", (e && e.stack) || e); }
+}
+
 /* ============ events ============ */
 $("#signin").addEventListener("click", () => app.loginRedirect({ scopes: SCOPES }));
 $("#signout").addEventListener("click", () => app.logoutRedirect());
-$("#mdhide").addEventListener("click", () => mdPrivacy(!$("#mdgrid").classList.contains("priv")));
-try { if (localStorage.getItem("bh.mdpriv") === "1") mdPrivacy(true); } catch(_) {}
 $("#q").addEventListener("input", applyFilter);
 $("#q").addEventListener("keydown", e => { if (e.key === "Escape"){ e.target.value = ""; applyFilter(); } });
 document.addEventListener("keydown", e => {
