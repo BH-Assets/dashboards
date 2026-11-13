@@ -9,13 +9,14 @@
 /* page-only layout; the shell (linked after) supplies tokens and components */
 .sd-wrap{padding:24px 40px 48px}
 .sd-loader{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 40px;border-bottom:1px solid var(--bh-hairline,#e8e6e7);background:var(--bh-cream,#f2ece1)}
-.sd-basebox{display:flex;flex-direction:column;gap:4px;position:relative}
+.sd-basebox{display:flex;flex-direction:column;gap:4px;position:relative;flex:1 1 320px;min-width:0}
 .sd-adds{display:flex;flex-direction:column;gap:4px}.sd-addrow{display:flex;gap:6px}
 .sd-store{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .sd-store .sd-dot{width:8px;height:8px;background:var(--faint);flex:none}
 .sd-store.is-on .sd-dot{background:#2e8b3e}.sd-store.is-off .sd-dot{background:#e0a100}.sd-store.is-bad .sd-dot{background:#c4161c}
 .sd-store button{font:600 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.06em;text-transform:uppercase;background:#fff;border:1px solid var(--ink);padding:4px 8px;cursor:pointer}
-.sd-basesum{min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;max-width:420px}
+.sd-basesum{min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;font-size:13px;font-weight:600;line-height:1.3}
+.sd-basesum .bh-caption{white-space:nowrap}
 .sd-tag{font:600 12px var(--bh-font,Figtree,sans-serif);border:1px solid var(--line);background:#fff;padding:5px 6px;min-width:128px;cursor:pointer}
 .sd-tag.is-initial{background:var(--ink);color:#fff;border-color:var(--ink)}
 .sd-tag.is-baseline{background:var(--cream);border-color:var(--muted)}
@@ -730,9 +731,10 @@ function render(){
   $("side-job").textContent=CUR;$("c-sched").textContent=j.rows.length;
   $("asof").textContent=L?fmt(L.dd):"—";
 
-  $("files").innerHTML=j.fetching?'<span class="bh-chip">Loading this job\'s XER files from SharePoint…</span>':j.S.length?j.S.map(s=>`<span class="bh-chip">${esc(s.file)}</span>`).join(""):(j.rows.length?'<span class="bh-chip">Saved results only. Reload the XERs for detail views.</span>':"");
+  $("files").innerHTML=(!j.remote&&(j.S.length||j.rows.length)?`<button class="bh-btn-outline sd-forget" style="min-height:30px;padding:0 10px;font-size:11px">Remove ${esc(CUR)} from this browser</button>`:"")+(j.fetching?'<span class="bh-chip">Loading this job\'s XER files from SharePoint…</span>':j.S.length?j.S.map(s=>`<span class="bh-chip">${esc(s.file)}</span>`).join(""):(j.rows.length?'<span class="bh-chip">Saved results only. Reload the XERs for detail views.</span>':""));
+  {const fb=$("files").querySelector(".sd-forget");if(fb)fb.onclick=()=>{delete JOBS[CUR];CUR=null;save();render();};}
   {const BL=j.S.length?baseList(j):j.rows.filter(r=>r.tag);
-   $("basesum").innerHTML=BL.length?BL.map(b=>`${fmt(b.dd)} <span class="bh-caption">&nbsp;${TAG_NAME[b.tag||tagOf(j,b)]}</span>`).join("&nbsp;&nbsp;·&nbsp;&nbsp;"):'<span class="bh-caption">None tagged. Tag them in Schedules.</span>';}
+   $("basesum").innerHTML=BL.length?BL.map(b=>`<span style="white-space:nowrap;margin-right:14px">${fmt(b.dd)} <span class="bh-caption">${TAG_NAME[b.tag||tagOf(j,b)]}</span></span>`).join(""):'<span class="bh-caption">None tagged. Tag them in Schedules.</span>';}
   renderHero();renderPortfolio(names);renderDashboard(j);renderSchedules(j);renderQuality(j);renderGao(j);renderExec(j);renderMilestones(j);renderAbout();}
 
 function renderPortfolio(names){
@@ -875,7 +877,11 @@ function pmTeam(p){if(!p)return[];const seen={},out=[];
     .forEach(t=>{const e=t.email.toLowerCase();if(!seen[e]){seen[e]=1;out.push(t);}});return out;}
 /* one job, one name: an existing desk job with the same job number wins, then the Procore name, then what was typed */
 function canonicalJob(typed){const t=String(typed||"").trim();if(!t)return t;const k=jobNo(t);
-  const have=Object.keys(JOBS).find(n=>jobNo(n)===k);if(have)return have;const p=procoreFor(t);return p?procoreName(p):t;}
+  const have=Object.keys(JOBS).find(n=>jobNo(n)===k);if(have)return have;const p=procoreFor(t);if(p)return procoreName(p);
+  // no job number typed: a unique match on the name ("WSCC", "Comer Hall"), desk jobs first, then Procore
+  const q=t.toLowerCase(),hits=[...new Set([...Object.keys(JOBS),...PROCORE.map(procoreName)].filter(n=>n.toLowerCase().includes(q)).map(n=>canonicalByNo(n)))];
+  return hits.length===1?hits[0]:t;}
+function canonicalByNo(n){const k=jobNo(n);return Object.keys(JOBS).find(x=>jobNo(x)===k)||n;}
 const SP=(()=>{
   const CLIENT_ID="1825a1c0-1ce3-4078-aeb7-a4714562c422",TENANT_ID="848aa890-7982-4028-befa-3323d82583ce";
   const SCOPES=["User.Read","Sites.Selected"],SP_HOST="baileyharris.sharepoint.com",SP_PATH="/sites/ScheduleDesk",LIBRARY="ScheduleData";
@@ -885,8 +891,10 @@ const SP=(()=>{
   const path=(name,file)=>encodeURIComponent(folderOf(name))+"/"+encodeURIComponent(file);
   function status(t,cls,btn){const el=$("store");el.className="sd-store "+(cls||"");$("store-t").textContent=t;
     const old=el.querySelector("button");if(old)old.remove();if(btn){const b=document.createElement("button");b.textContent=btn.label;b.onclick=btn.go;el.appendChild(b);}}
+  class NeedSignIn extends Error{}
   async function token(){try{return(await app.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken;}
-    catch(e){if(typeof msal!=="undefined"&&msal.InteractionRequiredAuthError&&e instanceof msal.InteractionRequiredAuthError)app.acquireTokenRedirect({scopes:SCOPES});throw e;}}
+    catch(e){ // silent sign-in failed (expired session, consent, or the background iframe timed out): ask the person once
+      const code=(e&&(e.errorCode||e.name))||"";throw new NeedSignIn(code);}}
   async function G(p,opt={}){const t=await token();return fetch(p.startsWith("http")?p:GRAPH+p,{...opt,headers:{Authorization:"Bearer "+t,...(opt.headers||{})}});}
   async function json(r){try{return await r.json();}catch(e){return null;}}
   const onStatus=()=>status(`Shared through SharePoint · ${LIBRARY} on ${SP_PATH} · signed in as ${STORE_ME}`,"is-on",{label:"Refresh",go:()=>api.refresh(true)});
@@ -906,7 +914,9 @@ const SP=(()=>{
       driveId=drive.id;ok=true;
       await api.loadProcore();
       await api.refresh();onStatus();
-    }catch(e){status("Not connected: "+(e.message||e)+". Files stay in this browser.","is-bad");}};
+    }catch(e){
+      if(e instanceof NeedSignIn)return status(`Sign-in needs you to confirm (${e.message||"session expired"}). Uploads and tags stay in this browser until you do.`,"is-off",{label:"Sign in",go:()=>app.acquireTokenRedirect({scopes:SCOPES,account:acct})});
+      status("Not connected: "+(e.message||e)+". Files stay in this browser.","is-bad");}};
   api.refresh=async function(force){
     if(!ok)return;
     const r=await G(`/drives/${driveId}/root/children?$select=name,folder&$top=999`);const kids=(((await json(r))||{}).value||[]).filter(x=>x.folder);
@@ -928,7 +938,8 @@ const SP=(()=>{
       const files=(((await json(r))||{}).value||[]).filter(x=>/\.xer$/i.test(x.name));
       const S=[];for(const f of files){const c=await G(`/drives/${driveId}/items/${f.id}/content`);if(!c.ok)continue;
         try{S.push(schedule(new TextDecoder("windows-1252").decode(await c.arrayBuffer()),f.name));}catch(e){}}
-      if(S.length){j.S=S;rebuild(name);}}
+      const one={};S.sort((a,b)=>a.file.length-b.file.length).forEach(x=>{const k=x.code+"|"+x.dd;if(!one[k])one[k]=x;}); // same schedule saved twice: keep the plainer name
+      const U=Object.values(one);if(U.length){j.S=U;rebuild(name);}}
     catch(e){status("Couldn't load "+name+" from SharePoint: "+(e.message||e),"is-bad");}
     finally{j.fetching=false;j.fetched=true;save();render();}};
   api.loadProcore=async function(){
@@ -992,15 +1003,18 @@ function show(v){VIEW=v;renderHero();document.querySelectorAll("[data-panel]").f
 document.querySelectorAll(".sd-tab[data-view]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();show(a.dataset.view);}));
 function guessJob(s){return(s.code||s.file).replace(/[-_ ]*(UPDATE|UPD|BASE(LINE)?|REV|R\d).*$/i,"").trim()||s.file;}
 async function load(files,jobName,tag){
-  const errs=[],touched=new Set(),up={};
+  const errs=[],touched=new Set(),up={},skipped=[];
   for(const f of files){if(!/\.xer$/i.test(f.name))continue;
     try{const s=schedule(new TextDecoder("windows-1252").decode(await f.arrayBuffer()),f.name);
       const name=canonicalJob((jobName||"").trim()||guessJob(s));
       const j=JOBS[name]||(JOBS[name]={rows:[],S:[],V:[]});
+      const dup=j.S.find(x=>x.file!==f.name&&x.code===s.code&&x.dd===s.dd);
+      if(dup){skipped.push(`${f.name} is the same schedule as ${dup.file} (${s.code}, ${fmt(s.dd)}), skipped`);continue;}
       j.S=j.S.filter(x=>x.file!==f.name);j.S.push(s);touched.add(name);(up[name]=up[name]||[]).push(f);
       if(tag)setTag(j,s,tag);}catch(e){errs.push(f.name+": "+e.message);}}
   touched.forEach(rebuild);if(touched.size)CUR=[...touched][0];save();render();
   for(const name of touched){await SP.upload(name,up[name]);if(tag||!SP.hasTags(name))await SP.saveTags(name);await SP.saveMetrics(name);}
+  if(skipped.length)$("files").insertAdjacentHTML("beforeend",skipped.map(e=>`<span class="bh-chip is-warn">${esc(e)}</span>`).join(""));
   if(errs.length)$("files").insertAdjacentHTML("beforeend",errs.map(e=>`<span class="bh-chip is-bad">${esc(e)}</span>`).join(""));}
 let ADD_TAG="";
 document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ADD_TAG=b.dataset.add;$("file").multiple=ADD_TAG!=="initial";$("file").click();});
