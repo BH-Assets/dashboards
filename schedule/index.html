@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Desk · Bailey-Harris</title>
+<style>
+/* page-only layout; the shell (linked after) supplies tokens and components */
+.sd-wrap{padding:24px 40px 48px}
+.sd-loader{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 40px;border-bottom:1px solid var(--bh-hairline,#e8e6e7);background:var(--bh-cream,#f2ece1)}
+.sd-loader .bh-caption{flex:1 1 280px}
+.sd-loader label{display:flex;flex-direction:column;gap:4px}
+.sd-files{display:flex;flex-wrap:wrap;gap:6px}
+.sd-drop.is-over{outline:2px dashed var(--bh-black,#211e1e);outline-offset:-6px}
+.sd-section{margin-top:28px}
+.sd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:28px}
+.sd-panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px}
+.sd-empty{padding:48px 40px;max-width:760px}
+.sd-empty ol{padding-left:20px;line-height:1.7;font-size:14px}
+.sd-note{font-size:12px;color:var(--bh-slate,#484b4d);margin-top:10px;line-height:1.5}
+.sd-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+td.neg{color:var(--bh-bad-ink,#9c0006);font-weight:600}
+/* score tiles, after Schedule Validator's dashboard: value big, label small, status fill */
+.sd-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sd-tile{padding:10px 12px;background:var(--bh-light-gray,#e8e6e7);min-height:86px;display:flex;flex-direction:column;justify-content:space-between}
+.sd-tile .bh-label{color:inherit}
+.sd-tile small{font-size:11px;opacity:.8}
+.sd-tile b{font-size:30px;font-weight:700;line-height:1;text-align:right}
+.sd-tile.is-ok{background:var(--bh-ok-bg);color:var(--bh-ok-ink)}
+.sd-tile.is-warn{background:var(--bh-warn-bg);color:var(--bh-warn-ink)}
+.sd-tile.is-bad{background:var(--bh-bad-bg);color:var(--bh-bad-ink)}
+.sd-group-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+/* score cells in tables */
+.sd-score{display:inline-block;min-width:38px;padding:4px 6px;text-align:center;font-weight:700;font-size:13px;background:var(--bh-light-gray,#e8e6e7)}
+.sd-score.is-ok{background:var(--bh-ok-bg);color:var(--bh-ok-ink)}
+.sd-score.is-warn{background:var(--bh-warn-bg);color:var(--bh-warn-ink)}
+.sd-score.is-bad{background:var(--bh-bad-bg);color:var(--bh-bad-ink)}
+.bh-table td.c,.bh-table th.c{text-align:center}
+.sd-sumrow td{background:var(--bh-cream,#f2ece1);font-weight:600}
+.sd-grouprow th{background:#fff;color:var(--bh-slate,#484b4d);border-bottom:1px solid var(--bh-hairline,#e8e6e7);text-align:center}
+.sd-click{cursor:pointer}
+.sd-click:hover td{background:var(--bh-cream,#f2ece1)}
+.sd-row-btn{cursor:pointer}
+.sd-items td{background:#faf8f4;font-size:12px;color:var(--bh-slate,#484b4d)}
+.sd-items ul{margin:0;padding-left:18px;columns:2;column-gap:32px}
+.sd-items li{break-inside:avoid;margin-bottom:3px}
+.sd-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-top:8px}
+.sd-legend span::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.sd-cond td:not(:first-child){text-align:center}
+.sd-wrap .bh-table-wrap{overflow-x:auto}
+#s-table th{white-space:normal}
+.sd-about{max-width:980px}
+.sd-about h3{font-size:15px;margin:24px 0 8px}
+.sd-about p,.sd-about li{font-size:14px;line-height:1.6}
+.sd-about .bh-table{margin-top:6px}
+.sd-ev{margin:0;padding-left:16px;font-size:12px}
+svg text{font-family:var(--bh-font,Figtree,Arial,sans-serif)}
+@media (max-width:960px){.sd-wrap,.sd-loader{padding-left:20px;padding-right:20px}.sd-items ul{columns:1}}
+
+/* ===== Launcher look (13 Nov 2026): white page, red duotone hero, underline tabs, hairline cards, black end band ===== */
+.sd-pg{--line:#e8e6e7;--ink:#211e1e;--muted:#484b4d;--faint:#8a8d90;--cream:#f2ece1;--red:#ed2b30;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.sd-pg .wrap{max-width:1440px;margin:0 auto;padding:0 56px;box-sizing:border-box}
+header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.lh .wrap{display:flex;align-items:center;gap:18px;min-height:74px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)!important;flex:none}
+.brand img{height:30px;width:auto;display:block}
+.brand .wm{font-size:12px;font-weight:800;letter-spacing:.04em;line-height:1.05;text-transform:uppercase}
+.brand .wm small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.06em}
+.lh-desk{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding-left:18px;border-left:1px solid var(--line);color:var(--muted)}
+.lh .spacer{flex:1 1 20px}
+/* hero */
+.hero{position:relative;overflow:hidden;background:var(--red);min-height:300px}
+.hero-photo{position:absolute;inset:0;background:url("/hero.jpg") center 55%/cover no-repeat;filter:grayscale(1) contrast(1.08) brightness(1.3);mix-blend-mode:multiply}
+.hero-wash{position:absolute;inset:0;background:rgba(33,30,30,.38)}
+.hero .deco{position:absolute;right:56px;top:28px;display:flex;align-items:flex-start;gap:24px;pointer-events:none}
+.hero .deco .dots{display:grid;grid-template-columns:repeat(4,14px);gap:8px}
+.hero .deco .dots i{width:14px;height:14px;border-radius:50%;background:#fff;display:block}
+.hero .deco .sq{width:64px;height:64px;background:#fff}
+.hero-row{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap;min-height:300px;padding-top:34px!important;padding-bottom:34px!important}
+.hero-txt{flex:1 1 380px;min-width:0}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff;margin:0 0 10px}
+.eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:#fff;margin-right:10px;vertical-align:0}
+.greet{margin:0;font-size:44px;line-height:1.02;font-weight:500;text-transform:uppercase;color:#fff;letter-spacing:.005em}
+.greet .nm{display:block;font-weight:800}
+.hsum{margin:14px 0 0;font-size:15px;color:#fff;max-width:720px}
+.h-stats{display:grid;grid-template-columns:repeat(4,minmax(128px,1fr));gap:2px;flex:0 1 640px}
+.h-stat{background:#fff;padding:14px 16px 12px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;border-bottom:5px solid var(--line)}
+.h-stat .bh-label{color:var(--muted)}
+.h-stat b{font-size:40px;line-height:1;font-weight:700;letter-spacing:-.01em}
+.h-stat small{font-size:11px;color:var(--muted)}
+.h-stat.is-ok{border-bottom-color:#2e8b3e}.h-stat.is-warn{border-bottom-color:#e0a100}.h-stat.is-bad{border-bottom-color:#c4161c}
+.hero .caption{position:absolute;right:16px;bottom:10px;background:var(--ink);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px}
+/* tabs, after the launcher's application tabs */
+.sd-nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:75px;z-index:25}
+.sd-nav .wrap{display:flex;align-items:stretch;gap:4px;overflow-x:auto;scrollbar-width:thin}
+.sd-tab{display:flex;align-items:center;gap:8px;padding:16px 12px 13px;font-size:14px;font-weight:500;color:var(--ink)!important;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+.sd-tab:hover{border-bottom-color:var(--line)}
+.sd-tab[aria-current]{font-weight:700;border-bottom-color:var(--red)}
+.sd-tab .bh-count{font-size:11px;font-weight:700;background:var(--line);padding:1px 6px}
+.sd-tab-sep{width:1px;background:var(--line);margin:12px 10px}
+.sd-tab-job{align-self:center;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-right:4px}
+.sd-tab.is-help{margin-left:auto}
+/* loader strip */
+.sd-loader{display:block;padding:0;border-bottom:1px solid var(--line);background:var(--cream)}
+.sd-loader .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding-top:14px;padding-bottom:14px}
+.sd-loader label{display:flex;flex-direction:column;gap:4px}
+.sd-loader .bh-caption{flex:1 1 240px;align-self:center}
+/* page body */
+.sd-pg main.page{padding-top:36px;padding-bottom:24px}
+.sd-wrap{padding:0}
+.sd-pg .bh-section-title{font-size:13px;font-weight:800;letter-spacing:.1em}
+.sd-pg main h2.bh-section-title::before{content:"";display:inline-block;width:11px;height:11px;background:var(--red);margin-right:10px;vertical-align:-1px}
+.sd-pg .bh-panel{border-top:3px solid var(--ink);border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0 18px 18px;background:#fff}
+.sd-pg .sd-panel-h{margin:0 -18px 16px;padding:14px 18px;border-bottom:1px solid var(--line);gap:12px}
+.sd-grid{gap:20px;grid-template-columns:repeat(auto-fit,minmax(460px,1fr))}
+.sd-section{margin-top:24px}
+/* tiles: white, hairline, big number, status bar underneath */
+.sd-tiles{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.sd-tile{background:#fff;border:1px solid var(--line);border-bottom:5px solid var(--line);color:var(--ink);padding:12px 14px 10px;min-height:96px}
+.sd-tile .bh-label{color:var(--muted)}
+.sd-tile small{color:var(--muted);opacity:1}
+.sd-tile b{font-size:34px;font-weight:700;letter-spacing:-.01em}
+.sd-tile.is-ok,.sd-tile.is-warn,.sd-tile.is-bad{background:#fff;color:var(--ink)}
+.sd-tile.is-ok{border-bottom-color:#2e8b3e}.sd-tile.is-warn{border-bottom-color:#e0a100}.sd-tile.is-bad{border-bottom-color:#c4161c}
+.sd-tile.is-ok b{color:var(--bh-ok-ink)}.sd-tile.is-warn b{color:var(--bh-warn-ink)}.sd-tile.is-bad b{color:var(--bh-bad-ink)}
+.sd-empty{padding:8px 0 24px;max-width:820px}
+.sd-empty .bh-panel{padding-top:4px}
+.sd-tabs .bh-btn,.sd-tabs .bh-btn-outline{min-height:36px;padding:0 14px;font-size:12px}
+/* end band, from the launcher */
+.endband{margin-top:46px;background:var(--ink);color:#fff;padding:26px 0 24px}
+.endband .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.endband img{height:40px;width:auto;flex:none}
+.flywheel{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--red);fill:none;stroke-width:2.1;stroke-linecap:round}
+.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.88);white-space:nowrap}
+.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--red);clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
+@media (max-width:1100px){.h-stats{grid-template-columns:repeat(2,minmax(128px,1fr));flex-basis:100%}}
+@media (max-width:960px){.sd-grid{grid-template-columns:1fr}.lh .bh-avatar{display:none}.sd-pg .wrap{padding:0 20px}.greet{font-size:32px}.hero .deco{display:none}.lh-desk{display:none}.sd-nav{top:0;position:relative}.sd-tab.is-help{margin-left:0}}
+</style>
+<link rel="stylesheet" href="/bh-shell.css">
+<script src="/bh-shell.js" defer></script>
+</head>
+<body class="bh-page sd-pg">
+<div class="bh-topbar"></div>
+<header class="lh"><div class="wrap">
+  <a class="brand" href="/" aria-label="All desks"><img src="data:image/png;base64,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" alt=""><span class="wm">Bailey-Harris<small>Construction</small></span></a>
+  <span class="lh-desk">Schedule Desk</span>
+  <div class="spacer"></div>
+  <div class="bh-asof"><span class="bh-label">Data as of</span><strong id="asof">No schedules loaded</strong></div>
+  <a class="bh-btn-outline" href="/">All desks</a>
+  <div class="bh-avatar">TB</div>
+</div></header>
+<section class="hero" aria-label="Summary">
+  <div class="hero-photo"></div><div class="hero-wash"></div>
+  <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
+  <div class="wrap hero-row">
+    <div class="hero-txt">
+      <p class="eyebrow" id="h-eyebrow">Schedule Desk</p>
+      <h1 class="greet"><span id="h-t1">Schedule</span> <span class="nm" id="h-t2">health</span></h1>
+      <p class="hsum" id="sub">Schedule quality, execution and slip from P6 updates</p>
+    </div>
+    <div class="h-stats" id="h-stats"></div>
+  </div>
+  <div class="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
+</section>
+<nav class="sd-nav" aria-label="Schedule Desk sections"><div class="wrap">
+  <a class="sd-tab" href="#portfolio" data-view="portfolio" aria-current="page">All jobs <span class="bh-count" id="c-jobs"></span></a>
+  <span class="sd-tab-sep"></span>
+  <span class="sd-tab-job" id="side-job">Job</span>
+  <a class="sd-tab" href="#dashboard" data-view="dashboard">Dashboard</a>
+  <a class="sd-tab" href="#schedules" data-view="schedules">Schedules <span class="bh-count" id="c-sched"></span></a>
+  <a class="sd-tab" href="#quality" data-view="quality">DCMA 14-point</a>
+  <a class="sd-tab" href="#gao" data-view="gao">GAO best practices</a>
+  <a class="sd-tab" href="#execution" data-view="execution">Execution</a>
+  <a class="sd-tab" href="#milestones" data-view="milestones">Milestones</a>
+  <a class="sd-tab is-help" href="#about" data-view="about">About BH scores</a>
+</div></nav>
+<div class="sd-loader"><div class="wrap">
+  <label><span class="bh-label">Job</span><select class="bh-select" id="jobpick"></select></label>
+  <label><span class="bh-label">Load updates for job</span><input class="bh-input" id="jobname" placeholder="e.g. 25HV001 WSCC STEM & Auto" size="26"></label>
+  <button class="bh-btn" id="pick">Load XER files</button>
+  <label><span class="bh-label">Baseline</span><select class="bh-select" id="basepick"></select></label>
+  <button class="bh-btn-outline" id="export">Export metrics</button>
+  <input type="file" id="file" accept=".xer" multiple hidden>
+  <div class="bh-caption">Files are read in this browser, not uploaded. Drop XERs anywhere on the page.</div>
+  <div class="sd-files" id="files"></div>
+</div></div>
+<main class="wrap page sd-drop" id="main">
+    <div id="empty" class="sd-empty"><div class="bh-panel">
+      <div class="sd-panel-h"><h2 class="bh-section-title">Start with a job's updates</h2></div>
+      <ol>
+        <li>Type the job (for example <strong>25HV001 WSCC STEM &amp; Auto</strong>).</li>
+        <li>Load the XER from each dated folder in the job's <strong>05 Scheduling\01 OPS</strong>. The baseline too, if there is one.</li>
+        <li>Pick the baseline from the Baseline list if the desk guessed wrong (it looks for BASE in the file name, else the earliest update).</li>
+        <li>Repeat for other jobs. The portfolio shows every job loaded in this browser.</li>
+      </ol>
+    </div>
+    </div>
+
+    <div class="sd-wrap" id="views" hidden>
+      <!-- PORTFOLIO -->
+      <section data-panel="portfolio">
+        <div class="sd-grid">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Statistics</h2><span class="bh-caption">Latest update of each job</span></div>
+            <div class="sd-tiles" id="p-tiles"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Condition summary</h2><span class="bh-caption" id="p-count"></span></div>
+            <div class="bh-table-wrap"><table class="bh-table sd-cond" id="p-cond"></table></div>
+            <div class="sd-legend"><span style="--c:var(--bh-ok-bg)">Normal</span><span style="--c:var(--bh-warn-bg)">Warning</span><span style="--c:var(--bh-bad-bg)">Alert</span><span style="--c:var(--bh-light-gray)">N/A</span></div>
+          </div>
+        </div>
+        <div class="sd-grid sd-section">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">BH Quality Score trend</h2><span class="bh-caption">Average across jobs, by month</span></div>
+            <div id="p-trend-q"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">BH Performance Score trend</h2><span class="bh-caption">Average across jobs, by month</span></div>
+            <div id="p-trend-p"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Execution trend</h2><span class="bh-caption">Average across jobs, by month</span></div>
+            <div id="p-trend-x"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Critical path slip v. finish slip</h2><span class="bh-caption">Total since first update, days</span></div>
+            <div id="p-scatter"></div>
+          </div>
+        </div>
+        <div class="sd-section bh-panel">
+          <div class="sd-panel-h"><h2 class="bh-section-title">Jobs</h2><span class="bh-caption">Click a job to open it</span></div>
+          <div class="bh-table-wrap"><table class="bh-table" id="p-jobs"></table></div>
+        </div>
+      </section>
+
+      <!-- JOB DASHBOARD -->
+      <section data-panel="dashboard" hidden>
+        <div class="sd-grid">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Schedule quality · BH Quality Score</h2><span class="bh-caption" id="d-asof"></span></div>
+            <div class="sd-tiles" id="d-quality"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Progress · BH Performance Score</h2><span class="bh-caption">Compared with the previous update</span></div>
+            <div class="sd-tiles" id="d-progress"></div>
+          </div>
+        </div>
+        <div class="sd-grid sd-section">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Forecast finish by update</h2></div>
+            <div id="d-finish"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Execution by update</h2></div>
+            <div id="d-exec"></div>
+          </div>
+        </div>
+        <div class="sd-grid sd-section">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">BH Quality Score by update</h2><span class="bh-caption">Dashed line: 80</span></div>
+            <div id="d-q"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">BH Performance Score by update</h2><span class="bh-caption">Dashed line: 80</span></div>
+            <div id="d-p"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULES TABLE -->
+      <section data-panel="schedules" hidden>
+        <div class="bh-table-wrap"><table class="bh-table" id="s-table"></table></div>
+        <div class="sd-note" id="s-note"></div>
+      </section>
+
+      <!-- DCMA 14-POINT -->
+      <section data-panel="quality" hidden>
+        <div class="sd-tabs" id="q-tabs"></div>
+        <h2 class="bh-section-title" id="q-title">DCMA 14-point assessment</h2>
+        <p class="bh-caption">Open activities only. Click a row to see the activities behind it. Points: 100 at target, falling to 0 at the "zero at" value in About BH scores. The BH Quality Score is the weighted average of the points.</p>
+        <div class="bh-table-wrap"><table class="bh-table" id="q-table"></table></div>
+        <h2 class="bh-section-title sd-section">Other checks</h2>
+        <p class="bh-caption">Not part of DCMA 14 and not in the BH Quality Score. Used as evidence for the GAO best practices.</p>
+        <div class="bh-table-wrap"><table class="bh-table" id="q-extra"></table></div>
+        <div class="sd-note">Checks follow the published DCMA 14-point definitions. Resources (10) is shown for information only because BH schedules aren't resource-loaded. The critical path test (12) needs the schedule recalculated in P6 and isn't automated yet; both are left out of the score. CPLI counts workdays on the project calendar, holidays included. Missed tasks and BEI need the baseline picked in the loader.</div>
+      </section>
+
+      <!-- GAO -->
+      <section data-panel="gao" hidden>
+        <div class="sd-tabs" id="g-tabs"></div>
+        <h2 class="bh-section-title" id="g-title">GAO Schedule Assessment Guide</h2>
+        <p class="bh-caption">The GAO's ten best practices for a reliable schedule, rated from the checks in this desk. Rating: no failed checks = Fully met, 1 = Substantially, 2 = Partially, 3 = Minimally, 4 or more = Not met. Practices that need a person's review or data the XER doesn't hold are marked.</p>
+        <div class="bh-table-wrap"><table class="bh-table" id="g-table"></table></div>
+      </section>
+
+      <!-- EXECUTION -->
+      <section data-panel="execution" hidden>
+        <div class="sd-tabs" id="x-tabs"></div>
+        <div class="sd-grid">
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title" id="x-title">Task execution</h2></div>
+            <div class="bh-table-wrap"><table class="bh-table" id="x-sum"></table></div>
+            <div class="sd-note" id="x-note"></div>
+          </div>
+          <div class="bh-panel">
+            <div class="sd-panel-h"><h2 class="bh-section-title">Compared with Schedule Validator</h2></div>
+            <div class="bh-table-wrap"><table class="bh-table" id="x-sv"></table></div>
+            <div class="sd-note" id="x-svnote"></div>
+          </div>
+        </div>
+        <div class="sd-section"><h2 class="bh-section-title" id="fs-title">Tasks failed to start</h2><div class="bh-table-wrap"><table class="bh-table" id="x-fs"></table></div></div>
+        <div class="sd-section"><h2 class="bh-section-title" id="ff-title">Tasks failed to finish</h2><div class="bh-table-wrap"><table class="bh-table" id="x-ff"></table></div></div>
+      </section>
+
+      <!-- MILESTONES -->
+      <section data-panel="milestones" hidden>
+        <h2 class="bh-section-title">Milestones by update</h2>
+        <p class="bh-caption">Forecast date of each milestone in every update loaded. Change is calendar days against the first update loaded.</p>
+        <div class="bh-table-wrap"><table class="bh-table" id="m-table"></table></div>
+      </section>
+
+      <!-- ABOUT -->
+      <section data-panel="about" hidden>
+        <div class="sd-about">
+          <h2 class="bh-section-title">About BH scores</h2>
+          <p>The Schedule Desk scores every P6 update with two Bailey-Harris scores: the <strong>BH Quality Score</strong> and the <strong>BH Performance Score</strong>. They are our scores, not Schedule Validator's. They are built from public standards, the DCMA 14-point assessment and the GAO Schedule Assessment Guide, and every weight is published below so anyone can check a number by hand.</p>
+          <h3>If you're used to Schedule Validator</h3>
+          <div class="bh-table-wrap"><table class="bh-table">
+            <tr><th>In Schedule Validator</th><th>In the Schedule Desk</th><th>Same number?</th></tr>
+            <tr><td>SV Score (quality)</td><td>BH Quality Score</td><td>No. Different checks and weights; SV doesn't publish its weights.</td></tr>
+            <tr><td>SPS (performance)</td><td>BH Performance Score</td><td>No. Different measures and weights.</td></tr>
+            <tr><td>Finish slip</td><td>Finish slip</td><td>Yes. Same rule and sign: calendar days, negative = finish moved later.</td></tr>
+            <tr><td>Critical path slip</td><td>CP slip</td><td>Yes. Matched to SV on the WSCC updates.</td></tr>
+            <tr><td>Execution index</td><td>Execution</td><td>Yes. Tasks that started or finished as planned in the window.</td></tr>
+            <tr><td>Changes %</td><td>Change %</td><td>Yes. Relationships added and deleted, as a share of the previous update's.</td></tr>
+            <tr><td>Diagnostic checks</td><td>DCMA 14-point view</td><td>Close but not identical. We use the DCMA definitions as published.</td></tr>
+            <tr><td>Confidence / risk simulation</td><td>Not provided</td><td>GAO practice 8 is shown as Not assessed.</td></tr>
+          </table></div>
+          <p>So a job can score 78 in SV and 85 here, or the other way round. Neither is wrong; they measure different things. Compare BH scores with BH scores, over time and across jobs. The color bands are the same as SV's: 80 and up is green, 70 to 79 is amber, under 70 is red.</p>
+          <h3>BH Quality Score: is the schedule well built?</h3>
+          <p>Each DCMA check earns 0 to 100 points: 100 when it meets the target, falling in a straight line to 0 at the "zero at" value. The score is the weighted average. Checks that can't be run for an update (no baseline loaded, or this is the baseline) drop out and the other weights are scaled up to 100.</p>
+          <div class="bh-table-wrap"><table class="bh-table" id="a-q"></table></div>
+          <h3>BH Performance Score: is the job doing what the schedule said?</h3>
+          <p>Compares each update with the previous one and with the baseline. Same 0 to 100 points per measure and weighted average. The first update loaded has no previous update, so it has no Performance Score.</p>
+          <div class="bh-table-wrap"><table class="bh-table" id="a-p"></table></div>
+          <h3>Definitions</h3>
+          <ul>
+            <li><strong>Execution index</strong>: tasks the previous update scheduled to start or finish before this data date that did, as a share of all it scheduled.</li>
+            <li><strong>BEI</strong>: tasks finished ÷ tasks the baseline planned to finish by this data date.</li>
+            <li><strong>CPLI</strong>: (workdays to the forecast finish + float on the finish milestone) ÷ workdays to the forecast finish. Below 1 means the finish can't be met without recovery.</li>
+            <li><strong>Float erosion</strong>: average change in total float, in workdays, for open work that had 20 workdays of float or less in the previous update. Negative = float lost.</li>
+            <li><strong>GAO rating</strong>: from the checks mapped to each practice. See the GAO best practices view.</li>
+          </ul>
+          <h3>What's not in the scores yet</h3>
+          <ul>
+            <li>DCMA 10 Resources: BH schedules aren't resource-loaded. Shown for information.</li>
+            <li>DCMA 12 Critical path test: needs P6 to recalculate the schedule. A critical path continuity check is shown instead, outside the score.</li>
+            <li>Risk analysis (GAO 8): no risk data in the XER.</li>
+          </ul>
+          <p class="bh-caption">Weights version 1, November 2026. A change to the weights gets a new version number here, so old and new scores aren't mixed without notice.</p>
+        </div>
+      </section>
+    </div>
+</main>
+<div class="endband"><div class="wrap">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAicAAAGHCAYAAABrpPKuAAAKIklEQVR42u3dQW4b9xnG4VeB1uGgFxC3WYnIBcRusjVzAqsnqHqC0qsssqhyglAnKHUCU7sUaBNp1WWpC6TUomt18R81guMkSOx6viGfBxjEBoxYeGkbP80Mh0ePj48BAKjiIxMAAOIEAECcAADiBABAnAAA4gQAQJwAAOIEAECcAADiBABAnAAAiBMAQJwAAIgTAECcAACIEwBAnAAAiBMAQJwAAIgTAECcAACIEwAAcQIAiBMAAHECAIgTAABxAgCIEwAAcQIAiBMAAHECAIgTAABxAgAgTgAAcQIAIE4AAHECACBOAABxAgAgTgAAcQIAIE4AAHECACBOAADECQAgTgAAxAkAIE4AAMQJACBOAADECQAgTgAAxAkAIE4AAMQJAIA4AQDECQCAOAEAxAkAgDgBAMQJAIA4AQDECQCAOAEAxAkAgDgBABAnAIA4AQAQJwCAOAEAECcAgDgBABAnAIA4AQAQJwCAOAEAECcAAOIEABAnAADiBAAQJwAA4gQAECcAAOIEABAnAADiBAAQJyYAAMQJAIA4AQDECQCAOAEAxAkAgDgBAMQJAIA4AQDECQDAQI5N8D+zJJdm2Aubn/n5xjwlXfZ/Bw/dqj+89l57cUKSpEtyZoa98Obr+Oe3/Jr7JNu3HLdJdiYc5JsDf/8OM5699r5xEifQO+mPt/2j+NBHytOx9Q8HgDiBIU36aHkzXG76WNn0x85UAOIEhvQULH/sf373LFTECoA4gcGd9sdTrFwnWfehsjUPwG/jrcTw/rxI8nWSf6Vd/jlPu9EaAHECgzvtQ+XfaW8PnJsEQJxAFS+TvE671HMRZ1MAxAkUcZLkL32kLEUKgDiBKiZpD4YTKQDiBEpHCgDiBMpFysIcgDgBqjhJ8te0Z6V05gDECVDFiziLAogToJhJ2lmUVZxFAcQJUMjLtMfhz0wBiBOgitM+UOamAMQJUMUk7Smz56YAxAlQydcCBRAngEABECeAQAHECSBQAMQJ8I4u423GgDgBCpmkvc24MwUgToBKgbI2AyBOgErOklyYARAnQCXLJFMzAOIEqGKS9kGBAOIEKOMsPoMHECdAMSsTAOIEqOQkHs4GiBOgmKUJAHECVHIS954A4gQo5sIEgDgBKnkRj7UHxAlQzLkJAHECVLIwASBOgErO4tIOIE6AYuYmAMQJIE4AxAnwE2YmAMQJUMmZCQBxAlQzMwEgToBKOhMA4gSoZG4CYCyOTcAbXhX5Ln/27MenXhYAccLhWhb9umZJpv0ZgLlg+U37AYgTeI9u+2Pd/3ya9rkxF0km5vlFnQmAsXDPCWO1TTvL0yX5U5IHkwCIE6jiMu1Myo0pAMbPZR32xS7tXpRVkpfm+JHu+08+nVf94n73z287LxEgTthX52lnUUbxVNTvP/n0Q/1Wp0leH8oOX378mC/+9p2/DTBSLuuwjxZxDwqAOIFCdqn7lmgAxAkHahVnTwDECRSyyw/PRAFAnEAJGxMAiBOoZGsCAHEClWxMACBOAADECQAgTgAAxAn8SnMTAIgTqGRqAgBxApXMTQAgTqCKLu0DAAEQJ1DCRZKJGQDECVQw7eMEgBE6NgF7pkv7wD9nTRijeZLlAX4zAeKEvQ6TTZJTUzBSZ/0BB81lHfbFTJgAiBOooEs7Df6dMAHYDy7rMFaL/nhpCgBxAh9al3bZZv7sv254BRAnHIhNoa9lmuTESwIgTjhs3ikAwKDcEAsAiBMAAHECAIgTAABxAgCIEwAAcQIAiBMAAHECAIgTAABxAgAgTgAAcQIAIE4AAHECACBOAABxAgAgTgAAcQIAIE4AAHECACBOAADECQAgTgAAxAkAIE4AAMQJACBOAADECQAgTgAAxAkAIE4AAMQJAIA4AQDECQCAOAEAxAkAgDgBAMQJAIA4AQDECQCAOAEADtOxCXjD70f0tU77o0sy63984iUEECfsl83Iv/5pHyqL/ph4SQHGxWUd9s02yTrJedoZlT8kuTELgDiBKlZJ5kk+T3JvDgBxAlWs0y73XJsCQJxAFbu0+1CuTEFRr5IcHdjhsiviBNLuR3EGBUCcQLlAcQ8KgDiBMnZJlmYAECdQySrOngCIEyhmbQIAcQLiBABxAj9hYwIAcQLVPJgAQJxAJbcmABAnAADiBAAQJzAGMxMAiBOoZGICgDqOTcCBmw/5m99MjkqNcfbwOMgnxP7946PT/xyle1//vy+++dafbBAnMFqLIX/zz7/5h1hL8ll73syZP45A4rIOLEwAIE6givMkJ2YAECdQQZfk0gwA4gSqWMe7dADECRSxipsvAcrybh0OSZd2xkSYABTmzAmH4jzJVpj8rBsTABU4c8I+69LeKryMd+UAiBMYyKw/FklemONX2ZkAECdUNB/J1zntj6cg6eKSzbu6NQEgTqjotQkO1tYEQAVuiAXECSBOgJI2JgDECVDFnQkAcQJUcmsCQJwAlWxMAIgToJK1CQBxAlRxFw9gA8QJUMjKBIA4ASpZmwAQJ0AV1/HwNUCcAIWsTACIE6CK+7ikA4gToJClCQBxAlRxH5d0AHECFLI0ASBOgCru4qwJIE6AQs5NAIgToIqv4hOIAXECFHEX95oA4gQo4iHtcs7OFIA4ASq4iMs5gDgBivgq3p0DiBOgiKu0syYA4gQY3F28bRgQJ0ChMJmbARAnQAXXfZjsTAGIE2BoV0kWwgQQJ0AFr+IeE2APHJsARu/pAWtrUwD7wJkTGLebJDNhAogToIJXaTe+bk0B7BOXdWB8buJx9IA4AQp46KNkZQpAnABDR8llf+zMAYgTYEhXSZZxXwkgToABPaRdurkUJYA4AYZ03wfJKi7fAOIEGNBV2nNK1qYAECcwlJu0MyTrOEsCIE5gINd9jGziXhIAcQIDuOtDZBOXbADECQzgJu2prU9BsjMJgDiBDx0i22dBAoA4gf97gCQ/nAV5ipGtaQDECbyrh/z4g/I2z3582wfILj5QD2BQR4+Pj1YAAMr4yAQAgDgBABAnAIA4AQAQJwCAOAEAECcAgDgBABAnAIA4AQAQJwAA4gQAECcAAOIEABAnAADiBAAQJwAA4gQAECcAAOIEABAnAADiBABAnAAA4gQAQJwAAOIEAECcAADiBABAnAAA4gQAQJwAAOIEAECcAACIEwBAnAAAiBMAQJwAAIgTAECcAACIEwBAnAAAiBMAQJwAAIgTAABxAgCIEwAAcQIAiBMAAHECAIgTAABxAgCIEwAAcQIAiBMAAHECACBOAABxAgAgTgAAcQIAIE4AAHECACBOAABxAgAgTgAAcQIAIE4AAMQJACBOAADECQAgTgAAxAkAIE4AAMQJACBOAADECQAgTgAAxAkAgDgBAMQJAIA4AQDECQCAOAEAxAkAgDgBAMQJAIA4AQDEiQkAAHECACBOAABxAgAgTgAAcQIAIE4AAHECACBOAABxAgAgTgAAkv8CrMP/Svklg1cAAAAASUVORK5CYII=" alt="">
+  <div class="flywheel" aria-label="Quality construction drives corporate profitability, which drives employee fulfillment, which drives quality construction">
+    <svg class="loop" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M18.4 2.2v4.2h-4.2"/></svg>
+    <span>Quality Construction</span><i class="ch"></i><span>Corporate Profitability</span><i class="ch"></i><span>Employee Fulfillment</span><i class="ch"></i>
+  </div>
+  <span class="since">Bailey-Harris Construction &middot; since 1979</span>
+</div></div>
+<script>
+/* ===================== XER engine (matches xer_metrics.py) ===================== */
+const HARD=new Set(["CS_MSO","CS_MEO","CS_MSOB","CS_MEOB","CS_MANDSTART","CS_MANDFIN"]);
+const CSTR={CS_MSO:"Start on",CS_MEO:"Finish on",CS_MSOA:"Start on or after",CS_MEOA:"Finish on or after",CS_MSOB:"Start on or before",CS_MEOB:"Finish on or before",CS_ALAP:"As late as possible",CS_MANDSTART:"Mandatory start",CS_MANDFIN:"Mandatory finish"};
+const MS=new Set(["TT_Mile","TT_FinMile"]),EX=new Set(["TT_LOE","TT_WBS"]),WORK=new Set(["TT_Task","TT_Rsrc"]);
+const NEAR_CRITICAL_DAYS=20;   // assumption until Schedule Validator's setting is known
+const T={hiFloat:44,hiDur:44};
+const ds=s=>s?String(s).slice(0,10):null;
+
+function readXer(txt){const t={};let cur=null,f=[];
+  for(const l of txt.split(/\r?\n/)){const p=l.split("\t");
+    if(p[0]==="%T"){cur=p[1].trim();t[cur]=[];}
+    else if(p[0]==="%F"){f=p.slice(1).map(s=>s.trim());}
+    else if(p[0]==="%R"&&cur){const o={};f.forEach((k,i)=>o[k]=p[i+1]??"");t[cur].push(o);}}
+  return t;}
+
+function schedule(txt,fileName){
+  const t=readXer(txt);const projects=t.PROJECT||[];const tasks=t.TASK||[];
+  if(!projects.length) throw new Error(fileName+": no PROJECT table");
+  const n={};tasks.forEach(r=>n[r.proj_id]=(n[r.proj_id]||0)+1);
+  const P=projects.slice().sort((a,b)=>(n[b.proj_id]||0)-(n[a.proj_id]||0))[0];
+  const s={file:fileName,P,code:P.proj_short_name,dd:ds(P.last_recalc_date||P.next_data_date)};
+  s.cal={};s.calRaw={};(t.CALENDAR||[]).forEach(c=>{s.cal[c.clndr_id]=+c.day_hr_cnt||8;s.calRaw[c.clndr_id]=parseCal(c.clndr_data||"");});
+  s.projCal=P.clndr_id;s.workdays=(a,b)=>calWorkdays(s.calRaw[s.projCal],a,b);
+  s.wbs={};(t.PROJWBS||[]).forEach(w=>s.wbs[w.wbs_id]=w);
+  s.tasks={};tasks.filter(r=>r.proj_id===P.proj_id).forEach(r=>s.tasks[r.task_id]=r);
+  s.rels=(t.TASKPRED||[]).filter(r=>s.tasks[r.task_id]&&s.tasks[r.pred_task_id]);
+  s.rsrc=new Set((t.TASKRSRC||[]).map(r=>r.task_id));
+  s.byCode={};Object.values(s.tasks).forEach(r=>s.byCode[r.task_code]=r);
+  s.hpd=r=>s.cal[r.clndr_id]||8;
+  s.tf=r=>(r.total_float_hr_cnt===""||r.total_float_hr_cnt==null)?null:+r.total_float_hr_cnt/s.hpd(r);
+  s.days=(r,f)=>(+r[f]||0)/s.hpd(r);
+  s.fin=r=>ds(r.act_end_date||r.early_end_date);
+  s.st=r=>ds(r.act_start_date||r.early_start_date);
+  s.done=r=>r.status_code==="TK_Complete";
+  s.lab=r=>r?r.task_code+" "+(r.task_name||""):"?";
+  s.open=Object.values(s.tasks).filter(r=>!s.done(r)&&!EX.has(r.task_type));
+  s.crit=r=>r.driving_path_flag==="Y"||(s.tf(r)!==null&&s.tf(r)<=0);
+  s.finish=ds(P.scd_end_date)||Object.values(s.tasks).map(s.fin).filter(Boolean).sort().pop();
+  return s;}
+
+const pct=(n,d)=>d?Math.round(1000*n/d)/10:0;
+function workdays(a,b){if(!a||!b||b<=a)return 0;const d=new Date(a+"T12:00:00"),e=new Date(b+"T12:00:00");let n=0;while(d<e){d.setDate(d.getDate()+1);const w=d.getDay();if(w>0&&w<6)n++;}return n;}
+/* P6 calendars: clndr_data holds the working days of the week (1=Sunday..7=Saturday; an empty entry is a day off)
+   and Exceptions, each an Excel-style day number; an exception with no hours is a day off (holiday, rain day). */
+function parseCal(raw){
+  if(!raw)return null;const d=raw.replace(/[\x7f\s]/g,"");const wk={};
+  const a=d.indexOf("DaysOfWeek()("),b=d.indexOf("Exceptions()(");
+  const dow=a>=0?d.slice(a,b>a?b:undefined):"";
+  for(const m of dow.matchAll(/\(0\|\|([1-7])\(\)\((\)|\()/g))wk[+m[1]]=m[2]==="(";
+  const exc={};if(b>=0)for(const m of d.slice(b).matchAll(/\(d\|(\d+)\)\((\)|\()/g))exc[+m[1]]=m[2]==="(";
+  return{wk,exc};}
+const SERIAL0=Date.UTC(1899,11,30);
+function calWorkdays(cal,a,b){ // working days after a, up to and including b
+  if(!a||!b||b<=a)return 0;if(!cal)return workdays(a,b);
+  let d=Date.UTC(+a.slice(0,4),+a.slice(5,7)-1,+a.slice(8,10)),e=Date.UTC(+b.slice(0,4),+b.slice(5,7)-1,+b.slice(8,10)),n=0;
+  while(d<e){d+=864e5;const serial=Math.round((d-SERIAL0)/864e5);const w=cal.exc[serial];
+    if(w===undefined?cal.wk[new Date(d).getUTCDay()+1]:w)n++;}
+  return n;}
+const calDays=(a,b)=>a&&b?Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5):null;
+
+function validation(s,base){
+  const o=s.open,n=o.length,ids=new Set(o.map(r=>r.task_id)),pr={},su={};
+  s.rels.forEach(r=>{(su[r.pred_task_id]=su[r.pred_task_id]||[]).push(r);(pr[r.task_id]=pr[r.task_id]||[]).push(r);});
+  const orl=s.rels.filter(r=>ids.has(r.task_id)||ids.has(r.pred_task_id)),nr=orl.length,out=[];
+  const C=(key,check,value,unit,threshold,pass,count,of,items,note)=>out.push({key,check,value,unit,threshold,pass,count,of,items:items||[],note:note||""});
+  const relLab=r=>`${s.lab(s.tasks[r.pred_task_id])} → ${s.tasks[r.task_id].task_code} (${r.pred_type.replace("PR_","")} ${(+r.lag_hr_cnt/s.hpd(s.tasks[r.task_id])).toFixed(0)}d)`;
+  const miss={};o.forEach(r=>{if(!pr[r.task_id]&&r.task_type!=="TT_Mile")miss[r.task_id]=s.lab(r)+" (no predecessor)";if(!su[r.task_id]&&r.task_type!=="TT_FinMile")miss[r.task_id]=s.lab(r)+" (no successor)";});
+  const m=Object.values(miss);C("logic","Logic: missing predecessor or successor",pct(m.length,n),"%","≤ 5%",pct(m.length,n)<=5,m.length,n,m);
+  const leads=orl.filter(r=>+r.lag_hr_cnt<0);C("leads","Leads (negative lag)",leads.length,"","0",leads.length===0,leads.length,nr,leads.map(relLab));
+  const lags=orl.filter(r=>+r.lag_hr_cnt>0);C("lags","Lags (positive lag)",pct(lags.length,nr),"%","≤ 5%",pct(lags.length,nr)<=5,lags.length,nr,lags.map(relLab));
+  const ty={};orl.forEach(r=>ty[r.pred_type]=(ty[r.pred_type]||0)+1);
+  C("fs","Finish-to-start relationships",pct(ty.PR_FS||0,nr),"%","≥ 90%",pct(ty.PR_FS||0,nr)>=90,ty.PR_FS||0,nr,[],Object.entries(ty).map(([k,v])=>k.replace("PR_","")+" "+v).join(" · "));
+  const hc=o.filter(r=>HARD.has(r.cstr_type)||HARD.has(r.cstr_type2)),anyc=o.filter(r=>r.cstr_type);
+  C("hard","Hard constraints",pct(hc.length,n),"%","≤ 5%",pct(hc.length,n)<=5,hc.length,n,hc.map(r=>s.lab(r)+" ["+(CSTR[r.cstr_type]||r.cstr_type)+"]"),anyc.length+" open activities carry a constraint of any kind");
+  const hf=o.filter(r=>(s.tf(r)||0)>T.hiFloat).sort((a,b)=>s.tf(b)-s.tf(a));
+  C("hifloat","High float (over 44 workdays)",pct(hf.length,n),"%","≤ 5%",pct(hf.length,n)<=5,hf.length,n,hf.map(r=>s.lab(r)+" ("+Math.round(s.tf(r))+"d)"));
+  const nf=o.filter(r=>s.tf(r)!==null&&s.tf(r)<0).sort((a,b)=>s.tf(a)-s.tf(b));
+  C("negfloat","Negative float",nf.length,"","0",nf.length===0,nf.length,n,nf.map(r=>s.lab(r)+" ("+Math.round(s.tf(r))+"d)"),nf.length?"Worst "+Math.round(s.tf(nf[0]))+" workdays":"");
+  const wk=o.filter(r=>!MS.has(r.task_type)),hd=wk.filter(r=>s.days(r,"target_drtn_hr_cnt")>T.hiDur);
+  C("hidur","High duration (original duration over 44 workdays)",pct(hd.length,wk.length),"%","≤ 5%",pct(hd.length,wk.length)<=5,hd.length,wk.length,hd.map(r=>s.lab(r)+" ("+Math.round(s.days(r,"target_drtn_hr_cnt"))+"d)"));
+  const bad=[];Object.values(s.tasks).forEach(r=>{if(EX.has(r.task_type))return;const as=ds(r.act_start_date),af=ds(r.act_end_date);
+    if((as&&as>s.dd)||(af&&af>s.dd))bad.push(s.lab(r)+" (actual after data date)");
+    if(r.status_code==="TK_NotStart"&&ds(r.early_start_date)&&ds(r.early_start_date)<s.dd)bad.push(s.lab(r)+" (forecast start before data date)");
+    if(!s.done(r)&&ds(r.early_end_date)&&ds(r.early_end_date)<s.dd)bad.push(s.lab(r)+" (forecast finish before data date)");});
+  C("dates","Invalid dates",bad.length,"","0",bad.length===0,bad.length,null,bad);
+  const nores=wk.filter(r=>!s.rsrc.has(r.task_id));
+  C("rsrc","Resources (open activities with none)",pct(nores.length,wk.length),"%","Info",null,nores.length,wk.length,[],"Only matters on a resource- or cost-loaded schedule");
+  // DCMA 11 Missed tasks and 14 BEI: against the baseline update, tasks whose baseline finish falls before this data date
+  if(base&&base.dd<s.dd){
+    const due=Object.values(base.tasks).filter(b=>WORK.has(b.task_type)&&base.fin(b)&&base.fin(b)<s.dd);
+    const missed=[],doneN=due.filter(b=>{const u=s.byCode[b.task_code];return u&&s.done(u);}).length;
+    due.forEach(b=>{const u=s.byCode[b.task_code];const bf=base.fin(b);
+      if(!u)missed.push(b.task_code+" "+b.task_name+" (deleted; baseline "+bf+")");
+      else if(!s.done(u))missed.push(s.lab(u)+" (not finished; baseline "+bf+")");
+      else if(ds(u.act_end_date)>bf)missed.push(s.lab(u)+" (finished "+ds(u.act_end_date)+"; baseline "+bf+")");});
+    C("missed","Missed tasks (finished late or not at all vs baseline)",pct(missed.length,due.length),"%","≤ 5%",pct(missed.length,due.length)<=5,missed.length,due.length,missed,"Baseline: "+base.file);
+    const bei=due.length?Math.round(100*doneN/due.length)/100:null;
+    C("bei","BEI (baseline execution index)",bei,"","≥ 0.95",bei==null?null:bei>=0.95,doneN,due.length,[],"Tasks finished ÷ tasks the baseline ("+base.file+") planned to finish by this data date");
+  }else{
+    C("missed","Missed tasks (vs baseline)",null,"","≤ 5%",null,null,null,[],base?"This is the baseline or earlier":"Load and pick the baseline to run this check");
+    C("bei","BEI (baseline execution index)",null,"","≥ 0.95",null,null,null,[],base?"This is the baseline or earlier":"Load and pick the baseline to run this check");}
+  C("cptest","Critical path test",null,"","Finish moves",null,null,null,[],"Needs the schedule recalculated: add a delay to a critical activity and check the finish moves by the same amount. Not automated yet.");
+  // extra checks (not DCMA) used as GAO evidence
+  const started=Object.values(s.tasks).filter(r=>!EX.has(r.task_type)&&r.act_start_date);
+  const oos=started.filter(r=>(pr[r.task_id]||[]).some(x=>{if(x.pred_type!=="PR_FS")return false;const q=s.tasks[x.pred_task_id];return !q.act_end_date||ds(q.act_end_date)>ds(r.act_start_date);}));
+  C("oos","Out of sequence (started before a finish-to-start predecessor finished)",pct(oos.length,started.length),"%","≤ 5%",pct(oos.length,started.length)<=5,oos.length,started.length,oos.map(s.lab));
+  const dang=o.filter(r=>{const P2=pr[r.task_id]||[],S2=su[r.task_id]||[];
+    const openStart=r.status_code==="TK_NotStart"&&r.task_type!=="TT_Mile"&&P2.length&&!P2.some(x=>x.pred_type==="PR_FS"||x.pred_type==="PR_SS");
+    const openFinish=r.task_type!=="TT_FinMile"&&S2.length&&!S2.some(x=>x.pred_type==="PR_FS"||x.pred_type==="PR_FF");return openStart||openFinish;});
+  C("openends","Open start or finish (dangling logic)",pct(dang.length,n),"%","≤ 5%",pct(dang.length,n)<=5,dang.length,n,dang.map(s.lab));
+  const now=Object.values(s.tasks).filter(r=>!EX.has(r.task_type)&&!(r.wbs_id&&s.wbs[r.wbs_id]));
+  C("wbs","Activities outside the WBS",now.length,"","0",now.length===0,now.length,Object.keys(s.tasks).length,now.map(s.lab));
+  const cr=o.filter(s.crit),cid=new Set(cr.map(r=>r.task_id));
+  const br=cr.filter(r=>r.status_code==="TK_NotStart"&&!(pr[r.task_id]||[]).some(x=>cid.has(x.pred_task_id)));
+  C("cp","Critical path continuity",br.length,"","1 start",br.length<=1,br.length,cr.length,br.map(s.lab),"Not-started critical activities with no critical predecessor. Stands in for the DCMA critical path test, which needs P6.");
+  const fm=Object.values(s.tasks).filter(r=>r.task_type==="TT_FinMile"&&!s.done(r)&&s.fin(r)).sort((a,b)=>s.fin(a)<s.fin(b)?-1:1).pop();
+  const cpl=s.workdays(s.dd,s.finish),tfe=fm?(s.tf(fm)||0):0,cpli=cpl?Math.round(100*(cpl+tfe)/cpl)/100:null;
+  C("cpli","CPLI (critical path length index)",cpli,"","≥ 0.95",cpli!==null&&cpli>=0.95,null,null,[],`${cpl} workdays to finish on the project calendar (holidays counted), ${Math.round(tfe)}d float on ${fm?s.lab(fm):"no finish milestone"}`);
+  const order={logic:1,leads:2,lags:3,fs:4,hard:5,hifloat:6,negfloat:7,hidur:8,dates:9,rsrc:10,missed:11,cptest:12,cpli:13,bei:14};
+  out.forEach(c=>c.dcma=order[c.key]||0);out.sort((a,b)=>(a.dcma||99)-(b.dcma||99));
+  return out;}
+
+function cls(s,r){if(r.driving_path_flag==="Y")return"Critical";const f=s.tf(r);return f!==null&&f<=NEAR_CRITICAL_DAYS?"Near critical":"Non-critical";}
+const STATUS={TK_NotStart:"Not started",TK_Active:"Active",TK_Complete:"Complete"};
+function execution(c,p){
+  const lo=p.dd,hi=c.dd,W=x=>x&&x>=lo&&x<hi,st=[],fi=[];
+  Object.values(p.tasks).forEach(r=>{
+    if(!WORK.has(r.task_type)||p.done(r))return;
+    const u=c.byCode[r.task_code];
+    const row={id:r.task_code,name:r.task_name,cls:cls(p,r),sA:ds(r.act_start_date||r.early_start_date),sB:u?ds(u.act_start_date||u.early_start_date):null,
+      fA:ds(r.early_end_date),fB:u?ds(u.act_end_date||u.early_end_date):null,tf:p.tf(r)!==null?Math.round(p.tf(r)):null,status:u?STATUS[u.status_code]:"Deleted"};
+    if(r.status_code==="TK_NotStart"&&W(ds(r.early_start_date)))st.push({...row,ok:!!(u&&u.act_start_date)});
+    if(W(ds(r.early_end_date)))fi.push({...row,ok:!!(u&&c.done(u))});});
+  const sum=a=>{const o={all:[a.length,a.filter(x=>x.ok).length]};["Critical","Near critical","Non-critical"].forEach(k=>{const b=a.filter(x=>x.cls===k);o[k]=[b.length,b.filter(x=>x.ok).length];});return o;};
+  const tot=st.length+fi.length,ok=st.filter(x=>x.ok).length+fi.filter(x=>x.ok).length;
+  return{from:lo,to:hi,prev:p,cur:c,index:tot?Math.round(100*ok/tot):null,start:sum(st),finish:sum(fi),
+    failedStart:st.filter(x=>!x.ok).sort((a,b)=>a.sA<b.sA?-1:1),failedFinish:fi.filter(x=>!x.ok).sort((a,b)=>a.fA<b.fA?-1:1)};}
+
+/* Schedule Validator figures already on file, keyed by job code prefix + window, for calibration */
+const SV_REF={"WSCC|2026-08-19|2026-09-02":{index:44,start:{all:[28,13],Critical:[0,0],"Near critical":[25,12],"Non-critical":[3,1]},finish:{all:[49,21],Critical:[1,1],"Near critical":[44,19],"Non-critical":[4,1]},
+  note:"From the 09-02-26 Execution Index PDF. Its earlier schedule shows a 27 Apr 2027 finish; the 08-19-R1 XER in SharePoint finishes 23 Apr 2027, so Schedule Validator was likely run on a different revision of the 19 Aug update. Executed counts are close; scheduled counts are not."},
+  "WSCC|2026-09-02|2026-09-16":{index:52,start:{all:[40,22],Critical:[1,1],"Near critical":[39,21],"Non-critical":[0,0]},finish:{all:[54,27],Critical:[0,0],"Near critical":[52,25],"Non-critical":[2,2]},
+  note:"From the 09-16-26 Execution % PDF (earlier finish 16 Apr 2027, later 19 Apr 2027). No 16 Sep XER in SharePoint yet."},
+  "WSCC|2026-09-16|2026-09-30":{index:41,start:{all:[44,21],Critical:[0,0],"Near critical":[33,18],"Non-critical":[11,3]},finish:{all:[56,20],Critical:[0,0],"Near critical":[44,20],"Non-critical":[12,0]},
+  note:"From the 09-30-26 Execution % PDF. It shows the 16 Sep schedule finishing 5 May 2027, but the 09-16 report showed 19 Apr 2027 for the same update, so the 16 Sep update was revised between the two runs."},
+  "WSCC|2026-09-30|2026-10-14":{index:45,start:{all:[40,18],Critical:[0,0],"Near critical":[24,12],"Non-critical":[16,6]},finish:{all:[49,22],Critical:[0,0],"Near critical":[23,11],"Non-critical":[26,11]},
+  note:"From the 10-14-26 Execution % PDF (finish 21 Apr 2027 in both). No 30 Sep or 14 Oct XER in SharePoint yet."}};
+
+/* ===================== metrics per update ===================== */
+// Colors follow the bands Schedule Validator shows on its schedules table (observed, not published).
+const BANDS={
+  quality:v=>v==null?"":v>=80?"is-ok":v>=70?"is-warn":"is-bad",
+  exec:v=>v==null?"":v>=80?"is-ok":v>=60?"is-warn":"is-bad",
+  slip:v=>v==null?"":v>=0?"is-ok":v>=-12?"is-warn":"is-bad",
+  change:v=>v==null?"":v<=4?"is-ok":v<=9?"is-warn":"is-bad",
+  perf:v=>v==null?"":v>=80?"is-ok":v>=70?"is-warn":"is-bad",
+  bei:v=>v==null?"":v>=0.95?"is-ok":v>=0.8?"is-warn":"is-bad"};
+const clamp=v=>Math.max(0,Math.min(100,Math.round(v)));
+/* ===================== BH scores (Bailey-Harris's own, weights published in the desk's "About the scores" view) =====================
+   BH Quality Score  = weighted DCMA 14-point checks. Replaces Schedule Validator's SV Score for BH use.
+   BH Performance Score = weighted standard performance measures vs the previous update and the baseline. Replaces SPS.
+   Each input earns 0-100 points: 100 when it meets its target, falling in a straight line to 0 at the "zero at" value.
+   Inputs that can't be measured (no baseline loaded, first update) are left out and the remaining weights are rescaled. */
+const QUALITY_WEIGHTS=[ // key, DCMA #, name, weight, target, zero points at
+  ["logic",1,"Logic (missing predecessor or successor)",15,"≤ 5%","25%"],
+  ["leads",2,"Leads",5,"0","25% of relationships"],
+  ["lags",3,"Lags",5,"≤ 5%","25%"],
+  ["fs",4,"Relationship types (finish-to-start)",5,"≥ 90%","50%"],
+  ["hard",5,"Hard constraints",10,"≤ 5%","25%"],
+  ["hifloat",6,"High float",10,"≤ 5%","25%"],
+  ["negfloat",7,"Negative float",10,"0","25% of open activities"],
+  ["hidur",8,"High duration",5,"≤ 5%","25%"],
+  ["dates",9,"Invalid dates",10,"0","25 activities"],
+  ["missed",11,"Missed tasks",5,"≤ 5%","25%"],
+  ["cpli",13,"CPLI",10,"≥ 0.95","0.70"],
+  ["bei",14,"BEI",10,"≥ 0.95","0.50"]];
+const PERF_WEIGHTS=[ // key, name, weight, target, zero points at
+  ["exec","Execution index (CEI): planned starts and finishes that happened",30,"95% or more","0%"],
+  ["bei","BEI: baseline work finished to date",20,"0.95 or more","0"],
+  ["cpli","CPLI: can the remaining critical path still make the finish",15,"0.95 or more","0.70"],
+  ["finishSlip","Finish slip since the previous update",15,"0 or gained","20 days later"],
+  ["cpSlip","Critical path slip since the previous update",10,"0 or gained","20 days later"],
+  ["floatErosion","Float erosion on near-critical work",10,"0 or gained","10 workdays lost"]];
+function checkScore(c){
+  if(c.pass===null||c.value==null)return null;
+  if(c.pass)return 100;
+  switch(c.key){
+    case"logic":case"lags":case"hard":case"hifloat":case"hidur":case"missed":return clamp(100*(1-(c.value-5)/20));
+    case"fs":return clamp(100*(1-(90-c.value)/40));
+    case"leads":case"negfloat":{const r=c.of?100*c.count/c.of:c.count;return clamp(100*(1-r/25));}
+    case"dates":return clamp(100*(1-c.count/25));
+    case"cpli":return clamp(100*(1-(0.95-c.value)/0.25));
+    case"bei":return clamp(100*(1-(0.95-c.value)/0.45));
+  }return null;}
+function bhQuality(checks){let w=0,t=0;QUALITY_WEIGHTS.forEach(([k,,,wt])=>{const c=checks.find(x=>x.key===k);const sc=c?checkScore(c):null;if(sc!=null){w+=wt;t+=wt*sc;}});return w?Math.round(t/w):null;}
+const perfPts={exec:v=>clamp(100*v/95),bei:v=>clamp(100*v/0.95),cpli:v=>v>=0.95?100:clamp(100*(1-(0.95-v)/0.25)),
+  finishSlip:v=>v>=0?100:clamp(100*(1+v/20)),cpSlip:v=>v>=0?100:clamp(100*(1+v/20)),floatErosion:v=>v>=0?100:clamp(100*(1+v/10))};
+function bhPerformance(m){let w=0,t=0;PERF_WEIGHTS.forEach(([k,,wt])=>{const v=m[k];if(v!=null){w+=wt;t+=wt*perfPts[k](v);}});return w?Math.round(t/w):null;}
+function floatErosion(c,p){ // average change in total float, workdays, for work that was near-critical (<= 20 workdays) in the previous update and is still open
+  if(!p)return null;const d=[];
+  Object.values(p.tasks).forEach(r=>{if(!WORK.has(r.task_type)||p.done(r))return;const f=p.tf(r);if(f==null||f>NEAR_CRITICAL_DAYS)return;
+    const u=c.byCode[r.task_code];if(!u||c.done(u)||c.tf(u)==null)return;d.push(c.tf(u)-f);});
+  return d.length?Math.round(10*d.reduce((a,b)=>a+b,0)/d.length)/10:null;}
+/* GAO Schedule Assessment Guide: the 10 best practices, rated from the checks above where they can be automated */
+const GAO=[
+  [1,"Capturing all activities",null,"Needs a comparison with the scope, estimate and WBS. Evidence shown; rate by review."],
+  [2,"Sequencing all activities",["logic","leads","lags","fs","hard","oos"],""],
+  [3,"Assigning resources to all activities",null,"BH schedules aren't resource-loaded, so this is not assessed."],
+  [4,"Establishing the duration of all activities",["hidur"],""],
+  [5,"Verifying horizontal and vertical traceability",["openends","logic","wbs"],""],
+  [6,"Confirming the critical path is valid",["cp","cpli","cptest"],"The critical path test needs P6 and is not automated yet."],
+  [7,"Ensuring reasonable total float",["hifloat","negfloat"],""],
+  [8,"Conducting a schedule risk analysis",null,"No risk analysis data in the schedule file. Not assessed."],
+  [9,"Updating the schedule using actual progress and logic",["dates","oos"],""],
+  [10,"Maintaining a baseline schedule",["bei","missed"],"Load and pick the baseline to assess this."]];
+const GAO_RATING=["Fully met","Substantially met","Partially met","Minimally met","Not met"];
+function gaoAssess(checks){
+  return GAO.map(([n,name,keys,note])=>{
+    if(!keys)return{n,name,rating:n===1?"Review":"Not assessed",evidence:[],note};
+    const cs=keys.map(k=>checks.find(c=>c.key===k)).filter(c=>c&&c.pass!==null);
+    if(!cs.length){const why=keys.map(k=>checks.find(c=>c.key===k)).find(c=>c&&c.note);return{n,name,rating:"Not assessed",evidence:[],note:why?why.note:note};}
+    const fails=cs.filter(c=>!c.pass).length;
+    return{n,name,rating:GAO_RATING[Math.min(4,fails)],evidence:cs.map(c=>({check:c.check,pass:c.pass,value:c.value,unit:c.unit})),note:fails?"":note};});}
+function gaoMet(g){return g.filter(x=>x.rating==="Fully met"||x.rating==="Substantially met").length;}
+function gaoAssessed(g){return g.filter(x=>GAO_RATING.includes(x.rating)).length;}
+function endMilestone(s){return Object.values(s.tasks).filter(r=>r.task_type==="TT_FinMile"&&s.fin(r)).sort((a,b)=>s.fin(a)<s.fin(b)?-1:1).pop();}
+function pctComplete(s){let tot=0,done=0;Object.values(s.tasks).forEach(r=>{if(!WORK.has(r.task_type))return;const t=+r.target_drtn_hr_cnt||0,rem=+r.remain_drtn_hr_cnt||0;tot+=t;done+=s.done(r)?t:Math.max(0,t-rem);});return tot?Math.round(100*done/tot):null;}
+function changePct(c,p){ // Schedule Validator's Change %: relationships added + deleted, as a share of the earlier update's relationships (matched 55 of 56 update pairs)
+  const pairs=s=>new Set(s.rels.map(r=>s.tasks[r.pred_task_id].task_code+"\u0001"+s.tasks[r.task_id].task_code));
+  const P=pairs(p),C=pairs(c);if(!P.size)return null;let n=0;C.forEach(k=>{if(!P.has(k))n++;});P.forEach(k=>{if(!C.has(k))n++;});
+  return Math.round(100*n/P.size);}
+/* Critical path slip, matched to Schedule Validator on 56 of 56 update pairs (WSCC 25HV001 + Comer Hall 25AU010, Nov 2026).
+   Earlier update: activities on P6's driving (longest) path, not complete, planned to be under way at the later data date
+   (early start <= later data date <= early finish). If any are still on the driving path in the later update, take the one
+   with the earliest planned finish; otherwise take the worst slip among them. Slip = earlier planned finish - later finish
+   (forecast or actual), calendar days; negative = later. None qualifying = N/A. */
+function cpSlipSV(c,p){
+  if(!p)return null;const dd=c.dd;
+  const C=Object.values(p.tasks).filter(r=>r.driving_path_flag==="Y"&&!p.done(r)&&c.byCode[r.task_code]&&p.st(r)&&p.fin(r)&&p.st(r)<=dd&&dd<=p.fin(r));
+  if(!C.length)return null;
+  const sl=r=>calDays(c.fin(c.byCode[r.task_code]),p.fin(r));
+  const C2=C.filter(r=>c.byCode[r.task_code].driving_path_flag==="Y");
+  if(C2.length){const r=C2.slice().sort((a,b)=>p.fin(a)<p.fin(b)?-1:p.fin(a)>p.fin(b)?1:0)[0];return sl(r);}
+  return Math.min(...C.map(sl));}
+function metricsFor(s,prev,checks){
+  const x=prev?execution(s,prev):null,dc=checks.filter(c=>c.dcma&&c.pass!==null),g=gaoAssess(checks),get=k=>(checks.find(c=>c.key===k)||{}).value;
+  const m={file:s.file,code:s.code,dd:s.dd,finish:s.finish,complete:pctComplete(s),
+    quality:bhQuality(checks),dcmaPassed:dc.filter(c=>c.pass).length,dcmaOf:dc.length,gaoMet:gaoMet(g),gaoOf:gaoAssessed(g),
+    finishSlip:prev?calDays(s.finish,prev.finish):null,          // negative = finish moved later (Schedule Validator's sign)
+    cpSlip:cpSlipSV(s,prev),                                    // Schedule Validator's CP slip, calendar days (see cpSlipSV)
+    exec:x?x.index:null,change:prev?changePct(s,prev):null,bei:get("bei"),cpli:get("cpli"),floatErosion:floatErosion(s,prev),
+    negFloat:(checks.find(c=>c.key==="negfloat")||{}).count,open:s.open.length};
+  m.passed=m.dcmaPassed;m.scored=m.dcmaOf;
+  m.perf=prev?bhPerformance(m):null;
+  return m;}
+
+/* ===================== state ===================== */
+const STORE="bh-schedule-desk-v2";
+let JOBS={};            // name -> {rows:[metrics], S:[schedules] (this session only), V:[checks]}
+let CUR=null,qSel=0,xSel=0;
+function save(){try{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]={rows:j.rows,baseFile:j.baseFile});localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+function restore(){try{const o=JSON.parse(localStorage.getItem(STORE)||"{}");Object.entries(o).forEach(([k,j])=>JOBS[k]={rows:j.rows||[],S:[],V:[],baseFile:j.baseFile});}catch(e){}}
+function baseOf(j){return j.S.find(x=>x.file===j.baseFile)||j.S.find(x=>/BASE/i.test(x.file+" "+x.code+" "+(x.P.proj_short_name||"")))||j.S[0];}
+function rebuild(name){const j=JOBS[name];j.S.sort((a,b)=>a.dd<b.dd?-1:1);const B=baseOf(j);if(B)j.baseFile=B.file;
+  j.V=j.S.map(s=>validation(s,B));j.rows=j.S.map((s,i)=>metricsFor(s,j.S[i-1],j.V[i]));}
+
+/* ===================== helpers ===================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=d=>{if(!d)return"";const x=new Date(d+"T12:00:00");return x.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});};
+const sgn=n=>n==null?"":(n>0?"+":"")+n;
+const score=(v,band,suffix="")=>v==null?'<span class="sd-score">N/A</span>':`<span class="sd-score ${BANDS[band](v)}">${band==="slip"?sgn(v):v}${suffix}</span>`;
+const tile=(label,sub,v,band,suffix="")=>`<div class="sd-tile ${v==null?"":BANDS[band](v)}"><div><div class="bh-label">${label}</div><small>${sub}</small></div><b>${v==null?"—":(band==="slip"?sgn(v):v)+suffix}</b></div>`;
+const avg=a=>{a=a.filter(x=>x!=null);return a.length?Math.round(a.reduce((p,q)=>p+q,0)/a.length):null;};
+const sum=a=>{a=a.filter(x=>x!=null);return a.length?a.reduce((p,q)=>p+q,0):null;};
+const latest=j=>j.rows[j.rows.length-1];
+const chip=p=>p===null?'<span class="bh-chip">Info</span>':p?'<span class="bh-chip is-ok">Pass</span>':'<span class="bh-chip is-bad">Fail</span>';
+
+/* ---- small SVG charts: black marks on light gray, per the UI spec ---- */
+function lineChart(points,{min=0,max=100,goal=null,h=180}={}){
+  if(!points.length)return'<div class="bh-caption" style="padding:20px 0">Not enough updates yet.</div>';
+  const W=560,H=h,L=34,R=10,T=10,B=28,xs=i=>L+(points.length===1?(W-L-R)/2:i*(W-L-R)/(points.length-1)),ys=v=>T+(H-T-B)*(1-(v-min)/(max-min));
+  let g="";for(let v=min;v<=max;v+=(max-min)/4)g+=`<line x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}" stroke="#e8e6e7"/><text x="${L-6}" y="${ys(v)+4}" font-size="10" text-anchor="end" fill="#484b4d">${Math.round(v)}</text>`;
+  if(goal!=null)g+=`<line x1="${L}" x2="${W-R}" y1="${ys(goal)}" y2="${ys(goal)}" stroke="#484b4d" stroke-dasharray="4 4"/>`;
+  const path=points.map((p,i)=>`${i?"L":"M"}${xs(i)},${ys(p.v)}`).join(""),area=points.length>1?`<path d="${path}L${xs(points.length-1)},${ys(min)}L${xs(0)},${ys(min)}Z" fill="#f2ece1"/>`:"";
+  const step=Math.ceil(points.length/8);
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${area}${g}<path d="${path}" fill="none" stroke="#211e1e" stroke-width="2"/>${points.map((p,i)=>`<circle cx="${xs(i)}" cy="${ys(p.v)}" r="3.5" fill="#211e1e"><title>${esc(p.label)}: ${p.v}</title></circle>${i%step===0?`<text x="${xs(i)}" y="${H-8}" font-size="10" text-anchor="middle" fill="#484b4d">${esc(p.label)}</text>`:""}`).join("")}</svg>`;}
+function barChart(items,{max=100,h=180}={}){
+  if(!items.length)return'<div class="bh-caption" style="padding:20px 0">Load two or more updates.</div>';
+  const W=560,H=h,L=10,B=28,T=16,bw=Math.min(40,(W-2*L)/items.length-6);
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${items.map((it,i)=>{const x=L+i*((W-2*L)/items.length)+3,hh=(H-T-B)*Math.max(0,it.v)/max;
+    return`<rect x="${x}" y="${T}" width="${bw}" height="${H-T-B}" fill="#e8e6e7"/><rect x="${x}" y="${H-B-hh}" width="${bw}" height="${hh}" fill="#211e1e"><title>${esc(it.label)}: ${it.v}</title></rect><text x="${x+bw/2}" y="${H-B-hh-4}" font-size="10" text-anchor="middle">${it.v}</text>${i%Math.ceil(items.length/10)===0?`<text x="${x+bw/2}" y="${H-8}" font-size="10" text-anchor="middle" fill="#484b4d">${esc(it.label)}</text>`:""}`;}).join("")}</svg>`;}
+function scatter(pts){
+  if(!pts.length)return'<div class="bh-caption" style="padding:20px 0">Load two or more updates for a job.</div>';
+  const W=560,H=260,P=34,lim=Math.max(20,...pts.map(p=>Math.max(Math.abs(p.x),Math.abs(p.y))))*1.1,sx=v=>P+(W-2*P)*(v+lim)/(2*lim),sy=v=>H-P-(H-2*P)*(v+lim)/(2*lim);
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img"><rect x="${P}" y="${P}" width="${W-2*P}" height="${H-2*P}" fill="none" stroke="#e8e6e7"/><line x1="${sx(0)}" x2="${sx(0)}" y1="${P}" y2="${H-P}" stroke="#484b4d"/><line x1="${P}" x2="${W-P}" y1="${sy(0)}" y2="${sy(0)}" stroke="#484b4d"/>
+    <text x="${W/2}" y="${H-6}" font-size="10" text-anchor="middle" fill="#484b4d">Finish slip, calendar days (negative = later)</text><text x="12" y="${H/2}" font-size="10" text-anchor="middle" fill="#484b4d" transform="rotate(-90 12 ${H/2})">Critical path slip, calendar days</text>
+    ${pts.map(p=>`<circle cx="${sx(p.x)}" cy="${sy(p.y)}" r="6" fill="${p.x<-12||p.y<-12?"#9c0006":"#211e1e"}"><title>${esc(p.label)}: finish ${sgn(p.x)}, CP ${sgn(p.y)}</title></circle><text x="${sx(p.x)+9}" y="${sy(p.y)+4}" font-size="10">${esc(p.label)}</text>`).join("")}</svg>`;}
+
+/* ===================== render ===================== */
+function render(){
+  const names=Object.keys(JOBS).sort();
+  if(!names.length){$("empty").hidden=false;$("views").hidden=true;renderHero();return;}
+  $("empty").hidden=true;$("views").hidden=false;
+  if(!CUR||!JOBS[CUR])CUR=names[0];
+  $("jobpick").innerHTML=names.map(n=>`<option ${n===CUR?"selected":""}>${esc(n)}</option>`).join("");
+  $("c-jobs").textContent=names.length;
+  const j=JOBS[CUR],L=latest(j);
+  $("side-job").textContent=CUR;$("c-sched").textContent=j.rows.length;
+  $("asof").textContent=L?fmt(L.dd):"—";
+
+  $("files").innerHTML=j.S.length?j.S.map(s=>`<span class="bh-chip">${esc(s.file)}</span>`).join(""):(j.rows.length?'<span class="bh-chip">Saved results only. Reload the XERs for detail views.</span>':"");
+    $("basepick").innerHTML=j.S.length?j.S.map(s=>`<option value="${esc(s.file)}" ${s.file===j.baseFile?"selected":""}>${esc(s.file)}</option>`).join(""):`<option>${esc(j.baseFile||"Reload XERs to change")}</option>`;
+  $("basepick").disabled=!j.S.length;
+  renderHero();renderPortfolio(names);renderDashboard(j);renderSchedules(j);renderQuality(j);renderGao(j);renderExec(j);renderMilestones(j);renderAbout();}
+
+function renderPortfolio(names){
+  const lat=names.map(n=>({name:n,r:latest(JOBS[n]),rows:JOBS[n].rows})).filter(x=>x.r);
+  const outdated=lat.filter(x=>calDays(x.r.dd,new Date().toISOString().slice(0,10))>45).length;
+  $("p-tiles").innerHTML=tile("BH Quality","Average",avg(lat.map(x=>x.r.quality)),"quality")+tile("BH Performance","Average",avg(lat.map(x=>x.r.perf)),"perf")+tile("Execution","Average",avg(lat.map(x=>x.r.exec)),"exec")+
+    tile("Finish slip","Average, latest update",avg(lat.map(x=>x.r.finishSlip)),"slip")+tile("Changed","Average, latest update",avg(lat.map(x=>x.r.change)),"change","%")+
+    `<div class="sd-tile ${outdated?"is-warn":"is-ok"}"><div><div class="bh-label">Outdated</div><small>No update in 45 days</small></div><b>${outdated}</b></div>`;
+  const cond=[["BH Quality Score","quality",x=>x.r.quality],["BH Performance Score","perf",x=>x.r.perf],["Execution","exec",x=>x.r.exec],["Critical path slip","slip",x=>x.r.cpSlip],["Finish slip","slip",x=>x.r.finishSlip],["Changed %","change",x=>x.r.change]];
+  $("p-cond").innerHTML="<tr><th>Measure</th><th class='c'>Normal</th><th class='c'>Warning</th><th class='c'>Alert</th><th class='c'>N/A</th></tr>"+
+    cond.map(([l,b,f])=>{const c={"is-ok":0,"is-warn":0,"is-bad":0,"":0};lat.forEach(x=>c[BANDS[b](f(x))]++);
+      return`<tr><td>${l}</td><td><span class="sd-score is-ok">${c["is-ok"]}</span></td><td><span class="sd-score is-warn">${c["is-warn"]}</span></td><td><span class="sd-score is-bad">${c["is-bad"]}</span></td><td><span class="sd-score">${c[""]}</span></td></tr>`;}).join("");
+  $("p-count").textContent=`${lat.length} jobs, ${lat.reduce((a,x)=>a+x.rows.length,0)} schedules`;
+  const byMonth=key=>{const m={};lat.forEach(x=>x.rows.forEach(r=>{if(r[key]==null)return;const k=r.dd.slice(0,7);(m[k]=m[k]||[]).push(r[key]);}));
+    return Object.keys(m).sort().slice(-12).map(k=>({label:new Date(k+"-15").toLocaleDateString("en-US",{month:"short",year:"numeric"}),v:avg(m[k])}));};
+  $("p-trend-q").innerHTML=lineChart(byMonth("quality"),{goal:80});
+  $("p-trend-x").innerHTML=lineChart(byMonth("exec"),{goal:80});
+  $("p-trend-p").innerHTML=lineChart(byMonth("perf"),{goal:80});
+  $("p-scatter").innerHTML=scatter(lat.filter(x=>x.rows.length>1).map(x=>({label:x.name.split(" ")[0],x:sum(x.rows.map(r=>r.finishSlip))||0,y:sum(x.rows.map(r=>r.cpSlip))||0})));
+  $("p-jobs").innerHTML="<tr><th>Job</th><th>Data date</th><th>Finish</th><th class='c'>Complete</th><th class='c'>BH Quality</th><th class='c'>BH Performance</th><th class='c'>Finish slip</th><th class='c'>Total finish slip</th><th class='c'>CP slip</th><th class='c'>Execution</th><th class='c'>Changed</th><th class='c'>Updates</th></tr>"+
+    lat.map(x=>`<tr class="sd-click" data-job="${esc(x.name)}"><td><strong>${esc(x.name)}</strong></td><td>${fmt(x.r.dd)}</td><td>${fmt(x.r.finish)}</td><td class="c">${x.r.complete??""}%</td><td class="c">${score(x.r.quality,"quality")}</td><td class="c">${score(x.r.perf,"perf")}</td><td class="c">${score(x.r.finishSlip,"slip")}</td><td class="c">${score(sum(x.rows.map(r=>r.finishSlip)),"slip")}</td><td class="c">${score(x.r.cpSlip,"slip")}</td><td class="c">${score(x.r.exec,"exec")}</td><td class="c">${score(x.r.change,"change","%")}</td><td class="c">${x.rows.length}</td></tr>`).join("");
+  $("p-jobs").querySelectorAll("[data-job]").forEach(tr=>tr.onclick=()=>{CUR=tr.dataset.job;render();show("dashboard");});}
+
+function renderDashboard(j){
+  const L=latest(j),rows=j.rows;
+  $("d-asof").textContent=L?"Latest update "+fmt(L.dd):"";
+  const plain=h=>h.replace(/sd-tile [^"]*"/,'sd-tile"');
+  $("d-quality").innerHTML=tile("BH Quality","Latest",L&&L.quality,"quality")+tile("BH Quality","Average",avg(rows.map(r=>r.quality)),"quality")+
+    plain(tile("DCMA checks passed","Latest",L&&L.dcmaOf!=null?L.dcmaPassed+" of "+L.dcmaOf:null,"quality"))+
+    plain(tile("GAO practices met","Latest, fully or substantially",L&&L.gaoOf?L.gaoMet+" of "+L.gaoOf:null,"quality"))+
+    tile("CPLI","Latest",L&&L.cpli,"bei")+tile("Changed","Latest",L&&L.change,"change","%");
+  $("d-progress").innerHTML=tile("BH Performance","Latest",L&&L.perf,"perf")+tile("BH Performance","Average",avg(rows.map(r=>r.perf)),"perf")+
+    tile("Finish slip","Latest",L&&L.finishSlip,"slip")+tile("Project finish","Total slip",sum(rows.map(r=>r.finishSlip)),"slip")+
+    tile("Critical path","Latest slip",L&&L.cpSlip,"slip")+tile("Execution index","Latest",L&&L.exec,"exec")+
+    tile("BEI","Latest",L&&L.bei,"bei")+tile("Float erosion","Latest, workdays",L&&L.floatErosion,"slip");
+  $("d-q").innerHTML=lineChart(rows.filter(r=>r.quality!=null).map(r=>({label:fmt(r.dd).slice(0,5),v:r.quality})),{goal:80});
+  $("d-p").innerHTML=lineChart(rows.filter(r=>r.perf!=null).map(r=>({label:fmt(r.dd).slice(0,5),v:r.perf})),{goal:80});
+  const fin=rows.filter(r=>r.finish);
+  if(fin.length){const base=fin[0].finish;$("d-finish").innerHTML=lineChart(fin.map(r=>({label:fmt(r.dd).slice(0,5),v:calDays(base,r.finish)})),{min:Math.min(0,...fin.map(r=>calDays(base,r.finish)))-5,max:Math.max(10,...fin.map(r=>calDays(base,r.finish)))+5})+`<div class="sd-note">Days the forecast finish has moved since the first update loaded (${fmt(base)}). Latest: ${fmt(latest(j).finish)}.</div>`;}
+  else $("d-finish").innerHTML="";
+  $("d-exec").innerHTML=barChart(rows.filter(r=>r.exec!=null).map(r=>({label:fmt(r.dd).slice(0,5),v:r.exec})));}
+
+function renderSchedules(j){
+  const rows=j.rows.slice().reverse(),Lr=latest(j);
+  const dc=r=>r.dcmaOf!=null?`${r.dcmaPassed} of ${r.dcmaOf}`:(r.scored!=null?`${r.passed} of ${r.scored}`:"");
+  const head=`<tr class="sd-sumrow"><td></td><td class="c">${j.rows.length}</td><td></td><td class="c">${Lr?Lr.complete+"% complete":""}</td><td class="c">${score(avg(j.rows.map(r=>r.quality)),"quality")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.perf)),"perf")}<br><small>AVG</small></td><td class="c">${score(sum(j.rows.map(r=>r.finishSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${score(sum(j.rows.map(r=>r.cpSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${score(avg(j.rows.map(r=>r.exec)),"exec")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.change)),"change","%")}<br><small>AVG</small></td></tr>`;
+  $("s-table").innerHTML=`<tr class="sd-grouprow"><th colspan="4"></th><th colspan="2">Quality</th><th colspan="5">Performance</th><th>Changes</th></tr>
+    <tr><th>Data date</th><th class="c">Updates</th><th>Description (click for diagnostics)</th><th>Finish date</th><th class="c">BH Quality</th><th class="c">DCMA passed</th><th class="c">BH Performance</th><th class="c">Finish slip</th><th class="c">CP slip</th><th class="c">Execution</th><th class="c">BEI</th><th class="c">Change %</th></tr>`+head+
+    rows.map((r,i)=>`<tr class="sd-click" data-i="${j.rows.length-1-i}"><td>${fmt(r.dd)}</td><td class="c">${j.rows.length-i}</td><td>${esc(r.code||r.file)}${r.file===j.baseFile?' <span class="bh-chip">Baseline</span>':""}${r.code&&!r.file.toUpperCase().startsWith(r.code.toUpperCase())?` <span class="bh-caption">${esc(r.file)}</span>`:""}</td><td>${fmt(r.finish)}</td><td class="c">${score(r.quality,"quality")}</td><td class="c">${dc(r)}</td><td class="c">${score(r.perf,"perf")}</td><td class="c">${score(r.finishSlip,"slip")}</td><td class="c">${score(r.cpSlip,"slip")}</td><td class="c">${score(r.exec,"exec")}</td><td class="c">${score(r.bei,"bei")}</td><td class="c">${score(r.change,"change","%")}</td></tr>`).join("");
+  $("s-table").querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=()=>{qSel=+tr.dataset.i;xSel=Math.max(0,qSel-1);renderQuality(j);renderGao(j);renderExec(j);show("quality");});
+  $("s-note").innerHTML="BH Quality and BH Performance are Bailey-Harris's own scores, with published weights (see <a href='#about' data-go='about'>About BH scores</a>). They replace Schedule Validator's SV Score and SPS and won't match them. Finish slip, CP slip, Execution and Change % use Schedule Validator's rules and do match: finish slip is calendar days the forecast finish moved since the previous update, negative = later; CP slip is how far the critical-path work due at this data date (per the previous update) has moved, N/A when none was due; execution is the share of tasks the previous update scheduled to start or finish in the window that did; Change % is relationships added or deleted as a share of the previous update's. BEI is against the baseline marked in the table.";
+  $("s-note").querySelectorAll("[data-go]").forEach(a=>a.onclick=e=>{e.preventDefault();show(a.dataset.go);});}
+
+function needDetail(el,j){if(j.S.length)return false;el.innerHTML="<tr><td class='bh-caption'>Only the saved results are in this browser for this job. Load its XER files again to see this view.</td></tr>";return true;}
+function checkRows(list,j,tableId,withWeights){
+  const W={};QUALITY_WEIGHTS.forEach(([k,,,w,,z])=>W[k]={w,z});
+  const cols=withWeights?9:7;
+  return(withWeights?"<tr><th class='num'>#</th><th>Check</th><th class='num'>Result</th><th>Target</th><th>Status</th><th class='num'>Weight</th><th class='num'>Points</th><th class='num'>Count</th><th>Notes</th></tr>":"<tr><th>Check</th><th class='num'>Result</th><th>Target</th><th>Status</th><th class='num'>Count</th><th>Notes</th></tr>")+
+    list.map(([c,i])=>`<tr class="${c.items.length?"sd-row-btn":""}" data-i="${i}">${withWeights?`<td class="num">${c.dcma}</td>`:""}<td>${c.items.length?"▸ ":""}${esc(c.check)}</td><td class="num">${c.value??"—"}${c.value==null?"":c.unit}</td><td>${c.threshold}</td><td>${chip(c.pass)}</td>${withWeights?`<td class="num">${W[c.key]?W[c.key].w:"—"}</td><td class="num">${W[c.key]?(checkScore(c)??"N/A"):""}</td>`:""}<td class="num">${c.count!=null?(c.of?c.count+" of "+c.of:c.count):""}</td><td class="bh-caption">${esc(c.note)}</td></tr><tr class="sd-items" data-for="${i}" hidden><td colspan="${cols}"><ul>${c.items.slice(0,200).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${c.items.length>200?`<div class="sd-note">${c.items.length-200} more not shown</div>`:""}</td></tr>`).join("");}
+function wireRows(t){t.querySelectorAll(".sd-row-btn").forEach(tr=>tr.onclick=()=>{const x=t.querySelector(`[data-for="${tr.dataset.i}"]`);x.hidden=!x.hidden;tr.classList.toggle("is-selected",!x.hidden);});}
+function renderQuality(j){
+  if(needDetail($("q-table"),j)){$("q-tabs").innerHTML="";$("q-extra").innerHTML="";return;}
+  qSel=Math.min(qSel,j.S.length-1);if(qSel<0)qSel=j.S.length-1;
+  $("q-tabs").innerHTML=j.S.map((s,i)=>`<button class="${i===qSel?"bh-btn":"bh-btn-outline"}" data-q="${i}">${fmt(s.dd)}</button>`).join("");
+  $("q-tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{qSel=+b.dataset.q;renderQuality(j);renderGao(j);});
+  const s=j.S[qSel],LV=j.V[qSel],r=j.rows[qSel],idx=LV.map((c,i)=>[c,i]);
+  $("q-title").innerHTML=`DCMA 14-point · ${fmt(s.dd)} update · BH Quality ${score(r.quality,"quality")} · ${r.dcmaPassed} of ${r.dcmaOf} passed`;
+  $("q-table").innerHTML=checkRows(idx.filter(([c])=>c.dcma),j,"q-table",true);
+  $("q-extra").innerHTML=checkRows(idx.filter(([c])=>!c.dcma),j,"q-extra",false);
+  wireRows($("q-table"));wireRows($("q-extra"));}
+const gaoChip=r=>`<span class="bh-chip ${/^(Fully|Substantially)/.test(r)?"is-ok":/^Partially/.test(r)?"is-warn":/^(Minimally|Not met)/.test(r)?"is-bad":""}">${esc(r)}</span>`;
+function renderGao(j){
+  if(needDetail($("g-table"),j)){$("g-tabs").innerHTML="";return;}
+  const i0=Math.min(Math.max(0,qSel),j.S.length-1);
+  $("g-tabs").innerHTML=j.S.map((s,i)=>`<button class="${i===i0?"bh-btn":"bh-btn-outline"}" data-g="${i}">${fmt(s.dd)}</button>`).join("");
+  $("g-tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{qSel=+b.dataset.g;renderGao(j);renderQuality(j);});
+  const g=gaoAssess(j.V[i0]);
+  $("g-title").innerHTML=`GAO best practices · ${fmt(j.S[i0].dd)} update · ${gaoMet(g)} of ${gaoAssessed(g)} assessed practices fully or substantially met`;
+  $("g-table").innerHTML="<tr><th class='num'>#</th><th>Best practice</th><th>Rating</th><th>Evidence from the checks</th><th>Notes</th></tr>"+
+    g.map(x=>`<tr><td class="num">${x.n}</td><td>${esc(x.name)}</td><td>${gaoChip(x.rating)}</td><td>${x.evidence.length?`<ul class="sd-ev">${x.evidence.map(e=>`<li>${e.pass?"Pass":"Fail"} · ${esc(e.check)}${e.value!=null?" ("+e.value+e.unit+")":""}</li>`).join("")}</ul>`:""}</td><td class="bh-caption">${esc(x.note)}</td></tr>`).join("");}
+function renderAbout(){
+  $("a-q").innerHTML="<tr><th class='num'>DCMA #</th><th>Check</th><th class='num'>Weight</th><th>Full points at</th><th>Zero points at</th></tr>"+
+    QUALITY_WEIGHTS.map(([k,n,name,w,t,z])=>`<tr><td class="num">${n}</td><td>${esc(name)}</td><td class="num">${w}</td><td>${esc(t)}</td><td>${esc(z)}</td></tr>`).join("")+
+    `<tr class="sd-sumrow"><td></td><td>Total</td><td class="num">${QUALITY_WEIGHTS.reduce((a,x)=>a+x[3],0)}</td><td></td><td></td></tr>`;
+  $("a-p").innerHTML="<tr><th>Measure</th><th class='num'>Weight</th><th>Full points at</th><th>Zero points at</th></tr>"+
+    PERF_WEIGHTS.map(([k,name,w,t,z])=>`<tr><td>${esc(name)}</td><td class="num">${w}</td><td>${esc(t)}</td><td>${esc(z)}</td></tr>`).join("")+
+    `<tr class="sd-sumrow"><td>Total</td><td class="num">${PERF_WEIGHTS.reduce((a,x)=>a+x[2],0)}</td><td></td><td></td></tr>`;}
+
+function renderExec(j){
+  const ids=["x-sum","x-sv","x-fs","x-ff"];
+  if(j.S.length<2){$("x-tabs").innerHTML=`<div class="bh-caption">${j.S.length?"Load two or more updates to measure execution.":"Load this job's XER files again to see execution detail."}</div>`;ids.forEach(i=>$(i).innerHTML="");$("x-svnote").textContent="";$("x-note").textContent="";return;}
+  const X=[];for(let i=1;i<j.S.length;i++)X.push(execution(j.S[i],j.S[i-1]));
+  xSel=Math.min(Math.max(0,xSel),X.length-1);
+  $("x-tabs").innerHTML=X.map((x,i)=>`<button class="${i===xSel?"bh-btn":"bh-btn-outline"}" data-x="${i}">${fmt(x.from)} – ${fmt(x.to)}</button>`).join("");
+  $("x-tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{xSel=+b.dataset.x;renderExec(j);});
+  const x=X[xSel];$("x-title").innerHTML="Task execution · index "+score(x.index,"exec");
+  const line=(lab,v,ind)=>`<tr><td>${ind?"&nbsp;&nbsp;&nbsp;&nbsp;":""}${lab}</td><td class="num">${v[0]}</td><td class="num">${v[1]}</td><td class="num">${v[0]?Math.round(100*v[1]/v[0])+"%":"n/a"}</td></tr>`;
+  const block=(o,lab)=>line(lab,o.all,false)+["Critical","Near critical","Non-critical"].map(k=>line(k,o[k],true)).join("");
+  $("x-sum").innerHTML="<tr><th>Tasks</th><th class='num'>Scheduled</th><th class='num'>Executed</th><th class='num'>Share</th></tr>"+block(x.start,"To start")+block(x.finish,"To finish");
+  $("x-note").textContent=`Window ${fmt(x.from)} up to ${fmt(x.to)}: tasks the ${fmt(x.from)} update scheduled in it, checked against the ${fmt(x.to)} update. Critical = on the longest path in P6; near critical = ${NEAR_CRITICAL_DAYS} workdays of float or less (assumed until Schedule Validator's setting is confirmed).`;
+  const key=Object.keys(SV_REF).find(k=>{const[code,a,b]=k.split("|");return((x.cur.code||"")+" "+CUR).toUpperCase().includes(code)&&a===x.from&&b===x.to;});
+  if(key){const r=SV_REF[key],cmp=(lab,m,v)=>`<tr><td>${lab}</td><td class="num">${m[0]} / ${m[1]}</td><td class="num">${v[0]} / ${v[1]}</td></tr>`;
+    $("x-sv").innerHTML=`<tr><th>Measure</th><th class="num">This desk</th><th class="num">Schedule Validator</th></tr><tr><td>Execution index</td><td class="num">${x.index}</td><td class="num">${r.index}</td></tr>`+cmp("To start (scheduled / executed)",x.start.all,r.start.all)+cmp("To finish (scheduled / executed)",x.finish.all,r.finish.all);$("x-svnote").textContent=r.note;}
+  else{$("x-sv").innerHTML="<tr><td class='bh-caption'>No Schedule Validator report on file for this window.</td></tr>";$("x-svnote").textContent="";}
+  const tbl=rows=>"<tr><th>Activity ID</th><th>Description</th><th>Class</th><th>Start (earlier)</th><th>Start (later)</th><th>Finish (earlier)</th><th>Finish (later)</th><th class='num'>Float</th><th>Status</th></tr>"+
+    rows.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${r.cls==="Critical"?'<span class="bh-chip is-bad">Critical</span>':esc(r.cls)}</td><td>${fmt(r.sA)}</td><td>${fmt(r.sB)}</td><td>${fmt(r.fA)}</td><td>${fmt(r.fB)}</td><td class="num ${r.tf<0?"neg":""}">${r.tf??""}</td><td>${esc(r.status)}</td></tr>`).join("");
+  $("fs-title").textContent=`Tasks failed to start (${x.failedStart.length} of ${x.start.all[0]})`;$("x-fs").innerHTML=tbl(x.failedStart);
+  $("ff-title").textContent=`Tasks failed to finish (${x.failedFinish.length} of ${x.finish.all[0]})`;$("x-ff").innerHTML=tbl(x.failedFinish);}
+
+function renderMilestones(j){
+  if(needDetail($("m-table"),j))return;
+  const S=j.S,L=S[S.length-1],codes=[];S.forEach(s=>Object.values(s.tasks).forEach(r=>{if(MS.has(r.task_type)&&!codes.includes(r.task_code))codes.push(r.task_code);}));
+  const md=(s,code)=>{const r=s.byCode[code];if(!r)return null;return r.task_type==="TT_FinMile"?s.fin(r):s.st(r);};
+  const rows=codes.map(code=>{const r=L.byCode[code]||S.find(s=>s.byCode[code]).byCode[code];return{code,r,dates:S.map(s=>md(s,code)),done:L.byCode[code]&&L.done(L.byCode[code]),tf:L.byCode[code]?L.tf(L.byCode[code]):null};}).sort((a,b)=>(a.dates[a.dates.length-1]||"")<(b.dates[b.dates.length-1]||"")?-1:1);
+  $("m-table").innerHTML="<tr><th>Milestone</th>"+S.map(s=>`<th>${fmt(s.dd)}</th>`).join("")+"<th class='num'>Change</th><th class='num'>Float</th><th>Status</th></tr>"+
+    rows.map(m=>{const ch=calDays(m.dates[0],m.dates[m.dates.length-1]);return`<tr><td>${esc(m.code+" "+(m.r.task_name||""))}</td>${m.dates.map(d=>`<td>${fmt(d)}</td>`).join("")}<td class="num ${ch>0?"neg":""}">${ch==null?"":sgn(ch)+"d"}</td><td class="num ${m.tf<0?"neg":""}">${m.tf==null||m.done?"":Math.round(m.tf)}</td><td>${m.done?'<span class="bh-chip">Complete</span>':""}</td></tr>`;}).join("");}
+
+/* ===================== views + loading ===================== */
+let VIEW="portfolio";
+function heroStat(label,v,band,sub,suffix=""){return`<div class="h-stat ${v==null?"":BANDS[band](v)}"><span class="bh-label">${label}</span><b>${v==null?"—":(band==="slip"?sgn(v):v)+suffix}</b><small>${sub}</small></div>`;}
+function renderHero(){
+  const names=Object.keys(JOBS);
+  if(!names.length){$("h-eyebrow").textContent="Schedule Desk";$("h-t1").textContent="Schedule";$("h-t2").textContent="health";
+    $("sub").textContent="BH Quality and BH Performance scores, DCMA 14-point checks and the GAO best practices for every P6 update.";$("h-stats").innerHTML="";return;}
+  if(VIEW==="portfolio"||VIEW==="about"){const lat=names.map(n=>latest(JOBS[n])).filter(Boolean);
+    $("h-eyebrow").textContent="Schedule Desk · Portfolio";$("h-t1").textContent=names.length+" job"+(names.length>1?"s":"");$("h-t2").textContent="in view";
+    $("sub").textContent=names.reduce((a,n)=>a+JOBS[n].rows.length,0)+" schedule updates loaded in this browser. Scores are averages of each job's latest update.";
+    $("h-stats").innerHTML=heroStat("BH Quality",avg(lat.map(r=>r.quality)),"quality","Average")+heroStat("BH Performance",avg(lat.map(r=>r.perf)),"perf","Average")+
+      heroStat("Execution",avg(lat.map(r=>r.exec)),"exec","Average")+heroStat("Finish slip",avg(lat.map(r=>r.finishSlip)),"slip","Average, days");return;}
+  const j=JOBS[CUR],L=latest(j),parts=CUR.split(" "),code=/^\d/.test(parts[0])?parts.shift():"";
+  $("h-eyebrow").textContent="Schedule Desk"+(code?" · "+code:"");$("h-t1").textContent=parts.slice(0,1).join(" ")||CUR;$("h-t2").textContent=parts.slice(1).join(" ");
+  $("sub").textContent=L?`Update ${fmt(L.dd)} · forecast finish ${fmt(L.finish)} · ${L.complete??"—"}% complete · ${j.rows.length} update${j.rows.length>1?"s":""} loaded`:"";
+  $("h-stats").innerHTML=heroStat("BH Quality",L&&L.quality,"quality",L&&L.dcmaOf!=null?L.dcmaPassed+" of "+L.dcmaOf+" DCMA passed":"Latest")+heroStat("BH Performance",L&&L.perf,"perf","Latest")+
+    heroStat("Finish slip",L&&L.finishSlip,"slip","Days, this update")+heroStat("Execution",L&&L.exec,"exec","Latest");}
+function show(v){VIEW=v;renderHero();document.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==v);
+  document.querySelectorAll(".sd-tab[data-view]").forEach(a=>{if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  try{history.replaceState(null,"","#"+v);}catch(e){}}
+document.querySelectorAll(".sd-tab[data-view]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();show(a.dataset.view);}));
+function guessJob(s){return(s.code||s.file).replace(/[-_ ]*(UPDATE|UPD|BASE(LINE)?|REV|R\d).*$/i,"").trim()||s.file;}
+async function load(files,jobName){
+  const errs=[],touched=new Set();
+  for(const f of files){if(!/\.xer$/i.test(f.name))continue;
+    try{const s=schedule(new TextDecoder("windows-1252").decode(await f.arrayBuffer()),f.name);
+      const name=(jobName||"").trim()||guessJob(s);
+      const j=JOBS[name]||(JOBS[name]={rows:[],S:[],V:[]});
+      j.S=j.S.filter(x=>x.file!==f.name);j.S.push(s);touched.add(name);}catch(e){errs.push(f.name+": "+e.message);}}
+  touched.forEach(rebuild);if(touched.size)CUR=[...touched][0];save();render();
+  if(errs.length)$("files").insertAdjacentHTML("beforeend",errs.map(e=>`<span class="bh-chip is-bad">${esc(e)}</span>`).join(""));}
+$("pick").onclick=()=>$("file").click();
+$("file").onchange=e=>{load([...e.target.files],$("jobname").value);e.target.value="";};
+$("jobpick").onchange=e=>{CUR=e.target.value;render();};
+$("basepick").onchange=e=>{const j=JOBS[CUR];if(!j||!j.S.length)return;j.baseFile=e.target.value;rebuild(CUR);save();render();};
+$("export").onclick=()=>{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]=j.rows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({generated:new Date().toISOString(),jobs:o},null,2)],{type:"application/json"}));a.download="schedule-desk-metrics.json";a.click();};
+const main=$("main");
+main.addEventListener("dragover",e=>{e.preventDefault();main.classList.add("is-over");});
+main.addEventListener("dragleave",()=>main.classList.remove("is-over"));
+main.addEventListener("drop",e=>{e.preventDefault();main.classList.remove("is-over");load([...e.dataTransfer.files],$("jobname").value);});
+restore();render();show((location.hash||"#portfolio").slice(1));
+window.ScheduleDesk={schedule,validation,execution,metricsFor,load,rebuild,gaoAssess,bhQuality,bhPerformance,JOBS};
+</script>
+</body>
+</html>
