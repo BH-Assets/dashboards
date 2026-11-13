@@ -100,6 +100,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 .eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:#fff;margin-right:10px;vertical-align:0}
 .greet{margin:0;font-size:44px;line-height:1.02;font-weight:500;text-transform:uppercase;color:#fff;letter-spacing:.005em}
 .greet .nm{display:block;font-weight:800}
+.greet.is-long{font-size:30px;line-height:1.08}
 .hsum{margin:14px 0 0;font-size:15px;color:#fff;max-width:720px}
 .h-stats{display:grid;grid-template-columns:repeat(4,minmax(128px,1fr));gap:2px;flex:0 1 640px}
 .h-stat{background:#fff;padding:14px 16px 12px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;border-bottom:5px solid var(--line)}
@@ -195,8 +196,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
   <a class="sd-tab is-help" href="#about" data-view="about">About BH scores</a>
 </div></nav>
 <div class="sd-loader"><div class="wrap">
-  <label><span class="bh-label">Job</span><select class="bh-select" id="jobpick"></select></label>
-  <label><span class="bh-label">Load updates for job</span><input class="bh-input" id="jobname" list="joblist" placeholder="Pick a job or type a new one" size="26"><datalist id="joblist"></datalist></label>
+  <label><span class="bh-label">Job</span><input class="bh-input" id="jobname" list="joblist" placeholder="Type a job number or name" size="40" autocomplete="off"><datalist id="joblist"></datalist></label>
   <div class="sd-adds"><span class="bh-label">Add XER files</span><div class="sd-addrow">
     <button class="bh-btn" data-add="">Updates</button>
     <button class="bh-btn-outline" data-add="baseline">Baseline</button>
@@ -721,11 +721,11 @@ function render(){
     $("joblist").innerHTML=PROCORE.map(procoreName).sort().map(n=>`<option value="${esc(n)}">Procore, active</option>`).join("");return;}
   $("empty").hidden=true;$("views").hidden=false;
   if(!CUR||!JOBS[CUR]){const withData=names.filter(n=>latest(JOBS[n])).sort((a,b)=>latest(JOBS[a]).dd<latest(JOBS[b]).dd?1:-1);CUR=withData[0]||names[0];}
-  $("jobpick").innerHTML=names.map(n=>`<option ${n===CUR?"selected":""}>${esc(n)}</option>`).join("");
+
   $("c-jobs").textContent=names.length;
   {const opts=[...names];PROCORE.map(procoreName).forEach(n=>{if(!opts.some(o=>jobNo(o)===jobNo(n)))opts.push(n);});
    $("joblist").innerHTML=opts.sort().map(n=>`<option value="${esc(n)}">${names.includes(n)?"On the desk":"Procore, active"}</option>`).join("");
-   if(!$("jobname").value)$("jobname").value=CUR;}
+   if(document.activeElement!==$("jobname"))$("jobname").value=CUR;}
   const j=JOBS[CUR],L=latest(j);
   if(j.remote&&!j.S.length&&!j.fetching&&!j.fetched)SP.fetchJob(CUR);
   $("side-job").textContent=CUR;$("c-sched").textContent=j.rows.length;
@@ -981,7 +981,7 @@ const SP=(()=>{
 /* ===================== views + loading ===================== */
 let VIEW="portfolio";
 function heroStat(label,v,band,sub,suffix=""){return`<div class="h-stat ${v==null?"":BANDS[band](v)}"><span class="bh-label">${label}</span><b>${v==null?"—":(band==="slip"?sgn(v):v)+suffix}</b><small>${sub}</small></div>`;}
-function renderHero(){
+function renderHero(){setTimeout(fitHero,0);
   const names=Object.keys(JOBS);
   if(!names.length){$("h-eyebrow").textContent="Schedule Desk";$("h-t1").textContent="Schedule";$("h-t2").textContent="health";
     $("sub").textContent="BH Quality and BH Performance scores, DCMA 14-point checks and the GAO best practices for every P6 update.";$("h-stats").innerHTML="";return;}
@@ -997,6 +997,7 @@ function renderHero(){
   $("sub").textContent=(L?`Update ${fmt(L.dd)} · forecast finish ${fmt(L.finish)} · ${L.complete??"—"}% complete · ${j.rows.length} update${j.rows.length>1?"s":""} loaded`:"")+(team.length?` · PM team: ${team.join(", ")}`:"");
   $("h-stats").innerHTML=heroStat("BH Quality",L&&L.quality,"quality",L&&L.dcmaOf!=null?L.dcmaPassed+" of "+L.dcmaOf+" DCMA passed":"Latest")+heroStat("BH Performance",L&&L.perf,"perf","Latest")+
     heroStat("Finish slip",L&&L.finishSlip,"slip","Days, this update")+heroStat("Execution",L&&L.exec,"exec","Latest");}
+function fitHero(){const g=document.querySelector(".greet");g.classList.toggle("is-long",(g.textContent||"").length>26);}
 function show(v){VIEW=v;renderHero();document.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==v);
   document.querySelectorAll(".sd-tab[data-view]").forEach(a=>{if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
   try{history.replaceState(null,"","#"+v);}catch(e){}}
@@ -1019,7 +1020,10 @@ async function load(files,jobName,tag){
 let ADD_TAG="";
 document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ADD_TAG=b.dataset.add;$("file").multiple=ADD_TAG!=="initial";$("file").click();});
 $("file").onchange=e=>{load([...e.target.files],$("jobname").value,ADD_TAG);e.target.value="";ADD_TAG="";};
-$("jobpick").onchange=e=>{CUR=e.target.value;render();};
+/* one job box: picking or typing a job opens it, and files added next go to it. A job that isn't on the desk yet
+   (a Procore job with no schedules, or a new name) is opened empty and created by its first upload. */
+$("jobname").onchange=()=>{const n=canonicalJob($("jobname").value);if(!n)return;
+  if(!JOBS[n])JOBS[n]={rows:[],S:[],V:[]};CUR=n;$("jobname").value=n;render();if(VIEW==="portfolio")show("dashboard");};
 
 $("export").onclick=()=>{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]=j.rows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({generated:new Date().toISOString(),jobs:o},null,2)],{type:"application/json"}));a.download="schedule-desk-metrics.json";a.click();};
 const main=$("main");
