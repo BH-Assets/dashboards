@@ -15,6 +15,16 @@
 .sd-store .sd-dot{width:8px;height:8px;background:var(--faint);flex:none}
 .sd-store.is-on .sd-dot{background:#2e8b3e}.sd-store.is-off .sd-dot{background:#e0a100}.sd-store.is-bad .sd-dot{background:#c4161c}
 .sd-store button{font:600 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.06em;text-transform:uppercase;background:#fff;border:1px solid var(--ink);padding:4px 8px;cursor:pointer}
+.sd-jobbox{position:relative;display:block}
+.sd-jobbox .bh-input{padding-right:36px;width:100%;box-sizing:border-box}
+.sd-jobcaret{position:absolute;right:1px;top:1px;bottom:1px;width:34px;border:0;background:transparent;cursor:pointer;font-size:14px}
+.sd-jobmenu{position:absolute;z-index:50;left:0;top:100%;width:max(100%,460px);max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--ink);margin-top:-1px}
+.sd-jobmenu .grp{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 12px 4px;background:#faf8f4}
+.sd-jobmenu .opt{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;font-size:13.5px;cursor:pointer;border-top:1px solid var(--line)}
+.sd-jobmenu .opt small{color:var(--muted);white-space:nowrap}
+.sd-jobmenu .opt:hover,.sd-jobmenu .opt.is-active{background:var(--cream)}
+.sd-jobmenu .opt[aria-selected="true"]{font-weight:700}
+.sd-jobmenu .none{padding:10px 12px;font-size:13px;color:var(--muted)}
 .sd-basesum{min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;font-size:13px;font-weight:600;line-height:1.3}
 .sd-basesum .bh-caption{white-space:nowrap}
 .sd-tag{font:600 12px var(--bh-font,Figtree,sans-serif);border:1px solid var(--line);background:#fff;padding:5px 6px;min-width:128px;cursor:pointer}
@@ -196,7 +206,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
   <a class="sd-tab is-help" href="#about" data-view="about">About BH scores</a>
 </div></nav>
 <div class="sd-loader"><div class="wrap">
-  <label><span class="bh-label">Job</span><input class="bh-input" id="jobname" list="joblist" placeholder="Type a job number or name" size="40" autocomplete="off"><datalist id="joblist"></datalist></label>
+  <label><span class="bh-label">Job</span><span class="sd-jobbox"><input class="bh-input" id="jobname" placeholder="Type a job number or name" size="40" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="jobmenu"><button type="button" class="sd-jobcaret" id="jobcaret" aria-label="Show all jobs" tabindex="-1">▾</button><div class="sd-jobmenu" id="jobmenu" role="listbox" hidden></div></span></label>
   <div class="sd-adds"><span class="bh-label">Add XER files</span><div class="sd-addrow">
     <button class="bh-btn" data-add="">Updates</button>
     <button class="bh-btn-outline" data-add="baseline">Baseline</button>
@@ -718,14 +728,12 @@ function scatter(pts){
 function render(){
   const names=Object.keys(JOBS).sort();
   if(!names.length){$("empty").hidden=false;$("views").hidden=true;renderHero();
-    $("joblist").innerHTML=PROCORE.map(procoreName).sort().map(n=>`<option value="${esc(n)}">Procore, active</option>`).join("");return;}
+    return;}
   $("empty").hidden=true;$("views").hidden=false;
   if(!CUR||!JOBS[CUR]){const withData=names.filter(n=>latest(JOBS[n])).sort((a,b)=>latest(JOBS[a]).dd<latest(JOBS[b]).dd?1:-1);CUR=withData[0]||names[0];}
 
   $("c-jobs").textContent=names.length;
-  {const opts=[...names];PROCORE.map(procoreName).forEach(n=>{if(!opts.some(o=>jobNo(o)===jobNo(n)))opts.push(n);});
-   $("joblist").innerHTML=opts.sort().map(n=>`<option value="${esc(n)}">${names.includes(n)?"On the desk":"Procore, active"}</option>`).join("");
-   if(document.activeElement!==$("jobname"))$("jobname").value=CUR;}
+  if(document.activeElement!==$("jobname"))$("jobname").value=CUR;
   const j=JOBS[CUR],L=latest(j);
   if(j.remote&&!j.S.length&&!j.fetching&&!j.fetched)SP.fetchJob(CUR);
   $("side-job").textContent=CUR;$("c-sched").textContent=j.rows.length;
@@ -901,7 +909,7 @@ const SP=(()=>{
   api.connect=async function(){
     if(typeof msal==="undefined")return status("Not connected: the sign-in script didn't load. Files stay in this browser.","is-off");
     try{
-      app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/"+TENANT_ID,redirectUri:location.origin+"/schedule/",navigateToLoginRequestUrl:false},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:false}});
+      app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/"+TENANT_ID,redirectUri:location.origin+"/schedule/",navigateToLoginRequestUrl:false},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:false},system:{iframeHashTimeout:10000}});
       await app.initialize();await app.handleRedirectPromise();
       acct=app.getAllAccounts()[0];
       if(!acct)return status("Not signed in. Uploads and tags stay in this browser until you sign in.","is-off",{label:"Sign in",go:()=>app.loginRedirect({scopes:SCOPES})});
@@ -1022,8 +1030,35 @@ document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ADD_TAG=b.data
 $("file").onchange=e=>{load([...e.target.files],$("jobname").value,ADD_TAG);e.target.value="";ADD_TAG="";};
 /* one job box: picking or typing a job opens it, and files added next go to it. A job that isn't on the desk yet
    (a Procore job with no schedules, or a new name) is opened empty and created by its first upload. */
-$("jobname").onchange=()=>{const n=canonicalJob($("jobname").value);if(!n)return;
-  if(!JOBS[n])JOBS[n]={rows:[],S:[],V:[]};CUR=n;$("jobname").value=n;render();if(VIEW==="portfolio")show("dashboard");};
+function openJob(typed){const n=canonicalJob(typed);if(!n)return;
+  if(!JOBS[n])JOBS[n]={rows:[],S:[],V:[]};CUR=n;$("jobname").value=n;closeJobMenu();render();if(VIEW==="portfolio")show("dashboard");}
+/* job picker: every job on the desk (with schedules first, then waiting for a first upload) and every active Procore job
+   not on the desk yet. Shows everything when opened, filters as you type (job number or any part of the name). */
+let JM_ITEMS=[],JM_AT=-1;
+function jobChoices(){const names=Object.keys(JOBS),have=n=>!!latest(JOBS[n]);
+  const pm=n=>(pmTeam(procoreFor(n))[0]||{}).name||"";
+  const a=names.filter(have).sort().map(n=>({n,g:"With schedules",s:`${JOBS[n].rows.length} update${JOBS[n].rows.length===1?"":"s"} · ${pm(n)}`}));
+  const b=names.filter(n=>!have(n)).sort().map(n=>({n,g:"Waiting for a first upload",s:pm(n)}));
+  const c=PROCORE.map(procoreName).filter(n=>!names.some(o=>jobNo(o)===jobNo(n))).sort().map(n=>({n,g:"Active in Procore, no folder yet",s:pm(n)}));
+  return[...a,...b,...c];}
+function drawJobMenu(filter){const q=String(filter||"").trim().toLowerCase();
+  JM_ITEMS=jobChoices().filter(x=>!q||x.n.toLowerCase().includes(q)||x.s.toLowerCase().includes(q));JM_AT=JM_ITEMS.length?0:-1;
+  let g="",h="";JM_ITEMS.forEach((x,i)=>{if(x.g!==g){g=x.g;h+=`<div class="grp">${esc(g)}</div>`;}
+    h+=`<div class="opt${i===JM_AT?" is-active":""}" role="option" data-i="${i}" aria-selected="${x.n===CUR}"><span>${esc(x.n)}</span><small>${esc(x.s)}</small></div>`;});
+  const m=$("jobmenu");m.innerHTML=h||'<div class="none">No job matches. Press Enter to start a new job with this name.</div>';m.hidden=false;$("jobname").setAttribute("aria-expanded","true");
+  m.querySelectorAll(".opt").forEach(o=>o.onmousedown=e=>{e.preventDefault();openJob(JM_ITEMS[+o.dataset.i].n);});}
+function closeJobMenu(){$("jobmenu").hidden=true;$("jobname").setAttribute("aria-expanded","false");}
+function moveJM(d){const o=$("jobmenu").querySelectorAll(".opt");if(!o.length)return;JM_AT=(JM_AT+d+o.length)%o.length;o.forEach((x,i)=>x.classList.toggle("is-active",i===JM_AT));o[JM_AT].scrollIntoView({block:"nearest"});}
+$("jobname").addEventListener("focus",()=>{$("jobname").select();drawJobMenu("");});
+$("jobname").addEventListener("input",()=>drawJobMenu($("jobname").value));
+$("jobname").addEventListener("keydown",e=>{
+  if(e.key==="ArrowDown"){e.preventDefault();if($("jobmenu").hidden)drawJobMenu("");else moveJM(1);}
+  else if(e.key==="ArrowUp"){e.preventDefault();moveJM(-1);}
+  else if(e.key==="Enter"){e.preventDefault();const typed=$("jobname").value;openJob(!$("jobmenu").hidden&&JM_AT>=0&&typed!==CUR&&JM_ITEMS[JM_AT]?JM_ITEMS[JM_AT].n:typed);}
+  else if(e.key==="Escape"){closeJobMenu();$("jobname").value=CUR||"";$("jobname").blur();}});
+$("jobname").addEventListener("blur",()=>setTimeout(()=>{if(document.activeElement===$("jobname"))return;closeJobMenu();
+  const t=$("jobname").value.trim();if(t&&t!==CUR)openJob(t);else $("jobname").value=CUR||"";},120)); // typing a job then clicking Updates goes to that job
+$("jobcaret").onmousedown=e=>{e.preventDefault();if($("jobmenu").hidden){$("jobname").focus();}else closeJobMenu();};
 
 $("export").onclick=()=>{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]=j.rows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({generated:new Date().toISOString(),jobs:o},null,2)],{type:"application/json"}));a.download="schedule-desk-metrics.json";a.click();};
 const main=$("main");
