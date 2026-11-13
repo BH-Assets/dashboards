@@ -3,11 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com; default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com;">
 <title>Schedule Desk · Bailey-Harris</title>
 <style>
 /* page-only layout; the shell (linked after) supplies tokens and components */
 .sd-wrap{padding:24px 40px 48px}
 .sd-loader{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 40px;border-bottom:1px solid var(--bh-hairline,#e8e6e7);background:var(--bh-cream,#f2ece1)}
+.sd-basebox{display:flex;flex-direction:column;gap:4px;position:relative}
+.sd-adds{display:flex;flex-direction:column;gap:4px}.sd-addrow{display:flex;gap:6px}
+.sd-store{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.sd-store .sd-dot{width:8px;height:8px;background:var(--faint);flex:none}
+.sd-store.is-on .sd-dot{background:#2e8b3e}.sd-store.is-off .sd-dot{background:#e0a100}.sd-store.is-bad .sd-dot{background:#c4161c}
+.sd-store button{font:600 11px var(--bh-font,Figtree,sans-serif);letter-spacing:.06em;text-transform:uppercase;background:#fff;border:1px solid var(--ink);padding:4px 8px;cursor:pointer}
+.sd-basesum{min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;max-width:420px}
+.sd-tag{font:600 12px var(--bh-font,Figtree,sans-serif);border:1px solid var(--line);background:#fff;padding:5px 6px;min-width:128px;cursor:pointer}
+.sd-tag.is-initial{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sd-tag.is-baseline{background:var(--cream);border-color:var(--muted)}
+.sd-bases summary{list-style:none;cursor:pointer;min-width:240px;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center}
+.sd-bases summary::-webkit-details-marker{display:none}
+.sd-bases-pop{position:absolute;z-index:40;top:100%;left:0;min-width:420px;background:#fff;border:1px solid var(--ink);padding:10px 14px}
+.sd-bases-pop label{flex-direction:row!important;align-items:center;gap:10px!important;padding:6px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.sd-bases-pop label:last-of-type{border-bottom:0}
+.sd-bases-pop small{display:block;color:var(--muted);font-size:11.5px;margin-top:6px;line-height:1.45}
 .sd-loader .bh-caption{flex:1 1 280px}
 .sd-loader label{display:flex;flex-direction:column;gap:4px}
 .sd-files{display:flex;flex-wrap:wrap;gap:6px}
@@ -178,13 +195,18 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
 </div></nav>
 <div class="sd-loader"><div class="wrap">
   <label><span class="bh-label">Job</span><select class="bh-select" id="jobpick"></select></label>
-  <label><span class="bh-label">Load updates for job</span><input class="bh-input" id="jobname" placeholder="e.g. 25HV001 WSCC STEM & Auto" size="26"></label>
-  <button class="bh-btn" id="pick">Load XER files</button>
-  <label><span class="bh-label">Baseline</span><select class="bh-select" id="basepick"></select></label>
+  <label><span class="bh-label">Load updates for job</span><input class="bh-input" id="jobname" list="joblist" placeholder="Pick a job or type a new one" size="26"><datalist id="joblist"></datalist></label>
+  <div class="sd-adds"><span class="bh-label">Add XER files</span><div class="sd-addrow">
+    <button class="bh-btn" data-add="">Updates</button>
+    <button class="bh-btn-outline" data-add="baseline">Baseline</button>
+    <button class="bh-btn-outline" data-add="initial">Initial schedule</button></div></div>
+  <div class="sd-basebox"><span class="bh-label">Baselines</span><div class="sd-basesum" id="basesum">None tagged</div></div>
+
   <button class="bh-btn-outline" id="export">Export metrics</button>
   <input type="file" id="file" accept=".xer" multiple hidden>
-  <div class="bh-caption">Files are read in this browser, not uploaded. Drop XERs anywhere on the page.</div>
+  <div class="bh-caption">Dropped files load as updates; tag them in Schedules.</div>
   <div class="sd-files" id="files"></div>
+  <div class="sd-store" id="store"><span class="sd-dot"></span><span id="store-t">Connecting to SharePoint…</span></div>
 </div></div>
 <main class="wrap page sd-drop" id="main">
     <div id="empty" class="sd-empty"><div class="bh-panel">
@@ -350,6 +372,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
           <ul>
             <li><strong>Execution index</strong>: tasks the previous update scheduled to start or finish before this data date that did, as a share of all it scheduled.</li>
             <li><strong>BEI</strong>: tasks finished ÷ tasks the baseline planned to finish by this data date.</li>
+            <li><strong>Initial schedule and baselines</strong>: tag them in the Schedules table. A job has one initial schedule (it always stays the first reference) and any number of baselines (re-baselines). BEI and missed tasks use the latest tagged schedule before each update's data date. "Vs initial" always compares with the initial schedule. Schedule Validator's flags aren't in the XER file, so they're tagged here. Files with BASE in the name are tagged Baseline automatically.</li>
             <li><strong>CPLI</strong>: (workdays to the forecast finish + float on the finish milestone) ÷ workdays to the forecast finish. Below 1 means the finish can't be met without recovery.</li>
             <li><strong>Float erosion</strong>: average change in total float, in workdays, for open work that had 20 workdays of float or less in the previous update. Negative = float lost.</li>
             <li><strong>GAO rating</strong>: from the checks mapped to each practice. See the GAO best practices view.</li>
@@ -373,6 +396,7 @@ header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;to
   </div>
   <span class="since">Bailey-Harris Construction &middot; since 1979</span>
 </div></div>
+<script src="/msal-browser.min.js"></script>
 <script>
 /* ===================== XER engine (matches xer_metrics.py) ===================== */
 const HARD=new Set(["CS_MSO","CS_MEO","CS_MSOB","CS_MEOB","CS_MANDSTART","CS_MANDFIN"]);
@@ -473,8 +497,8 @@ function validation(s,base){
     const bei=due.length?Math.round(100*doneN/due.length)/100:null;
     C("bei","BEI (baseline execution index)",bei,"","≥ 0.95",bei==null?null:bei>=0.95,doneN,due.length,[],"Tasks finished ÷ tasks the baseline ("+base.file+") planned to finish by this data date");
   }else{
-    C("missed","Missed tasks (vs baseline)",null,"","≤ 5%",null,null,null,[],base?"This is the baseline or earlier":"Load and pick the baseline to run this check");
-    C("bei","BEI (baseline execution index)",null,"","≥ 0.95",null,null,null,[],base?"This is the baseline or earlier":"Load and pick the baseline to run this check");}
+    C("missed","Missed tasks (vs baseline)",null,"","≤ 5%",null,null,null,[],"No baseline in force before this data date");
+    C("bei","BEI (baseline execution index)",null,"","≥ 0.95",null,null,null,[],"No baseline in force before this data date");}
   C("cptest","Critical path test",null,"","Finish moves",null,null,null,[],"Needs the schedule recalculated: add a delay to a critical activity and check the finish moves by the same amount. Not automated yet.");
   // extra checks (not DCMA) used as GAO evidence
   const started=Object.values(s.tasks).filter(r=>!EX.has(r.task_type)&&r.act_start_date);
@@ -631,14 +655,30 @@ function metricsFor(s,prev,checks){
   return m;}
 
 /* ===================== state ===================== */
-const STORE="bh-schedule-desk-v2";
+const STORE="bh-schedule-desk-v4";
 let JOBS={};            // name -> {rows:[metrics], S:[schedules] (this session only), V:[checks]}
 let CUR=null,qSel=0,xSel=0;
-function save(){try{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]={rows:j.rows,baseFile:j.baseFile});localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
-function restore(){try{const o=JSON.parse(localStorage.getItem(STORE)||"{}");Object.entries(o).forEach(([k,j])=>JOBS[k]={rows:j.rows||[],S:[],V:[],baseFile:j.baseFile});}catch(e){}}
-function baseOf(j){return j.S.find(x=>x.file===j.baseFile)||j.S.find(x=>/BASE/i.test(x.file+" "+x.code+" "+(x.P.proj_short_name||"")))||j.S[0];}
-function rebuild(name){const j=JOBS[name];j.S.sort((a,b)=>a.dd<b.dd?-1:1);const B=baseOf(j);if(B)j.baseFile=B.file;
-  j.V=j.S.map(s=>validation(s,B));j.rows=j.S.map((s,i)=>metricsFor(s,j.S[i-1],j.V[i]));}
+function save(){try{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]={rows:j.rows,tags:j.tags||{},tagMeta:j.tagMeta||{}});localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+function restore(){try{const o=JSON.parse(localStorage.getItem(STORE)||"{}");Object.entries(o).forEach(([k,j])=>JOBS[k]={rows:j.rows||[],S:[],V:[],tags:j.tags||{},tagMeta:j.tagMeta||{}});}catch(e){}}
+/* Tags. Anyone can tag an update in the Schedules table:
+   "Initial schedule": the first approved schedule. One per job; tagging another moves the tag.
+   "Baseline": an approved re-baseline. Any number.
+   Each update is measured (BEI, missed tasks) against the latest tagged schedule before its data date, so the initial
+   schedule covers everything up to the first re-baseline. Finish vs initial is always measured against the initial schedule.
+   Schedule Validator's flags aren't in the XER, so tags come from: a tag set here (kept in this browser), else this list
+   (matched on the P6 project ID, so file names don't matter), else BASE in the file name (tagged Baseline). */
+const KNOWN_TAGS={"WSCC-UPDATE-10-14":"initial","WSCC-UPDATE-11-04-R2":"baseline"};
+const TAG_NAME={initial:"Initial schedule",baseline:"Baseline"};
+function autoTag(s){return KNOWN_TAGS[s.code]||(/BASE/i.test(s.file+" "+s.code)?"baseline":"");}
+function tagOf(j,s){j.tags=j.tags||{};const t=j.tags[s.code||s.file];return t===undefined?autoTag(s):t;}
+function setTag(j,s,t){j.tags=j.tags||{};j.tagMeta=j.tagMeta||{};j.tagMeta[s.code||s.file]={by:STORE_ME||"",at:new Date().toISOString()};if(t==="initial")j.S.forEach(x=>{if(x!==s&&tagOf(j,x)==="initial")j.tags[x.code||x.file]="";});j.tags[s.code||s.file]=t;}
+function tagWho(j,r){const m=(j.tagMeta||{})[r.code||r.file];return m&&m.by?"Tagged by "+m.by+" "+fmt((m.at||"").slice(0,10)):"";}
+function initialOf(j){return j.S.find(s=>tagOf(j,s)==="initial")||null;}
+function baseList(j){return j.S.filter(s=>tagOf(j,s)).sort((a,b)=>a.dd<b.dd?-1:1);}
+function baseFor(j,s){const L=baseList(j).filter(b=>b.dd<s.dd);return L.length?L[L.length-1]:null;}
+function rebuild(name){const j=JOBS[name];j.S.sort((a,b)=>a.dd<b.dd?-1:1);
+  j.V=j.S.map(s=>validation(s,baseFor(j,s)));j.rows=j.S.map((s,i)=>metricsFor(s,j.S[i-1],j.V[i]));
+  const I=initialOf(j);j.rows.forEach((r,n)=>{const S=j.S[n];r.tag=tagOf(j,S);r.vsInitial=I&&S.dd>I.dd?calDays(S.finish,I.finish):null;r.baseUsed=(baseFor(j,S)||{}).file||null;});}
 
 /* ===================== helpers ===================== */
 const $=id=>document.getElementById(id);
@@ -676,18 +716,23 @@ function scatter(pts){
 /* ===================== render ===================== */
 function render(){
   const names=Object.keys(JOBS).sort();
-  if(!names.length){$("empty").hidden=false;$("views").hidden=true;renderHero();return;}
+  if(!names.length){$("empty").hidden=false;$("views").hidden=true;renderHero();
+    $("joblist").innerHTML=PROCORE.map(procoreName).sort().map(n=>`<option value="${esc(n)}">Procore, active</option>`).join("");return;}
   $("empty").hidden=true;$("views").hidden=false;
-  if(!CUR||!JOBS[CUR])CUR=names[0];
+  if(!CUR||!JOBS[CUR]){const withData=names.filter(n=>latest(JOBS[n])).sort((a,b)=>latest(JOBS[a]).dd<latest(JOBS[b]).dd?1:-1);CUR=withData[0]||names[0];}
   $("jobpick").innerHTML=names.map(n=>`<option ${n===CUR?"selected":""}>${esc(n)}</option>`).join("");
   $("c-jobs").textContent=names.length;
+  {const opts=[...names];PROCORE.map(procoreName).forEach(n=>{if(!opts.some(o=>jobNo(o)===jobNo(n)))opts.push(n);});
+   $("joblist").innerHTML=opts.sort().map(n=>`<option value="${esc(n)}">${names.includes(n)?"On the desk":"Procore, active"}</option>`).join("");
+   if(!$("jobname").value)$("jobname").value=CUR;}
   const j=JOBS[CUR],L=latest(j);
+  if(j.remote&&!j.S.length&&!j.fetching&&!j.fetched)SP.fetchJob(CUR);
   $("side-job").textContent=CUR;$("c-sched").textContent=j.rows.length;
   $("asof").textContent=L?fmt(L.dd):"—";
 
-  $("files").innerHTML=j.S.length?j.S.map(s=>`<span class="bh-chip">${esc(s.file)}</span>`).join(""):(j.rows.length?'<span class="bh-chip">Saved results only. Reload the XERs for detail views.</span>':"");
-    $("basepick").innerHTML=j.S.length?j.S.map(s=>`<option value="${esc(s.file)}" ${s.file===j.baseFile?"selected":""}>${esc(s.file)}</option>`).join(""):`<option>${esc(j.baseFile||"Reload XERs to change")}</option>`;
-  $("basepick").disabled=!j.S.length;
+  $("files").innerHTML=j.fetching?'<span class="bh-chip">Loading this job\'s XER files from SharePoint…</span>':j.S.length?j.S.map(s=>`<span class="bh-chip">${esc(s.file)}</span>`).join(""):(j.rows.length?'<span class="bh-chip">Saved results only. Reload the XERs for detail views.</span>':"");
+  {const BL=j.S.length?baseList(j):j.rows.filter(r=>r.tag);
+   $("basesum").innerHTML=BL.length?BL.map(b=>`${fmt(b.dd)} <span class="bh-caption">&nbsp;${TAG_NAME[b.tag||tagOf(j,b)]}</span>`).join("&nbsp;&nbsp;·&nbsp;&nbsp;"):'<span class="bh-caption">None tagged. Tag them in Schedules.</span>';}
   renderHero();renderPortfolio(names);renderDashboard(j);renderSchedules(j);renderQuality(j);renderGao(j);renderExec(j);renderMilestones(j);renderAbout();}
 
 function renderPortfolio(names){
@@ -707,8 +752,11 @@ function renderPortfolio(names){
   $("p-trend-x").innerHTML=lineChart(byMonth("exec"),{goal:80});
   $("p-trend-p").innerHTML=lineChart(byMonth("perf"),{goal:80});
   $("p-scatter").innerHTML=scatter(lat.filter(x=>x.rows.length>1).map(x=>({label:x.name.split(" ")[0],x:sum(x.rows.map(r=>r.finishSlip))||0,y:sum(x.rows.map(r=>r.cpSlip))||0})));
-  $("p-jobs").innerHTML="<tr><th>Job</th><th>Data date</th><th>Finish</th><th class='c'>Complete</th><th class='c'>BH Quality</th><th class='c'>BH Performance</th><th class='c'>Finish slip</th><th class='c'>Total finish slip</th><th class='c'>CP slip</th><th class='c'>Execution</th><th class='c'>Changed</th><th class='c'>Updates</th></tr>"+
-    lat.map(x=>`<tr class="sd-click" data-job="${esc(x.name)}"><td><strong>${esc(x.name)}</strong></td><td>${fmt(x.r.dd)}</td><td>${fmt(x.r.finish)}</td><td class="c">${x.r.complete??""}%</td><td class="c">${score(x.r.quality,"quality")}</td><td class="c">${score(x.r.perf,"perf")}</td><td class="c">${score(x.r.finishSlip,"slip")}</td><td class="c">${score(sum(x.rows.map(r=>r.finishSlip)),"slip")}</td><td class="c">${score(x.r.cpSlip,"slip")}</td><td class="c">${score(x.r.exec,"exec")}</td><td class="c">${score(x.r.change,"change","%")}</td><td class="c">${x.rows.length}</td></tr>`).join("");
+  $("p-jobs").innerHTML="<tr><th>Job</th><th>Project manager</th><th>Data date</th><th>Finish</th><th class='c'>Complete</th><th class='c'>BH Quality</th><th class='c'>BH Performance</th><th class='c'>Finish slip</th><th class='c'>Total finish slip</th><th class='c'>CP slip</th><th class='c'>Execution</th><th class='c'>Changed</th><th class='c'>Updates</th></tr>"+
+    lat.map(x=>`<tr class="sd-click" data-job="${esc(x.name)}"><td><strong>${esc(x.name)}</strong></td><td>${esc((pmTeam(procoreFor(x.name))[0]||{}).name||"")}</td><td>${fmt(x.r.dd)}</td><td>${fmt(x.r.finish)}</td><td class="c">${x.r.complete??""}%</td><td class="c">${score(x.r.quality,"quality")}</td><td class="c">${score(x.r.perf,"perf")}</td><td class="c">${score(x.r.finishSlip,"slip")}</td><td class="c">${score(sum(x.rows.map(r=>r.finishSlip)),"slip")}</td><td class="c">${score(x.r.cpSlip,"slip")}</td><td class="c">${score(x.r.exec,"exec")}</td><td class="c">${score(x.r.change,"change","%")}</td><td class="c">${x.rows.length}</td></tr>`).join("");
+  {const empty=Object.keys(JOBS).filter(n=>!latest(JOBS[n])).sort();
+   if(empty.length)$("p-jobs").insertAdjacentHTML("beforeend",`<tr class="sd-grouprow"><th colspan="13" style="text-align:left">Waiting for a first upload (${empty.length})</th></tr>`+
+     empty.map(n=>`<tr class="sd-click" data-job="${esc(n)}"><td>${esc(n)}</td><td>${esc((pmTeam(procoreFor(n))[0]||{}).name||"")}</td><td colspan="11" class="bh-caption">No schedules loaded yet</td></tr>`).join(""));}
   $("p-jobs").querySelectorAll("[data-job]").forEach(tr=>tr.onclick=()=>{CUR=tr.dataset.job;render();show("dashboard");});}
 
 function renderDashboard(j){
@@ -720,7 +768,7 @@ function renderDashboard(j){
     plain(tile("GAO practices met","Latest, fully or substantially",L&&L.gaoOf?L.gaoMet+" of "+L.gaoOf:null,"quality"))+
     tile("CPLI","Latest",L&&L.cpli,"bei")+tile("Changed","Latest",L&&L.change,"change","%");
   $("d-progress").innerHTML=tile("BH Performance","Latest",L&&L.perf,"perf")+tile("BH Performance","Average",avg(rows.map(r=>r.perf)),"perf")+
-    tile("Finish slip","Latest",L&&L.finishSlip,"slip")+tile("Project finish","Total slip",sum(rows.map(r=>r.finishSlip)),"slip")+
+    tile("Finish slip","Latest",L&&L.finishSlip,"slip")+tile("Finish vs initial","Days, latest",L&&L.vsInitial,"slip")+
     tile("Critical path","Latest slip",L&&L.cpSlip,"slip")+tile("Execution index","Latest",L&&L.exec,"exec")+
     tile("BEI","Latest",L&&L.bei,"bei")+tile("Float erosion","Latest, workdays",L&&L.floatErosion,"slip");
   $("d-q").innerHTML=lineChart(rows.filter(r=>r.quality!=null).map(r=>({label:fmt(r.dd).slice(0,5),v:r.quality})),{goal:80});
@@ -733,12 +781,13 @@ function renderDashboard(j){
 function renderSchedules(j){
   const rows=j.rows.slice().reverse(),Lr=latest(j);
   const dc=r=>r.dcmaOf!=null?`${r.dcmaPassed} of ${r.dcmaOf}`:(r.scored!=null?`${r.passed} of ${r.scored}`:"");
-  const head=`<tr class="sd-sumrow"><td></td><td class="c">${j.rows.length}</td><td></td><td class="c">${Lr?Lr.complete+"% complete":""}</td><td class="c">${score(avg(j.rows.map(r=>r.quality)),"quality")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.perf)),"perf")}<br><small>AVG</small></td><td class="c">${score(sum(j.rows.map(r=>r.finishSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${score(sum(j.rows.map(r=>r.cpSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${score(avg(j.rows.map(r=>r.exec)),"exec")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.change)),"change","%")}<br><small>AVG</small></td></tr>`;
-  $("s-table").innerHTML=`<tr class="sd-grouprow"><th colspan="4"></th><th colspan="2">Quality</th><th colspan="5">Performance</th><th>Changes</th></tr>
-    <tr><th>Data date</th><th class="c">Updates</th><th>Description (click for diagnostics)</th><th>Finish date</th><th class="c">BH Quality</th><th class="c">DCMA passed</th><th class="c">BH Performance</th><th class="c">Finish slip</th><th class="c">CP slip</th><th class="c">Execution</th><th class="c">BEI</th><th class="c">Change %</th></tr>`+head+
-    rows.map((r,i)=>`<tr class="sd-click" data-i="${j.rows.length-1-i}"><td>${fmt(r.dd)}</td><td class="c">${j.rows.length-i}</td><td>${esc(r.code||r.file)}${r.file===j.baseFile?' <span class="bh-chip">Baseline</span>':""}${r.code&&!r.file.toUpperCase().startsWith(r.code.toUpperCase())?` <span class="bh-caption">${esc(r.file)}</span>`:""}</td><td>${fmt(r.finish)}</td><td class="c">${score(r.quality,"quality")}</td><td class="c">${dc(r)}</td><td class="c">${score(r.perf,"perf")}</td><td class="c">${score(r.finishSlip,"slip")}</td><td class="c">${score(r.cpSlip,"slip")}</td><td class="c">${score(r.exec,"exec")}</td><td class="c">${score(r.bei,"bei")}</td><td class="c">${score(r.change,"change","%")}</td></tr>`).join("");
-  $("s-table").querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=()=>{qSel=+tr.dataset.i;xSel=Math.max(0,qSel-1);renderQuality(j);renderGao(j);renderExec(j);show("quality");});
-  $("s-note").innerHTML="BH Quality and BH Performance are Bailey-Harris's own scores, with published weights (see <a href='#about' data-go='about'>About BH scores</a>). They replace Schedule Validator's SV Score and SPS and won't match them. Finish slip, CP slip, Execution and Change % use Schedule Validator's rules and do match: finish slip is calendar days the forecast finish moved since the previous update, negative = later; CP slip is how far the critical-path work due at this data date (per the previous update) has moved, N/A when none was due; execution is the share of tasks the previous update scheduled to start or finish in the window that did; Change % is relationships added or deleted as a share of the previous update's. BEI is against the baseline marked in the table.";
+  const head=`<tr class="sd-sumrow"><td></td><td class="c">${j.rows.length}</td><td></td><td class="c">${Lr?Lr.complete+"% complete":""}</td><td></td><td class="c">${score(avg(j.rows.map(r=>r.quality)),"quality")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.perf)),"perf")}<br><small>AVG</small></td><td class="c">${score(sum(j.rows.map(r=>r.finishSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${Lr?score(Lr.vsInitial,"slip"):""}<br><small>LATEST</small></td><td class="c">${score(sum(j.rows.map(r=>r.cpSlip)),"slip")}<br><small>TOTAL</small></td><td class="c">${score(avg(j.rows.map(r=>r.exec)),"exec")}<br><small>AVG</small></td><td></td><td class="c">${score(avg(j.rows.map(r=>r.change)),"change","%")}<br><small>AVG</small></td></tr>`;
+  $("s-table").innerHTML=`<tr class="sd-grouprow"><th colspan="5"></th><th colspan="2">Quality</th><th colspan="6">Performance</th><th>Changes</th></tr>
+    <tr><th>Data date</th><th class="c">Updates</th><th>Description (click for diagnostics)</th><th>Finish date</th><th>Tag</th><th class="c">BH Quality</th><th class="c">DCMA passed</th><th class="c">BH Performance</th><th class="c">Finish slip</th><th class="c">vs initial</th><th class="c">CP slip</th><th class="c">Execution</th><th class="c">BEI</th><th class="c">Change %</th></tr>`+head+
+    rows.map((r,i)=>`<tr class="sd-click" data-i="${j.rows.length-1-i}"><td>${fmt(r.dd)}</td><td class="c">${j.rows.length-i}</td><td>${esc(r.code||r.file)}${r.code&&!r.file.toUpperCase().startsWith(r.code.toUpperCase())?` <span class="bh-caption">${esc(r.file)}</span>`:""}</td><td>${fmt(r.finish)}</td><td>${j.S.length?`<select class="sd-tag ${r.tag?"is-"+r.tag:""}" data-t="${j.rows.length-1-i}" aria-label="Tag" title="${esc(tagWho(j,r))}" ${SP.canWrite===false?"disabled":""}><option value="">—</option><option value="initial" ${r.tag==="initial"?"selected":""}>Initial schedule</option><option value="baseline" ${r.tag==="baseline"?"selected":""}>Baseline</option></select>`:esc(TAG_NAME[r.tag]||"")}</td><td class="c">${score(r.quality,"quality")}</td><td class="c">${dc(r)}</td><td class="c">${score(r.perf,"perf")}</td><td class="c">${score(r.finishSlip,"slip")}</td><td class="c">${score(r.vsInitial,"slip")}</td><td class="c">${score(r.cpSlip,"slip")}</td><td class="c">${score(r.exec,"exec")}</td><td class="c">${score(r.bei,"bei")}</td><td class="c">${score(r.change,"change","%")}</td></tr>`).join("");
+  $("s-table").querySelectorAll("select.sd-tag").forEach(sel=>{sel.onclick=e=>e.stopPropagation();sel.onchange=async()=>{setTag(j,j.S[+sel.dataset.t],sel.value);rebuild(CUR);save();render();await SP.saveTags(CUR);await SP.saveMetrics(CUR);};});
+  $("s-table").querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=e=>{if(e.target.closest("select"))return;qSel=+tr.dataset.i;xSel=Math.max(0,qSel-1);renderQuality(j);renderGao(j);renderExec(j);show("quality");});
+  $("s-note").innerHTML="BH Quality and BH Performance are Bailey-Harris's own scores, with published weights (see <a href='#about' data-go='about'>About BH scores</a>). They replace Schedule Validator's SV Score and SPS and won't match them. Finish slip, CP slip, Execution and Change % use Schedule Validator's rules and do match: finish slip is calendar days the forecast finish moved since the previous update, negative = later; CP slip is how far the critical-path work due at this data date (per the previous update) has moved, N/A when none was due; execution is the share of tasks the previous update scheduled to start or finish in the window that did; Change % is relationships added or deleted as a share of the previous update's. Tag: mark the initial schedule (one per job) and each re-baseline. BEI and missed tasks use the latest tagged schedule before each data date; vs initial is calendar days the finish has moved since the initial schedule, negative = later.";
   $("s-note").querySelectorAll("[data-go]").forEach(a=>a.onclick=e=>{e.preventDefault();show(a.dataset.go);});}
 
 function needDetail(el,j){if(j.S.length)return false;el.innerHTML="<tr><td class='bh-caption'>Only the saved results are in this browser for this job. Load its XER files again to see this view.</td></tr>";return true;}
@@ -805,6 +854,119 @@ function renderMilestones(j){
   $("m-table").innerHTML="<tr><th>Milestone</th>"+S.map(s=>`<th>${fmt(s.dd)}</th>`).join("")+"<th class='num'>Change</th><th class='num'>Float</th><th>Status</th></tr>"+
     rows.map(m=>{const ch=calDays(m.dates[0],m.dates[m.dates.length-1]);return`<tr><td>${esc(m.code+" "+(m.r.task_name||""))}</td>${m.dates.map(d=>`<td>${fmt(d)}</td>`).join("")}<td class="num ${ch>0?"neg":""}">${ch==null?"":sgn(ch)+"d"}</td><td class="num ${m.tf<0?"neg":""}">${m.tf==null||m.done?"":Math.round(m.tf)}</td><td>${m.done?'<span class="bh-chip">Complete</span>':""}</td></tr>`;}).join("");}
 
+/* ===================== SharePoint store =====================
+   Uploads and tags are shared through the ScheduleData library on /sites/ScheduleDesk, one folder per job:
+     <job>/<file>.xer   the updates, as uploaded
+     <job>/tags.json    {job, tags:{<P6 project ID>:"initial"|"baseline"|""}, meta:{<id>:{by,at}}}
+     <job>/metrics.json the computed rows, so the portfolio opens without downloading every XER
+   Signed in with the dashboards app (delegated, Sites.Selected): every write is made as the person, and their own
+   SharePoint permission on the site applies. With no sign-in or no site, the desk works in this browser only. */
+let STORE_ME="";
+/* Procore jobs, from jobs_public.json (the project pull's money-free copy, Compliance Dashboard folder on /sites/Resources,
+   readable by every employee). Used for the job box and for who is on each job. A job belongs to its Procore
+   Project Manager role and its Project Management Team, @baileyharris.com only (same rule as the Job page, 12 Nov). */
+let PROCORE=[];
+const jobNo=n=>String(n||"").trim().split(/\s+/)[0].toUpperCase();
+const procoreName=p=>{const no=String(p.project_number||"").trim(),nm=String(p.project||"").trim();return no&&!nm.toUpperCase().startsWith(no.toUpperCase())?(no+" "+nm).trim():nm||no;};
+function procoreFor(name){const k=jobNo(name);return PROCORE.find(p=>String(p.project_number||"").trim().toUpperCase()===k)||null;}
+function pmTeam(p){if(!p)return[];const seen={},out=[];
+  (p.team||[]).filter(t=>/^project manager$/i.test(String(t.role||"").trim())||/project management/i.test(t.role||"")).filter(t=>/@baileyharris\.com$/i.test(t.email||""))
+    .sort((a,b)=>(/^project manager$/i.test(b.role)?1:0)-(/^project manager$/i.test(a.role)?1:0))
+    .forEach(t=>{const e=t.email.toLowerCase();if(!seen[e]){seen[e]=1;out.push(t);}});return out;}
+/* one job, one name: an existing desk job with the same job number wins, then the Procore name, then what was typed */
+function canonicalJob(typed){const t=String(typed||"").trim();if(!t)return t;const k=jobNo(t);
+  const have=Object.keys(JOBS).find(n=>jobNo(n)===k);if(have)return have;const p=procoreFor(t);return p?procoreName(p):t;}
+const SP=(()=>{
+  const CLIENT_ID="1825a1c0-1ce3-4078-aeb7-a4714562c422",TENANT_ID="848aa890-7982-4028-befa-3323d82583ce";
+  const SCOPES=["User.Read","Sites.Selected"],SP_HOST="baileyharris.sharepoint.com",SP_PATH="/sites/ScheduleDesk",LIBRARY="ScheduleData";
+  const GRAPH="https://graph.microsoft.com/v1.0";
+  let app=null,acct=null,driveId=null,ok=false;const etags={};const api={canWrite:null};
+  const folderOf=name=>name.replace(/[\\/:*?"<>|#%{}~&]+/g,"-").replace(/\s+/g," ").trim().replace(/^\.+|\.+$/g,"")||"Job";
+  const path=(name,file)=>encodeURIComponent(folderOf(name))+"/"+encodeURIComponent(file);
+  function status(t,cls,btn){const el=$("store");el.className="sd-store "+(cls||"");$("store-t").textContent=t;
+    const old=el.querySelector("button");if(old)old.remove();if(btn){const b=document.createElement("button");b.textContent=btn.label;b.onclick=btn.go;el.appendChild(b);}}
+  async function token(){try{return(await app.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken;}
+    catch(e){if(typeof msal!=="undefined"&&msal.InteractionRequiredAuthError&&e instanceof msal.InteractionRequiredAuthError)app.acquireTokenRedirect({scopes:SCOPES});throw e;}}
+  async function G(p,opt={}){const t=await token();return fetch(p.startsWith("http")?p:GRAPH+p,{...opt,headers:{Authorization:"Bearer "+t,...(opt.headers||{})}});}
+  async function json(r){try{return await r.json();}catch(e){return null;}}
+  const onStatus=()=>status(`Shared through SharePoint · ${LIBRARY} on ${SP_PATH} · signed in as ${STORE_ME}`,"is-on",{label:"Refresh",go:()=>api.refresh(true)});
+  api.connect=async function(){
+    if(typeof msal==="undefined")return status("Not connected: the sign-in script didn't load. Files stay in this browser.","is-off");
+    try{
+      app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/"+TENANT_ID,redirectUri:location.origin+"/schedule/",navigateToLoginRequestUrl:false},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:false}});
+      await app.initialize();await app.handleRedirectPromise();
+      acct=app.getAllAccounts()[0];
+      if(!acct)return status("Not signed in. Uploads and tags stay in this browser until you sign in.","is-off",{label:"Sign in",go:()=>app.loginRedirect({scopes:SCOPES})});
+      app.setActiveAccount(acct);STORE_ME=acct.name||acct.username||"";
+      const site=await G("/sites/"+SP_HOST+":"+SP_PATH+"?$select=id");
+      if(!site.ok)return status(`Not connected: SharePoint returned HTTP ${site.status} for ${SP_PATH}. Files stay in this browser.`,"is-bad");
+      const sid=(await json(site)).id;
+      const dr=await G("/sites/"+sid+"/drives?$select=id,name");const d=((await json(dr))||{}).value||[];
+      const drive=d.find(x=>x.name===LIBRARY);if(!drive)return status(`Not connected: no ${LIBRARY} library on ${SP_PATH}. Files stay in this browser.`,"is-bad");
+      driveId=drive.id;ok=true;
+      await api.loadProcore();
+      await api.refresh();onStatus();
+    }catch(e){status("Not connected: "+(e.message||e)+". Files stay in this browser.","is-bad");}};
+  api.refresh=async function(force){
+    if(!ok)return;
+    const r=await G(`/drives/${driveId}/root/children?$select=name,folder&$top=999`);const kids=(((await json(r))||{}).value||[]).filter(x=>x.folder);
+    for(const k of kids){
+      const base=`/drives/${driveId}/root:/${encodeURIComponent(k.name)}`;
+      const [mt,tg]=await Promise.all([G(base+"/metrics.json:/content"),G(base+"/tags.json")]);
+      const m=mt.ok?await json(mt):null;let tags=null;
+      if(tg.ok){const it=await json(tg);etags[k.name]=it.eTag;const c=await G(`/drives/${driveId}/items/${it.id}/content`);tags=c.ok?await json(c):null;}
+      const name=(m&&m.job)||(tags&&tags.job)||k.name;
+      const j=JOBS[name]||(JOBS[name]={rows:[],S:[],V:[]});
+      j.remote=k.name;if(tags){j.tags=tags.tags||{};j.tagMeta=tags.meta||{};j.sharedTags=true;}
+      if(force){j.S=[];j.V=[];j.fetched=false;}
+      if(m&&Array.isArray(m.rows)&&!j.S.length)j.rows=m.rows;else if(j.S.length)rebuild(name);
+    }
+    save();render();};
+  api.fetchJob=async function(name){
+    const j=JOBS[name];if(!ok||!j||!j.remote)return;j.fetching=true;render();
+    try{const r=await G(`/drives/${driveId}/root:/${encodeURIComponent(j.remote)}:/children?$select=name,id&$top=999`);
+      const files=(((await json(r))||{}).value||[]).filter(x=>/\.xer$/i.test(x.name));
+      const S=[];for(const f of files){const c=await G(`/drives/${driveId}/items/${f.id}/content`);if(!c.ok)continue;
+        try{S.push(schedule(new TextDecoder("windows-1252").decode(await c.arrayBuffer()),f.name));}catch(e){}}
+      if(S.length){j.S=S;rebuild(name);}}
+    catch(e){status("Couldn't load "+name+" from SharePoint: "+(e.message||e),"is-bad");}
+    finally{j.fetching=false;j.fetched=true;save();render();}};
+  api.loadProcore=async function(){
+    try{const r=await G("/sites/"+SP_HOST+":/sites/Resources?$select=id");if(!r.ok)return;const id=(await json(r)).id;
+      const f=await G(`/sites/${id}/drive/root:/Compliance%20Dashboard/jobs_public.json:/content`);if(!f.ok)return;
+      const d=await json(f);PROCORE=((d&&d.projects)||[]).filter(p=>p.group==="active"&&p.project_number);render();}catch(e){}};
+  api.hasTags=name=>!!(JOBS[name]&&JOBS[name].sharedTags);
+  async function put(p,body,type,ifMatch){
+    const h={"Content-Type":type};if(ifMatch)h["If-Match"]=ifMatch;
+    if(body.size>4*1024*1024){const ss=await G(`/drives/${driveId}/root:/${p}:/createUploadSession`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({item:{"@microsoft.graph.conflictBehavior":"replace"}})});
+      if(!ss.ok)return ss;const url=(await json(ss)).uploadUrl;let off=0,res=null;const CH=10*320*1024;
+      while(off<body.size){const end=Math.min(off+CH,body.size);res=await fetch(url,{method:"PUT",headers:{"Content-Range":`bytes ${off}-${end-1}/${body.size}`},body:body.slice(off,end)});if(!res.ok)return res;off=end;}
+      return res;}
+    return G(`/drives/${driveId}/root:/${p}:/content`,{method:"PUT",headers:h,body});}
+  function denied(r,what){if(r.status===403||r.status===401){api.canWrite=false;status(`Read-only: you can't ${what} on the Schedule Desk site. Ask IT for Contribute access. Your changes are in this browser only.`,"is-bad");render();return true;}return false;}
+  api.upload=async function(name,files){
+    if(!ok||!files||!files.length)return;const j=JOBS[name];j.remote=folderOf(name);let n=0;
+    for(const f of files){status(`Saving ${f.name} to SharePoint…`,"is-on");const r=await put(path(name,f.name),f,"application/octet-stream");
+      if(!r.ok){if(denied(r,"upload"))return;status(`${f.name} didn't save (HTTP ${r.status}). It's loaded in this browser only.`,"is-bad");return;}n++;}
+    api.canWrite=true;status(`${n} file${n>1?"s":""} saved to SharePoint · ${LIBRARY}/${folderOf(name)}`,"is-on",{label:"Refresh",go:()=>api.refresh(true)});};
+  api.saveTags=async function(name,retry){
+    const j=JOBS[name];if(!ok||!j)return;const fol=folderOf(name);j.remote=fol;
+    const body=new Blob([JSON.stringify({job:name,tags:j.tags||{},meta:j.tagMeta||{},updated:new Date().toISOString(),by:STORE_ME},null,1)],{type:"application/json"});
+    const r=await put(path(name,"tags.json"),body,"application/json",etags[fol]);
+    if(r.status===412&&!retry){ // someone else saved tags since this page read them: take theirs, keep the newer of each, try once more
+      const mine={...(j.tags||{})},mineMeta={...(j.tagMeta||{})};
+      const it=await json(await G(`/drives/${driveId}/root:/${path(name,"tags.json")}`));etags[fol]=it&&it.eTag;
+      const theirs=(await json(await G(`/drives/${driveId}/items/${it.id}/content`)))||{};
+      j.tags={...(theirs.tags||{})};j.tagMeta={...(theirs.meta||{})};
+      Object.keys(mineMeta).forEach(k=>{const t=(theirs.meta||{})[k];if(!t||t.at<mineMeta[k].at){j.tags[k]=mine[k];j.tagMeta[k]=mineMeta[k];}});
+      if(j.S.length)rebuild(name);render();return api.saveTags(name,true);}
+    if(!r.ok){if(!denied(r,"save tags"))status(`Tags didn't save (HTTP ${r.status}).`,"is-bad");return;}
+    const it=await json(r);if(it&&it.eTag)etags[fol]=it.eTag;j.sharedTags=true;api.canWrite=true;onStatus();};
+  api.saveMetrics=async function(name){
+    const j=JOBS[name];if(!ok||!j||!j.rows.length||api.canWrite===false)return;
+    await put(path(name,"metrics.json"),new Blob([JSON.stringify({job:name,generated:new Date().toISOString(),by:STORE_ME,rows:j.rows})],{type:"application/json"}),"application/json");};
+  return api;})();
+
 /* ===================== views + loading ===================== */
 let VIEW="portfolio";
 function heroStat(label,v,band,sub,suffix=""){return`<div class="h-stat ${v==null?"":BANDS[band](v)}"><span class="bh-label">${label}</span><b>${v==null?"—":(band==="slip"?sgn(v):v)+suffix}</b><small>${sub}</small></div>`;}
@@ -813,13 +975,15 @@ function renderHero(){
   if(!names.length){$("h-eyebrow").textContent="Schedule Desk";$("h-t1").textContent="Schedule";$("h-t2").textContent="health";
     $("sub").textContent="BH Quality and BH Performance scores, DCMA 14-point checks and the GAO best practices for every P6 update.";$("h-stats").innerHTML="";return;}
   if(VIEW==="portfolio"||VIEW==="about"){const lat=names.map(n=>latest(JOBS[n])).filter(Boolean);
-    $("h-eyebrow").textContent="Schedule Desk · Portfolio";$("h-t1").textContent=names.length+" job"+(names.length>1?"s":"");$("h-t2").textContent="in view";
-    $("sub").textContent=names.reduce((a,n)=>a+JOBS[n].rows.length,0)+" schedule updates loaded in this browser. Scores are averages of each job's latest update.";
+    $("h-eyebrow").textContent="Schedule Desk · Portfolio";const nd=lat.length,ne=names.length-nd;
+    $("h-t1").textContent=nd+" job"+(nd===1?"":"s");$("h-t2").textContent="with schedules";
+    $("sub").textContent=names.reduce((a,n)=>a+JOBS[n].rows.length,0)+" schedule updates"+(ne?` · ${ne} job${ne===1?"":"s"} waiting for a first upload`:"")+". Scores are averages of each job's latest update.";
     $("h-stats").innerHTML=heroStat("BH Quality",avg(lat.map(r=>r.quality)),"quality","Average")+heroStat("BH Performance",avg(lat.map(r=>r.perf)),"perf","Average")+
       heroStat("Execution",avg(lat.map(r=>r.exec)),"exec","Average")+heroStat("Finish slip",avg(lat.map(r=>r.finishSlip)),"slip","Average, days");return;}
   const j=JOBS[CUR],L=latest(j),parts=CUR.split(" "),code=/^\d/.test(parts[0])?parts.shift():"";
   $("h-eyebrow").textContent="Schedule Desk"+(code?" · "+code:"");$("h-t1").textContent=parts.slice(0,1).join(" ")||CUR;$("h-t2").textContent=parts.slice(1).join(" ");
-  $("sub").textContent=L?`Update ${fmt(L.dd)} · forecast finish ${fmt(L.finish)} · ${L.complete??"—"}% complete · ${j.rows.length} update${j.rows.length>1?"s":""} loaded`:"";
+  const team=pmTeam(procoreFor(CUR)).map(t=>t.name);
+  $("sub").textContent=(L?`Update ${fmt(L.dd)} · forecast finish ${fmt(L.finish)} · ${L.complete??"—"}% complete · ${j.rows.length} update${j.rows.length>1?"s":""} loaded`:"")+(team.length?` · PM team: ${team.join(", ")}`:"");
   $("h-stats").innerHTML=heroStat("BH Quality",L&&L.quality,"quality",L&&L.dcmaOf!=null?L.dcmaPassed+" of "+L.dcmaOf+" DCMA passed":"Latest")+heroStat("BH Performance",L&&L.perf,"perf","Latest")+
     heroStat("Finish slip",L&&L.finishSlip,"slip","Days, this update")+heroStat("Execution",L&&L.exec,"exec","Latest");}
 function show(v){VIEW=v;renderHero();document.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==v);
@@ -827,25 +991,28 @@ function show(v){VIEW=v;renderHero();document.querySelectorAll("[data-panel]").f
   try{history.replaceState(null,"","#"+v);}catch(e){}}
 document.querySelectorAll(".sd-tab[data-view]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();show(a.dataset.view);}));
 function guessJob(s){return(s.code||s.file).replace(/[-_ ]*(UPDATE|UPD|BASE(LINE)?|REV|R\d).*$/i,"").trim()||s.file;}
-async function load(files,jobName){
-  const errs=[],touched=new Set();
+async function load(files,jobName,tag){
+  const errs=[],touched=new Set(),up={};
   for(const f of files){if(!/\.xer$/i.test(f.name))continue;
     try{const s=schedule(new TextDecoder("windows-1252").decode(await f.arrayBuffer()),f.name);
-      const name=(jobName||"").trim()||guessJob(s);
+      const name=canonicalJob((jobName||"").trim()||guessJob(s));
       const j=JOBS[name]||(JOBS[name]={rows:[],S:[],V:[]});
-      j.S=j.S.filter(x=>x.file!==f.name);j.S.push(s);touched.add(name);}catch(e){errs.push(f.name+": "+e.message);}}
+      j.S=j.S.filter(x=>x.file!==f.name);j.S.push(s);touched.add(name);(up[name]=up[name]||[]).push(f);
+      if(tag)setTag(j,s,tag);}catch(e){errs.push(f.name+": "+e.message);}}
   touched.forEach(rebuild);if(touched.size)CUR=[...touched][0];save();render();
+  for(const name of touched){await SP.upload(name,up[name]);if(tag||!SP.hasTags(name))await SP.saveTags(name);await SP.saveMetrics(name);}
   if(errs.length)$("files").insertAdjacentHTML("beforeend",errs.map(e=>`<span class="bh-chip is-bad">${esc(e)}</span>`).join(""));}
-$("pick").onclick=()=>$("file").click();
-$("file").onchange=e=>{load([...e.target.files],$("jobname").value);e.target.value="";};
+let ADD_TAG="";
+document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ADD_TAG=b.dataset.add;$("file").multiple=ADD_TAG!=="initial";$("file").click();});
+$("file").onchange=e=>{load([...e.target.files],$("jobname").value,ADD_TAG);e.target.value="";ADD_TAG="";};
 $("jobpick").onchange=e=>{CUR=e.target.value;render();};
-$("basepick").onchange=e=>{const j=JOBS[CUR];if(!j||!j.S.length)return;j.baseFile=e.target.value;rebuild(CUR);save();render();};
+
 $("export").onclick=()=>{const o={};Object.entries(JOBS).forEach(([k,j])=>o[k]=j.rows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({generated:new Date().toISOString(),jobs:o},null,2)],{type:"application/json"}));a.download="schedule-desk-metrics.json";a.click();};
 const main=$("main");
 main.addEventListener("dragover",e=>{e.preventDefault();main.classList.add("is-over");});
 main.addEventListener("dragleave",()=>main.classList.remove("is-over"));
 main.addEventListener("drop",e=>{e.preventDefault();main.classList.remove("is-over");load([...e.dataTransfer.files],$("jobname").value);});
-restore();render();show((location.hash||"#portfolio").slice(1));
+restore();render();show((location.hash||"#portfolio").slice(1));SP.connect();
 window.ScheduleDesk={schedule,validation,execution,metricsFor,load,rebuild,gaoAssess,bhQuality,bhPerformance,JOBS};
 </script>
 </body>
