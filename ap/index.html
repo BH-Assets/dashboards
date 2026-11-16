@@ -1468,7 +1468,7 @@ function ceInvoiceOf(i){
   d.invdate = /^\d{4}-\d{2}-\d{2}$/.test(dt) ? dt : today;
   if (!pay && /^\d{4}-\d{2}-\d{2}/.test(String(f.DueDate || ''))) d.duedate = String(f.DueDate).slice(0, 10);
   const by = f.ApprovedBy ? P(lc(f.ApprovedBy)).n : '';
-  d.notes = 'AP Desk ' + i.id + (by ? ' - approved by ' + by + (f.ApprovedAt ? ' ' + String(f.ApprovedAt).slice(0, 10) : '') : '') + (i.hold ? ' - payment held in the desk' : '');
+  d.notes = 'AP Desk ' + i.id + (by ? ' - approved by ' + by + (f.ApprovedAt ? ' ' + String(f.ApprovedAt).slice(0, 10) : '') : '') + (i.hold ? ' - payment held in the desk' : '') + (i.pdf ? ' - PDF: ' + encodeURI(i.pdf) : ' - no PDF on file in the desk');
   if (chgBlocked(i)) why.push('changed since it was approved');
   if (pay) {
     const led = ceLed(i.po);
@@ -2078,12 +2078,20 @@ function ceOpts(i){
 }
 function ceSelect(O, k, sel, attr){
   const byG = {}; O.opts.forEach(o => (byG[o.rfc || ''] = byG[o.rfc || ''] || []).push(o));
-  let h = '<select class="bh-select cl-sel" ' + attr + '="' + k + '" aria-label="CE line">';
-  for (const g of Object.keys(byG).sort((a, b) => (a ? 1 : 0) - (b ? 1 : 0) || a.localeCompare(b))) {
+  const keys = Object.keys(byG).sort((a, b) => (a ? 1 : 0) - (b ? 1 : 0) || a.localeCompare(b, undefined, { numeric: true }));
+  const ref = O.po ? String(O.po).toUpperCase() : (O.kind === 'PO' ? 'PO' : 'SC');
+  const isSel = o => String(sel) === String(o.ix), dead = o => !!o.why || Number(o.left) <= 0;
+  const opt = (o, n) => { const parts = [o.rfc ? 'line ' + n : ref, o.pc || '—', money(o.left) + ' remaining'];
+    if (o.why) parts.push(o.why.charAt(0).toUpperCase() + o.why.slice(1));
+    return '<option value="' + o.ix + '"' + (isSel(o) ? ' selected' : '') + (dead(o) && !isSel(o) ? ' disabled' : '') + '>' + esc(parts.join(' | ')) + '</option>'; };
+  let h = '<select class="bh-select cl-sel" ' + attr + '="' + k + '" aria-label="CE line">', coHead = false;
+  for (const g of keys) {
     const list = byG[g];
-    const opt = o => '<option value="' + o.ix + '"' + (String(sel) === String(o.ix) ? ' selected' : '') + (o.why && String(sel) !== String(o.ix) ? ' disabled' : '') + '>'
-      + esc(list.length > 1 ? (o.pc ? o.pc + ' · ' : '') + (o.sub || o.head) + ' · ' + money(o.left) + ' left' + (o.why ? ' · ' + o.why : '') : o.label) + '</option>';
-    h += list.length > 1 ? '<optgroup label="' + esc(g ? 'CO ' + g : O.kind) + '">' + list.map(opt).join('') + '</optgroup>' : list.map(opt).join('');
+    if (!g) { h += '<optgroup label="' + (O.kind === 'PO' ? 'Purchase order' : 'Subcontract') + '">' + list.map(o => opt(o, 0)).join('') + '</optgroup>'; continue; }
+    if (!coHead) { h += '<optgroup label="── Change orders ──"></optgroup>'; coHead = true; }
+    const none = list.every(o => dead(o) && !isSel(o));
+    const why = !none ? '' : list.every(o => Number(o.left) <= 0) ? 'nothing left' : list.every(o => o.why && o.why === list[0].why) ? list[0].why : 'not available';
+    h += '<optgroup label="CO ' + esc(g) + (none ? ' · ' + esc(why) : '') + '"' + (none ? ' disabled' : '') + '>' + list.map((o, n) => opt(o, n + 1)).join('') + '</optgroup>';
   }
   if (O.missing.length) h += '<optgroup label="Not in CE yet">' + O.missing.map(m => '<option disabled>' + esc(m.label) + '</option>').join('') + '</optgroup>';
   return h + '</select>';
