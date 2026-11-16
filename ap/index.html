@@ -544,6 +544,9 @@ async function loadLive(){
   LIVE.ceInv = await file('ap_ce_invoices.json');
   LIVE.gl = await glAccounts(tok, drive.id);
   LIVE.ceVend = await ceVendors(tok, drive.id); CE_VMAP = null;
+  { const have = new Set(LIVE.ceVend.map(v => vNorm(v.name)));
+    for (const v of (cm.vendors || [])) if (v && v.name && v.code && !have.has(vNorm(v.name))) { have.add(vNorm(v.name)); LIVE.ceVend.push({ no: String(v.code).trim(), name: String(v.name).trim(), active: true, src: 'Procore' }); }
+    LIVE.ceVend.sort((a, b) => a.name.localeCompare(b.name)); }
   LIVE.cc = await file('ap_cost_codes.json');
   LIVE.ccn = await file('ap_cost_code_names.json');   // names from the CE Job Cost Detail (ce_ledger_pull)
   LIVE.byNum = {}; LIVE.byKey = {}; LIVE.pmName = {}; LIVE.jobs = {};
@@ -2660,7 +2663,7 @@ function addRender(){
     + '<div class="ad-drop' + (A.file ? ' has' : '') + '" id="adDrop">' + (A.file ? '<b>' + esc(A.file.name) + '</b> · ' + Math.max(1, Math.round(A.file.size / 1024)) + ' KB · <a href="#" data-adclear="1">Remove</a>' : 'Drop the file here, or <label for="adFile" style="display:inline;text-transform:none;font-size:13px;letter-spacing:0;color:var(--bh-ink);text-decoration:underline;cursor:pointer">choose a file</label>') + '</div>'
     + '<input type="file" id="adFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" style="position:absolute;left:-9999px"></div>'
     + '<div class="full"><label for="adVendor">Vendor</label><input id="adVendor" list="adVendors" autocomplete="off" value="' + esc(A.vendor) + '" placeholder="e.g. Point Broadband"><datalist id="adVendors">' + ceV.map(v => '<option value="' + esc(v.name) + '">CE ' + esc(v.no) + '</option>').join('') + vendors.map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>'
-      + (ceV.length ? (A.vendor && !ceVendByName(A.vendor) ? '<div class="note" style="margin:2px 0 0">Not in the CE vendor list — set the vendor up in CE before it is entered.</div>' : '') : '<div class="note" style="margin:2px 0 0">CE vendor list not loaded (ce_vendors.csv in APData).</div>') + '</div>'
+      + (ceV.length ? (A.vendor && !ceVendByName(A.vendor) ? '<div class="note" style="margin:2px 0 0">Not in the CE vendor list — set the vendor up in CE before it is entered.</div>' : '') : '<div class="note" style="margin:2px 0 0">Vendor list not loaded yet (the AP commitments pull adds it from Procore).</div>') + '</div>'
     + '<div><label for="adNo">Invoice or account #</label><input id="adNo" value="' + esc(A.no) + '"></div>'
     + '<div><label for="adAmt">Amount due</label><input id="adAmt" inputmode="decimal" value="' + esc(A.amt) + '" placeholder="0.00"></div>'
     + '<div><label for="adDate">Invoice date</label><input id="adDate" type="date" value="' + esc(A.date) + '"></div>'
