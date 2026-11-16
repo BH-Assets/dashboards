@@ -398,6 +398,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   .ap-as,.ap-as select{max-width:100%}
 }
 .ce-dlg{max-width:min(1100px,96vw);width:100%;border:1px solid var(--bh-line,#d9d6d7);padding:18px 20px}.ce-dlg::backdrop{background:rgba(33,30,30,.4)}.ce-t{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0}.ce-t th,.ce-t td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bh-line,#e8e6e7);vertical-align:top}.ce-t .num{text-align:right;white-space:nowrap}.ce-t tr.bad td{background:#fff8f8}.ce-v{width:110px;min-height:28px;font-size:12.5px;text-transform:uppercase}
+body.v-aud #tMine,body.v-aud #tChg{display:none}.au-top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:18px 0 10px}.au-pre{display:flex;gap:6px;flex-wrap:wrap}.au-pre .xp-mini{margin:0}.au-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 14px}.au-wrap{overflow-x:auto}.au-t{width:100%;border-collapse:collapse;font-size:12.5px}.au-t th,.au-t td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bh-line,#e8e6e7);vertical-align:top}.au-t th a{color:inherit;text-decoration:none;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.au-t .num{text-align:right;white-space:nowrap}.au-t tr.need td{background:#fff8f8}.au-t .note{margin:2px 0 0}
 </style>
 <script src="msal-browser.min.js"></script>
 </head>
@@ -413,7 +414,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
 </header>
 
 <div class="ap-bar">
-  <span class="ap-view"><button class="ap-tog" id="vQ" aria-pressed="true">Queue</button><button class="ap-tog" id="vE" aria-pressed="false">Expected billings</button></span>
+  <span class="ap-view"><button class="ap-tog" id="vQ" aria-pressed="true">Queue</button><button class="ap-tog" id="vE" aria-pressed="false">Expected billings</button><button class="ap-tog" id="vA" aria-pressed="false" hidden>Audit</button></span>
   <input class="bh-input" id="q" type="search" placeholder="Search vendor, job, invoice #" aria-label="Search">
   <button class="ap-tog" id="tMine" aria-pressed="false">Waiting on me <span class="n" id="nMine"></span></button>
   <button class="ap-tog" id="tChg" aria-pressed="false">Changed <span class="n" id="nChg"></span></button>
@@ -1066,6 +1067,8 @@ function draw(){
   if (!LIVE.me) return;
   document.body.classList.toggle('v-exp', VIEW === 'exp');
   { const w = document.getElementById('xWrap'); if (w) w.hidden = !LIVE.me; }
+  document.body.classList.toggle('v-aud', VIEW === 'audit');
+  if (VIEW === 'audit') { drawAudit(); return; }
   if (VIEW === 'exp') { drawExp(); return; }
   typeBar();
   const v = visible();
@@ -1241,6 +1244,123 @@ function attachG(r, per){
     + line('Balance to finish incl. retainage', 'BALANCE TO FINISH INCLUDING RETAINAGE', i && adj != null && pEarned != null ? adj - pEarned : null, adj != null && earned != null ? adj - earned : null, '')
     + '</tbody></table></div>';
 }
+/* ---- Audit tab (16 Nov 2026) --------------------------------------------------------------- */
+const AU = { basis: 'entered', from: '', to: '', only: 'all', sort: 'date', dir: -1 };
+const auDay = v => String(v || '').slice(0, 10);
+const fyStart = d => { const y = Number(d.slice(0, 4)), m = Number(d.slice(5, 7)); return (m >= 10 ? y : y - 1); };   /* FY named by its start year */
+function auPreset(k){
+  const t = new Date().toISOString().slice(0, 10), y = Number(t.slice(0, 4)), m = Number(t.slice(5, 7));
+  const pad = n => String(n).padStart(2, '0'), last = (yy, mm) => new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+  if (k === 'all') return ['', ''];
+  if (k === 'month') return [y + '-' + pad(m) + '-01', y + '-' + pad(m) + '-' + pad(last(y, m))];
+  if (k === 'lastmonth') { const yy = m === 1 ? y - 1 : y, mm = m === 1 ? 12 : m - 1; return [yy + '-' + pad(mm) + '-01', yy + '-' + pad(mm) + '-' + pad(last(yy, mm))]; }
+  const fy = fyStart(t) - (k === 'lastfy' ? 1 : 0); return [fy + '-10-01', (fy + 1) + '-09-30'];
+}
+function auDates(i){
+  const f = i.f, entered = auDay(f.EnteredAt) || auDay((([...(i.log || [])].reverse().find(x => x && x.s === 'approved and entered')) || {}).at) || auDay(f.StatusChangedAt);
+  return { entered, approved: auDay(f.ApprovedAt), invoice: auDay(i.type === 'Pay app' ? f.PeriodEnding : f.InvoiceDate) };
+}
+/* what CE holds now vs what the desk had */
+function auCheck(i){
+  const f = i.f, n = v => Number(v || 0);
+  if (i.type === 'Pay app') {
+    if (!i.po || !f.PayRequest) return { st: 'na', t: 'No subcontract or pay request number to match in CE' };
+    const L = ledgerFor(i.po, f.PayRequest);
+    if (!L.available) return { st: 'na', t: 'CE ledger not loaded (or not full history)' };
+    if (!L.exists) return { st: 'warn', t: 'Subcontract ' + i.po + ' is not in the CE ledger', sig: 'nosub' };
+    const asOf = String((LIVE.ceInv && LIVE.ceInv.as_of) || '').slice(0, 10), ent = auDates(i).entered;
+    if (!L.thisApp.length) return asOf && ent && asOf < ent ? { st: 'wait', t: 'CE ledger (' + usDate(asOf) + ') is older than the entry — checked again after the next pull' }
+      : { st: 'bad', t: 'Not found in CE — voided, renumbered or never posted', sig: 'missing' };
+    const prior = (L.led.invoices || []).filter(x => !L.thisApp.includes(x));
+    const ceG = r2(L.thisApp.reduce((t, x) => t + n(x.total), 0)), ceR = r2(L.thisApp.reduce((t, x) => t + n(x.retention), 0));
+    const e = ceSplitOf(i), sp = (e && e.ceSplit) || [];
+    const ctd = num(f.CompletedToDate), held = num(f.RetainageHeld);
+    const dG = sp.length && sp.every(x => x.amt != null) ? r2(sp.reduce((t, x) => t + x.amt, 0)) : ctd != null ? r2(ctd - prior.reduce((t, x) => t + n(x.total), 0)) : null;
+    const dR = held != null ? r2(held - prior.reduce((t, x) => t + n(x.retention), 0)) : null;
+    const diffs = [];
+    if (dG != null && Math.abs(dG - ceG) > 0.005) diffs.push('gross ' + money(dG) + ' → ' + money(ceG) + ' in CE');
+    if (dR != null && dR >= 0 && Math.abs(dR - ceR) > 0.005) diffs.push('retainage ' + money(dR) + ' → ' + money(ceR) + ' in CE');
+    return diffs.length ? { st: 'chg', t: 'Changed in CE after entry: ' + diffs.join('; '), sig: diffs.join('|') } : { st: 'ok', t: 'Matches CE (' + money(ceG) + ', retainage ' + money(ceR) + ')' };
+  }
+  return { st: 'na', t: 'Not checked — the CE ledger covers subcontract billing only' };
+}
+function auRows(){
+  return (ALLH || []).filter(i => !i.isMsg && i.raw === 'approved and entered').map(i => {
+    const f = i.f, d = auDates(i), ck = auCheck(i), by = lc(f.EnteredBy || ''), ap = lc(f.ApprovedBy || '');
+    const notes = (i.log || []).filter(x => x && x.auditNote);
+    const answered = ck.sig && notes.some(x => x.auditFor === ck.sig);
+    const ex = [];
+    if (!ap) ex.push('No approval recorded');
+    else if (by && by === ap) ex.push('Approved and entered by the same person');
+    if (i.asNoted || (i.log || []).some(x => x && x.asNoted)) ex.push('Approved as noted');
+    return { i, d, ck, ex, notes, need: !!ck.sig && !answered && (ck.st === 'chg' || ck.st === 'bad' || ck.st === 'warn'),
+             enteredBy: f.EnteredBy ? P(lc(f.EnteredBy)).n : '', approvedBy: ap ? P(ap).n : '', ce: f.CEReference || '' };
+  });
+}
+function auFiltered(){
+  const all = auRows(), k = AU.basis;
+  let r = all.filter(x => (!AU.from || (x.d[k] && x.d[k] >= AU.from)) && (!AU.to || (x.d[k] && x.d[k] <= AU.to)));
+  if (Q) r = r.filter(x => (x.i.id + ' ' + x.i.v + ' ' + x.i.job + ' ' + (x.i.po || '') + ' ' + (x.i.no || '') + ' ' + x.ce + ' ' + x.approvedBy + ' ' + x.enteredBy).toLowerCase().includes(Q));
+  const inRange = r;
+  if (AU.only === 'attn') r = r.filter(x => x.need || x.ex.length);
+  else if (AU.only === 'chg') r = r.filter(x => x.need);
+  else if (AU.only === 'sod') r = r.filter(x => x.ex.length);
+  const key = { date: x => x.d[k] || '', vendor: x => String(x.i.v).toLowerCase(), amt: x => x.i.amt || 0, check: x => (x.need ? 0 : 1) + ':' + x.ck.st, ap: x => Number(x.i.itemId) || 0 }[AU.sort] || (x => x.d[k] || '');
+  r.sort((a, b) => { const A = key(a), B = key(b); return (A < B ? -1 : A > B ? 1 : 0) * AU.dir; });
+  return { all, inRange, rows: r };
+}
+function drawAudit(){
+  const { inRange, rows } = auFiltered();
+  const kpi = (l, v, t) => '<div class="bh-kpi"' + (t ? ' title="' + esc(t) + '"' : '') + '><div class="bh-label">' + l + '</div><div class="bh-kpi-value">' + v + '</div></div>';
+  const need = inRange.filter(x => x.need), miss = inRange.filter(x => x.ck.st === 'bad'), sod = inRange.filter(x => x.ex.some(e => /same person|No approval/.test(e)));
+  const asOf = LIVE.ceInv && LIVE.ceInv.as_of ? usDate(String(LIVE.ceInv.as_of).slice(0, 10)) : '—';
+  const th = (k, t, cls) => '<th class="' + (cls || '') + '"><a href="#" data-aus="' + k + '">' + t + (AU.sort === k ? (AU.dir < 0 ? ' ▾' : ' ▴') : '') + '</a></th>';
+  const chip = x => { const c = { ok: 'is-ok', chg: 'is-bad', bad: 'is-bad', warn: 'is-warn', wait: '', na: '' }[x.ck.st] || '';
+    const lab = { ok: 'Matches CE', chg: 'Changed in CE', bad: 'Not in CE', warn: 'Check', wait: 'Waiting on CE', na: 'Not checked' }[x.ck.st] || x.ck.st;
+    return '<span class="bh-chip sm ' + c + '" title="' + esc(x.ck.t) + '">' + lab + '</span>' + (x.need ? ' <span class="bh-chip sm is-bad">Needs a note</span>' : x.ck.sig && x.notes.length ? ' <span class="bh-chip sm is-ok">Noted</span>' : ''); };
+  let h = '<div class="au-top">'
+    + '<label class="ap-as"><span class="bh-label">Date</span><select class="bh-select" id="auBasis">' + [['entered', 'Entered in CE'], ['approved', 'Approved'], ['invoice', 'Invoice / period date']].map(([v, t]) => '<option value="' + v + '"' + (AU.basis === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>'
+    + '<label class="ap-as"><span class="bh-label">From</span><input class="bh-input" type="date" id="auFrom" value="' + esc(AU.from) + '"></label>'
+    + '<label class="ap-as"><span class="bh-label">To</span><input class="bh-input" type="date" id="auTo" value="' + esc(AU.to) + '"></label>'
+    + '<span class="au-pre">' + [['month', 'This month'], ['lastmonth', 'Last month'], ['fy', 'FY ' + fyStart(new Date().toISOString().slice(0, 10))], ['lastfy', 'FY ' + (fyStart(new Date().toISOString().slice(0, 10)) - 1)], ['all', 'All']].map(([k, t]) => '<button class="xp-mini" data-aup="' + k + '">' + t + '</button>').join('') + '</span>'
+    + '<label class="ap-as"><span class="bh-label">Show</span><select class="bh-select" id="auOnly">' + [['all', 'All entered'], ['attn', 'Needs attention'], ['chg', 'CE changes needing a note'], ['sod', 'Approval exceptions']].map(([v, t]) => '<option value="' + v + '"' + (AU.only === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>'
+    + '<button class="bh-btn-outline" data-au="csv">Export CSV</button></div>'
+    + '<div class="au-kpis">' + kpi('Entered', inRange.length + ' · ' + money(inRange.reduce((t, x) => t + (x.i.amt || 0), 0)), 'Items marked entered in CE in this range')
+    + kpi('CE changes needing a note', need.length, 'Changed or missing in CE after entry, with no audit note answering the change')
+    + kpi('Not found in CE', miss.length, 'Pay apps marked entered that the CE ledger does not hold')
+    + kpi('Approval exceptions', sod.length, 'Approved and entered by the same person, or entered with no approval recorded')
+    + kpi('CE ledger as of', asOf, 'The CE check reads the daily CE ledger; invoices (not pay apps) are not checked yet') + '</div>';
+  h += rows.length ? '<div class="au-wrap"><table class="au-t"><thead><tr>' + th('ap', 'Item') + th('date', AU.basis === 'entered' ? 'Entered' : AU.basis === 'approved' ? 'Approved' : 'Inv / period') + th('vendor', 'Vendor') + '<th>Job · document</th>' + th('amt', 'Amount', 'num') + '<th>Approved</th><th>Entered</th><th>CE ref</th>' + th('check', 'CE check') + '<th>Exceptions · notes</th><th></th></tr></thead><tbody>'
+    + rows.map(x => { const i = x.i, last = x.notes[x.notes.length - 1];
+      return '<tr class="' + (x.need ? 'need' : '') + '"><td>' + esc(i.id) + '</td><td>' + usDate(x.d[AU.basis]) + '</td><td>' + esc(i.v) + '</td><td>' + esc(i.job || '') + ' · ' + esc(i.no || i.type) + (i.po ? '<br><span class="note">' + esc(i.po) + '</span>' : '') + '</td>'
+        + '<td class="num">' + (i.amtKnown ? money(i.amt) : '—') + '</td><td>' + esc(x.approvedBy || '—') + (x.d.approved ? '<br><span class="note">' + usDate(x.d.approved) + '</span>' : '') + '</td><td>' + esc(x.enteredBy || '—') + (x.d.entered ? '<br><span class="note">' + usDate(x.d.entered) + '</span>' : '') + '</td>'
+        + '<td>' + esc(x.ce || '—') + '</td><td>' + chip(x) + (x.ck.st === 'chg' || x.ck.st === 'bad' ? '<div class="note">' + esc(x.ck.t) + '</div>' : '') + '</td>'
+        + '<td>' + x.ex.map(e => '<span class="bh-chip sm is-warn">' + esc(e) + '</span>').join(' ') + (last ? '<div class="note">“' + esc(last.auditNote) + '” — ' + esc(last.by || '') + ' ' + usDate(auDay(last.at)) + '</div>' : '') + '</td>'
+        + '<td><button class="xp-mini" data-aun="' + esc(i.id) + '">Add note</button></td></tr>'; }).join('') + '</tbody></table></div>'
+    : '<div class="ap-empty" style="margin-top:18px">No entered items match.</div>';
+  $('#list').innerHTML = h;
+}
+function auCsv(){
+  const { rows } = auFiltered(), q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const head = ['Item', 'Type', 'Vendor', 'Job', 'Subcontract/PO', 'Number', 'Invoice/period date', 'Amount', 'Approved by', 'Approved', 'Entered by', 'Entered', 'CE reference', 'CE check', 'CE detail', 'Needs a note', 'Exceptions', 'Latest audit note'];
+  const lines = [head.map(q).join(',')].concat(rows.map(x => { const i = x.i, last = x.notes[x.notes.length - 1];
+    return [i.id, i.type, i.v, i.job, i.po || i.f.Subcontract || '', i.f.PayRequest || '', x.d.invoice, i.amtKnown ? i.amt.toFixed(2) : '', x.approvedBy, x.d.approved, x.enteredBy, x.d.entered, x.ce, x.ck.st, x.ck.t, x.need ? 'yes' : '', x.ex.join('; '), last ? last.auditNote + ' (' + (last.by || '') + ' ' + auDay(last.at) + ')' : ''].map(q).join(','); }));
+  const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'AP Desk audit ' + (AU.from || 'all') + ' to ' + (AU.to || 'today') + '.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function auNote(id){
+  const x = auRows().find(r => r.i.id === id); if (!x) return;
+  const t = (prompt('Audit note for ' + id + ' — ' + x.i.v + (x.ck.sig ? '\n\n' + x.ck.t : '') + '\n\nThis is added to the item’s history with your name and the time.') || '').trim();
+  if (!t) return;
+  run(async () => { if (await saveRow(x.i, {}, { auditNote: t, auditFor: x.ck.sig || '', note: 'Audit note: ' + t + (x.ck.sig ? ' (re: ' + x.ck.t + ')' : '') })) { toast('Note added'); } });
+}
+document.addEventListener('change', e => { if (VIEW !== 'audit' || !e.target.id) return;
+  if (e.target.id === 'auBasis') { AU.basis = e.target.value; draw(); } else if (e.target.id === 'auFrom') { AU.from = e.target.value; draw(); } else if (e.target.id === 'auTo') { AU.to = e.target.value; draw(); } else if (e.target.id === 'auOnly') { AU.only = e.target.value; draw(); } });
+document.addEventListener('click', e => { if (VIEW !== 'audit') return; const t = e.target.closest && e.target.closest('[data-aup],[data-aus],[data-aun],[data-au]'); if (!t) return; e.preventDefault();
+  if (t.dataset.aup) { [AU.from, AU.to] = auPreset(t.dataset.aup); draw(); }
+  else if (t.dataset.aus) { AU.dir = AU.sort === t.dataset.aus ? -AU.dir : (t.dataset.aus === 'vendor' ? 1 : -1); AU.sort = t.dataset.aus; draw(); }
+  else if (t.dataset.aun) auNote(t.dataset.aun);
+  else if (t.dataset.au === 'csv') auCsv(); });
 function drawExp(){
   const { per, rows: scoped } = expData();
   const jobList = {};
@@ -1464,6 +1584,7 @@ function entBar(){
     + '<input class="bh-input" id="eRef" placeholder="CE batch or reference" aria-label="CE batch or reference">'
     + '<button class="bh-btn" data-do="cexml"' + (BUSY ? ' disabled' : '') + ' title="One ComputerEase AP Invoices import file for the selected items">CE import file</button>'
     + '<button class="bh-btn" data-do="bulkenter"' + (BUSY ? ' disabled' : '') + '>Mark ' + sel.length + ' entered</button>'
+    + (testPhase() ? '<button class="bh-btn-outline" data-do="entdel" title="Testing phase only">Delete ' + sel.length + '</button>' : '')
     + '<button class="bh-btn-outline" data-do="entclear">Clear</button></div>';
 }
 function bulkBar(){
@@ -1485,6 +1606,7 @@ function bulkBar(){
     + (ok.length ? '<button class="bh-btn" data-do="bulkroute"' + (BUSY ? ' disabled' : '') + '>Route ' + ok.length + '</button>' : '')
     + (comp.length ? '<button class="bh-btn" data-do="bulkfwd"' + (BUSY ? ' disabled' : '') + '>Forward ' + comp.length + ' to compliance</button>' : '')
     + (msgs.length ? '<button class="bh-btn" data-do="bulkdismiss"' + (BUSY ? ' disabled' : '') + '>Dismiss ' + msgs.length + ' email' + (msgs.length > 1 ? 's' : '') + '</button>' : '')
+    + (testPhase() ? '<button class="bh-btn-outline" data-do="bulkdel" title="Testing phase only">Delete ' + sel.length + '</button>' : '')
     + '<button class="bh-btn-outline" data-do="bulkclear">Clear</button>'
     + (held ? '<span class="held">' + held + ' pay app' + (held > 1 ? 's' : '') + ' with flags or missing details left out — send them one at a time</span>' : '')
     + '</div>';
@@ -1507,7 +1629,23 @@ function secondary(i){
   if (i.sec === 'corr' && i.mailPending && !i.isMsg) return ['mailoutlook','Open in Outlook to add attachments'];
   return null;
 }
-function moreItems(i){
+/* ---- Delete: testing phase only (16 Nov 2026) ---- */
+const testPhase = () => !!(PW.tag && PW.tag !== '*');
+function delRows(list){
+  list = list.filter(Boolean); if (!list.length || !acctSeat() || !testPhase()) return;
+  const entered = list.filter(i => i.raw === 'approved and entered').length;
+  if (!confirm('Delete ' + list.length + ' item' + (list.length > 1 ? 's' : '') + ' from the AP Desk?\n\n' + list.slice(0, 8).map(i => i.id + '  ' + i.v + '  ' + (i.no || '')).join('\n') + (list.length > 8 ? '\n…' : '')
+      + (entered ? '\n\n' + entered + ' of them are marked entered in CE. Deleting here does not change CE.' : '') + '\n\nTesting phase only. Deleted rows go to the AP Desk site recycle bin.')) return;
+  run(async () => { const tok = await token(), q = LIVE.queue; let n = 0, bad = 0;
+    for (const i of list) {
+      const r = await fetch(GRAPH + '/sites/' + q.siteId + '/lists/' + q.listId + '/items/' + encodeURIComponent(i.itemId), { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } });
+      if (r.ok) { n++; BULK.delete(i.id); ENT.delete(i.id); if (SEL === i.id) { SEL = null; document.body.classList.add('no-pane'); } } else bad++;
+    }
+    await loadLive(); rebuild(); header(); draw();
+    toast(n + ' deleted' + (bad ? ' · ' + bad + ' could not be deleted — check your SharePoint permission on the AP Desk site' : '')); });
+}
+function moreItems(i){ const m = moreItems0(i); if (acctSeat() && testPhase()) m.push(['delrow', 'Delete — testing only']); return m; }
+function moreItems0(i){
   const m = [];
   if (acctSeat() && !i.isMsg && (i.sec === 'ready' || i.sec === 'done')) m.push(i.hold ? ['holdrelease','Release the payment hold'] : ['holdtoggle','Hold payment…']);
 
@@ -1519,7 +1657,7 @@ function moreItems(i){
   }
   if (acctSeat() && i.sec === 'corr' && i.mailPending) { m.push(['copymail','Copy the email text']); if (i.draft || MAIL.ok !== false) m.push(['mailsent','Mark email sent (sent another way)']); if (i.draft) m.push(['mkdraft','Create the draft again']); }
   if (acctSeat() && i.sec === 'corr') m.push(['totriage','Back to Triage (resubmission arrived)']);
-  if (acctSeat() && i.sec === 'ready') m.push(['totriage','Back to Triage']);
+  if (acctSeat() && i.sec === 'ready' && i.raw !== 'approved and entered') m.push(['totriage','Back to Triage']);
   return m;
 }
 function openPane(id){
@@ -2883,6 +3021,8 @@ function mailText(m){ return (m.to ? 'To: ' + m.to + '\n' : '') + (m.cc ? 'Cc: '
 /* ---- actions -------------------------------------------------------------------- */
 function act(k){
   if (k === 'bulkclear') { BULK.clear(); draw(); return; }
+  if (k === 'bulkdel') { delRows(INV.filter(x => BULK.has(x.id))); return; }
+  if (k === 'entdel') { delRows(INV.filter(x => ENT.has(x.id))); return; }
   if (k === 'cexml') { if (acctSeat()) ceOpen(); return; }
   if (k === 'entclear') { ENT.clear(); draw(); return; }
   if (k === 'bulkfwd') {
@@ -3157,6 +3297,7 @@ function act(k){
     run(async () => { if (await saveRow(i, {}, { mail:'sent', note:'Email sent to the trade partner from payables@.' })) toast('Marked sent'); });
     return; }
   if (k === 'totriage') { if (!acctSeat()) return;
+    if (i.raw === 'approved and entered' || i.sec === 'done') { toast('Entered in CE — this item is locked. Changes after entry are made in CE and show on the item as a CE change.'); return; }
     run(async () => { if (await saveRow(i, { Status:'received' }, { s:'received', note: i.sec === 'corr' ? 'Resubmission received; back to Triage.' : 'Back to Triage.' })) toast('Back in Triage'); });
     return; }
   if (k === 'enter') { if (!acctSeat()) return;
@@ -3167,6 +3308,7 @@ function act(k){
   if (k === 'notours') { if (!acctSeat()) return; const to = i.type === 'Pay app' ? 'invoice' : 'pay app';
     run(async () => { if (await saveRow(i, { DocType: to }, { note:'Type changed to ' + (to === 'invoice' ? 'regular invoice' : 'pay application') + ' — stays in Triage.' })) toast('Now a ' + (to === 'invoice' ? 'regular invoice' : 'pay application')); });
     return; }
+  if (k === 'delrow') { delRows([i]); return; }
   if (k === 'dup') { if (!acctSeat()) return; if (!confirm('Archive this as a duplicate? The original stays active.')) return;
     run(async () => { if (await saveRow(i, { Status:'duplicate archived' }, { s:'duplicate archived', note:'Archived as an exact resend; no accounting entry.' })) { toast('Archived as duplicate'); SEL = null; document.body.classList.add('no-pane'); } });
     return; }
@@ -3322,10 +3464,11 @@ document.addEventListener('change', e => {
   const c = e.target.closest('[data-ck]'); if (c && i) i.checks[c.dataset.ck] = c.checked;
 });
 $('#q').addEventListener('input', e => { Q = e.target.value.trim().toLowerCase(); draw(); });
-function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('aria-pressed', v === 'queue'); $('#vE').setAttribute('aria-pressed', v === 'exp');
+function setView(v){ VIEW = v; store.set('apview', v); $('#vQ').setAttribute('aria-pressed', v === 'queue'); $('#vE').setAttribute('aria-pressed', v === 'exp'); $('#vA').setAttribute('aria-pressed', v === 'audit');
   $('#q').placeholder = v === 'exp' ? 'Search vendor, job, commitment #' : 'Search vendor, job, invoice #'; draw(); }
 $('#vQ').addEventListener('click', () => setView('queue'));
 $('#vE').addEventListener('click', () => setView('exp'));
+$('#vA').addEventListener('click', () => setView('audit'));
 document.addEventListener('change', e => { if (e.target.id === 'poPick') { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); pane(); } } });
 document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-cla]')) { const i = INV.find(x => x.id === SEL); if (i) { keepReview(i); const t = document.querySelector('.cl-tot'); if (t) t.innerHTML = clTot(i); } } });
 document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-cl],[data-spl]')) { const i = INV.find(x => x.id === SEL); if (i) keepReview(i); } });
@@ -3616,7 +3759,8 @@ document.addEventListener('keydown', e => {
   try {
     if (!(await loadLive())) return;
     WHO = LIVE.me.isAccounting ? ACCT : LIVE.me.email;
-    VIEW = store.get('apview') === 'exp' ? 'exp' : 'queue';
+    $('#vA').hidden = !LIVE.me.isAccounting;
+    { const sv = store.get('apview'); VIEW = sv === 'exp' ? 'exp' : sv === 'audit' && LIVE.me.isAccounting ? 'audit' : 'queue'; }
     rebuild(); header(); setView(VIEW);
     if (LIVE.me.isAccounting) { await mailToken(); draw(); checkSent().catch(() => {}); }
   } catch (e) {
