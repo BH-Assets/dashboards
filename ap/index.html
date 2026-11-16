@@ -756,7 +756,7 @@ function rebuild(){
   if (LIVE.me) PEOPLE[LIVE.me.email] = Object.assign(PEOPLE[LIVE.me.email] || {}, { n: LIVE.me.name, i: initials(LIVE.me.name) });
   for (const i of INV) if (i.assign && !PEOPLE[i.assign]) PEOPLE[i.assign] = { n: i.assign, i: initials(i.assign) };
 }
-const P = k => PEOPLE[k] || { n: k || 'Unassigned', i: initials(k) };
+const P = k => PEOPLE[k] || (TEST_PMS.find(t => t.e === k) ? { n: TEST_PMS.find(t => t.e === k).n, i: 'BS' } : null) || { n: k || 'Unassigned', i: initials(k) };
 const jobName = j => (JOBS[j] && JOBS[j].n) || (j ? j : 'No project');
 
 /* ---- seats: what you see vs what you may do --------------------------------- */
