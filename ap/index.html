@@ -543,6 +543,7 @@ async function loadLive(){
   LIVE.expected = await file('ap_payapp_expected.json');
   LIVE.ceInv = await file('ap_ce_invoices.json');
   LIVE.gl = await glAccounts(tok, drive.id);
+  LIVE.ceVend = await ceVendors(tok, drive.id); CE_VMAP = null;
   LIVE.cc = await file('ap_cost_codes.json');
   LIVE.ccn = await file('ap_cost_code_names.json');   // names from the CE Job Cost Detail (ce_ledger_pull)
   LIVE.byNum = {}; LIVE.byKey = {}; LIVE.pmName = {}; LIVE.jobs = {};
@@ -1440,6 +1441,7 @@ const vNorm = v => String(v || '').toLowerCase().replace(/&/g, 'and').replace(/\
 let CE_VMAP = null;
 function ceVendMap(){
   if (CE_VMAP) return CE_VMAP; CE_VMAP = {};
+  for (const v of (LIVE.ceVend || [])) CE_VMAP[vNorm(v.name)] = v.no;
   for (const sc of Object.values((LIVE.ceInv || {}).subcontracts || {})) if (sc.vendor_code && sc.vendor) CE_VMAP[vNorm(sc.vendor)] = sc.vendor_code;
   for (const it of (ALLH || INV)) { const e = [...(it.log || [])].reverse().find(x => x && x.ceVendor); if (e && it.v) CE_VMAP[vNorm(it.v)] = e.ceVendor; }
   return CE_VMAP;
@@ -1818,6 +1820,24 @@ async function glAccounts(tok, driveId){
       .filter(x => x.no).sort((x, y) => ((order[x.type.toLowerCase()] ?? 9) - (order[y.type.toLowerCase()] ?? 9)) || x.no.localeCompare(y.no));
   } catch (e) { return []; }
 }
+/* ---- CE vendors (16 Nov 2026) ---------------------------------------------------------
+   ce_vendors.csv in APData: the CE vendor list exported to CSV. Header names are matched
+   loosely (Vendor # / Vendor No / Number / Code, and Name / Vendor Name; Status optional).
+   Inactive vendors are left out. Re-export and overwrite when vendors are added in CE. */
+async function ceVendors(tok, driveId){
+  try {
+    const r = await fetch(GRAPH + '/drives/' + driveId + '/root:/ce_vendors.csv:/content', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return [];
+    const rows = csvRows((await r.text()).replace(/^\uFEFF/, '')); if (!rows.length) return [];
+    const hd = rows[0].map(x => String(x).trim().toLowerCase().replace(/[.:]/g, ''));
+    const find = re => hd.findIndex(h => re.test(h));
+    const no = find(/^(vendor ?(#|no|num|number|code|id)|number|code|vennum|no|#)$/), nm = find(/^(vendor ?name|name)$/) >= 0 ? find(/^(vendor ?name|name)$/) : find(/^vendor$/), st = find(/status|active/);
+    if (no < 0 || nm < 0 || no === nm) return [];
+    return rows.slice(1).map(x => ({ no: String(x[no] || '').trim(), name: String(x[nm] || '').trim(), active: st < 0 || !/inactive|^no$|^n$|^false$/i.test(String(x[st] || '').trim()) }))
+      .filter(v => v.no && v.name && v.active);
+  } catch (e) { return []; }
+}
+const ceVendByName = name => { const k = vNorm(name); return k ? (LIVE.ceVend || []).find(v => vNorm(v.name) === k) || null : null; };
 const glName = code => { const c = String(code || '').trim().replace(/^gl\s*/i, ''); const x = (LIVE.gl || []).find(g => g.no === c || g.no === c + '.00' || g.no.replace(/\.00$/, '') === c); return x ? x.name + (x.active ? '' : ' (inactive in CE)') : ''; };
 const glList = () => '<datalist id="glList">' + (LIVE.gl || []).filter(x => x.active).map(x => '<option value="' + esc(x.no) + '">' + esc(x.name + ' · ' + x.type) + '</option>').join('') + '</datalist>';
 /* ---- Job cost codes (22 Oct 2026) ----------------------------------------------------
@@ -2621,7 +2641,8 @@ function addRead(){
 function addRender(){
   const d = document.getElementById('addDlg'); if (!d || !ADD) return;
   const A = ADD, o = (v, t, cur) => '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>' + t + '</option>';
-  const vendors = [...new Set((LIVE.commitments || []).map(c => String(c.vendor || '').trim()).concat((ALLH || []).map(i => String(i.v || '').trim())).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const ceV = LIVE.ceVend || [], ceK = new Set(ceV.map(v => vNorm(v.name)));
+  const vendors = [...new Set((LIVE.commitments || []).map(c => String(c.vendor || '').trim()).concat((ALLH || []).map(i => String(i.v || '').trim())).filter(v => v && !ceK.has(vNorm(v))))].sort((a, b) => a.localeCompare(b));
   const jobs = Object.keys(JOBS).filter(k => k !== 'OH').sort();
   let route = '';
   if (acctSeat()) {
@@ -2638,7 +2659,8 @@ function addRender(){
     + '<div class="full"><label for="adFile">The invoice <small>(PDF, or a photo from your phone)</small></label>'
     + '<div class="ad-drop' + (A.file ? ' has' : '') + '" id="adDrop">' + (A.file ? '<b>' + esc(A.file.name) + '</b> · ' + Math.max(1, Math.round(A.file.size / 1024)) + ' KB · <a href="#" data-adclear="1">Remove</a>' : 'Drop the file here, or <label for="adFile" style="display:inline;text-transform:none;font-size:13px;letter-spacing:0;color:var(--bh-ink);text-decoration:underline;cursor:pointer">choose a file</label>') + '</div>'
     + '<input type="file" id="adFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" style="position:absolute;left:-9999px"></div>'
-    + '<div class="full"><label for="adVendor">Vendor</label><input id="adVendor" list="adVendors" autocomplete="off" value="' + esc(A.vendor) + '" placeholder="e.g. Point Broadband"><datalist id="adVendors">' + vendors.map(v => '<option value="' + esc(v) + '">').join('') + '</datalist></div>'
+    + '<div class="full"><label for="adVendor">Vendor</label><input id="adVendor" list="adVendors" autocomplete="off" value="' + esc(A.vendor) + '" placeholder="e.g. Point Broadband"><datalist id="adVendors">' + ceV.map(v => '<option value="' + esc(v.name) + '">CE ' + esc(v.no) + '</option>').join('') + vendors.map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>'
+      + (ceV.length ? (A.vendor && !ceVendByName(A.vendor) ? '<div class="note" style="margin:2px 0 0">Not in the CE vendor list — set the vendor up in CE before it is entered.</div>' : '') : '<div class="note" style="margin:2px 0 0">CE vendor list not loaded (ce_vendors.csv in APData).</div>') + '</div>'
     + '<div><label for="adNo">Invoice or account #</label><input id="adNo" value="' + esc(A.no) + '"></div>'
     + '<div><label for="adAmt">Amount due</label><input id="adAmt" inputmode="decimal" value="' + esc(A.amt) + '" placeholder="0.00"></div>'
     + '<div><label for="adDate">Invoice date</label><input id="adDate" type="date" value="' + esc(A.date) + '"></div>'
@@ -2689,7 +2711,8 @@ async function addSave(){
     A.msg = 'Adding it to the desk…'; addRender();
     const who = LIVE.me.name, at = now.toISOString(), job = A.job === 'OH' ? 'GL' : A.job;
     const routed = acctSeat() && A.route ? A.route : '';
-    const log = [{ s: 'received', at, by: who, manual: true, note: 'Added by hand — came in by ' + A.how.toLowerCase() + '.' }];
+    const cv = ceVendByName(A.vendor);
+    const log = [Object.assign({ s: 'received', at, by: who, manual: true, note: 'Added by hand — came in by ' + A.how.toLowerCase() + '.' + (cv ? ' CE vendor ' + cv.no + '.' : '') }, cv ? { ceVendor: cv.no } : {})];
     if (routed) { const m = jobRoster(A.job).find(x => x.e === routed); log.push({ s: 'with PM', at, by: who, note: 'Routed to ' + P(routed).n + (m ? ' (' + ROLE_LABEL[m.r] + ')' : P(routed).dept ? ' (' + P(routed).dept + ' department head)' : '') + ' when added. No CE entry created.' }); }
     const fields = { Title: 'manual|' + stamp + '|' + Math.random().toString(36).slice(2, 7), Status: routed ? 'with PM' : 'received', DocType: 'invoice',
       Vendor: A.vendor, PayRequest: A.no, BalanceDue: Number(amt), ReceivedAt: at, StatusChangedAt: at, PdfPath: path,
