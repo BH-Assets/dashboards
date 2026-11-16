@@ -1120,7 +1120,7 @@ function draw(){
           if (!ceK && i.type === 'Invoice' && i.f.CostCode) chips.push('<span class="bh-chip sm" title="' + esc(i.f.CostCode) + '">' + esc(String(i.f.CostCode).split(';')[0].replace(/\s+\$[\d,.-]+$/, '')) + (/;/.test(i.f.CostCode) ? ' +' + (String(i.f.CostCode).split(';').length - 1) : '') + '</span>'); }
         const tqOn = s.k === 'triage' && acctSeat() && !i.isMsg;
         h += '<div class="ap-row' + (ceK ? ' ce' : '') + (tqOn ? ' has-tq' : '') + (SEL === i.id ? ' is-sel' : '') + (i.sec === 'ready' ? ' is-appr' : '') + '" tabindex="0" data-id="' + i.id + '">'
-          + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + (bulkReady(i) ? '' : ' title="Flagged pay apps can be selected, but are routed one at a time from their Triage decision"') + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
+          + '<span class="selc">' + (ceK && acctSeat() ? '<input type="checkbox" class="esel" data-eid="' + i.id + '"' + (ENT.has(i.id) ? ' checked' : '') + ' aria-label="Select ' + esc(i.v) + ' to mark entered">' : '') + (acctSeat() && s.k === 'triage' ? '<input type="checkbox" class="bsel" data-bid="' + i.id + '"' + (BULK.has(i.id) ? ' checked' : '') + '' + ' aria-label="Select ' + esc(i.v) + '">' : '') + (i.changed ? '<span class="ap-dot" title="Changed since you last looked"></span>' : '') + '</span>'
           + '<div class="ap-v"><b>' + esc(i.v) + '</b><span>' + esc(i.no) + ' · ' + i.id + '</span></div>'
           + '<div class="ap-j"><b>' + esc(i.job || '—') + '</b><span>' + esc(i.job ? jobName(i.job) : (i.isMsg ? 'From ' + i.v : 'No project')) + '</span></div>'
           + '<div class="ap-amt"' + (ceK ? ' tabindex="-1"' : '') + '>' + (ceK ? '<span class="m">' + (i.amtKnown ? money(i.amt) : '<span title="No balance due was read off the document">—</span>') + '</span>' + amtPop(i) : i.isMsg ? '' : i.amtKnown ? money(i.amt) : '<span class="note" style="margin:0" title="No balance due was read off the document">—</span>') + '</div>'
@@ -1310,7 +1310,7 @@ function drawExp(){
 }
 
 /* ---- bulk routing (Accounting, Triage) ---------------------------------------- */
-function bulkReady(i){ return !i.isMsg && !(i.type === 'Pay app' && (i.flags.length || i.missing.length)); }
+function bulkReady(i){ return !i.isMsg; }   /* 16 Nov 2026: flags travel to the approver; Drew no longer holds them back */
 /* ---- CE import file (16 Nov 2026) --------------------------------------------------------
    One ComputerEase "AP Invoices" XML (apinvoices.xsd) for the selected Ready for entry items.
    Nothing reaches CE until Drew imports the file and clicks Post on CE's import screen. */
@@ -2345,8 +2345,12 @@ function jobRoster(job){
   const R = (jt && jt.length)
     ? jt.map(m => ({ e: lc(m.email), n: m.name || P(lc(m.email)).n, r: ROLE_LABEL[m.role] ? m.role : 'Team', t: m.title || '' }))
     : ((JOBS[job] && JOBS[job].team) || []).map(e => ({ e: lc(e), n: P(lc(e)).n, r: 'Team', t: '' }));
-  return R.filter(m => m.e).sort((a, b) => ROLE_ORDER[a.r] - ROLE_ORDER[b.r] || a.n.localeCompare(b.n));
+  const out = R.filter(m => m.e);
+  /* test mode only: the PM tester sits on every job's team as a PM */
+  if (PW.tag && PW.tag !== '*') for (const t of TEST_PMS) if (!out.some(m => m.e === t.e)) out.push({ e: t.e, n: t.n + ' (tester)', r: 'PM', t: 'PM tester' });
+  return out.sort((a, b) => ROLE_ORDER[a.r] - ROLE_ORDER[b.r] || a.n.localeCompare(b.n));
 }
+const TEST_PMS = [{ e: 'bsims@baileyharris.com', n: 'Ben Sims' }];
 function tqPick(i){
   if (i.tqPick != null) return i.tqPick;
   const saved = lc(i.f.AssignedApprover); if (saved) return saved;
