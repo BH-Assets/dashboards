@@ -1686,7 +1686,7 @@ function pane(){
     + (i.mail ? '<p class="note"><a href="' + esc(i.mail) + '" target="_blank" rel="noopener">Open the email</a></p>' : '');
   if (TAB === 'review' && i.replied && i.lastEmail && !i.isMsg) h += '<div class="flags" style="border-left-color:var(--bh-warn-ink);background:#fffbea"><b>Trade partner replied · ' + esc(fmtTime(i.lastEmail.at)) + '</b>' + esc(i.lastEmail.text || i.lastEmail.subject || '') + (i.lastEmail.link ? ' <a href="' + esc(i.lastEmail.link) + '" target="_blank" rel="noopener">Open email</a>' : '') + '</div>';
   /* removed 22 Oct 2026: the draft email is not shown in the pane - the header buttons open or send it */
-  const acctView = isAcct() && i.math && !i.isMsg;
+  const acctView = (isAcct() || (mySeat(i) && i.sec === 'pm')) && i.math && !i.isMsg;   /* 16 Nov 2026: the approver gets Drew's check */
   if (TAB === 'review') h += compBanner(i) + chgBanner(i) + holdBanner(i) + approvedBanner(i) + step1Banner(i) + routedBanner(i) + (i.holdOpen && acctSeat() && (i.sec === 'ready' || i.sec === 'done') ? holdPanel(i, 'acct') : '');
   if (TAB === 'review' && i.sec === 'pm' && mySeat(i) && !i.isMsg && !CF && !isInv(i)) h += reviewBox(i);
   if (TAB === 'review' && acctView) h += acctCheck(i);
@@ -1990,10 +1990,10 @@ function routedBanner(i){
   const notes = (txt.match(/with notes:\s*([\s\S]*)$/) || [])[1] || '';
   const flagged = (txt.match(/with flags:\s*([\s\S]*?)\.\s*No CE entry/) || [])[1] || '';
   const mine = mySeat(i);
-  return '<div class="rt-ban"><div class="h"><span class="ic">✓</span>Verified by Accounting — ' + (mine ? 'waiting on your approval' : 'with ' + esc(P(i.assign).n) + ' for approval') + '</div>'
+  return '<div class="rt-ban"><div class="h"><span class="ic">→</span>Routed for approval by Accounting — ' + (mine ? 'waiting on your approval' : 'with ' + esc(P(i.assign).n) + ' for approval') + '</div>'
     + '<div class="sub">' + esc(by) + (at ? ' routed it ' + esc(fmtTime(at)) : '') + (i.type === 'Invoice' ? (mine ? ' · code it below, then approve' : '') : (mine ? ' · check the figures below, then approve' : '')) + '</div>'
     + (notes ? '<div class="nt"><b>Accounting’s notes:</b> ' + esc(notes) + '</div>' : '')
-    + (flagged ? '<div class="nt" style="border-color:#f3c4c4"><b>Flags Accounting saw:</b> ' + esc(flagged) + '</div>' : '')
+    + (flagged ? '<div class="nt" style="border-color:#f3c4c4"><b>Flags on this item:</b> ' + esc(flagged) + '</div>' : '')
     + '</div>';
 }
 /* POs (22 Oct 2026): an invoice billed against a purchase order has to be entered in CE
@@ -2037,7 +2037,14 @@ function keepReview(i){
   const crs = document.querySelectorAll('[data-cr]'); if (crs.length) i.cr = [...crs].filter(x => x.checked).map(x => x.dataset.cr);
 }
 /* What a PM asks the trade partner to fix (22 Oct 2026) - each says what to do. */
-const PM_CORR = [['wip','Work completed doesn’t match work in place','Work completed does not match the work in place. Please update your SOV and resubmit.'],
+const PM_CORR = [['attg','Not on our Attachment G form','The application is not on Bailey-Harris’s Attachment G form. Please resubmit it on our Attachment G (ask us for a blank copy if you need one).'],
+  ['ids','Missing subcontract or project number','The subcontract number or project number is missing. Please add both and resubmit.'],
+  ['per','Missing period ending date','The PERIOD ENDING date is missing. Please add it and resubmit.'],
+  ['orig','Original contract amount is wrong','AMOUNT OF ORIGINAL CONTRACT does not match the subcontract on file.'],
+  ['adj','Approved COs / adjusted contract is wrong','APPROVED CHANGE ORDER(S) / ADJUSTED CONTRACT AMOUNT do not match the change orders approved as of the period ending date.'],
+  ['prev','Previous payments are wrong','LESS PREVIOUS PAYMENTS does not match what Bailey-Harris has previously certified.'],
+  ['math','Figures don’t add up','The figures do not add up to the BALANCE DUE THIS PAYMENT ESTIMATE.'],
+['wip','Work completed doesn’t match work in place','Work completed does not match the work in place. Please update your SOV and resubmit.'],
   ['cos','Billing for change orders not yet approved','The application bills change orders that have not yet been approved. Please update your SOV and resubmit.'],
   ['ret','Retainage is calculated incorrectly','Retainage is not calculated per the subcontract terms. Please correct it and resubmit.']];
 /* ---- Split for CE entry (28 Oct 2026) ---------------------------------------------------
@@ -2081,7 +2088,7 @@ function ceSelect(O, k, sel, attr){
   const keys = Object.keys(byG).sort((a, b) => (a ? 1 : 0) - (b ? 1 : 0) || a.localeCompare(b, undefined, { numeric: true }));
   const ref = O.po ? String(O.po).toUpperCase() : (O.kind === 'PO' ? 'PO' : 'SC');
   const isSel = o => String(sel) === String(o.ix), dead = o => !!o.why || Number(o.left) <= 0;
-  const opt = (o, n) => { const parts = [o.rfc ? 'line ' + n : ref, o.pc || '—', money(o.left) + ' remaining'];
+  const opt = (o, n) => { const parts = [o.rfc ? 'CO ' + o.rfc + ' · line ' + n : ref, o.pc || '—', money(o.left) + ' remaining'];
     if (o.why) parts.push(o.why.charAt(0).toUpperCase() + o.why.slice(1));
     return '<option value="' + o.ix + '"' + (isSel(o) ? ' selected' : '') + (dead(o) && !isSel(o) ? ' disabled' : '') + '>' + esc(parts.join(' | ')) + '</option>'; };
   let h = '<select class="bh-select cl-sel" ' + attr + '="' + k + '" aria-label="CE line">', coHead = false;
@@ -2329,7 +2336,7 @@ function acctCheck(i){
      signed amount (pay app minus that figure). Period ending + PR # and the pay app figures
      are edited in place, not on the Details tab. */
   const m = i.math, f = i.f, L = i.ledger || {}, P = cePeriod(i), R = retRule(i.c);
-  const per = payAsOf(f), canEd = acctSeat() && i.sec !== 'done';
+  const per = payAsOf(f), canEd = (acctSeat() || (mySeat(i) && i.sec === 'pm')) && i.sec !== 'done';
   const v = x => x == null ? '<span class="note" style="margin:0">not read</span>' : money(x);
   const dash = '<span class="note" style="margin:0">—</span>';
   const sd = (a, b) => { if (a == null || b == null) return ''; if (!dif(a, b)) return '<span class="bh-chip is-ok sm">✓</span>';
@@ -3179,7 +3186,7 @@ function act(k){
     run(async () => { if (await saveRow(i, r.f, { note: 'Invoice details: ' + r.said.join('; ') + '.' })) { i.editInv = false; toast('Saved'); } });
     return; }
   if (k === 'figx') { i.editFig = false; pane(); return; }
-  if (k === 'figsave') { if (!acctSeat()) return;
+  if (k === 'figsave') { if (!acctSeat() && !(mySeat(i) && i.sec === 'pm')) return;
     const f = {}, said = [], keyed = [];
     if (!readFigs(i, f, said, keyed)) return;
     if (!said.length) { i.editFig = false; pane(); return; }
@@ -3201,7 +3208,7 @@ function act(k){
   if (k === 'pcshow') { i.showPc = !i.showPc; pane(); return; }
   if (k === 'peredit') { i.editPer = true; pane(); return; }
   if (k === 'perx') { i.editPer = false; pane(); return; }
-  if (k === 'persave') { if (!acctSeat()) return; const v = ((document.getElementById('perIn') || {}).value || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast('Pick the period-ending date'); return; }
+  if (k === 'persave') { if (!acctSeat() && !(mySeat(i) && i.sec === 'pm')) return; const v = ((document.getElementById('perIn') || {}).value || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast('Pick the period-ending date'); return; }
     const pr = ((document.getElementById('prIn') || {}).value || '').trim();
     const old = i.f.PeriodEnding ? String(i.f.PeriodEnding).slice(0, 10) : '', oldPr = String(i.f.PayRequest || '');
     const f = {}, said = [];
