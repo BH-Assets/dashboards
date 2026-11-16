@@ -1426,7 +1426,8 @@ const OUTLOOK = { mail: "https://outlook.office.com/mail/", cal: "https://outloo
 /* Procore team roles that belong to the client or the design team, not to us
    (same list as the Compliance Desk's "My projects" filter) */
 const EXTERNAL_ROLE = /^(owner|architect|construction manager|(geotechnical|mechanical|electrical|civil|structural|plumbing|fire protection) engineer)( contact)?$/i;
-const MD = { cal: null, mail: null, tasks: null, waiting: null, connect: false, off: false };
+const MD = { cal: null, mail: null, tasks: null, waiting: null, connect: false, off: false, down: false, err: [], calErr: 0 };
+let mdRetry = null;
 let myTok = null, myAcct = null, myEmail = "", projRows = null, projSiteId = null, mdTimer = null;
 
 async function gMy(path, tz){
@@ -1491,7 +1492,9 @@ async function loadCalendar(){
     "&endDateTime=" + encodeURIComponent(e.toISOString()) +
     "&$select=subject,start,end,isAllDay,isCancelled,showAs,location,onlineMeeting,webLink,responseStatus" +
     "&$orderby=start/dateTime&$top=40", MY_TZ);
-  if (!r.ok){ log("my day calendar", "HTTP " + r.status); MD.cal = null; return; }
+  /* a failed read keeps the last good calendar; MD.calErr says why it is not fresh (12 Nov 2026) */
+  if (!r.ok){ log("my day calendar", "HTTP " + r.status); MD.err.push(r.status); MD.calErr = r.status; return; }
+  MD.calErr = 0;
   const ev = (r.body.value || []).filter(x => !x.isCancelled &&
     !(x.responseStatus && x.responseStatus.response === "declined"));
   MD.cal = ev.map(x => ({ subject: x.subject || "(no subject)", allDay: !!x.isAllDay,
@@ -1541,7 +1544,7 @@ async function loadMail(){
         "&$orderby=receivedDateTime%20desc&$top=3" + sel),
     gMy("/me/messages?$filter=" + encodeURIComponent("flag/flagStatus eq 'flagged'") + "&$top=50" + sel, MY_TZ)
   ]);
-  if (!f.ok && !u.ok && !fl.ok){ log("my day mail", "HTTP " + f.status + "/" + u.status + "/" + fl.status); MD.mail = null; return; }
+  if (!f.ok && !u.ok && !fl.ok){ log("my day mail", "HTTP " + f.status + "/" + u.status + "/" + fl.status); MD.err.push(f.status); return; }
   const flagged = (fl.ok && fl.body.value || []).map(m => ({
     subject: m.subject || "(no subject)", from: (m.from && m.from.emailAddress && m.from.emailAddress.name) || "",
     at: m.receivedDateTime, link: m.webLink,
@@ -1599,7 +1602,7 @@ async function loadTasks(){
   } else log("my day to do", "HTTP " + lists.status);
 
 
-  if (!okAny){ MD.tasks = null; return; }
+  if (!okAny){ MD.err.push(lists.status); return; }
   out.sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (b.high - a.high));
   MD.tasks = out;
   const t = todayYmd();
@@ -1680,14 +1683,19 @@ function renderMyDay(){
 
 async function refreshPersonal(){
   myTok = await myToken();
+  MD.err = [];
   if (!myTok){ MD.cal = MD.mail = MD.tasks = null; renderMyDay(); return; }
   await Promise.all([
-    loadCalendar().catch(e => log("my day calendar", "failed " + e.message)),
-    loadMail().catch(e => log("my day mail", "failed " + e.message)),
-    loadTasks().catch(e => log("my day tasks", "failed " + e.message))
+    loadCalendar().catch(e => { MD.err.push("network"); MD.calErr = MD.calErr || "network"; log("my day calendar", "failed " + e.message); }),
+    loadMail().catch(e => { MD.err.push("network"); log("my day mail", "failed " + e.message); }),
+    loadTasks().catch(e => { MD.err.push("network"); log("my day tasks", "failed " + e.message); })
   ]);
-  /* a token, but every source refused: the scopes are not in it yet */
-  MD.off = !MD.cal && !MD.mail && !MD.tasks;
+  /* 12 Nov 2026: Outlook answering 502/503/504 (or no network) is Microsoft having a bad
+     moment, not missing permission. Only a refusal (401/403) means the scopes are not granted.
+     When Outlook is down, try again in a minute instead of waiting for the 5-minute refresh. */
+  MD.down = MD.err.some(x => x === "network" || x === 429 || x >= 500);
+  MD.off = !MD.down && !MD.cal && !MD.mail && !MD.tasks;
+  if (MD.down && !mdRetry) mdRetry = setTimeout(() => { mdRetry = null; if (!document.hidden) refreshPersonal(); }, 60000);
   renderMyDay();
 }
 function startMyDay(acct){
@@ -2074,7 +2082,7 @@ async function main(){
   ]);
   try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
   try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
-  H.dashSite = siteId;
+  H.dashSite = siteId; H.drives = drives;
   /* the home reads its own files and draws itself as they land; nothing below waits for it */
   homeLoad(me.body, myGroups, links && links.site).catch(e => log("home", "failed " + ((e && e.stack) || e)));
   renderMyDay();
@@ -2355,7 +2363,7 @@ async function homeLoad(me, groups, siteLinks){
       try { H.costs[j] = costMove(j, f, H.cache["cost_history.json"]); } catch(e){ log("home cost " + j, e.message); } });
     log("home", Object.values(H.costs).filter(Boolean).length + " of " + jobs.length + " jobs with two projection periods");
   }
-  if (H.role === "office") await loadTaskDesk();
+  if (H.role === "office") await Promise.all([loadTaskDesk(), loadBilly()]);
   H.ready = true;
   renderHome();
 }
@@ -2375,6 +2383,17 @@ async function loadTaskDesk(){
   }
   H.tasks = out;
   log("home task desk", out.length + " open");
+}
+/* Billy's "Needs review" queue, written by the compliance pipeline to TasksData/billy_reviews.json
+   (the same file the Task Desk reads) */
+async function loadBilly(){
+  H.billy = null;
+  const id = H.drives && H.drives.TasksData;
+  if (!id){ log("home billy", "TasksData library not available"); return; }
+  const f = await graphRaw("/drives/" + id + "/root:/billy_reviews.json:/content").catch(() => ({ ok: false, status: "network" }));
+  if (!f.ok){ log("home billy", "billy_reviews.json HTTP " + f.status); return; }
+  try { const j = JSON.parse(f.text); if (j && Array.isArray(j.items)){ H.billy = j; log("home billy", j.items.length + " waiting" + (j.asOf ? ", as of " + j.asOf : "")); } }
+  catch(_) { log("home billy", "billy_reviews.json parse failed"); }
 }
 async function loadIdeas(){
   H.ideas = null;
@@ -2517,9 +2536,11 @@ function cardsOffice(){
   if (MD.mail && MD.mail.flagOk){ const fl = MD.mail.flagged || [];
     out.push(card({ l: "Flagged email", n: fl.length, s: "flagged in Outlook", li: fl.slice(0, 3).map(x => esc(x.subject + (x.from ? " · " + x.from : ""))).concat(more(fl, 3)),
       go: "Outlook", href: OUTLOOK.mail, sev: "", zero: "no flagged email" })); }
-  if (typeof TEAM !== "undefined" && TEAM){ const n = (TEAM.cele || []).length + (TEAM.upd || []).length;
-    out.push(card({ l: "Team updates", n, s: "birthdays, anniversaries and news", li: (TEAM.cele || []).concat(TEAM.upd || []).slice(0, 3).map(x => esc(x.name + (x.kind ? " · " + x.kind : ""))),
-      go: "Team drawer", href: "#team", sev: "", zero: "no team updates", team: true })); }
+  if (H.billy){ const it = H.billy.items.slice().sort((a, b) => String(a.submitted || "").localeCompare(String(b.submitted || "")));
+    const old = it[0] && it[0].submitted ? dayOf(it[0].submitted) : null;
+    out.push(card({ l: "Compliance reviews waiting", n: it.length, s: "Needs review in Billy" + (old && !isNaN(old) ? " \u00b7 oldest " + old.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""),
+      li: it.slice(0, 3).map(x => esc([x.vendor, x.project, x.document].filter(Boolean).join(" \u00b7 "))).concat(more(it, 3)),
+      go: "Billy", href: "https://app.billyforinsurance.com/", sev: it.length > 10 ? "warn" : "", zero: "nothing waiting for review in Billy" })); }
   return cardsCommon().concat(out);
 }
 
@@ -2666,7 +2687,11 @@ function renderMeetings(){
     const b = $("#mdconnect"); if (b) b.addEventListener("click", () => app.acquireTokenRedirect({ scopes: MY_SCOPES, account: myAcct }));
     return;
   }
-  if (!MD.cal) return;
+  if (!MD.cal){
+    if (MD.calErr){ mc.textContent = "\u2013";
+      ul.innerHTML = '<li class="none">Outlook is not answering right now (Microsoft returned ' + esc(String(MD.calErr)) + '). Trying again in a minute.</li>'; }
+    return;
+  }
   const now = new Date(), ahead = MD.cal.filter(x => x.allDay || !(x.end && x.end <= now));
   mc.textContent = ahead.length;
   ul.innerHTML = ahead.length ? ahead.slice(0, 4).map(x => {
