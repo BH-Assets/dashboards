@@ -753,11 +753,12 @@ function rebuild(){
   for (const i of INV) if (i.job && !JOBS[i.job]) JOBS[i.job] = { n: i.job, team: [] };
   PEOPLE = { [ACCT]: { n:'Accounting', i:'AP' } };
   for (const e in LIVE.pmName) PEOPLE[e] = { n: LIVE.pmName[e], i: initials(LIVE.pmName[e]) };
+  syncTestDepts();
   for (const d of DEPTS) PEOPLE[d[0]] = Object.assign(PEOPLE[d[0]] || { n: d[2], i: initials(d[2]) }, { dept: d[1] });
   if (LIVE.me) PEOPLE[LIVE.me.email] = Object.assign(PEOPLE[LIVE.me.email] || {}, { n: LIVE.me.name, i: initials(LIVE.me.name) });
   for (const i of INV) if (i.assign && !PEOPLE[i.assign]) PEOPLE[i.assign] = { n: i.assign, i: initials(i.assign) };
 }
-const P = k => PEOPLE[k] || (TEST_PMS.find(t => t.e === k) ? { n: TEST_PMS.find(t => t.e === k).n, i: 'BS' } : null) || { n: k || 'Unassigned', i: initials(k) };
+const P = k => PEOPLE[k] || (TEST_PMS.find(t => t.e === k) ? { n: TEST_PMS.find(t => t.e === k).n, i: initials(TEST_PMS.find(t => t.e === k).n) } : null) || { n: k || 'Unassigned', i: initials(k) };
 const jobName = j => (JOBS[j] && JOBS[j].n) || (j ? j : 'No project');
 
 /* ---- seats: what you see vs what you may do --------------------------------- */
@@ -2122,15 +2123,31 @@ function clTot(i){
       : ' <span class="bh-chip is-bad sm">' + (tgt > sum ? money(r2(tgt - sum)) + ' left' : money(r2(sum - tgt)) + ' over') + ' of ' + money(tgt) + '</span>')
     : 'Billed this period wasn’t read off the pay app — enter each line from the SOV';
 }
+/* why the split should open: '' = one line on the base is enough */
+function coBilling(i, O, tgt){
+  const avail = o => !o.why && Number(o.left) > 0;
+  const baseLeft = r2(O.opts.filter(o => !o.rfc && !o.why).reduce((t, o) => t + Math.max(0, Number(o.left) || 0), 0));
+  if (tgt != null && tgt > baseLeft + 0.005) return 'This period bills ' + money(tgt) + ' and the base contract has ' + money(baseLeft) + ' left, so part of it belongs on a change order line.';
+  const co = num(i.f.ChangeOrders);
+  if (co != null && Math.abs(co) > 0.005 && O.opts.some(o => o.rfc && avail(o))) return 'The pay app shows ' + money(co) + ' in approved change orders and a change order line still has a balance. Put each part on its line, or leave it all on the base if none of it is change order work.';
+  return '';
+}
 function ceSplitBox(i){
   const O = ceOpts(i); if (!O) return '';
   const tgt = billedThis(i);
   if (!i.cl || !i.cl.length) { const e = ceSplitOf(i);
     i.cl = e && e.ceSplit && e.ceSplit.length ? e.ceSplit.map(x => ({ ix: x.ix, amt: x.amt == null ? '' : Number(x.amt).toFixed(2) })) : [{ ix: O.base.ix, amt: tgt != null ? tgt.toFixed(2) : '' }]; }
-  const many = i.cl.length > 1;
+  const many = i.cl.length > 1, why = coBilling(i, O, tgt);
+  if (!many && !why && !i.clWide && String(i.cl[0].ix) === String(O.base.ix)) {
+    const ref = (O.po ? String(O.po).toUpperCase() : 'SC') + (O.base.pc ? ' | ' + O.base.pc : '');
+    return '<div class="cl-box"><div class="bh-label" style="margin-top:12px">CE line</div>'
+      + '<p class="note" style="margin:4px 0 0">' + (tgt != null ? 'All <b>' + money(tgt) + '</b>' : 'All of this period') + ' goes on the base contract (' + esc(ref) + '). No change order billing on this pay app. '
+      + '<a href="#" data-do="clwide">Split across change orders</a></p></div>';
+  }
   return '<div class="cl-box"><div class="bh-label" style="margin-top:12px">Split for CE entry <span style="text-transform:none;font-weight:400">· this period’s billing before retainage, on the CE line it belongs to</span></div>'
     + i.cl.map((r, k) => '<div class="sp-row">' + ceSelect(O, k, r.ix, 'data-cl') + '<input class="bh-input sp-amt" inputmode="decimal" data-cla="' + k + '" value="' + esc(r.amt) + '" placeholder="Amount">'
       + (many ? '<button class="xp-mini" data-do="clrm:' + k + '" aria-label="Remove line">✕</button>' : '') + '</div>').join('')
+    + (why ? '<p class="note" style="margin:4px 0 0">' + esc(why) + '</p>' : '')
     + '<p class="note" style="margin:4px 0 0"><span class="cl-tot">' + clTot(i) + '</span> · <a href="#" data-do="cladd">Add a line</a></p>'
     + (O.missing.length ? '<p class="note" style="margin:2px 0 0;color:var(--bh-bad-ink,#9c0006)">' + (O.missing.length > 1 ? O.missing.length + ' change orders approved in Procore are' : 'A change order approved in Procore is') + ' not in CE yet. If this pay app bills it, approve with payment held (Change order billed but not yet executed).</p>' : '')
     + '</div>';
@@ -2503,7 +2520,13 @@ function jobRoster(job){
   if (PW.tag && PW.tag !== '*') for (const t of TEST_PMS) if (!out.some(m => m.e === t.e)) out.push({ e: t.e, n: t.n + ' (tester)', r: 'PM', t: 'PM tester' });
   return out.sort((a, b) => ROLE_ORDER[a.r] - ROLE_ORDER[b.r] || a.n.localeCompare(b.n));
 }
-const TEST_PMS = [{ e: 'bsims@baileyharris.com', n: 'Ben Sims' }];
+const TEST_PMS = [{ e: 'bbradford@baileyharris.com', n: 'Ben Bradford' }];
+/* test mode only: Ben Sims approves overhead (GL) invoices as a department head */
+const TEST_DEPTS = [['bsims@baileyharris.com', 'General ledger (tester)', 'Ben Sims']];
+function syncTestDepts(){
+  for (let k = DEPTS.length - 1; k >= 0; k--) if (TEST_DEPTS.some(t => t[0] === DEPTS[k][0])) DEPTS.splice(k, 1);
+  if (PW.tag && PW.tag !== '*') for (const t of TEST_DEPTS) DEPTS.push(t);
+}
 function tqPick(i){
   if (i.tqPick != null) return i.tqPick;
   const saved = lc(i.f.AssignedApprover); if (saved) return saved;
@@ -3104,6 +3127,7 @@ function act(k){
   if (k === 'sincenote') { const n = prompt('Note since ' + (i.sec === 'pm' ? 'it was routed' : 'approval') + ' — e.g. Owner withheld the October draw, hold'); if (!n || !n.trim()) return;
     run(async () => { if (await saveRow(i, {}, { since: true, note: n.trim() })) toast('Note added'); });
     return; }
+  if (k === 'clwide') { keepReview(i); i.clWide = true; pane(); return; }
   if (k === 'cladd') { keepReview(i); const O = ceOpts(i); if (!O) return; if (!i.cl || !i.cl.length) i.cl = [{ ix: O.base.ix, amt:'' }];
     const co = O.opts.find(o => o.rfc && !o.why && !i.cl.some(r => String(r.ix) === String(o.ix)));
     i.cl.push({ ix: co ? co.ix : O.base.ix, amt:'' }); pane(); return; }
