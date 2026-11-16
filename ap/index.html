@@ -397,6 +397,7 @@ body.v-exp #tMine,body.v-exp #tChg{display:none}
   .ap-row .selc{grid-area:d}
   .ap-as,.ap-as select{max-width:100%}
 }
+.ce-dlg{max-width:min(1100px,96vw);width:100%;border:1px solid var(--bh-line,#d9d6d7);padding:18px 20px}.ce-dlg::backdrop{background:rgba(33,30,30,.4)}.ce-t{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0}.ce-t th,.ce-t td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bh-line,#e8e6e7);vertical-align:top}.ce-t .num{text-align:right;white-space:nowrap}.ce-t tr.bad td{background:#fff8f8}.ce-v{width:110px;min-height:28px;font-size:12.5px;text-transform:uppercase}
 </style>
 <script src="msal-browser.min.js"></script>
 </head>
@@ -1310,11 +1311,158 @@ function drawExp(){
 
 /* ---- bulk routing (Accounting, Triage) ---------------------------------------- */
 function bulkReady(i){ return !i.isMsg && !(i.type === 'Pay app' && (i.flags.length || i.missing.length)); }
+/* ---- CE import file (16 Nov 2026) --------------------------------------------------------
+   One ComputerEase "AP Invoices" XML (apinvoices.xsd) for the selected Ready for entry items.
+   Nothing reaches CE until Drew imports the file and clicks Post on CE's import screen. */
+const ctNumOf = l => (Object.entries(CTYPE).find(([n, v]) => v[0] === String(l || '').toUpperCase()) || [null])[0];   /* 'S' -> '6' */
+const vNorm = v => String(v || '').toLowerCase().replace(/&/g, 'and').replace(/\b(inc|llc|l\.l\.c|co|corp|company|ltd)\b\.?/g, '').replace(/[^a-z0-9]+/g, '');
+let CE_VMAP = null;
+function ceVendMap(){
+  if (CE_VMAP) return CE_VMAP; CE_VMAP = {};
+  for (const sc of Object.values((LIVE.ceInv || {}).subcontracts || {})) if (sc.vendor_code && sc.vendor) CE_VMAP[vNorm(sc.vendor)] = sc.vendor_code;
+  for (const it of (ALLH || INV)) { const e = [...(it.log || [])].reverse().find(x => x && x.ceVendor); if (e && it.v) CE_VMAP[vNorm(it.v)] = e.ceVendor; }
+  return CE_VMAP;
+}
+const CEV_TYPED = {};
+function ceVendFor(i){
+  if (CEV_TYPED[i.id]) return CEV_TYPED[i.id];
+  if (i.type === 'Pay app' && vendCode(i)) return vendCode(i);
+  const e = [...(i.log || [])].reverse().find(x => x && x.ceVendor); if (e) return e.ceVendor;
+  if (i.f.Subcontract) { const l = ceLed(i.f.Subcontract); if (l && l.vendor_code) return l.vendor_code; }
+  return ceVendMap()[vNorm(i.v)] || '';
+}
+const c30 = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n || 30);
+const m2 = n => (Math.round(Number(n) * 100) / 100).toFixed(2);
+/* the CE line (base or change order line) an ix points at, with its subcontract item number */
+function ceLineOf(led, ix){
+  const lines = led ? subLines(led) : [], l = lines.find(x => String(x.ix) === String(ix));
+  if (!l) return null;
+  const g = lines.filter(x => (x.rfc || null) === (l.rfc || null));
+  return Object.assign({ item: g.indexOf(l) + 1 }, l);
+}
+function ceInvoiceOf(i){
+  const f = i.f, pay = i.type === 'Pay app', why = [], today = new Date().toISOString().slice(0, 10);
+  const ven = ceVendFor(i);
+  const d = { vennum: ven, onhold: i.hold ? 'true' : 'false', dists: [] };
+  const dt = String((pay ? f.PeriodEnding : f.InvoiceDate) || '').slice(0, 10);
+  d.invdate = /^\d{4}-\d{2}-\d{2}$/.test(dt) ? dt : today;
+  if (!pay && /^\d{4}-\d{2}-\d{2}/.test(String(f.DueDate || ''))) d.duedate = String(f.DueDate).slice(0, 10);
+  const by = f.ApprovedBy ? P(lc(f.ApprovedBy)).n : '';
+  d.notes = 'AP Desk ' + i.id + (by ? ' - approved by ' + by + (f.ApprovedAt ? ' ' + String(f.ApprovedAt).slice(0, 10) : '') : '') + (i.hold ? ' - payment held in the desk' : '');
+  if (chgBlocked(i)) why.push('changed since it was approved');
+  if (pay) {
+    const led = ceLed(i.po);
+    if (!i.po) why.push('no subcontract number'); else if (!led) why.push('subcontract ' + i.po + ' is not in the CE ledger');
+    if (!f.PayRequest) why.push('no pay request number');
+    d.ponum = c30(i.po, 10); d.invnum = c30('PR' + (f.PayRequest || '?') + ' ' + ceJob(i.job), 20);
+    d.desc = c30('Pay app ' + (f.PayRequest || '') + ' ' + i.v);
+    const e = ceSplitOf(i), sp = (e && e.ceSplit) || [];
+    const gross = sp.length && sp.every(x => x.amt != null) ? r2(sp.reduce((t, x) => t + x.amt, 0)) : billedThis(i);
+    if (gross == null) why.push('this period’s billing wasn’t read off the pay app');
+    d.amount = gross;
+    const F = deskFig(i);
+    let ret = F.ret != null ? F.ret : (gross != null && i.amtKnown ? r2(gross - i.amt) : null);
+    if (ret != null && (ret < 0 || (gross && ret > gross * 0.18))) ret = null;
+    if (gross != null && ret == null) why.push('retainage for this period is unclear');
+    d.retamt = ret;
+    let rows = sp.map(x => ({ ix: x.ix, amt: x.amt == null ? gross : x.amt }));
+    if (!rows.length && led) { const base = subLines(led).filter(l => !l.rfc && Number(l.amount) > 0);
+      if (base.length === 1) rows = [{ ix: base[0].ix, amt: gross }]; else why.push('the approver hasn’t split it across the CE lines'); }
+    for (const r of rows) {
+      const l = ceLineOf(led, r.ix);
+      if (!l || !l.phase || !l.cat) { why.push('a CE line has no cost code'); continue; }
+      d.dists.push({ amount: r.amt, jobnum: i.job, phasenum: l.phase, catnum: l.cat, ctnum: ctNumOf('S'), subrfcnum: l.rfc || null, subitemnum: l.item,
+        desc: c30((l.rfc ? 'CO ' + l.rfc + ' ' : '') + (l.description || 'Base contract')) });
+    }
+  } else {
+    if (!f.PayRequest) why.push('no invoice number');
+    d.invnum = c30(f.PayRequest, 20); d.desc = c30(f.InvoiceDescription || f.Description || ('Invoice ' + i.v));
+    if (!i.amtKnown) why.push('no amount'); d.amount = i.amtKnown ? r2(i.amt) : null;
+    const po = String(f.Subcontract || '').trim().toUpperCase(); if (po) d.ponum = c30(po, 10);
+    const pled = po ? ceLed(po) : null, pls = ((ceSplitOf(i) || {}).poLines) || [];
+    const parts = String(f.CostCode || '').split(/\s*;\s*/).filter(Boolean);
+    if (!parts.length) why.push('not coded');
+    const amts = parts.map(p2 => { const m = p2.match(/\s+\$([\d,.-]+)$/); return m ? Number(m[1].replace(/,/g, '')) : null; });
+    if (parts.length > 1 && amts.some(a => a == null)) why.push('a coding line has no amount');
+    if (parts.length > 1 && amts.every(a => a != null) && d.amount != null && Math.abs(r2(amts.reduce((t, a) => t + a, 0)) - d.amount) > 0.005) why.push('the coding lines don’t add up to the invoice');
+    parts.forEach((p2, k) => {
+      const code = p2.replace(/\s+\$[\d,.-]+$/, '').trim(), amt = amts[k] != null ? amts[k] : d.amount;
+      if (isJobInv(i)) {
+        const m = code.match(/^(\w+)-(\w+)\s+([A-Z])$/i);
+        if (!m || !ctNumOf(m[3])) { why.push('cost code ' + code + ' isn’t phase-category type'); return; }
+        const dist = { amount: amt, jobnum: i.job, phasenum: m[1], catnum: m[2], ctnum: ctNumOf(m[3]), desc: d.desc };
+        const pl = pls[k]; if (pled && pl) { const l = ceLineOf(pled, pl.ix); if (l) { dist.subitemnum = l.item; if (l.rfc) dist.subrfcnum = l.rfc; } }
+        d.dists.push(dist);
+      } else {
+        if (!/^\d{3,5}(\.\d{1,2})?$/.test(code)) { why.push('GL account ' + code + ' isn’t a GL number'); return; }
+        d.dists.push({ amount: amt, glaccount: code, desc: d.desc });
+      }
+    });
+  }
+  if (!d.vennum) why.push('no CE vendor number');
+  return { i, d, why };
+}
+const xe = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function ceXml(list){
+  const tag = (k, v, pad) => v == null || v === '' ? '' : pad + '<' + k + '>' + xe(typeof v === 'number' && !/num$/.test(k) ? m2(v) : v) + '</' + k + '>\n';
+  let x = '<?xml version="1.0" encoding="utf-8"?>\n<import type="apinvoices">\n';
+  for (const d of list) {
+    x += '  <invoice>\n';
+    for (const k of ['vennum', 'invdate', 'duedate', 'ponum', 'invnum', 'desc']) x += tag(k, d[k], '    ');
+    x += tag('amount', d.amount, '    ') + tag('onhold', d.onhold, '    ') + tag('retamt', d.retamt, '    ') + tag('notes', d.notes, '    ');
+    if (d.dists.length) { x += '    <distributions>\n';
+      for (const t of d.dists) { x += '      <distribution>\n';
+        for (const k of ['amount', 'jobnum', 'phasenum', 'catnum', 'ctnum', 'glaccount', 'desc', 'subrfcnum', 'subitemnum']) x += tag(k, k === 'ctnum' || k === 'subitemnum' ? (t[k] == null ? null : String(t[k])) : t[k], '        ');
+        x += '      </distribution>\n'; }
+      x += '    </distributions>\n'; }
+    x += '  </invoice>\n';
+  }
+  return x + '</import>\n';
+}
+function ceDlgRows(){
+  return INV.filter(i => ENT.has(i.id) && i.sec === 'ready').map(ceInvoiceOf);
+}
+function ceDlgDraw(){
+  const dlg = document.getElementById('ceDlg'), R = ceDlgRows(), ok = R.filter(r => !r.why.length);
+  dlg.querySelector('.ce-body').innerHTML = '<table class="ce-t"><thead><tr><th>Item</th><th>Vendor</th><th>CE vendor #</th><th class="num">Amount</th><th>Lines</th><th>Status</th></tr></thead><tbody>'
+    + R.map(r => '<tr class="' + (r.why.length ? 'bad' : 'ok') + '"><td>' + esc(r.i.id) + '</td><td>' + esc(r.i.v || '') + '</td><td>'
+      + (r.d.vennum && !CEV_TYPED[r.i.id] ? esc(r.d.vennum) : '<input class="bh-input ce-v" data-cev="' + esc(r.i.id) + '" maxlength="8" value="' + esc(CEV_TYPED[r.i.id] || '') + '" placeholder="e.g. POINTB" aria-label="CE vendor number for ' + esc(r.i.v || '') + '">')
+      + '</td><td class="num">' + (r.d.amount != null ? money(r.d.amount) : '—') + (r.d.retamt ? '<br><span class="note">ret ' + money(r.d.retamt) + '</span>' : '') + '</td><td>'
+      + r.d.dists.map(t => esc(t.glaccount ? 'GL ' + t.glaccount : t.jobnum + '.' + t.phasenum + '.' + t.catnum + ' ' + (CTYPE[t.ctnum] || ['?'])[0]) + (t.subrfcnum ? ' · CO ' + esc(t.subrfcnum) : '') + (t.subitemnum ? ' · item ' + t.subitemnum : '') + ' ' + money(t.amount)).join('<br>')
+      + '</td><td>' + (r.why.length ? '<span class="bh-chip is-bad sm">Left out</span> ' + esc(r.why.join('; ')) : '<span class="bh-chip is-ok sm">In the file</span>') + '</td></tr>').join('') + '</tbody></table>';
+  dlg.querySelector('[data-ce="go"]').textContent = ok.length ? 'Download file (' + ok.length + ')' : 'Nothing to download';
+  dlg.querySelector('[data-ce="go"]').disabled = !ok.length;
+  dlg.querySelectorAll('[data-cev]').forEach(inp => inp.addEventListener('change', () => { const v = inp.value.trim().toUpperCase(); if (v) CEV_TYPED[inp.dataset.cev] = v; else delete CEV_TYPED[inp.dataset.cev]; setTimeout(ceDlgDraw, 0); }));
+}
+function ceOpen(){
+  let dlg = document.getElementById('ceDlg');
+  if (!dlg) {
+    dlg = document.createElement('dialog'); dlg.id = 'ceDlg'; dlg.className = 'ce-dlg';
+    dlg.innerHTML = '<h3>CE import file</h3><p class="note">One ComputerEase <b>AP Invoices</b> import file for the selected items. In CE, import it, check each line on CE’s import screen, then click <b>Post</b>. Afterwards, come back and use <b>Mark entered</b>.</p><div class="ce-body"></div>'
+      + '<div class="rv-act"><button class="bh-btn" data-ce="go">Download</button><button class="bh-btn-outline" data-ce="x">Cancel</button></div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('[data-ce="x"]').onclick = () => dlg.close();
+    dlg.querySelector('[data-ce="go"]').onclick = () => ceDownload();
+  }
+  ceDlgDraw(); dlg.showModal();
+}
+function ceDownload(){
+  const R = ceDlgRows().filter(r => !r.why.length); if (!R.length) return;
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, ''), name = 'CE AP import ' + stamp + '.xml';
+  const url = URL.createObjectURL(new Blob([ceXml(R.map(r => r.d))], { type: 'application/xml' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+  document.getElementById('ceDlg').close();
+  run(async () => { let n = 0;
+    for (const r of R) { const typed = CEV_TYPED[r.i.id];
+      if (await saveRow(r.i, {}, Object.assign({ note: 'Put in CE import file ' + name + ' by ' + LIVE.me.name + ' — ' + money(r.d.amount) + ' on ' + r.d.dists.length + ' line' + (r.d.dists.length > 1 ? 's' : '') + '. Not entered until it is posted in CE.' }, typed ? { ceVendor: typed } : {}))) n++; }
+    CE_VMAP = null; toast(name + ' downloaded · ' + n + ' item' + (n > 1 ? 's' : '') + ' — import it in CE, post, then Mark entered'); });
+}
 function entBar(){
   if (!acctSeat() || !ENT.size) return '';
   const sel = INV.filter(i => ENT.has(i.id) && i.sec === 'ready');
   return '<div class="bulk"><b>' + sel.length + ' selected</b><span>' + money(sel.reduce((a, i) => a + i.amt, 0)) + '</span>'
     + '<input class="bh-input" id="eRef" placeholder="CE batch or reference" aria-label="CE batch or reference">'
+    + '<button class="bh-btn" data-do="cexml"' + (BUSY ? ' disabled' : '') + ' title="One ComputerEase AP Invoices import file for the selected items">CE import file</button>'
     + '<button class="bh-btn" data-do="bulkenter"' + (BUSY ? ' disabled' : '') + '>Mark ' + sel.length + ' entered</button>'
     + '<button class="bh-btn-outline" data-do="entclear">Clear</button></div>';
 }
@@ -2731,6 +2879,7 @@ function mailText(m){ return (m.to ? 'To: ' + m.to + '\n' : '') + (m.cc ? 'Cc: '
 /* ---- actions -------------------------------------------------------------------- */
 function act(k){
   if (k === 'bulkclear') { BULK.clear(); draw(); return; }
+  if (k === 'cexml') { if (acctSeat()) ceOpen(); return; }
   if (k === 'entclear') { ENT.clear(); draw(); return; }
   if (k === 'bulkfwd') {
     if (!acctSeat()) return;
