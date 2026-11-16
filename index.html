@@ -1943,9 +1943,15 @@ async function main(){
   let links = null;
 
   try {
-    const r = await app.acquireTokenSilent({ scopes: SCOPES, account: acct });
+    /* 16 Nov 2026: never wait on the hidden sign-in frame. The SPA refresh token lasts 24 hours;
+       once it lapses MSAL used to try a hidden iframe first, which sat for up to 10 s (third-party
+       cookies) before failing to the redirect below. Cache and refresh token only: an expired
+       refresh token fails at once and goes straight to the full-page sign-in. */
+    const t0 = performance.now();
+    const pol = msal.CacheLookupPolicy ? { cacheLookupPolicy: msal.CacheLookupPolicy.AccessTokenAndRefreshToken } : {};
+    const r = await app.acquireTokenSilent(Object.assign({ scopes: SCOPES, account: acct }, pol));
     token = r.accessToken;
-    log("token", "acquired");
+    log("token", "acquired in " + Math.round(performance.now() - t0) + " ms" + (r.fromCache ? " (cached)" : ""));
   } catch (e) {
     /* 9 Nov 2026: a silent renewal that times out in its hidden frame (monitor_window_timeout,
        usually blocked third-party cookies once the 24-hour sign-in lapses) needs the same
@@ -2068,23 +2074,16 @@ async function main(){
   myEmail = String((me.body && (me.body.mail || me.body.userPrincipalName)) || acct.username || "").trim().toLowerCase();
   const personal = startMyDay(acct).catch(e => log("my day", "failed " + (e && e.message)));
 
-  /* desk tile files: start every read now, the tiles below pick them up (4 Nov 2026) */
-  const deskReads = {};
-  for (const desk of DESKS){
-    if ((!desk.group || myGroups.has(desk.group)) && desk.library && siteId && drives[desk.library])
-      deskReads[desk.key] = graphRaw("/drives/" + drives[desk.library] + "/root:/" + desk.file + ":/content")
-        .catch(() => ({ ok: false, status: "network" }));
-  }
-
-  await Promise.all([
-    loadPulse().catch(e => log("pulse", "failed " + (e && e.message))),
-    loadApQueues(myEmail, me.body && me.body.department, drives).catch(e => log("ap review", "failed " + (e && e.message)))
-  ]);
-  try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
-  try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
+  /* 16 Nov 2026: the home starts as soon as the job list is in (it needs it to pick the view);
+     it no longer waits for the AP list and the compliance read behind it. The desk tile reads
+     (precon projects.json, ap_commitments.json) are gone: nothing shows those counts any more. */
+  const apP = loadApQueues(myEmail, me.body && me.body.department, drives).catch(e => log("ap review", "failed " + (e && e.message)));
+  await loadPulse().catch(e => log("pulse", "failed " + (e && e.message)));
   H.dashSite = siteId; H.drives = drives;
-  /* the home reads its own files and draws itself as they land; nothing below waits for it */
   homeLoad(me.body, myGroups, links && links.site).catch(e => log("home", "failed " + ((e && e.stack) || e)));
+  try { wxJobsReady(); } catch(e){ log("weather", "jobsites failed " + (e && e.message)); }
+  await apP;
+  try { await loadWaiting(); } catch(e){ log("my day waiting", "failed " + (e && e.message)); }
   renderMyDay();
   void personal;
 
