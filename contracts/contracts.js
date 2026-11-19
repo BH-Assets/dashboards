@@ -62,10 +62,23 @@
   /* ---------------- Worker / Procore ---------------- */
   async function api(path, opt) {
     var t = await tokens(); opt = opt || {};
-    var r = await fetch(API + path, { method: opt.method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + t.idToken }, opt.headers || {}), body: opt.body });
-    var txt = await r.text(), j = null; try { j = txt ? JSON.parse(txt) : null; } catch (_) { j = { raw: txt }; }
-    if (!r.ok) { var e = new Error((j && j.error) || ('HTTP ' + r.status)); e.status = r.status; e.body = j; throw e; }
-    return j;
+    for (var attempt = 0; ; attempt++) {
+      var r = await fetch(API + path, { method: opt.method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + t.idToken }, opt.headers || {}), body: opt.body });
+      if (r.status === 429 && attempt < 4) {   // Procore rate limit: wait and try again
+        var wait = Number(r.headers.get('Retry-After')) || (3 + attempt * 5);
+        msg('Procore is busy (rate limit). Retrying in ' + wait + ' seconds…');
+        await new Promise(function (ok) { setTimeout(ok, wait * 1000); });
+        continue;
+      }
+      var txt = await r.text(), j = null; try { j = txt ? JSON.parse(txt) : null; } catch (_) { j = { raw: txt }; }
+      if (!r.ok) {
+        var er = j && j.error, text = typeof er === 'string' ? er : er && er.message ? er.message : 'HTTP ' + r.status;
+        var det = er && Array.isArray(er.details) ? er.details.map(function (d) { return d.message; }).join('; ') : er && er.details && er.details.message ? er.details.message : '';
+        var e = new Error(text + (det ? ' — ' + det : '') + (r.status === 429 ? ' (Procore rate limit; try again in a few minutes)' : '')); e.status = r.status; e.body = j; throw e;
+      }
+      if (attempt) msg('');
+      return j;
+    }
   }
   function pc(method, path, body, isForm) {
     var h = { 'X-Procore-Method': method, 'X-Procore-Path': path };
@@ -132,7 +145,8 @@
       (defs || []).forEach(function (d) { S.defs[d.id] = d; });
       var lovIds = [CF.retDuration, CF.taxExempt, CF.builderRisk, CF.pdfType, CF.bond, CF.riderNeeded];
       for (var i = 0; i < lovIds.length; i++) {
-        try { S.lov[lovIds[i]] = await pc('GET', '/rest/v1.0/custom_field_definitions/' + lovIds[i] + '/custom_field_lov_entries?company_id=' + CID); } catch (_) { S.lov[lovIds[i]] = []; }
+        try { S.lov[lovIds[i]] = await pc('GET', '/rest/v1.0/custom_field_definitions/' + lovIds[i] + '/custom_field_lov_entries?company_id=' + CID); }
+        catch (e) { S.lov[lovIds[i]] = []; msg('Could not load the options for Procore field ' + lovIds[i] + ': ' + e.message + '. Reload the page before saving or creating.', true); }
       }
     } catch (e) { msg('Could not load from Procore: ' + e.message, true); return; }
     var sel = $('#job');
@@ -187,7 +201,7 @@
   async function loadPrime() {
     $('#pc-table tbody').innerHTML = '<tr><td colspan="4">Loading the prime contract&hellip;</td></tr>';
     try { S.pcRec = await pc('GET', '/rest/v1.0/prime_contract?project_id=' + S.project.id); }
-    catch (e) { S.pcRec = null; $('#pc-table tbody').innerHTML = '<tr><td colspan="4">No prime contract found in Procore for this job. Create it in Procore first (Part 1, step 1 of the PM guide).</td></tr>'; $('#pc-read').disabled = true; $('#pc-save').disabled = true; return; }
+    catch (e) { S.pcRec = null; $('#pc-table tbody').innerHTML = '<tr><td colspan="4">' + (e.status === 404 ? 'No prime contract found in Procore for this job. Create it in Procore first (Part 1, step 1 of the PM guide).' : 'Could not load the prime contract: ' + esc(e.message) + '. Pick the job again or reload.') + '</td></tr>'; $('#pc-read').disabled = true; $('#pc-save').disabled = true; return; }
     S.docs = (S.pcRec.attachments || []).filter(function (a) { return /\.pdf$/i.test(a.name || a.filename || ''); }).map(function (a) { return { name: a.name || a.filename, url: a.url, source: 'procore' }; });
     renderDocs(); renderPrime();
     $('#pc-read').disabled = false; $('#pc-save').disabled = false;
@@ -253,7 +267,12 @@
       for (var i = 0; i < S.docs.length; i++) {
         var d = S.docs[i], st = $('#doc-' + i);
         try {
-          if (!d.bytes) { var r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status); d.bytes = new Uint8Array(await r.arrayBuffer()); }
+          if (!d.bytes) {   // Procore files come through the Worker (the browser can't fetch Procore storage directly)
+            var tk = await tokens();
+            var r = await fetch(API + '/procore/file?url=' + encodeURIComponent(d.url), { method: 'POST', headers: { Authorization: 'Bearer ' + tk.idToken } });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            d.bytes = new Uint8Array(await r.arrayBuffer());
+          }
         } catch (e) { d.status = 'Could not download from Procore in this browser. Add this PDF with "Add contract PDFs".'; if (st) st.textContent = d.status; continue; }
         var pages = await pdfPages(d.bytes.slice(0));
         var textPages = pages.filter(function (t) { return t.trim().length > 80; }).length;
@@ -547,6 +566,11 @@
     if (lovId(CF.retDuration, durLabel)) cfs['custom_field_' + CF.retDuration] = lovId(CF.retDuration, durLabel);
     var hasRider = row.riderPick && row.riderPick !== 'none';
     if (lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No')) cfs['custom_field_' + CF.riderNeeded] = lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No');
+    var need = [[CF.retDuration, 'Retainage Duration'], [CF.riderNeeded, 'Rider Needed?']];
+    if (TY.pdf) need.push([CF.pdfType, 'Subcontract PDF Type']);
+    var missing = need.filter(function (n) { return !cfs['custom_field_' + n[0]]; }).map(function (n) { return n[1]; });
+    if (!row.bhSignatoryId || !row.signatoryId) missing.push('signatories');
+    if (missing.length) throw new Error('Not created: the desk could not set ' + missing.join(', ') + ' (option lists did not load). Reload the page and try again.');
     var c = { number: row.number, title: row.title, vendor_id: Number(row.vendorId), status: 'Draft', executed: false, retainage_percent: ret };
     if (row.type !== 'LF') { c.inclusions = toRich('rich', row.inclusions) || ''; c.exclusions = toRich('rich', row.exclusions) || ''; c.description = toRich('rich', row.description) || ''; }
     var key = ep === 'work_order_contracts' ? 'work_order_contract' : 'purchase_order_contract';
