@@ -54,8 +54,14 @@
     var n = (acct.name || acct.username || '').split(/\s+/); $('#avatar').textContent = ((n[0] || '')[0] || '') + ((n[1] || '')[0] || '');
     return true;
   }
-  async function tokens() {
-    try { return await app.acquireTokenSilent({ scopes: SCOPES, account: acct }); }
+  async function tokens(force) {
+    try {
+      var t = await app.acquireTokenSilent({ scopes: SCOPES, account: acct, forceRefresh: !!force });
+      // MSAL can hand back a cached ID token that has already expired; the Worker checks it, so refresh it here
+      var exp = t.idTokenClaims && t.idTokenClaims.exp;
+      if (!force && exp && exp * 1000 < Date.now() + 5 * 60e3) t = await app.acquireTokenSilent({ scopes: SCOPES, account: acct, forceRefresh: true });
+      return t;
+    }
     catch (e) { await app.acquireTokenRedirect({ scopes: SCOPES, account: acct }); throw e; }
   }
 
@@ -64,6 +70,7 @@
     var t = await tokens(); opt = opt || {};
     for (var attempt = 0; ; attempt++) {
       var r = await fetch(API + path, { method: opt.method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + t.idToken }, opt.headers || {}), body: opt.body });
+      if (r.status === 401 && attempt === 0) { t = await tokens(true); continue; }
       if (r.status === 429 && attempt < 4) {   // Procore rate limit: wait and try again
         var wait = Number(r.headers.get('Retry-After')) || (3 + attempt * 5);
         msg('Procore is busy (rate limit). Retrying in ' + wait + ' seconds…');
