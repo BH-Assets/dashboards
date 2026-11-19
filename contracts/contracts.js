@@ -15,7 +15,7 @@
   var RIDER_DIR = '01 Working/Project Management/Approved Riders';
   var CF = { billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
     verifiedBy: 640531, verifiedDate: 640532, retDuration: 318332, ld: 269476, payTerms: 269489, finalPay: 322642, builderRisk: 320426,
-    ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
+    ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, poPdfType: 325741, vendorType: 536773, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
   var TYPES = {
     LF:  { label: 'Long Form', ep: 'work_order_contracts', series: 400, pdf: 'Standard Subcontract', att: ['B', 'C', 'D', 'F-Subcontract', 'G'], rider: 'Approved Subcontract Riders_Longform' },
     SF:  { label: 'Short Form', ep: 'work_order_contracts', series: 900, pdf: 'Short Form Subcontract', att: ['C', 'F-Subcontract'], rider: 'Approved Subcontract Riders_Shortform' },
@@ -143,7 +143,7 @@
         .sort(function (a, b) { return String(a.project_number || a.name).localeCompare(String(b.project_number || b.name)); });
       var defs = await pc('GET', '/rest/v1.0/custom_field_definitions?company_id=' + CID);
       (defs || []).forEach(function (d) { S.defs[d.id] = d; });
-      var lovIds = [CF.retDuration, CF.taxExempt, CF.builderRisk, CF.pdfType, CF.bond, CF.riderNeeded];
+      var lovIds = [CF.retDuration, CF.taxExempt, CF.builderRisk, CF.pdfType, CF.poPdfType, CF.vendorType, CF.bond, CF.riderNeeded];
       for (var i = 0; i < lovIds.length; i++) {
         try { S.lov[lovIds[i]] = await pc('GET', '/rest/v1.0/custom_field_definitions/' + lovIds[i] + '/custom_field_lov_entries?company_id=' + CID); }
         catch (e) { S.lov[lovIds[i]] = []; msg('Could not load the options for Procore field ' + lovIds[i] + ': ' + e.message + '. Reload the page before saving or creating.', true); }
@@ -241,6 +241,12 @@
 
   /* ---- reading the contract (in this browser) ---- */
   var KEYWORDS = /retain|retention|application for payment|pay(ment)? application|progress payment|final payment|liquidated|notice|calendar days|days after|weather|delay|change order|claim|sales (and use )?tax|tax[- ]exempt|exemption|builder'?s risk|alternate|value engineering|football|graduation|parking|signage|drone|unmanned|smok|firearm|harass|radio|safety|confidential|non-?disclosure|platform|e-builder|procore|textura|contract sum|contract time|substantial completion/i;
+  // a page is sent only when it carries at least two of the terms the desk fills (scored by distinct topics)
+  var TOPICS = [/retain|retention/i, /application for payment|pay(ment)? application|progress payment/i, /final payment|closeout/i, /liquidated damages/i,
+    /sales (and use )?tax|tax[- ]exempt|exemption/i, /builder'?s risk/i, /additional insured/i, /alternate|value engineering/i,
+    /weather|rain day/i, /notice of (claim|delay)|written notice|within \w+ \(\d+\) (calendar )?days/i, /change order|change proposal/i,
+    /football|graduation|parking|signage|drone|unmanned|smok|firearm|harass|radio/i, /confidential|non-?disclosure/i, /contract sum|contract time|substantial completion/i];
+  function score(t) { return TOPICS.reduce(function (n, re) { return n + (re.test(t) ? 1 : 0); }, 0); }
   var BANK = /(routing|aba)\s*(no\.?|number|#)?\s*[:#]?\s*\d{9}|account\s*(no\.?|number|#)\s*[:#]?\s*\d{4,}/i;
   async function pdfPages(bytes) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/contracts/pdf.worker.min.js';
@@ -277,12 +283,15 @@
         var pages = await pdfPages(d.bytes.slice(0));
         var textPages = pages.filter(function (t) { return t.trim().length > 80; }).length;
         if (textPages < pages.length / 2) { scanned.push(d.name); d.status = 'Scanned (' + pages.length + ' pages, no text). Server text recognition is not set up yet; fill those terms by hand.'; if (st) st.textContent = d.status; continue; }
-        var picked = 0;
+        var picked = 0, cands = [];
         pages.forEach(function (t, k) {
           all += '\n' + t;
           if (BANK.test(t)) return;          // never send a page with banking details
-          if (KEYWORDS.test(t)) { sections.push({ doc: d.name, page: k + 1, text: t }); picked++; }
+          var sc = score(t);
+          if (sc >= 2) cands.push({ doc: d.name, page: k + 1, text: t, sc: sc });
         });
+        cands.sort(function (a, b) { return b.sc - a.sc; }).slice(0, 18).sort(function (a, b) { return a.page - b.page; })
+          .forEach(function (c) { sections.push({ doc: c.doc, page: c.page, text: c.text }); picked++; });
         d.status = pages.length + ' pages, ' + picked + ' with contract terms'; if (st) st.textContent = d.status;
       }
       var conf = confidentiality(all);
@@ -555,19 +564,27 @@
   async function createOne(row) {
     var T = pcTerms(), TY = TYPES[row.type], pid = S.project.id, ep = TY.ep;
     var vendor = S.ref.vendors.find(function (v) { return String(v.id) === String(row.vendorId); });
-    var ret = row.type === 'PSA' ? 0 : T.retPct;
-    var cfs = {};
-    if (TY.pdf && lovId(CF.pdfType, TY.pdf)) cfs['custom_field_' + CF.pdfType] = lovId(CF.pdfType, TY.pdf);
-    cfs['custom_field_' + CF.billing] = T.billing;
+    var ret = (row.type === 'PSA' || /^PO/.test(row.type)) ? 0 : T.retPct;   // PSAs and POs carry no retainage
+    var cfs = {}, isPO = ep === 'purchase_order_contracts';
+    var hasRider = row.riderPick && row.riderPick !== 'none';
     if (row.bhSignatoryId) cfs['custom_field_' + CF.bhSignatory] = Number(row.bhSignatoryId);
     if (row.signatoryId) cfs['custom_field_' + CF.subSignatory] = Number(row.signatoryId);
-    if (lovId(CF.bond, row.bond)) cfs['custom_field_' + CF.bond] = lovId(CF.bond, row.bond);
-    var durLabel = row.type === 'PSA' ? 'N/A' : T.retDuration;
-    if (lovId(CF.retDuration, durLabel)) cfs['custom_field_' + CF.retDuration] = lovId(CF.retDuration, durLabel);
-    var hasRider = row.riderPick && row.riderPick !== 'none';
     if (lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No')) cfs['custom_field_' + CF.riderNeeded] = lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No');
-    var need = [[CF.retDuration, 'Retainage Duration'], [CF.riderNeeded, 'Rider Needed?']];
-    if (TY.pdf) need.push([CF.pdfType, 'Subcontract PDF Type']);
+    if (isPO) {
+      // the PO fieldset has its own PDF Type and a Vendor Type; no billing date, bond or retainage duration
+      if (lovId(CF.poPdfType, 'Purchase Order')) cfs['custom_field_' + CF.poPdfType] = lovId(CF.poPdfType, 'Purchase Order');
+      var vt = row.type === 'POOFF' ? 'Third-Party Delivery' : 'On-Site';
+      if (lovId(CF.vendorType, vt)) cfs['custom_field_' + CF.vendorType] = lovId(CF.vendorType, vt);
+    } else {
+      if (TY.pdf && lovId(CF.pdfType, TY.pdf)) cfs['custom_field_' + CF.pdfType] = lovId(CF.pdfType, TY.pdf);
+      cfs['custom_field_' + CF.billing] = T.billing;
+      if (lovId(CF.bond, row.bond)) cfs['custom_field_' + CF.bond] = lovId(CF.bond, row.bond);
+      var durLabel = row.type === 'PSA' ? 'N/A' : T.retDuration;
+      if (lovId(CF.retDuration, durLabel)) cfs['custom_field_' + CF.retDuration] = lovId(CF.retDuration, durLabel);
+    }
+    var need = [[CF.riderNeeded, 'Rider Needed?']];
+    if (isPO) { need.push([CF.poPdfType, 'Purchase Order PDF Type']); need.push([CF.vendorType, 'Vendor Type']); }
+    else { need.push([CF.retDuration, 'Retainage Duration']); if (TY.pdf) need.push([CF.pdfType, 'Subcontract PDF Type']); }
     var missing = need.filter(function (n) { return !cfs['custom_field_' + n[0]]; }).map(function (n) { return n[1]; });
     if (!row.bhSignatoryId || !row.signatoryId) missing.push('signatories');
     if (missing.length) throw new Error('Not created: the desk could not set ' + missing.join(', ') + ' (option lists did not load). Reload the page and try again.');
