@@ -15,7 +15,7 @@
   var RIDER_DIR = '01 Working/Project Management/Approved Riders';
   var CF = { billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
     verifiedBy: 640531, verifiedDate: 640532, retDuration: 318332, ld: 269476, payTerms: 269489, finalPay: 322642, builderRisk: 320426,
-    pdfType: 194471, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
+    ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
   var TYPES = {
     LF:  { label: 'Long Form', ep: 'work_order_contracts', series: 400, pdf: 'Standard Subcontract', att: ['B', 'C', 'D', 'F-Subcontract', 'G'], rider: 'Approved Subcontract Riders_Longform' },
     SF:  { label: 'Short Form', ep: 'work_order_contracts', series: 900, pdf: 'Short Form Subcontract', att: ['C', 'F-Subcontract'], rider: 'Approved Subcontract Riders_Shortform' },
@@ -170,8 +170,10 @@
     { key: 'sub_project_items', label: 'Sub project items (owner and site rules)', cf: CF.subItems, kind: 'list', hint: 'One rule per line. Goes into Attachment B, Project Specific General Items.' },
     { key: 'accepted_alternates', label: 'Accepted alternates and VE', cf: CF.alternates, kind: 'alts', hint: 'One per line: description and amount | Accepted (or Not Accepted).' },
     { key: 'builders_risk_provider', label: "Builder's risk provider", cf: CF.builderRisk, kind: 'lov' },
+    { key: 'owner_additional_insureds', label: 'Owner additional insureds (flows to Attachment F)', cf: CF.ownerAI, kind: 'rich', hint: 'Exactly as the owner contract lists them, with the coverages and endorsements it requires. Leave blank to use our default: Bailey-Harris Construction Co., Inc., Owner, Architect, and their officers, agents, consultants, and employees.' },
     { key: 'final_payment', label: 'Final payment / closeout', cf: CF.finalPay, kind: 'rich' }
   ];
+  FIELDS = FIELDS.filter(function (f) { return f.std || f.cf != null; });
   function cfVal(rec, id) { var v = rec && rec.custom_fields && rec.custom_fields['custom_field_' + id]; return v && v.value !== undefined ? v.value : v; }
   function lovLabel(v) { if (v == null) return ''; if (Array.isArray(v)) return v.map(lovLabel).join(', '); if (typeof v === 'object') return v.label || v.name || ''; return String(v); }
   function currentText(f, rec) {
@@ -272,7 +274,7 @@
       var f = res.fields || {};
       S.proposals = {};
       var map = { retainage_percent: 'retainage_percent', retainage_duration: 'retainage_duration', contract_date: 'contract_date', tax_exempt: 'tax_exempt', liquidated_damages: 'liquidated_damages',
-        payment_terms: 'payment_terms', sub_project_items: 'sub_project_items', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment' };
+        payment_terms: 'payment_terms', sub_project_items: 'sub_project_items', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment', owner_additional_insureds: 'owner_additional_insureds' };
       Object.keys(map).forEach(function (k) { if (f[k] && f[k].value != null) S.proposals[map[k]] = f[k]; });
       if (f.owner_platform && f.owner_platform.value) S.proposals.owner_platform = { value: true, source: f.owner_platform.source, quote: 'Owner system: ' + f.owner_platform.value };
       if (f.owner_notice_deadlines && f.owner_notice_deadlines.value) S.proposals.sub_notice = { value: null, source: 'Owner deadlines: ' + (Array.isArray(f.owner_notice_deadlines.value) ? f.owner_notice_deadlines.value.join('; ') : f.owner_notice_deadlines.value), quote: '' };
@@ -332,6 +334,7 @@
       retPct: Number(r.retainage_percent || 0), retDuration: dur || 'N/A',
       billing: cfVal(r, CF.billing) || '20th', taxExempt: /^yes$/i.test(lovLabel(cfVal(r, CF.taxExempt))),
       ownerPlatform: cfVal(r, CF.ownerPlatform) === true, builderRiskOwner: /owner/i.test(lovLabel(cfVal(r, CF.builderRisk))),
+      ownerAI: (function () { var t = CF.ownerAI ? htmlToText(cfVal(r, CF.ownerAI)).trim() : ''; return /^Bailey-Harris Construction Co\., Inc\., Owner, Architect, and their officers, agents, consultants, and employees\.?$/i.test(t) ? '' : t; })(), // blank or our default = Attachment F's standard line only
       items: linesOf(htmlToText(cfVal(r, CF.subItems))),
       alternates: linesOf(htmlToText(cfVal(r, CF.alternates))).map(function (l) { var p = l.split('|'); return { label: p[0].trim(), status: (p[1] || 'Accepted').trim() }; })
     };
@@ -584,7 +587,7 @@
     var TY = TYPES[row.type], out = [], pn = (S.project.project_number ? S.project.project_number + ' ' : '') + S.project.name;
     var city = [S.project.city, S.project.state_code].filter(Boolean).join(', ');
     var d = { projectNumName: pn, projectCity: city, projectNumber: S.project.project_number || '', commitmentNumber: row.number, subName: vendor ? vendor.name : '',
-      taxExempt: T.taxExempt, ownerPlatform: T.ownerPlatform, bondRequired: row.bond === 'Yes', builderRiskOwner: T.builderRiskOwner, projectItems: T.items, alternates: T.alternates,
+      ownerAI: T.ownerAI, taxExempt: T.taxExempt, ownerPlatform: T.ownerPlatform, bondRequired: row.bond === 'Yes', builderRiskOwner: T.builderRiskOwner, projectItems: T.items, alternates: T.alternates,
       scopeLines: row.lines.map(function (l) { return { desc: l.desc || row.title, amount: num(l.amount) }; }), submittalDate: row.submittalDate.trim(), scopeName: row.scopeName.trim(),
       csi: linesOf(row.csi), inclusions: linesOf(row.inclusions), exclusions: linesOf(row.exclusions), submitDay: '10th', billingDate: T.billing, retPct: T.retPct, retDuration: T.retDuration };
     var DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';

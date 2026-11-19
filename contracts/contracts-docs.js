@@ -156,7 +156,7 @@
 
     D.els = els;
     zip.file('word/document.xml', stripHighlight(joinBody(D)));
-    return { bytes: await zip.generateAsync({ type: 'uint8array' }), log: log };
+    return { bytes: await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }), log: log };
   }
 
   function retainageSentence(pct, dur) {
@@ -211,6 +211,15 @@
                  .replace(/<<\s*Subcontractor Name\s*>>/gi, d.subName || '');
         return n === t ? p : setParaText(p, n);
       });
+      // owner-required additional insureds (from the prime contract) go right after the standard Additional Insureds line in Attachment F
+      if (d.ownerAI && names[k] === 'word/document.xml') {
+        var done = false;
+        xml = xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, function (p) {
+          if (done || !/^Additional Insureds:/.test(norm(textOf(p)))) return p;
+          done = true;
+          return p + setParaText(p, 'Owner-required Additional Insureds for this project (per the Prime Contract): ' + String(d.ownerAI).replace(/\s+/g, ' ').trim());
+        });
+      }
       // table rows: label cell then empty value cell
       xml = xml.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, function (r) {
         var cs = r.match(/<w:tc>[\s\S]*?<\/w:tc>/g) || [];
@@ -227,7 +236,7 @@
       });
       zip.file(names[k], stripHighlight(xml));
     }
-    return await zip.generateAsync({ type: 'uint8array' });
+    return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   }
 
   /* ---------- Attachment G (xlsx): shared-string placeholders + label → next cell ---------- */
@@ -268,7 +277,7 @@
       });
       zip.file(sheets[s], x);
     }
-    return await zip.generateAsync({ type: 'uint8array' });
+    return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   }
 
   var api = { buildAttachmentB: buildAttachmentB, fillDocx: fillDocx, fillXlsx: fillXlsx, retainageSentence: retainageSentence, _textOf: textOf, _splitBody: splitBody };
