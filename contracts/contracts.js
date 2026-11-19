@@ -110,6 +110,8 @@
     var c = $('#conn');
     if (/procore=connected/.test(location.hash)) history.replaceState(null, '', location.pathname + '#prime');
     if (/procore=denied/.test(location.hash)) msg('Procore access was not approved, so the desk cannot read or create anything yet.', true);
+    var fm = location.hash.match(/procore=failed&why=([^&]*)/);
+    if (fm) { msg('Connecting Procore failed: ' + decodeURIComponent(fm[1]), true); history.replaceState(null, '', location.pathname + '#prime'); }
     var st;
     try { st = await api('/procore/status'); }
     catch (e) { c.innerHTML = '<span><span class="dot"></span>The Contracts service is not reachable (' + esc(e.message) + ').</span>'; return; }
@@ -443,7 +445,8 @@
     var bad = function (t) { out.push({ bad: true, t: t }); }, warn = function (t) { out.push({ t: t }); };
     if (!row.vendorId) bad('Pick the vendor.');
     if (!row.title.trim()) bad('Add a title.');
-    if (!row.signatoryId) warn('Pick the commitment signatory (the vendor\'s signer).');
+    if (!row.signatoryId) bad('Pick the commitment signatory (the vendor\'s signer); Procore requires it.');
+    if (!row.bhSignatoryId) bad('Pick the BH signatory (the project PM); Procore requires it.');
     var total = 0;
     row.lines.forEach(function (l, j) {
       var n = j + 1, t = R.types.find(function (x) { return String(x.id) === String(l.typeId); }), c = typeCode(t);
@@ -543,25 +546,32 @@
     if (lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No')) cfs['custom_field_' + CF.riderNeeded] = lovId(CF.riderNeeded, hasRider ? 'Yes, attached' : 'No');
     var c = { number: row.number, title: row.title, vendor_id: Number(row.vendorId), status: 'Draft', executed: false, retainage_percent: ret };
     if (row.type !== 'LF') { c.inclusions = toRich('rich', row.inclusions) || ''; c.exclusions = toRich('rich', row.exclusions) || ''; c.description = toRich('rich', row.description) || ''; }
-    Object.assign(c, cfs);
     var key = ep === 'work_order_contracts' ? 'work_order_contract' : 'purchase_order_contract';
     var body = {}; body[key] = c;
     log(row.number + ': creating ' + TY.label + ' for ' + (vendor ? vendor.name : row.vendorId) + '…');
     var made = await pc('POST', '/rest/v1.0/' + ep + '?project_id=' + pid, body);
     log(row.number + ': created as Draft (id ' + made.id + ').');
+    // custom fields: v1 ignores them, v2 saves them but wants the contract date and every required field in the same call
+    var v2 = Object.assign({ contract_date: new Date().toISOString().slice(0, 10) }, cfs);
+    await pc('PATCH', '/rest/v2.0/companies/' + CID + '/projects/' + pid + '/commitment_contracts/' + made.id, v2);
     // lines
     for (var j = 0; j < row.lines.length; j++) {
       var l = row.lines[j];
       await pc('POST', '/rest/v1.0/' + ep + '/' + made.id + '/line_items?project_id=' + pid, { line_item: { description: l.desc || row.title, amount: num(l.amount), cost_code_id: Number(l.costCodeId), line_item_type_id: Number(l.typeId), quantity: 1, unit_cost: num(l.amount), uom: 'LS' } });
     }
     log(row.number + ': ' + row.lines.length + ' line(s) added.');
-    // attachments
-    var files = await buildAttachments(row, T, vendor);
-    if (files.length) {
-      var fd = new FormData();
-      files.forEach(function (f) { fd.append(key + '[attachments][]', new Blob([f.bytes], { type: f.type }), f.name); });
-      await pc('PATCH', '/rest/v1.0/' + ep + '/' + made.id + '?project_id=' + pid, fd, true);
-      log(row.number + ': attached ' + files.map(function (f) { return f.name; }).join(', ') + '.');
+    // attachments: upload each file to Procore storage, then link them by upload id
+    var files = await buildAttachments(row, T, vendor), ids = [];
+    for (var f = 0; f < files.length; f++) {
+      try {
+        var u = await api('/procore/upload?project_id=' + pid + '&name=' + encodeURIComponent(files[f].name), { method: 'POST', headers: { 'Content-Type': files[f].type }, body: new Blob([files[f].bytes], { type: files[f].type }) });
+        ids.push(u.uuid);
+      } catch (e) { log(row.number + ': upload failed for ' + files[f].name + ' — ' + e.message); }
+    }
+    if (ids.length) {
+      var ab = {}; ab[key] = { upload_ids: ids };
+      await pc('PATCH', '/rest/v1.0/' + ep + '/' + made.id + '?project_id=' + pid, ab);
+      log(row.number + ': attached ' + files.map(function (x) { return x.name; }).join(', ') + '.');
     }
     // read back
     var back = await pc('GET', '/rest/v1.0/' + ep + '/' + made.id + '?project_id=' + pid);
