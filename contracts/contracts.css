@@ -47,6 +47,7 @@
 .cd-issues li{margin:2px 0}
 .cd-issues li.bad{color:var(--bh-bad-ink,#9c0006)}
 .cd-issues li.warn{color:var(--bh-warn-ink,#9c6500)}
+.cd-ack{grid-column:1 / -1;font-size:13px;display:flex;gap:6px;align-items:flex-start}
 .cd-log{font-size:13px;padding:12px 14px;border:1px solid var(--bh-light-gray,#e8e6e7);white-space:pre-wrap;font-variant-numeric:tabular-nums}
 .cd-dlg{border:1px solid var(--bh-black,#211e1e);padding:20px;max-width:720px;width:90vw}
 .cd-dlg textarea{width:100%;box-sizing:border-box;font:13px var(--bh-font);margin:10px 0}

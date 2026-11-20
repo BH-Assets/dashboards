@@ -13,7 +13,8 @@
   var OPS_SITE = '/sites/Operations', OPS_LIB = 'Documents';
   var TEMPLATE_DIR = '03 Forms and Templates/Contract Documents/Commitments';
   var RIDER_DIR = '01 Working/Project Management/Approved Riders';
-  var CF = { billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
+  var CF = { validatedBy: 640531, validatedDate: 640532, validationNotes: null,   // PC Verified By / Date, shared with the commitment fieldsets
+    billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
     verifiedBy: 640531, verifiedDate: 640532, retDuration: 318332, ld: 269476, payTerms: 269489, finalPay: 322642, builderRisk: 320426,
     ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, poPdfType: 325741, vendorType: 536773, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
   var TYPES = {
@@ -182,13 +183,13 @@
     { key: 'retainage_percent', label: 'Default retainage %', std: 'retainage_percent', kind: 'num' },
     { key: 'retainage_duration', label: 'Retainage duration', cf: CF.retDuration, kind: 'lov' },
     { key: 'contract_date', label: 'Contract date', std: 'contract_date', kind: 'date' },
-    { key: 'billing_date', label: 'Monthly Billing Date (trade partner pay apps)', cf: CF.billing, kind: 'text', dflt: '20th', hint: 'Last date a trade partner pay app (with corrections) is accepted for the month. Trade partners are asked to submit by the 10th. This is not in the owner contract; the owner date is under Payment terms.' },
+    { key: 'billing_date', label: 'Monthly Billing Date (trade partner pay apps)', cf: CF.billing, kind: 'text', dflt: '20th', hint: 'Last date a trade partner pay app is accepted for the month (Attachment B: no later than this date, no projection of work). This is not in the owner contract; the owner date is under Payment terms.' },
     { key: 'tax_exempt', label: 'Tax exempt', cf: CF.taxExempt, kind: 'lov' },
     { key: 'liquidated_damages', label: 'Liquidated damages', cf: CF.ld, kind: 'text' },
     { key: 'payment_terms', label: 'Payment terms (owner)', cf: CF.payTerms, kind: 'rich' },
     { key: 'sub_notice', label: 'Sub notice deadlines', cf: CF.subNotice, kind: 'text', dflt: 'Same as PC.', hint: 'Leave "Same as PC." unless trade partners get fewer days than the owner gives Bailey-Harris. Long Form 8.3 already sets 48 hours for change and differing-condition proposals.' },
     { key: 'owner_platform', label: 'Owner specific platform required (unticked = Procore)', cf: CF.ownerPlatform, kind: 'bool' },
-    { key: 'sub_project_items', label: 'Sub project items (owner and site rules)', cf: CF.subItems, kind: 'list', hint: 'One rule per line. Goes into Attachment B, Project Specific General Items.' },
+    { key: 'sub_project_items', label: 'Sub project items (everything job-specific for Attachment B)', cf: CF.subItems, kind: 'list', rows: 14, hint: 'One item per line. Goes into Attachment B, Project Specific General Items, in this order. Include the owner rules and the site and operational items PMs usually add (parking, lay-down area, utility shutdown notice, testing agency, superintendent on site, inspections, and so on).' },
     { key: 'accepted_alternates', label: 'Accepted alternates and VE', cf: CF.alternates, kind: 'alts', hint: 'One per line: description and amount | Accepted (or Not Accepted).' },
     { key: 'builders_risk_provider', label: "Builder's risk provider", cf: CF.builderRisk, kind: 'lov' },
     { key: 'owner_additional_insureds', label: 'Owner additional insureds (flows to Attachment F)', cf: CF.ownerAI, kind: 'rich', hint: 'Exactly as the owner contract lists them, with the coverages and endorsements it requires. Leave blank to use our default: Bailey-Harris Construction Co., Inc., Owner, Architect, and their officers, agents, consultants, and employees.' },
@@ -235,7 +236,7 @@
         input = '<label><input type="checkbox" data-k="' + f.key + '"' + (on ? ' checked' : '') + '> Owner requires its own system</label>';
       } else if (f.kind === 'rich' || f.kind === 'list' || f.kind === 'alts') {
         if (Array.isArray(val)) val = val.map(function (x) { return typeof x === 'object' ? (x.label + ' | ' + (x.status || 'Accepted')) : x; }).join('\n');
-        input = '<textarea data-k="' + f.key + '" rows="' + (f.kind === 'rich' ? 4 : 6) + '">' + esc(val) + '</textarea>';
+        input = '<textarea data-k="' + f.key + '" rows="' + (f.rows || (f.kind === 'rich' ? 4 : 6)) + '">' + esc(val) + '</textarea>';
       } else {
         input = '<input type="text" data-k="' + f.key + '" value="' + esc(val) + '">';
       }
@@ -253,6 +254,8 @@
     /sales (and use )?tax|tax[- ]exempt|exemption/i, /builder'?s risk/i, /additional insured/i, /alternate|value engineering/i,
     /weather|rain day/i, /notice of (claim|delay)|written notice|within \w+ \(\d+\) (calendar )?days/i, /change order|change proposal/i,
     /football|graduation|parking|signage|drone|unmanned|smok|firearm|harass|radio/i, /confidential|non-?disclosure/i, /contract sum|contract time|substantial completion/i];
+  // pages on these terms are always sent: each one sets a field on its own
+  var KEY = /retainage|liquidated damages|additional insured|tax[- ]exempt|sales and use tax|builder'?s risk|alternate|confidential|non-?disclosure/i;
   function score(t) { return TOPICS.reduce(function (n, re) { return n + (re.test(t) ? 1 : 0); }, 0); }
   var BANK = /(routing|aba)\s*(no\.?|number|#)?\s*[:#]?\s*\d{9}|account\s*(no\.?|number|#)\s*[:#]?\s*\d{4,}/i;
   async function pdfPages(bytes) {
@@ -295,9 +298,9 @@
           all += '\n' + t;
           if (BANK.test(t)) return;          // never send a page with banking details
           var sc = score(t);
-          if (sc >= 2) cands.push({ doc: d.name, page: k + 1, text: t, sc: sc });
+          if (sc >= 2 || KEY.test(t)) cands.push({ doc: d.name, page: k + 1, text: t, sc: sc + (KEY.test(t) ? 2 : 0) });
         });
-        cands.sort(function (a, b) { return b.sc - a.sc; }).slice(0, 18).sort(function (a, b) { return a.page - b.page; })
+        cands.sort(function (a, b) { return b.sc - a.sc; }).slice(0, 24).sort(function (a, b) { return a.page - b.page; })
           .forEach(function (c) { sections.push({ doc: c.doc, page: c.page, text: c.text }); picked++; });
         d.status = pages.length + ' pages, ' + picked + ' with contract terms'; if (st) st.textContent = d.status;
       }
@@ -310,7 +313,8 @@
       S.proposals = {};
       var map = { retainage_percent: 'retainage_percent', retainage_duration: 'retainage_duration', contract_date: 'contract_date', tax_exempt: 'tax_exempt', liquidated_damages: 'liquidated_damages',
         payment_terms: 'payment_terms', sub_project_items: 'sub_project_items', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment', owner_additional_insureds: 'owner_additional_insureds' };
-      Object.keys(map).forEach(function (k) { if (f[k] && f[k].value != null) S.proposals[map[k]] = f[k]; });
+      var empty = function (v) { return v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length); };
+      Object.keys(map).forEach(function (k) { if (f[k] && !empty(f[k].value)) S.proposals[map[k]] = f[k]; });
       if (f.owner_platform && f.owner_platform.value) S.proposals.owner_platform = { value: true, source: f.owner_platform.source, quote: 'Owner system: ' + f.owner_platform.value };
       if (f.owner_notice_deadlines && f.owner_notice_deadlines.value) S.proposals.sub_notice = { value: null, source: 'Owner deadlines: ' + (Array.isArray(f.owner_notice_deadlines.value) ? f.owner_notice_deadlines.value.join('; ') : f.owner_notice_deadlines.value), quote: '' };
       renderPrime();
@@ -335,9 +339,9 @@
         var cur = currentText(f, rec), v;
         if (f.kind === 'bool') { v = el.checked; if (v === (cfVal(rec, f.cf) === true)) return; }
         else if (f.kind === 'lov') { if (!el.value) return; var o = (S.lov[f.cf] || []).find(function (x) { return String(x.id) === el.value; }); if (o && o.label === cur) return; v = Number(el.value); }
-        else if (f.kind === 'rich' || f.kind === 'list' || f.kind === 'alts') { if (normCmp(el.value) === normCmp(cur)) return; v = toRich(f.kind, el.value); }
+        else if (f.kind === 'rich' || f.kind === 'list' || f.kind === 'alts') { if (normCmp(el.value) === normCmp(cur) || !el.value.trim()) return; v = toRich(f.kind, el.value); }
         else if (f.kind === 'num') { if (el.value === '' || Number(el.value) === Number(cur)) return; v = Number(el.value); }
-        else { if (el.value.trim() === cur.trim()) return; v = el.value.trim(); }
+        else { if (el.value.trim() === cur.trim() || !el.value.trim()) return; v = el.value.trim(); }
         body[f.std ? f.std : 'custom_field_' + f.cf] = v; changed.push(f.label);
       });
       var ok = confirm('Save ' + (changed.length ? changed.length + ' changed field(s) (' + changed.join(', ') + ')' : 'no changed fields') + ' and stamp the prime contract as verified by you today?');
@@ -401,14 +405,14 @@
     return '';
   }
   function newRow(seed) {
-    return Object.assign({ id: Math.random().toString(36).slice(2), type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
+    return Object.assign({ id: Math.random().toString(36).slice(2), type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', proposalDate: '', adds: '', bMode: 'build', ownB: null, items: (function () { try { var T = pcTerms(); return T ? T.items.join('\n') : ''; } catch (_) { return ''; } })(), equipAvail: false, inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
   }
   async function renderRows() {
     var host = $('#cm-rows'), T = pcTerms();
     $('#cm-add').disabled = $('#cm-paste').disabled = $('#cm-create').disabled = true;
     if (!S.project) { host.innerHTML = ''; return; }
     if (!T) { $('#cm-pc').innerHTML = 'No prime contract in Procore for this job.'; host.innerHTML = ''; return; }
-    $('#cm-pc').innerHTML = '<span>Retainage <b>' + T.retPct + '% ' + esc(T.retDuration) + '</b></span><span>Monthly Billing Date <b>' + esc(T.billing) + '</b> (submit by the 10th)</span><span>Tax exempt <b>' + (T.taxExempt ? 'Yes' : 'No') + '</b></span><span>Platform <b>' + (T.ownerPlatform ? 'Owner system' : 'Procore') + '</b></span><span>Owner rules <b>' + T.items.length + '</b></span><span>Alternates <b>' + T.alternates.length + '</b></span>';
+    $('#cm-pc').innerHTML = '<span>Retainage <b>' + T.retPct + '% ' + esc(T.retDuration) + '</b></span><span>Monthly Billing Date <b>' + esc(T.billing) + '</b></span><span>Tax exempt <b>' + (T.taxExempt ? 'Yes' : 'No') + '</b></span><span>Platform <b>' + (T.ownerPlatform ? 'Owner system' : 'Procore') + '</b></span><span>Owner rules <b>' + T.items.length + '</b></span><span>Alternates <b>' + T.alternates.length + '</b></span>';
     if (!T.verified) { host.innerHTML = '<div class="cd-msg is-bad">The prime contract is not verified yet. Confirm it on the Prime Contract tab first.</div>'; return; }
     host.innerHTML = '<p class="bh-caption">Loading vendors, cost codes and existing commitments&hellip;</p>';
     await loadRef();
@@ -428,9 +432,10 @@
     var ccOpts = function (sel) { return '<option value=""></option>' + R.costCodes.map(function (c) { return '<option value="' + c.id + '"' + (String(c.id) === String(sel) ? ' selected' : '') + '>' + esc((c.full_code || c.code || '') + ' ' + (c.name || '')) + '</option>'; }).join(''); };
     var tOpts = function (sel) { return '<option value=""></option>' + R.types.map(function (t) { return '<option value="' + t.id + '"' + (String(t.id) === String(sel) ? ' selected' : '') + '>' + esc((t.code ? t.code + ' ' : '') + t.name) + '</option>'; }).join(''); };
     $('#cm-rows').innerHTML = S.rows.map(function (row, i) {
-      var T = TYPES[row.type], iss = issues(row), lf = row.type === 'LF';
+      var T = TYPES[row.type], iss = issues(row), lf = row.type === 'LF', own = lf && row.bMode === 'own';
       var total = row.lines.reduce(function (s, l) { return s + num(l.amount); }, 0);
-      var state = iss.some(function (x) { return x.bad; }) ? '<span class="bh-chip is-bad">Blocked</span>' : iss.length ? '<span class="bh-chip is-warn">Needs review</span>' : '<span class="bh-chip is-ok">Ready</span>';
+      var signed = acked(row, iss), hasWarn = iss.some(function (x) { return !x.bad; });
+      var state = iss.some(function (x) { return x.bad; }) ? '<span class="bh-chip is-bad">Blocked</span>' : !signed ? '<span class="bh-chip is-warn">Needs PM sign-off</span>' : hasWarn ? '<span class="bh-chip is-ok">Signed off</span>' : '<span class="bh-chip is-ok">Validated</span>';
       if (row.done) state = '<span class="bh-chip">Created ' + esc(row.done) + '</span>';
       return '<div class="cd-row" data-i="' + i + '"><div class="cd-row-h"><span class="num">' + esc(row.number) + '</span><span class="ttl">' + esc(row.title || 'New commitment') + ' · ' + money(total) + '</span>' + state +
         '<button class="bh-btn-outline" data-act="del">Remove</button></div><div class="cd-row-b">' +
@@ -440,18 +445,26 @@
         '<label class="wide">Title<input data-f="title" value="' + esc(row.title) + '"></label>' +
         '<label>Commitment signatory (vendor)<select data-f="signatoryId">' + uOpts(row.signatoryId, row.vendorId) + '</select></label>' +
         '<label>BH signatory (project PM)<select data-f="bhSignatoryId">' + uOpts(row.bhSignatoryId) + '</select></label>' +
-        (lf ? '<label class="wide">Scope name (Attachment B)<input data-f="scopeName" value="' + esc(row.scopeName) + '" placeholder="e.g. Drywall and Framing"></label>' +
+        (lf ? '<label class="wide">Attachment B<select data-f="bMode"><option value="build"' + (own ? '' : ' selected') + '>Build it here (pre-filled from the prime contract)</option><option value="own"' + (own ? ' selected' : '') + '>Upload my own and check it</option></select></label>' : '') +
+        (lf && own ? '<label class="full">Your Attachment B (Word or PDF). The desk checks it against the prime contract and attaches it as is.<input type="file" data-own-b accept=".docx,.pdf">' + (row.ownB ? '<span class="bh-caption">' + esc(row.ownB.name) + (row.ownB.reading ? ' — reading…' : '') + '</span>' : '') + '</label>' : '') +
+        (lf && !own ? '<label class="wide">Scope name (Attachment B)<input data-f="scopeName" value="' + esc(row.scopeName) + '" placeholder="e.g. Drywall and Framing"></label>' +
               '<label class="wide">Submittal deadline<input data-f="submittalDate" value="' + esc(row.submittalDate) + '" placeholder="e.g. Friday, December 18, 2026"></label>' +
-              '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>'
-            : '<label class="full">Description<textarea data-f="description" rows="2">' + esc(row.description) + '</textarea></label>') +
-        '<label class="wide">Inclusions (one per line)<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
-        '<label class="wide">Exclusions accepted (one per line)<textarea data-f="exclusions">' + esc(row.exclusions) + '</textarea></label>' +
+              '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>' +
+              '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
+              '<label class="full">Alternates and adds in this price (cost table), one per line: description | amount. Base Bid is the commitment total less these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
+              '<label class="full">Project specific items (Section B), one per line. Starts from the prime contract; edit for this trade partner.<textarea data-f="items" rows="6">' + esc(row.items) + '</textarea></label>' +
+              '<label class="full"><span><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '> BH equipment on site available for loading/unloading with a usage agreement (changes General Item 33)</span></label>'
+            : '') +
+        (!lf ? '<label class="full">Description<textarea data-f="description" rows="2">' + esc(row.description) + '</textarea></label>' : '') +
+        (lf && own ? '' : '<label class="wide">Inclusions (one per line)<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
+        '<label class="wide">Exclusions accepted (one per line)<textarea data-f="exclusions">' + esc(row.exclusions) + '</textarea></label>') +
         '<div class="cd-lines"><table><thead><tr><th style="width:30%">Cost code</th><th style="width:16%">Cost type</th><th>Description</th><th style="width:14%">Amount</th><th style="width:40px"></th></tr></thead><tbody>' +
         row.lines.map(function (l, j) { return '<tr data-j="' + j + '"><td><select data-l="costCodeId">' + ccOpts(l.costCodeId) + '</select></td><td><select data-l="typeId">' + tOpts(l.typeId) + '</select></td><td><input data-l="desc" value="' + esc(l.desc) + '"></td><td><input class="amt" data-l="amount" value="' + esc(l.amount) + '"></td><td><button class="bh-btn-outline" data-act="dl" aria-label="Remove line">&times;</button></td></tr>'; }).join('') +
         '</tbody></table><button class="bh-btn-outline" data-act="al" style="margin-top:6px">Add line</button></div>' +
         '<label class="wide">Rider<select data-f="riderPick">' + riderOpts(row) + '</select></label>' +
-        '<div class="wide bh-caption" style="align-self:end">Attachments: ' + T.att.map(function (a) { return a === 'B' ? 'B (built)' : a; }).join(', ') + (row.type === 'SF' ? ' (Short Form F version not in the templates yet; the Subcontract F is used)' : '') + '</div>' +
+        '<div class="wide bh-caption" style="align-self:end">Attachments: ' + (lf ? 'A (copied from the job), ' : '') + T.att.map(function (a) { return a === 'B' ? (own ? 'B (yours)' : 'B (built)') : a; }).join(', ') + (row.type === 'SF' ? ' (Short Form F version not in the templates yet; the Subcontract F is used)' : '') + '</div>' +
         (iss.length ? '<ul class="cd-issues">' + iss.map(function (x) { return '<li class="' + (x.bad ? 'bad' : 'warn') + '">' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '') +
+        (hasWarn && !iss.some(function (x) { return x.bad; }) ? '<label class="cd-ack"><input type="checkbox" data-ack' + (signed ? ' checked' : '') + '> I reviewed these warnings and they are right for this commitment. I am the validator of record (' + esc(S.me ? S.me.name || S.me.login : 'me') + ').</label>' : '') +
         '</div></div>';
     }).join('');
   }
@@ -478,6 +491,72 @@
     drawRows();
   }
   var DUMPSTER = /dumpster|roll[- ]?off|toilet|porta|handwash|hand wash|trailer/i;
+  function parseAdds(text) {
+    return linesOf(text).map(function (l) { var k = l.lastIndexOf('|'); return k < 0 ? { desc: l.trim(), amount: 0 } : { desc: l.slice(0, k).trim(), amount: num(l.slice(k + 1)) }; });
+  }
+  /* checks a PM's own Attachment B against the prime contract terms the desk would otherwise write */
+  function checkOwnB(row) {
+    var T = pcTerms(), B = row.ownB, out = [];
+    var bad = function (t) { out.push({ bad: true, t: 'Your Attachment B ' + t }); }, warn = function (t) { out.push({ t: 'Your Attachment B ' + t }); };
+    if (!B) { out.push({ bad: true, t: 'Upload your Attachment B, or switch it to "Build it here".' }); return out; }
+    if (B.reading) { out.push({ t: 'Reading your Attachment B…' }); return out; }
+    if (B.error) { bad('could not be read: ' + B.error); return out; }
+    if (B.scanned) { warn('is a scanned PDF with no readable text, so the desk could not check it. Check retainage, billing, tax and exclusions by hand.'); return out; }
+    var t = String(B.text).replace(/[\u2010-\u2015]/g, '-').replace(/[\u2018\u2019]/g, "'").replace(/[ \t]+/g, ' ');
+    if (/<<[^>]*>>/.test(t)) bad('still has << >> placeholders to fill in.');
+    if (B.highlight) warn('still has yellow highlight. Check every highlighted part was edited for this job.');
+    // retainage
+    var m = t.match(/(\d+(?:\.\d+)?)\s*%\s*Retainage will be withheld/i), has50 = /50\s*% complete|50\s*% of the Subcontract/i.test(t);
+    if (T.retPct) {
+      if (!m) warn('has no retainage paragraph (the prime contract retainage is ' + T.retPct + '% ' + T.retDuration + ').');
+      else if (Number(m[1]) !== Number(T.retPct)) bad('withholds ' + m[1] + '% retainage; the prime contract says ' + T.retPct + '%.');
+      if (m && /50/.test(T.retDuration) && !has50) warn('does not reduce retainage at 50% (prime contract: ' + T.retDuration + ').');
+      if (m && !/50/.test(T.retDuration) && has50) bad('reduces retainage at 50%, but the prime contract retainage is ' + T.retDuration + '.');
+    } else if (m && Number(m[1]) > 0) bad('withholds ' + m[1] + '% retainage; the prime contract has none.');
+    // billing
+    var bm = t.match(/no later than the (\d{1,2})\s*(st|nd|rd|th)/i), want = parseInt(T.billing, 10);
+    if (!/Monthly Progress Pay Requests/i.test(t)) warn('has no billing paragraph (Monthly Progress Pay Requests…).');
+    else if (bm && want && Number(bm[1]) !== want) bad('sets billing by the ' + bm[1] + bm[2] + '; this job\'s Monthly Billing Date is the ' + T.billing + '.');
+    // sales tax
+    var taxItem = /does not include Sales Taxes/i.test(t) || /Sales and Use Tax Exemption/i.test(t), taxEx = /(^|\n)\s*([-•\d.)]*\s*)?Sales taxes\./m.test(t);
+    if (!T.taxExempt && taxItem) bad('uses the owner\'s sales tax exemption, but this job is not tax exempt.');
+    if (!T.taxExempt && taxEx) bad('excludes sales taxes, but this job is not tax exempt: the price must include sales tax on materials.');
+    if (T.taxExempt && !taxItem && !/tax exempt/i.test(t)) warn('has no sales tax exemption item; this job is tax exempt.');
+    // bonds
+    var bondsEx = /(^|\n)\s*([-•\d.)]*\s*)?Bonds\./m.test(t);
+    if (row.bond === 'Yes' && bondsEx) bad('excludes Bonds, but this commitment requires a P&P bond.');
+    if (row.bond !== 'Yes' && !bondsEx) warn('does not exclude Bonds (no bond is required on this commitment).');
+    // platform
+    var proc = /Procore will be utilized/i.test(t);
+    if (T.ownerPlatform && proc) warn('says Procore will be used; the owner requires its own platform.');
+    if (!T.ownerPlatform && !proc) warn('has no Procore item (General Item 21).');
+    // stored materials
+    if (!/stored off(-| )?(the )?site/i.test(t)) warn('has no terms for materials stored off site.');
+    // accepted alternates
+    T.alternates.filter(function (a) { return /^accepted/i.test(a.status); }).forEach(function (a) {
+      var k = a.label.match(/^(?:Alternate|Alt\.?)\s*#?\s*(\d+)/i);
+      if (k && !new RegExp('Alt(?:ernate)?\\.?\\s*#?\\s*' + k[1] + '\\b', 'i').test(t)) warn('does not mention accepted Alternate ' + k[1] + '. Ignore if it is not in this trade.');
+    });
+    // vendor
+    var v = S.ref && S.ref.vendors.find(function (x) { return String(x.id) === String(row.vendorId); });
+    if (v && normName(t).indexOf(normName(v.name).slice(0, 10)) < 0) warn('does not name ' + v.name + '.');
+    return out;
+  }
+  async function readOwnB(row, file) {
+    if (!file) return;
+    row.ownB = { name: file.name, reading: true }; drawRows();
+    try {
+      var bytes = new Uint8Array(await file.arrayBuffer()), info, pdf = /\.pdf$/i.test(file.name);
+      if (/\.docx$/i.test(file.name)) info = await BHDocs.docxText(bytes);
+      else if (pdf) { var pages = await pdfPages(bytes.slice(0)); info = { text: pages.join('\n'), scanned: pages.join('').trim().length < 200 }; }
+      else throw new Error('use a Word (.docx) or PDF file');
+      row.ownB = Object.assign({ name: file.name, bytes: bytes, type: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }, info);
+    } catch (e) { row.ownB = { name: file.name, error: e.message }; }
+    drawRows();
+  }
+  /* PM sign-off: warnings don't block, but the PM has to accept them; a change to the warnings clears the sign-off */
+  function warnKey(iss) { return iss.filter(function (x) { return !x.bad; }).map(function (x) { return x.t; }).join('|'); }
+  function acked(row, iss) { var k = warnKey(iss || issues(row)); return !k || row.ackKey === k; }
   function issues(row) {
     var T = pcTerms(), out = [], R = S.ref, isPO = /^PO/.test(row.type);
     var bad = function (t) { out.push({ bad: true, t: t }); }, warn = function (t) { out.push({ t: t }); };
@@ -501,10 +580,16 @@
       if (isPO && DUMPSTER.test(l.desc + ' ' + row.title) && c !== 'O') bad('Line ' + n + ': dumpsters, temporary toilets and handwash stations, and jobsite trailers on a PO are always O.');
     });
     if (row.type === 'SF' && total > 25000) bad('Short Form is limited to $25,000; use a Long Form.');
-    if (row.type === 'LF') {
+    if (row.type === 'LF' && row.bMode === 'own') checkOwnB(row).forEach(function (x) { out.push(x); });
+    else if (row.type === 'LF') {
       if (!row.scopeName.trim()) bad('Add the scope name for Attachment B.');
       if (!linesOf(row.inclusions).length) warn('No inclusions entered; Attachment B will have an empty scope list.');
       if (!row.submittalDate.trim()) bad('Add the submittal deadline for Attachment B.');
+      var adds = parseAdds(row.adds);
+      adds.forEach(function (a, k) { if (!a.amount) bad('Cost table line ' + (k + 1) + ': add the amount after a | (e.g. "Alternate 1 – Wood Panels | 142000").'); });
+      var addSum = adds.reduce(function (s, a) { return s + a.amount; }, 0);
+      if (adds.length && total - addSum <= 0) bad('Cost table: the alternates and adds (' + money(addSum) + ') are more than the commitment total (' + money(total) + '); the lines should include them.');
+      if (!row.proposalDate.trim()) warn('No proposal date; the cost table will say "Base Bid" without a date.');
     }
     if (row.rider && row.rider.matches && row.rider.matches.length > 1 && !row.riderPick) bad('Several approved riders match this vendor; pick one.');
     if (!row.number) bad('No free commitment number left in the ' + TYPES[row.type].series + ' series.');
@@ -515,7 +600,9 @@
     host.addEventListener('change', function (e) {
       var rEl = e.target.closest('.cd-row'); if (!rEl) return;
       var row = S.rows[+rEl.dataset.i], f = e.target.dataset.f, l = e.target.dataset.l;
-      if (f) { row[f] = e.target.value; if (f === 'vendorId' || f === 'type') { row.rider = null; row.riderPick = ''; if (row.vendorId) findRider(row); } }
+      if (e.target.hasAttribute('data-ack')) { row.ackKey = e.target.checked ? warnKey(issues(row)) : ''; drawRows(); return; }
+      if (e.target.hasAttribute('data-own-b')) { readOwnB(row, e.target.files && e.target.files[0]); return; }
+      if (f) { row[f] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; if (f === 'vendorId' || f === 'type') { row.rider = null; row.riderPick = ''; if (row.vendorId) findRider(row); } }
       if (l) { var j = +e.target.closest('tr').dataset.j; row.lines[j][l] = e.target.value; }
       drawRows();
     });
@@ -556,8 +643,8 @@
   /* ---- create in Procore ---- */
   function log(t) { var l = $('#cm-log'); l.hidden = false; l.textContent += t + '\n'; }
   async function createReady() {
-    var ready = S.rows.filter(function (r) { return !r.done && !issues(r).some(function (x) { return x.bad; }); });
-    if (!ready.length) { msg('No rows are ready. Fix the items marked in red first.', true); return; }
+    var ready = S.rows.filter(function (r) { var iss = issues(r); return !r.done && !iss.some(function (x) { return x.bad; }) && acked(r, iss); });
+    if (!ready.length) { msg('No rows are validated. Fix the items marked in red, and sign off the warnings, first.', true); return; }
     if (!confirm('Create ' + ready.length + ' Draft commitment(s) in Procore on ' + (S.project.project_number || S.project.name) + '?')) return;
     $('#cm-create').disabled = true; $('#cm-log').textContent = '';
     for (var i = 0; i < ready.length; i++) {
@@ -595,6 +682,14 @@
     var missing = need.filter(function (n) { return !cfs['custom_field_' + n[0]]; }).map(function (n) { return n[1]; });
     if (!row.bhSignatoryId || !row.signatoryId) missing.push('signatories');
     if (missing.length) throw new Error('Not created: the desk could not set ' + missing.join(', ') + ' (option lists did not load). Reload the page and try again.');
+    // validator of record
+    var today = new Date().toISOString().slice(0, 10), accepted = issues(row).filter(function (x) { return !x.bad; }).map(function (x) { return x.t; });
+    var vNote = 'Attachment B: ' + (row.type !== 'LF' ? 'n/a' : row.bMode === 'own' ? 'PM upload (' + (row.ownB && row.ownB.name) + '), checked' : 'built on the desk') + '. ' + (accepted.length ? 'Warnings accepted by the PM: ' + accepted.join(' / ') : 'No warnings.');
+    var vcf = {};   // written in a second call, so a fieldset without these fields can't stop the commitment's required fields saving
+    if (CF.validatedBy && S.me) vcf['custom_field_' + CF.validatedBy] = Number(S.me.id);
+    if (CF.validatedDate) vcf['custom_field_' + CF.validatedDate] = new Date().toISOString();
+    if (CF.validationNotes) vcf['custom_field_' + CF.validationNotes] = vNote;
+    log(row.number + ': validated by ' + (S.me ? S.me.name || S.me.login : '?') + ' on ' + today + '. ' + vNote);
     var c = { number: row.number, title: row.title, vendor_id: Number(row.vendorId), status: 'Draft', executed: false, retainage_percent: ret };
     if (row.type !== 'LF') { c.inclusions = toRich('rich', row.inclusions) || ''; c.exclusions = toRich('rich', row.exclusions) || ''; c.description = toRich('rich', row.description) || ''; }
     var key = ep === 'work_order_contracts' ? 'work_order_contract' : 'purchase_order_contract';
@@ -605,6 +700,10 @@
     // custom fields: v1 ignores them, v2 saves them but wants the contract date and every required field in the same call
     var v2 = Object.assign({ contract_date: new Date().toISOString().slice(0, 10) }, cfs);
     await pc('PATCH', '/rest/v2.0/companies/' + CID + '/projects/' + pid + '/commitment_contracts/' + made.id, v2);
+    if (Object.keys(vcf).length) {
+      try { await pc('PATCH', '/rest/v2.0/companies/' + CID + '/projects/' + pid + '/commitment_contracts/' + made.id, Object.assign({}, v2, vcf)); }
+      catch (e) { log(row.number + ': could not record the validator in Procore (' + e.message + '). Check PC Verified By / Date are in this commitment\'s fieldset.'); vcf = {}; }
+    }
     // lines
     for (var j = 0; j < row.lines.length; j++) {
       var l = row.lines[j];
@@ -626,7 +725,7 @@
     }
     // read back
     var back = await pc('GET', '/rest/v1.0/' + ep + '/' + made.id + '?project_id=' + pid);
-    var miss = Object.keys(cfs).filter(function (k) { var v = back.custom_fields && back.custom_fields[k]; v = v && v.value !== undefined ? v.value : v; return v == null || v === ''; });
+    var miss = Object.keys(Object.assign({}, cfs, vcf)).filter(function (k) { var v = back.custom_fields && back.custom_fields[k]; v = v && v.value !== undefined ? v.value : v; return v == null || v === ''; });
     var nAtt = (back.attachments || []).length;
     log(row.number + ': checked in Procore — ' + nAtt + ' attachment(s), retainage ' + back.retainage_percent + '%' + (miss.length ? ', custom fields NOT saved: ' + miss.join(', ') : ', custom fields saved') + '.');
     row.done = 'id ' + made.id;
@@ -635,8 +734,8 @@
     var TY = TYPES[row.type], out = [], pn = (S.project.project_number ? S.project.project_number + ' ' : '') + S.project.name;
     var city = [S.project.city, S.project.state_code].filter(Boolean).join(', ');
     var d = { projectNumName: pn, projectCity: city, projectNumber: S.project.project_number || '', commitmentNumber: row.number, subName: vendor ? vendor.name : '',
-      ownerAI: T.ownerAI, taxExempt: T.taxExempt, ownerPlatform: T.ownerPlatform, bondRequired: row.bond === 'Yes', builderRiskOwner: T.builderRiskOwner, projectItems: T.items, alternates: T.alternates,
-      scopeLines: row.lines.map(function (l) { return { desc: l.desc || row.title, amount: num(l.amount) }; }), submittalDate: row.submittalDate.trim(), scopeName: row.scopeName.trim(),
+      ownerAI: T.ownerAI, taxExempt: T.taxExempt, ownerPlatform: T.ownerPlatform, bondRequired: row.bond === 'Yes', builderRiskOwner: T.builderRiskOwner, projectItems: String(row.items || '').trim() ? linesOf(row.items) : T.items, equipAvailable: !!row.equipAvail, alternates: T.alternates,
+      scopeLines: row.lines.map(function (l) { return { desc: l.desc || row.title, amount: num(l.amount) }; }), submittalDate: row.submittalDate.trim(), scopeName: row.scopeName.trim(), proposalDate: (row.proposalDate || '').trim(), adds: parseAdds(row.adds),
       csi: linesOf(row.csi), inclusions: linesOf(row.inclusions), exclusions: linesOf(row.exclusions), submitDay: '10th', billingDate: T.billing, retPct: T.retPct, retDuration: T.retDuration };
     var DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     for (var i = 0; i < TY.att.length; i++) {
@@ -645,6 +744,9 @@
         if (a === 'G') {
           var g = 'Attachment G - Subs Pay App - ' + (T.retPct || 5) + (/50/.test(T.retDuration) ? ' thru 50' : '') + '.xlsx';
           out.push({ name: 'Attachment G - Subcontractors Application for Payment.xlsx', type: XLSX, bytes: await BHDocs.fillXlsx(await opsFile(TEMPLATE_DIR + '/' + g), d) });
+        } else if (a === 'B' && row.bMode === 'own') {
+          out.push({ name: 'Attachment B - Scope of Work (' + (d.subName || row.number) + ')' + (/\.pdf$/i.test(row.ownB.name) ? '.pdf' : '.docx'), type: row.ownB.type, bytes: row.ownB.bytes });
+          log(row.number + ': Attachment B — your file ' + row.ownB.name + ' attached as uploaded.');
         } else if (a === 'B') {
           var b = await BHDocs.buildAttachmentB(await opsFile(TEMPLATE_DIR + '/' + ATT_FILES.B), d);
           out.push({ name: 'Attachment B - Scope of Work (' + (d.subName || row.number) + ').docx', type: DOCX, bytes: b.bytes });
@@ -654,10 +756,41 @@
         }
       } catch (e) { log(row.number + ': could not build attachment ' + a + ' — ' + e.message); }
     }
+    if (row.type === 'LF') out = (await jobAttachmentA(row)).concat(out);
     if (row.riderPick && row.riderPick !== 'none') {
       try { out.push({ name: row.riderPick, type: /\.pdf$/i.test(row.riderPick) ? 'application/pdf' : DOCX, bytes: await opsFile(RIDER_DIR + '/' + row.rider.folder + '/' + row.riderPick) }); }
       catch (e) { log(row.number + ': could not fetch the rider — ' + e.message); }
     }
+    return out;
+  }
+
+  /* Attachment A (drawing and spec logs): job-wide, so copy it from the newest subcontract on the job that has one */
+  var ATT_A = {};
+  async function procoreFile(url) {
+    var tk = await tokens();
+    var r = await fetch(API + '/procore/file?url=' + encodeURIComponent(url), { method: 'POST', headers: { Authorization: 'Bearer ' + tk.idToken } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return new Uint8Array(await r.arrayBuffer());
+  }
+  async function jobAttachmentA(row) {
+    var pid = S.project.id;
+    if (!ATT_A[pid]) ATT_A[pid] = (async function () {
+      var list = (await pcAll('/rest/v1.0/work_order_contracts?project_id=' + pid)).sort(function (a, b) { return b.id - a.id; });
+      for (var k = 0; k < list.length && k < 20; k++) {
+        var c = await pc('GET', '/rest/v1.0/work_order_contracts/' + list[k].id + '?project_id=' + pid);
+        var A = (c.attachments || []).filter(function (a) { return /^Attachment A\b/i.test(a.name || a.filename || ''); });
+        if (A.length) return { from: c.number, files: A.map(function (a) { return { name: a.name || a.filename, url: a.url }; }) };
+      }
+      return { files: [] };
+    })();
+    var src = await ATT_A[pid], out = [];
+    if (!src.files.length) { log(row.number + ': no Attachment A on this job\'s other subcontracts yet. Export the drawing and spec logs from Procore and attach them by hand.'); return out; }
+    for (var i = 0; i < src.files.length; i++) {
+      var f = src.files[i];
+      try { out.push({ name: f.name, type: /\.pdf$/i.test(f.name) ? 'application/pdf' : 'application/octet-stream', bytes: await procoreFile(f.url) }); }
+      catch (e) { log(row.number + ': could not copy ' + f.name + ' — ' + e.message); }
+    }
+    log(row.number + ': Attachment A copied from ' + src.from + ' (' + out.map(function (x) { return x.name; }).join(', ') + '). Check it is the latest log.');
     return out;
   }
 

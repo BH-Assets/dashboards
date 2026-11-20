@@ -53,7 +53,7 @@
   /* d = { projectNumName, projectCity, subName, taxExempt, ownerPlatform, bondRequired,
            builderRiskOwner, projectItems:[..], alternates:[{label,status}], scopeLines:[{desc,amount}],
            submittalDate, scopeName, csi:[..], inclusions:[..], exclusions:[..],
-           submitDay:'10th', billingDate:'20th', retPct:5, retDuration:'Thru 50%' } */
+           proposalDate, adds:[{desc,amount}], equipAvailable, billingDate:'20th', retPct:5, retDuration:'Thru 50%' } */
   async function buildAttachmentB(bytes, d) {
     var zip = await JSZipRef.loadAsync(bytes);
     var xml = await zip.file('word/document.xml').async('string');
@@ -77,6 +77,9 @@
     if (!d.taxExempt) { i = find(els, starts('This Subcontract Agreement does not include Sales Taxes')); if (i >= 0) { els.splice(i, 1); log.push('removed general item: sales tax exemption'); } }
     if (d.ownerPlatform) { i = find(els, starts('Unless otherwise noted, Procore will be utilized')); if (i >= 0) { els.splice(i, 1); log.push('removed general item: Procore'); } }
 
+    // general item 33: PM can make BH equipment available for loading/unloading (wording from the Comer Hall drywall B)
+    if (d.equipAvailable) { i = find(els, starts('Bailey-Harris equipment on site will not be available')); if (i >= 0) { els[i] = setParaText(els[i], EQUIP_AVAILABLE); log.push('general item: BH equipment available with usage agreement'); } }
+
     // project specific general items: replace the examples with the PC's items
     var ps = find(els, starts('Project Specific General Items')), pe = find(els, starts('Subcontract Scope'), ps + 1);
     if (ps >= 0 && pe > ps) {
@@ -96,7 +99,7 @@
 
     // alternates and scope & cost table
     var ti = find(els, function (t, el) { return el.indexOf('<w:tbl') === 0 && t.indexOf('Owner Contract Base Bid') >= 0; });
-    if (ti >= 0) els[ti] = rebuildScopeTable(els[ti], d.alternates || [], d.scopeLines || [], money, log);
+    if (ti >= 0) els[ti] = rebuildScopeTable(els[ti], d.alternates || [], costRows(d), log);
 
     // scope items
     var ss = find(els, starts("Subcontractor's scope of work includes the following")), se = find(els, starts('Accepted Exclusions'), ss + 1);
@@ -146,28 +149,63 @@
       }
     }
 
-    // terms of agreement: #60 billing, #61 retainage
+    // terms of agreement: billing and retainage use the wording in the current commitments; stored-materials terms follow retainage
     i = find(els, starts('Monthly Progress Pay Requests'));
-    if (i >= 0) els[i] = setParaText(els[i], 'Monthly Progress Pay Requests should be submitted to Bailey-Harris by the ' + (d.submitDay || '10th') +
-      ' of each month, with projection of work to be completed by the last day of the month, to allow time for review and any corrections. Pay requests, including any corrections, not received complete by the ' +
-      (d.billingDate || '20th') + ' (the Monthly Billing Date) will be returned and processed the following month.');
+    if (i >= 0) els[i] = setParaText(els[i], billingSentence(d.billingDate));
     i = find(els, function (t) { return /Retainage will be withheld/.test(t); });
-    if (i >= 0) els[i] = setParaText(els[i], retainageSentence(d.retPct, d.retDuration));
+    if (i >= 0) {
+      els[i] = setParaText(els[i], retainageSentence(d.retPct, d.retDuration));
+      if (find(els, starts('The cost of materials and equipment to be incorporated')) < 0) {
+        var sub = els[i].replace(/<w:ilvl w:val="1"\/>/, '<w:ilvl w:val="2"/>');
+        els.splice(i + 1, 0, setParaText(els[i], STORED[0]), ...STORED.slice(1).map(function (s) { return setParaText(sub, s); }));
+        log.push('stored materials terms added');
+      }
+    }
 
     D.els = els;
     zip.file('word/document.xml', stripHighlight(joinBody(D)));
     return { bytes: await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }), log: log };
   }
 
+  var EQUIP_AVAILABLE = 'Bailey-Harris equipment on site will be available for use by the Subcontractor for loading/unloading with pre-authorized usage agreement. Bailey-Harris equipment onsite shall not be utilized for performance of Subcontractor Scope of Work without authorization by Bailey-Harris Superintendent. This Subcontractor is to have equipment that operates properly for this project. Equipment malfunctions do not provide a reason for delay, nor does the inability to offload materials due to a lack of equipment.';
+  /* text of a PM's own Attachment B, for the checks on the desk */
+  async function docxText(bytes) {
+    var zip = await JSZipRef.loadAsync(bytes);
+    var xml = await zip.file('word/document.xml').async('string');
+    var paras = xml.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || [];
+    return { text: paras.map(textOf).join('\n'), highlight: /<w:highlight /.test(xml) };
+  }
+  var STORED = [
+    'The cost of materials and equipment to be incorporated into the Work, which are stored off the site, may also be considered in monthly Applications for Payment under the following conditions:',
+    'The Subcontractor has received written approval from the Bailey-Harris to store the materials or equipment off site in advance of delivering the materials to the off site location;',
+    'Certificate of Insurance is furnished to the Bailey-Harris evidencing that a special insurance policy, or rider to an existing policy, has been obtained by the Subcontractor providing all-risk property insurance coverage, specifically naming the materials or equipment stored, and naming the Owner as an additionally insured party;',
+    'Bailey-Harris is provided with a detailed inventory of the stored materials or equipment and the materials or equipment are clearly marked in correlation to the inventory to facilitate inspection and verification of the presence of the materials or equipment by Bailey-Harris, Architect or Owner;',
+    'The materials or equipment are properly and safely stored in a bonded warehouse, or a facility otherwise approved in advance by Bailey-Harris, Architect and Owner; and',
+    'Compliance by the Subcontractor with procedures satisfactory to the Owner to establish the Owner\u2019s title to such materials and equipment or otherwise protect the Owner\u2019s interest.'
+  ];
+  function billingSentence(day) {
+    return 'Monthly Progress Pay Requests should be submitted to Bailey-Harris for processing no later than the ' + (day || '20th') +
+      ' of each applicable month with no projection of work. Any pay request received after this date will be returned to the Subcontractor for resubmission the following month. Pay requests shall be submitted in the format as supplied by Bailey-Harris.';
+  }
   function retainageSentence(pct, dur) {
     pct = Number(pct || 0);
     if (!pct) return 'No Retainage will be withheld from Monthly Pay Requests.';
-    var p = (Math.round(pct * 100) / 100) + '%';
-    if (/50/.test(dur || '')) return p + ' Retainage will be withheld from each Monthly Pay Request on completed work and stored materials until 50% of the Subcontract Price has been billed, after which no additional Retainage will be withheld.';
-    return p + ' Retainage will be withheld from each Monthly Pay Request on completed work and stored materials throughout the Subcontract.';
+    var p = (Math.round(pct * 100) / 100) + '% Retainage will be withheld from each Monthly Pay Request on completed work and stored materials.';
+    if (/50/.test(dur || '')) return p + '  There will be no additional Retainage withheld after the Subcontractor\u2019s work is 50% complete if all work is on schedule and acceptable to the Owner, Architect and Contractor.  This reduction in Retainage is at the sole discretion of the Contractor.';
+    return p;
   }
 
-  function rebuildScopeTable(tbl, alts, lines, money, log) {
+  /* cost table: Base Bid (proposal date) = commitment total less the adds; one row per alternate/add; total row named for the scope */
+  function costRows(d) {
+    var m = function (v) { v = Number(v || 0); return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); };
+    var total = (d.scopeLines || []).reduce(function (s, l) { return s + Number(l.amount || 0); }, 0);
+    var adds = (d.adds || []).filter(function (a) { return a && String(a.desc || '').trim(); });
+    var addSum = adds.reduce(function (s, a) { return s + Number(a.amount || 0); }, 0);
+    var rows = [['Base Bid' + (d.proposalDate ? ' Proposal Dated ' + d.proposalDate : ''), m(total - addSum)]];
+    adds.forEach(function (a) { var v = Number(a.amount || 0); rows.push([a.desc, (v < 0 ? 'Deduct ' : 'Add ') + m(Math.abs(v))]); });
+    return { rows: rows, total: [(d.scopeName ? d.scopeName + ' Scope Total Cost' : 'Total'), m(total)] };
+  }
+  function rebuildScopeTable(tbl, alts, cost, log) {
     var rows = tbl.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || [];
     var head = tbl.slice(0, tbl.indexOf(rows[0])), tail = tbl.slice(tbl.lastIndexOf(rows[rows.length - 1]) + rows[rows.length - 1].length);
     var cellsOf = function (r) { return r.match(/<w:tc>[\s\S]*?<\/w:tc>/g) || []; };
@@ -188,10 +226,9 @@
     var out = [altHdr];
     alts.forEach(function (a) { out.push(setRow(altTpl, [a.label, a.status])); });
     out.push(costHdr);
-    var total = 0;
-    lines.forEach(function (l) { total += Number(l.amount || 0); out.push(setRow(costTpl, [l.desc, money(l.amount)])); });
-    out.push(setRow(totTpl, ['Total', money(total)]));
-    log.push('alternates rows: ' + alts.length + ', cost rows: ' + lines.length);
+    cost.rows.forEach(function (r) { out.push(setRow(costTpl, r)); });
+    out.push(setRow(totTpl, cost.total));
+    log.push('alternates rows: ' + alts.length + ', cost rows: ' + cost.rows.length);
     return head + out.join('') + tail;
   }
 
@@ -280,6 +317,6 @@
     return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   }
 
-  var api = { buildAttachmentB: buildAttachmentB, fillDocx: fillDocx, fillXlsx: fillXlsx, retainageSentence: retainageSentence, _textOf: textOf, _splitBody: splitBody };
+  var api = { buildAttachmentB: buildAttachmentB, fillDocx: fillDocx, fillXlsx: fillXlsx, retainageSentence: retainageSentence, billingSentence: billingSentence, costRows: costRows, docxText: docxText, _textOf: textOf, _splitBody: splitBody };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BHDocs = api;
 })(this);
