@@ -297,22 +297,43 @@
     var u = me(); if (!u) return;
     m = document.createElement('div'); m.id = 'pmenu'; m.className = 'pmenu'; m.setAttribute('role', 'menu');
     m.innerHTML = '<div class="pm-head">' + avatarHtml(u, 'big') + '<div style="min-width:0"><b>' + esc(u.name) + '</b><div class="small muted trunc" style="max-width:190px">' + esc(u.email) + '</div>' + chipFor(CL.role) + '</div></div>' +
-      (CL.role === 'Admin' ? '<button role="menuitem" data-act="goto" data-to="users">Who has access</button>' : '') +
+      (CL.role === 'Admin' ? '<button role="menuitem" data-act="goto" data-to="users">Manage users</button>' : '') +
       '<button role="menuitem" data-act="theme">Switch light / dark</button><button role="menuitem" data-act="logout" class="pm-out">Sign out</button>';
     document.body.appendChild(m);
     var r = document.querySelector('#avatar-btn').getBoundingClientRect(), narrow = matchMedia('(max-width:760px)').matches;
     m.style.left = (narrow ? Math.max(8, r.left) : r.right + 8) + 'px'; m.style.top = (narrow ? r.bottom + 6 : r.top) + 'px';
   };
+  var ACCESS = null, ACCESS_ERR = '';
+  function loadAccess() {
+    api('/api/access').then(function (a) { ACCESS = a; ACCESS_ERR = ''; if (route() === 'users') rerender(); })
+      .catch(function (e) { ACCESS_ERR = e.message; if (route() === 'users') rerender(); });
+  }
   VIEWS.users = function () {
-    return band('Who has access', 'People sign in with their Bailey-Harris Microsoft account. Nobody has a separate password for this app.', '') +
-      '<div class="content"><div class="panel"><div class="body"><table class="tbl"><thead><tr><th>Role</th><th>Who</th><th>What they can do</th></tr></thead><tbody>' +
-      '<tr><td><b>Admin</b></td><td>John Barron, Tiffany Blackmon</td><td>Everything: catalog, rates, orders, check-outs, the shop, requests.</td></tr>' +
-      '<tr><td><b>Management</b></td><td>Clay (Self Perform)</td><td>Everything Super/PM can, and approves Self Perform crew requests.</td></tr>' +
-      '<tr><td><b>Super/PM</b></td><td>Anyone listed as a superintendent or on the PM team of an active or warranty job in Procore, plus the EqAccessExtras list</td><td>Sees the whole catalog with rates, requests equipment, stock and inventory (straight to John), and approves crew requests for their jobs.</td></tr>' +
-      '<tr><td><b>Viewer</b></td><td>Everyone else at Bailey-Harris</td><td>Sees the catalog, rates and what is available.</td></tr>' +
-      '<tr><td><b>Field crews</b></td><td>No sign-in</td><td>Request stock and inventory at dashboard.baileyharris.com/request with a job number.</td></tr>' +
-      '</tbody></table><p class="small muted" style="margin-top:12px">Admin and Management are set on the Equipment service (ADMIN_EMAILS, MGMT_EMAILS). Super/PM comes from Procore every night. To give someone Super/PM who is not on a Procore team, add their email to the EqAccessExtras list on the Equipment SharePoint site.</p></div></div></div>';
+    if (CL.role !== 'Admin') return band('Manage users', '', '') + '<div class="content"><div class="empty"><strong>Admins only</strong></div></div>';
+    if (!ACCESS && !ACCESS_ERR) loadAccess();
+    var nm = function (e) { var u = ACCESS && ACCESS.superPm.find(function (p) { return p.email === e; }); return u ? u.name : (CL.user && CL.user.email === e ? CL.user.name : ''); };
+    var who = function (arr) { return arr && arr.length ? arr.map(function (e) { var n = nm(e); return (n ? '<b>' + esc(n) + '</b> ' : '') + '<span class="muted">' + esc(e) + '</span>'; }).join('<br>') : '<span class="muted">Nobody set</span>'; };
+    var roles = '<table class="tbl"><thead><tr><th>Role</th><th>Who</th><th>What they can do</th></tr></thead><tbody>' +
+      '<tr><td><b>Admin</b></td><td>' + (ACCESS ? who(ACCESS.admins) : '…') + '</td><td>Everything: catalog, rates, orders, check-outs, the shop, requests, setup.</td></tr>' +
+      '<tr><td><b>Management</b></td><td>' + (ACCESS ? who(ACCESS.management) : '…') + '</td><td>Everything Super/PM can, and approves Self Perform crew requests.</td></tr>' +
+      '<tr><td><b>Super/PM</b></td><td>' + (ACCESS ? ACCESS.superPm.length + ' people on active and warranty jobs in Procore (listed below)' + (ACCESS.extras.length ? ', plus ' + ACCESS.extras.length + ' added by hand' : '') : '…') + '</td><td>Sees the whole catalog with rates, requests equipment, stock and inventory (straight to the Equipment Manager), and approves crew requests for their jobs.</td></tr>' +
+      '<tr><td><b>Viewer</b></td><td>Everyone else at Bailey-Harris</td><td>Sees the catalog, rates and what is available. Cannot request.</td></tr>' +
+      '<tr><td><b>Field crews</b></td><td>No sign-in</td><td>Request stock and inventory at dashboard.baileyharris.com/request with a job number.</td></tr></tbody></table>';
+    var people = !ACCESS ? '<p class="muted">' + (ACCESS_ERR ? esc(ACCESS_ERR) : 'Loading…') + '</p>' :
+      '<table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Jobs</th></tr></thead><tbody>' +
+      ACCESS.superPm.map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td class="muted">' + esc(p.email) + '</td><td>' + p.jobs.map(function (j) { return esc(j.job) + ' <span class="muted small">(' + esc(j.as) + ')</span>'; }).join(', ') + '</td></tr>'; }).join('') +
+      ACCESS.extras.map(function (e) { return '<tr><td>' + esc(nm(e) || e) + '</td><td class="muted">' + esc(e) + '</td><td class="muted">Added by hand (EqAccessExtras)</td></tr>'; }).join('') +
+      '</tbody></table><p class="small muted" style="margin-top:8px">From Procore, refreshed nightly' + (ACCESS.feedAt ? ' (last ' + esc(new Date(ACCESS.feedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + ')' : '') + '.</p>';
+    return band('Manage users', 'Managed by Microsoft 365. Everyone signs in with their Bailey-Harris Microsoft account; there are no passwords in this app.', '<button class="btn" data-cl-access="1">Refresh</button>') +
+      '<div class="content"><div class="panel"><h3>Who has access to what</h3><div class="body">' + roles + '</div></div>' +
+      '<div class="panel" style="margin-top:16px"><h3>Superintendents and PMs' + (ACCESS ? ' (' + ACCESS.superPm.length + ')' : '') + '</h3><div class="body">' + people + '</div></div>' +
+      '<div class="panel" style="margin-top:16px"><h3>Making a change</h3><div class="body small">' +
+      '<p><b>Super/PM</b> follows the Procore project team: add or remove someone on the job\'s team in Procore (Project Management Team, Field Management Team or a Superintendent role) and it changes overnight.</p>' +
+      '<p><b>Someone not on a Procore team</b> (an estimator, the office): add their email to the EqAccessExtras list on the Equipment SharePoint site.</p>' +
+      '<p><b>Admin and Management</b> are set on the Equipment service by Tiffany (ADMIN_EMAILS, MGMT_EMAILS).</p>' +
+      '<p><b>Someone who leaves</b> loses access when their Microsoft 365 account is turned off.</p></div></div></div>';
   };
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-cl-access]')) { ACCESS = null; ACCESS_ERR = ''; rerender(); } });
 
   /* bits the patched screens call */
   window.cloudJobSelect = function () {
