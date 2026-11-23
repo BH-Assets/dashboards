@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; connect-src 'self' https://contracts-api.baileyharris.com https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://storage.procore.com https://*.procore.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://login.microsoftonline.com; base-uri 'self'; object-src 'none'; form-action 'self' https://login.microsoftonline.com;">
 <title>Prime Contract Validator · Bailey-Harris</title>
-<link rel="stylesheet" href="contracts.css?v=20261123e">
+<link rel="stylesheet" href="contracts.css?v=20261124b">
 <link rel="stylesheet" href="/bh-shell.css">
 <script src="/bh-shell.js" defer></script>
 </head>
@@ -68,12 +68,14 @@
       <div class="cd-head">
         <div>
           <div class="bh-section-title">New commitments</div>
-          <p class="bh-caption" id="cm-caption">One row per commitment. Ready rows are created in Procore as Drafts with their attachments.</p>
+          <p class="bh-caption" id="cm-caption">Fill the <a href="bulk-template.xlsx" download="Prime Contract Validator - bulk template.xlsx">bulk template</a>, upload it, add any own Attachment B files, sign off the warnings once, then create. Commitments land in Procore as Drafts for you to review before sending.</p>
         </div>
         <div class="cd-actions">
-          <button class="bh-btn-outline" id="cm-add" disabled>Add row</button>
-          <button class="bh-btn-outline" id="cm-paste" disabled>Paste rows from Excel</button>
-          <button class="bh-btn" id="cm-create" disabled>Create ready rows</button>
+          <button class="bh-btn-outline" id="cm-paste" disabled>Upload bulk workbook</button>
+          <button class="bh-btn-outline" id="cm-bfiles" disabled>Add Attachment B files</button>
+          <button class="bh-btn-outline" id="cm-add" disabled>Add one row</button>
+          <input type="file" id="cm-xlsx" accept=".xlsx" hidden><input type="file" id="cm-bin" accept=".docx,.pdf" multiple hidden>
+          <button class="bh-btn" id="cm-create" disabled>Create validated rows in Procore</button>
         </div>
       </div>
       <div class="cd-pcsum" id="cm-pc"></div>
@@ -83,19 +85,10 @@
   </main>
 </div>
 
-<dialog id="dlg-paste" class="cd-dlg">
-  <form method="dialog">
-    <div class="bh-section-title">Paste rows from Excel</div>
-    <p class="bh-caption">Columns in this order: Vendor, Type (Long Form, Short Form, PSA, PO on site, PO off site), Title, Amount, Cost code, Cost type. One row per line item; rows with the same vendor and title become one commitment. <a href="paste-template.xlsx" download="Contracts Desk - paste template.xlsx">Download the Excel template</a>.</p>
-    <textarea id="paste-text" rows="10"></textarea>
-    <div class="cd-actions"><button class="bh-btn-outline" value="cancel">Cancel</button><button class="bh-btn" value="ok" id="paste-ok">Add rows</button></div>
-  </form>
-</dialog>
-
 <script src="/msal-browser.min.js"></script>
 <script src="jszip.min.js"></script>
 <script src="pdf.min.js"></script>
-<script src="contracts-docs.js?v=20261123e"></script>
-<script src="contracts.js?v=20261123e"></script>
+<script src="contracts-docs.js?v=20261124b"></script>
+<script src="contracts.js?v=20261124b"></script>
 </body>
 </html>

@@ -175,6 +175,37 @@
     var paras = xml.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || [];
     return { text: paras.map(textOf).join('\n'), highlight: /<w:highlight /.test(xml) };
   }
+  /* read an .xlsx into { sheetName: [[cell text, …], …] } — shared or inline strings, numbers as text */
+  async function readXlsx(bytes) {
+    var zip = await JSZipRef.loadAsync(bytes);
+    var get = async function (n) { var f = zip.file(n); return f ? f.async('string') : ''; };
+    var wb = await get('xl/workbook.xml'), rels = await get('xl/_rels/workbook.xml.rels'), sx = await get('xl/sharedStrings.xml'), ss = [];
+    var tText = function (x) { var t = '', re = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g, m; while ((m = re.exec(x))) t += m[1]; return unesc(t); };
+    (sx.match(/<si>[\s\S]*?<\/si>/g) || []).forEach(function (si) { ss.push(tText(si)); });
+    var attr = function (tag, n) { var m = tag.match(new RegExp('\\s' + n + '="([^"]*)"')); return m ? m[1] : ''; };
+    var colNo = function (ref) { var L = ref.replace(/\d+/g, ''), n = 0; for (var i = 0; i < L.length; i++) n = n * 26 + L.charCodeAt(i) - 64; return n - 1; };
+    var out = {}, sheets = wb.match(/<sheet\s[^>]*>/g) || [];
+    for (var k = 0; k < sheets.length; k++) {
+      var name = unesc(attr(sheets[k], 'name')), rid = attr(sheets[k], 'r:id');
+      var rel = (rels.match(new RegExp('<Relationship[^>]*Id="' + rid + '"[^>]*>')) || [''])[0], target = attr(rel, 'Target');
+      if (!target) continue;
+      var xml = await get(target.charAt(0) === '/' ? target.slice(1) : 'xl/' + target.replace(/^\.\//, ''));
+      var rows = [];
+      (xml.match(/<row[\s>][\s\S]*?<\/row>/g) || []).forEach(function (rx) {
+        var r = Number(attr(rx.match(/^<row[^>]*>/)[0], 'r')) - 1, row = [];
+        (rx.match(/<c\s[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g) || []).forEach(function (cx) {
+          var open = cx.match(/^<c\s[^>]*?\/?>/)[0], t = attr(open, 't'), v = (cx.match(/<v>([\s\S]*?)<\/v>/) || [])[1], val;
+          if (t === 's') val = ss[Number(v)] || '';
+          else if (t === 'inlineStr') val = tText((cx.match(/<is>[\s\S]*?<\/is>/) || [''])[0]);
+          else val = v == null ? '' : unesc(v);
+          row[colNo(attr(open, 'r'))] = val;
+        });
+        rows[r] = row;
+      });
+      out[name] = rows;
+    }
+    return out;
+  }
   var STORED = [
     'The cost of materials and equipment to be incorporated into the Work, which are stored off the site, may also be considered in monthly Applications for Payment under the following conditions:',
     'The Subcontractor has received written approval from the Bailey-Harris to store the materials or equipment off site in advance of delivering the materials to the off site location;',
@@ -317,6 +348,6 @@
     return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   }
 
-  var api = { buildAttachmentB: buildAttachmentB, fillDocx: fillDocx, fillXlsx: fillXlsx, retainageSentence: retainageSentence, billingSentence: billingSentence, costRows: costRows, docxText: docxText, _textOf: textOf, _splitBody: splitBody };
+  var api = { buildAttachmentB: buildAttachmentB, fillDocx: fillDocx, fillXlsx: fillXlsx, retainageSentence: retainageSentence, billingSentence: billingSentence, costRows: costRows, docxText: docxText, readXlsx: readXlsx, _textOf: textOf, _splitBody: splitBody };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BHDocs = api;
 })(this);

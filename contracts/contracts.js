@@ -13,7 +13,8 @@
   var OPS_SITE = '/sites/Operations', OPS_LIB = 'Documents';
   var TEMPLATE_DIR = '03 Forms and Templates/Contract Documents/Commitments';
   var RIDER_DIR = '01 Working/Project Management/Approved Riders';
-  var CF = { validatedBy: null, validatedDate: null, validationNotes: null,   // not written to commitments: the PC Verified By / Date on the prime contract is the record
+  var CF = { contractType: 254924, aiaForm: 459730, costPlus: 269473, splitSavings: 269474, ppBond: 307547, coTerms: 426345, weather: 269484, ownerDelays: 269485, claims: 269490, insDocs: 488034, brExpires: 488035, coiExpires: 488036,
+    validatedBy: null, validatedDate: null, validationNotes: null,   // not written to commitments: the PC Verified By / Date on the prime contract is the record
     billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
     verifiedBy: 640531, verifiedDate: 640532, retDuration: 318332, ld: 269476, payTerms: 269489, finalPay: 322642, builderRisk: 320426,
     ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, poPdfType: 325741, vendorType: 536773, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
@@ -151,7 +152,7 @@
         .sort(function (a, b) { return String(a.project_number || a.name).localeCompare(String(b.project_number || b.name)); });
       var defs = await pc('GET', '/rest/v1.0/custom_field_definitions?company_id=' + CID);
       (defs || []).forEach(function (d) { S.defs[d.id] = d; });
-      var lovIds = [CF.retDuration, CF.taxExempt, CF.builderRisk, CF.pdfType, CF.poPdfType, CF.vendorType, CF.bond, CF.riderNeeded];
+      var lovIds = [CF.contractType, CF.aiaForm, CF.ppBond, CF.retDuration, CF.taxExempt, CF.builderRisk, CF.pdfType, CF.poPdfType, CF.vendorType, CF.bond, CF.riderNeeded];
       for (var i = 0; i < lovIds.length; i++) {
         try { S.lov[lovIds[i]] = await pc('GET', '/rest/v1.0/custom_field_definitions/' + lovIds[i] + '/custom_field_lov_entries?company_id=' + CID); }
         catch (e) { S.lov[lovIds[i]] = []; msg('Could not load the options for Procore field ' + lovIds[i] + ': ' + e.message + '. Reload the page before saving or creating.', true); }
@@ -179,28 +180,68 @@
   /* =====================================================================
      PRIME CONTRACT TAB
      ===================================================================== */
+  /* every field on the Prime Contract fieldset (443377), in its sections and order. kind 'ro' = shown, edited in Procore */
+  var who = function (o) { return o ? o.name || o.company || o.login || '' : ''; };
   var FIELDS = [
-    { key: 'retainage_percent', label: 'Default retainage %', std: 'retainage_percent', kind: 'num' },
-    { key: 'retainage_duration', label: 'Retainage duration', cf: CF.retDuration, kind: 'lov' },
+    { section: 'General information' },
+    { key: 'title', label: 'Title', std: 'title', kind: 'text' },
+    { key: 'number', label: 'Contract #', std: 'number', kind: 'ro' },
+    { key: 'owner', label: 'Owner / client', kind: 'ro', get: function (r) { return who(r.vendor); } },
+    { key: 'contractor', label: 'Contractor', kind: 'ro', get: function (r) { return who(r.contractor); } },
+    { key: 'architect', label: 'Architect / engineer', kind: 'ro', get: function (r) { return who(r.architect); } },
+    { key: 'status', label: 'Status', kind: 'ro', get: function (r) { return r.status || ''; } },
+    { key: 'executed', label: 'Executed', kind: 'ro', get: function (r) { return r.executed ? 'Yes' : 'No'; } },
+    { key: 'signature_required', label: 'Sign with DocuSign', kind: 'ro', get: function (r) { return r.signature_required ? 'Yes' : 'No'; } },
+    { key: 'description', label: 'Description', std: 'description', kind: 'rich' },
+    { key: 'inclusions', label: 'Inclusions', std: 'inclusions', kind: 'rich' },
+    { key: 'exclusions', label: 'Exclusions', std: 'exclusions', kind: 'rich' },
     { key: 'contract_date', label: 'Contract date', std: 'contract_date', kind: 'date' },
+    { key: 'contract_start_date', label: 'Start date', std: 'contract_start_date', kind: 'date' },
+    { key: 'contract_estimated_completion_date', label: 'Estimated completion date', std: 'contract_estimated_completion_date', kind: 'date' },
+    { key: 'substantial_completion_date', label: 'Substantial completion date', std: 'substantial_completion_date', kind: 'date' },
+    { key: 'actual_completion_date', label: 'Actual completion date', std: 'actual_completion_date', kind: 'date' },
+    { key: 'contract_termination_date', label: 'Termination date', std: 'contract_termination_date', kind: 'date' },
+    { key: 'execution_date', label: 'Execution date', std: 'execution_date', kind: 'date' },
+    { key: 'retainage_percent', label: 'Default retainage %', std: 'retainage_percent', kind: 'num' },
+    { key: 'attachments', label: 'Attachments (the contract the desk reads)', kind: 'ro', get: function (r) { var a = r.attachments || []; return a.length ? a.length + ' file(s): ' + a.map(function (x) { return x.name || x.filename; }).join(', ') : ''; } },
+    { section: 'Prime contract summary' },
+    { key: 'contract_type', label: 'Contract type', cf: CF.contractType, kind: 'lovm' },
+    { key: 'aia_form', label: 'AIA contract form', cf: CF.aiaForm, kind: 'lov' },
+    { key: 'cost_plus_percent', label: 'Cost-Plus %', cf: CF.costPlus, kind: 'text' },
+    { key: 'split_savings_percent', label: 'Split-Savings %', cf: CF.splitSavings, kind: 'text' },
+    { key: 'retainage_duration', label: 'Retainage duration', cf: CF.retDuration, kind: 'lov' },
+    { key: 'builders_risk_provider', label: "Builder's risk provider", cf: CF.builderRisk, kind: 'lov' },
+    { key: 'liquidated_damages', label: 'Liquidated damages', cf: CF.ld, kind: 'text' },
+    { key: 'pp_bond', label: 'Performance and payment bond', cf: CF.ppBond, kind: 'lovm' },
+    { key: 'change_order_terms', label: 'Change order terms', cf: CF.coTerms, kind: 'rich', hint: 'Article reference? Allowed markup? What can and cannot be included?' },
+    { key: 'payment_terms', label: 'Payment terms (owner)', cf: CF.payTerms, kind: 'rich', hint: 'Article reference? Date BH pay app is due to Owner/Architect, payment terms once submitted, remedy for late or non-payment, items not subject to retainage.' },
+    { key: 'weather_delays', label: 'Weather delays', cf: CF.weather, kind: 'rich', hint: 'Article reference? How are weather delays determined? Notice requirements? Dry-out days?' },
+    { key: 'owner_delays', label: 'Owner delays', cf: CF.ownerDelays, kind: 'rich', hint: 'Article reference? Are owner or architect delays permissible and compensable? Notice requirements?' },
+    { key: 'claims', label: 'Claims', cf: CF.claims, kind: 'rich', hint: 'Article reference? Window to start a claim after discovery, what counts as notice, special notice conditions.' },
+    { key: 'final_payment', label: 'Final payment / closeout and other notes', cf: CF.finalPay, kind: 'rich' },
+    { section: 'Subcontractor flow-down (builds every commitment on this job)' },
     { key: 'billing_date', label: 'Monthly Billing Date (trade partner pay apps)', cf: CF.billing, kind: 'text', dflt: '20th', hint: 'Last date a trade partner pay app is accepted for the month (Attachment B: no later than this date, no projection of work). This is not in the owner contract; the owner date is under Payment terms.' },
     { key: 'tax_exempt', label: 'Tax exempt', cf: CF.taxExempt, kind: 'lov' },
-    { key: 'liquidated_damages', label: 'Liquidated damages', cf: CF.ld, kind: 'text' },
-    { key: 'payment_terms', label: 'Payment terms (owner)', cf: CF.payTerms, kind: 'rich' },
-    { key: 'sub_notice', label: 'Sub notice deadlines', cf: CF.subNotice, kind: 'text', dflt: 'Same as PC.', hint: 'Leave "Same as PC." unless trade partners get fewer days than the owner gives Bailey-Harris. Long Form 8.3 already sets 48 hours for change and differing-condition proposals.' },
     { key: 'owner_platform', label: 'Owner specific platform required (unticked = Procore)', cf: CF.ownerPlatform, kind: 'bool' },
+    { key: 'sub_notice', label: 'Sub notice deadlines', cf: CF.subNotice, kind: 'text', dflt: 'Same as PC.', hint: 'Leave "Same as PC." unless trade partners get fewer days than the owner gives Bailey-Harris. Long Form 8.3 already sets 48 hours for change and differing-condition proposals.' },
     { key: 'sub_project_items', label: 'Sub project items (everything job-specific for Attachment B)', cf: CF.subItems, kind: 'list', rows: 14, hint: 'One item per line. Goes into Attachment B, Project Specific General Items, in this order. Include the owner rules and the site and operational items PMs usually add (parking, lay-down area, utility shutdown notice, testing agency, superintendent on site, inspections, and so on).' },
     { key: 'accepted_alternates', label: 'Accepted alternates and VE', cf: CF.alternates, kind: 'alts', hint: 'One per line: description and amount | Accepted (or Not Accepted).' },
-    { key: 'builders_risk_provider', label: "Builder's risk provider", cf: CF.builderRisk, kind: 'lov' },
     { key: 'owner_additional_insureds', label: 'Owner additional insureds (flows to Attachment F)', cf: CF.ownerAI, kind: 'rich', hint: 'Exactly as the owner contract lists them, with the coverages and endorsements it requires. Leave blank to use our default: Bailey-Harris Construction Co., Inc., Owner, Architect, and their officers, agents, consultants, and employees.' },
-    { key: 'final_payment', label: 'Final payment / closeout', cf: CF.finalPay, kind: 'rich' }
+    { key: 'verified_by', label: 'PC verified by', kind: 'ro', get: function (r) { return who(cfVal(r, CF.verifiedBy)) || lovLabel(cfVal(r, CF.verifiedBy)); }, hint: 'Stamped when you confirm.' },
+    { key: 'verified_date', label: 'PC verified date', kind: 'ro', get: function (r) { return String(cfVal(r, CF.verifiedDate) || '').slice(0, 10); }, hint: 'Stamped when you confirm.' },
+    { section: 'Project insurance' },
+    { key: 'ins_docs', label: 'Insurance and bond documents (builders risk, BH project COI, P&P bonds)', kind: 'ro', get: function (r) { var v = cfVal(r, CF.insDocs) || []; return v.length ? v.length + ' file(s): ' + v.map(function (x) { return x.name || x.filename || ''; }).join(', ') : ''; } },
+    { key: 'br_expires', label: "Builder's risk insurance expiration date", cf: CF.brExpires, kind: 'datetime' },
+    { key: 'coi_expires', label: 'BH project COI expiration date', cf: CF.coiExpires, kind: 'datetime' }
   ];
-  FIELDS = FIELDS.filter(function (f) { return f.std || f.cf != null; });
+  FIELDS = FIELDS.filter(function (f) { return f.section || f.std || f.cf != null || f.get; });
   function cfVal(rec, id) { var v = rec && rec.custom_fields && rec.custom_fields['custom_field_' + id]; return v && v.value !== undefined ? v.value : v; }
   function lovLabel(v) { if (v == null) return ''; if (Array.isArray(v)) return v.map(lovLabel).join(', '); if (typeof v === 'object') return v.label || v.name || ''; return String(v); }
   function currentText(f, rec) {
+    if (f.get) return f.get(rec) || '';
     var v = f.std ? rec[f.std] : cfVal(rec, f.cf);
-    if (f.kind === 'lov') return lovLabel(v);
+    if (f.kind === 'lov' || f.kind === 'lovm') return lovLabel(v);
+    if (f.kind === 'date' || f.kind === 'datetime') return v ? String(v).slice(0, 10) : '';
     if (f.kind === 'bool') return v === true ? 'Ticked' : v === false ? 'Not ticked' : '';
     if (f.kind === 'rich' || f.kind === 'list' || f.kind === 'alts') return htmlToText(v);
     if (f.kind === 'num') return v == null ? '' : String(Number(v));
@@ -225,12 +266,18 @@
   function renderPrime() {
     var rec = S.pcRec;
     $('#pc-table tbody').innerHTML = FIELDS.map(function (f) {
+      if (f.section) return '<tr class="cd-sec"><td colspan="4">' + esc(f.section) + '</td></tr>';
       var cur = currentText(f, rec), p = S.proposals[f.key], val = p && p.value != null ? p.value : (cur || f.dflt || '');
       var input;
-      if (f.kind === 'lov') {
+      if (f.kind === 'ro') {
+        input = '<span class="bh-caption">Edit in Procore</span>';
+      } else if (f.kind === 'lov' || f.kind === 'lovm') {
         var opts = S.lov[f.cf] || [];
-        var curLabel = typeof val === 'string' ? val : lovLabel(val);
-        input = '<select data-k="' + f.key + '"><option value=""></option>' + opts.map(function (o) { return '<option value="' + o.id + '"' + (o.label === curLabel ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join('') + '</select>';
+        var curLabel = String(typeof val === 'string' ? val : lovLabel(val)).toLowerCase(), picks = curLabel.split(/\s*,\s*/);
+        var isSel = function (o) { var l = String(o.label).toLowerCase(); return f.kind === 'lovm' ? picks.indexOf(l) >= 0 || (curLabel && curLabel.indexOf(l) >= 0) : l === curLabel; };
+        input = '<select data-k="' + f.key + '"' + (f.kind === 'lovm' ? ' multiple size="' + Math.min(4, Math.max(2, opts.length)) + '"' : '') + '>' + (f.kind === 'lovm' ? '' : '<option value=""></option>') + opts.map(function (o) { return '<option value="' + o.id + '"' + (isSel(o) ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join('') + '</select>';
+      } else if (f.kind === 'date' || f.kind === 'datetime') {
+        input = '<input type="date" data-k="' + f.key + '" value="' + esc(String(val || '').slice(0, 10)) + '">';
       } else if (f.kind === 'bool') {
         var on = p ? !!p.value : cfVal(rec, f.cf) === true;
         input = '<label><input type="checkbox" data-k="' + f.key + '"' + (on ? ' checked' : '') + '> Owner requires its own system</label>';
@@ -312,7 +359,9 @@
       var f = res.fields || {};
       S.proposals = {};
       var map = { retainage_percent: 'retainage_percent', retainage_duration: 'retainage_duration', contract_date: 'contract_date', tax_exempt: 'tax_exempt', liquidated_damages: 'liquidated_damages',
-        payment_terms: 'payment_terms', sub_project_items: 'sub_project_items', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment', owner_additional_insureds: 'owner_additional_insureds' };
+        payment_terms: 'payment_terms', sub_project_items: 'sub_project_items', contract_type: 'contract_type', aia_form: 'aia_form', cost_plus_percent: 'cost_plus_percent', split_savings_percent: 'split_savings_percent',
+        performance_payment_bond: 'pp_bond', change_order_terms: 'change_order_terms', weather_delays: 'weather_delays', owner_delays: 'owner_delays', claims: 'claims', contract_start_date: 'contract_start_date',
+        substantial_completion_date: 'substantial_completion_date', contract_estimated_completion_date: 'contract_estimated_completion_date', description: 'description', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment', owner_additional_insureds: 'owner_additional_insureds' };
       var empty = function (v) { return v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length); };
       Object.keys(map).forEach(function (k) { if (f[k] && !empty(f[k].value)) S.proposals[map[k]] = f[k]; });
       if (f.owner_platform && f.owner_platform.value) S.proposals.owner_platform = { value: true, source: f.owner_platform.source, quote: 'Owner system: ' + f.owner_platform.value };
@@ -338,6 +387,10 @@
         var el = $('[data-k="' + f.key + '"]'); if (!el) return;
         var cur = currentText(f, rec), v;
         if (f.kind === 'bool') { v = el.checked; if (v === (cfVal(rec, f.cf) === true)) return; }
+        else if (f.kind === 'ro') return;
+        else if (f.kind === 'lovm') { var ids = Array.prototype.slice.call(el.selectedOptions).map(function (o) { return Number(o.value); }).sort(); var curIds = (cfVal(rec, f.cf) || []).map(function (x) { return Number(x.id); }).sort(); if (!ids.length || ids.join() === curIds.join()) return; v = ids; }
+        else if (f.kind === 'date') { if (!el.value || el.value === cur) return; v = el.value; }
+        else if (f.kind === 'datetime') { if (!el.value || el.value === cur) return; v = el.value + 'T18:00:00Z'; }
         else if (f.kind === 'lov') { if (!el.value) return; var o = (S.lov[f.cf] || []).find(function (x) { return String(x.id) === el.value; }); if (o && o.label === cur) return; v = Number(el.value); }
         else if (f.kind === 'rich' || f.kind === 'list' || f.kind === 'alts') { if (normCmp(el.value) === normCmp(cur) || !el.value.trim()) return; v = toRich(f.kind, el.value); }
         else if (f.kind === 'num') { if (el.value === '' || Number(el.value) === Number(cur)) return; v = Number(el.value); }
@@ -405,11 +458,11 @@
     return '';
   }
   function newRow(seed) {
-    return Object.assign({ id: Math.random().toString(36).slice(2), type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', proposalDate: '', adds: '', bMode: '', ownB: null, items: (function () { try { var T = pcTerms(); return T ? T.items.join('\n') : ''; } catch (_) { return ''; } })(), equipAvail: false, inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
+    return Object.assign({ id: Math.random().toString(36).slice(2), open: true, type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', proposalDate: '', adds: '', bMode: '', ownB: null, items: (function () { try { var T = pcTerms(); return T ? T.items.join('\n') : ''; } catch (_) { return ''; } })(), equipAvail: false, inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
   }
   async function renderRows() {
     var host = $('#cm-rows'), T = pcTerms();
-    $('#cm-add').disabled = $('#cm-paste').disabled = $('#cm-create').disabled = true;
+    $('#cm-add').disabled = $('#cm-paste').disabled = $('#cm-bfiles').disabled = $('#cm-create').disabled = true;
     if (!S.project) { host.innerHTML = ''; return; }
     if (!T) { $('#cm-pc').innerHTML = 'No prime contract in Procore for this job.'; host.innerHTML = ''; return; }
     $('#cm-pc').innerHTML = '<span>Retainage <b>' + T.retPct + '% ' + esc(T.retDuration) + '</b></span><span>Monthly Billing Date <b>' + esc(T.billing) + '</b></span><span>Tax exempt <b>' + (T.taxExempt ? 'Yes' : 'No') + '</b></span><span>Platform <b>' + (T.ownerPlatform ? 'Owner system' : 'Procore') + '</b></span><span>Owner rules <b>' + T.items.length + '</b></span><span>Alternates <b>' + T.alternates.length + '</b></span>';
@@ -417,7 +470,7 @@
     host.innerHTML = '<p class="bh-caption">Loading vendors, cost codes and existing commitments&hellip;</p>';
     await loadRef();
     if (!S.rows.length) S.rows.push(newRow());
-    $('#cm-add').disabled = $('#cm-paste').disabled = $('#cm-create').disabled = false;
+    $('#cm-add').disabled = $('#cm-paste').disabled = $('#cm-bfiles').disabled = $('#cm-create').disabled = false;
     drawRows();
   }
   function drawRows() {
@@ -437,8 +490,8 @@
       var signed = acked(row, iss), hasWarn = iss.some(function (x) { return !x.bad; });
       var state = iss.some(function (x) { return x.bad; }) ? '<span class="bh-chip is-bad">Blocked</span>' : !signed ? '<span class="bh-chip is-warn">Needs PM sign-off</span>' : hasWarn ? '<span class="bh-chip is-ok">Signed off</span>' : '<span class="bh-chip is-ok">Validated</span>';
       if (row.done) state = '<span class="bh-chip">Created ' + esc(row.done) + '</span>';
-      return '<div class="cd-row" data-i="' + i + '"><div class="cd-row-h"><span class="num">' + esc(row.number) + '</span><span class="ttl">' + esc(row.title || 'New commitment') + ' · ' + money(total) + '</span>' + state +
-        '<button class="bh-btn-outline" data-act="del">Remove</button></div><div class="cd-row-b">' +
+      return '<div class="cd-row" data-i="' + i + '"><div class="cd-row-h"><span class="num">' + esc(row.number) + '</span><span class="ttl">' + esc(row.title || 'New commitment') + ' · ' + esc(vendorName(row.vendorId)) + ' · ' + money(total) + '</span>' + issueSummary(iss) + state +
+        '<button class="bh-btn-outline" data-act="toggle">' + (row.open ? 'Hide details' : 'Details') + '</button><button class="bh-btn-outline" data-act="del">Remove</button></div>' + (!row.open ? '</div>' : '<div class="cd-row-b">' +
         '<label>Type<select data-f="type">' + Object.keys(TYPES).map(function (k) { return '<option value="' + k + '"' + (k === row.type ? ' selected' : '') + '>' + TYPES[k].label + '</option>'; }).join('') + '</select></label>' +
         '<label class="wide">Vendor<select data-f="vendorId">' + vOpts(row.vendorId) + '</select></label>' +
         '<label>P&amp;P bond required<select data-f="bond"><option' + (row.bond === 'No' ? ' selected' : '') + '>No</option><option' + (row.bond === 'Yes' ? ' selected' : '') + '>Yes</option></select></label>' +
@@ -466,9 +519,23 @@
         '<label class="wide">Rider<select data-f="riderPick">' + riderOpts(row) + '</select></label>' +
         '<div class="wide bh-caption" style="align-self:end">Attachments: ' + (lf ? 'A (copied from the job), ' : '') + T.att.map(function (a) { return a === 'B' ? (own ? 'B (yours)' : 'B (built)') : a; }).join(', ') + (row.type === 'SF' ? ' (Short Form F version not in the templates yet; the Subcontract F is used)' : '') + '</div>' +
         (iss.length ? '<ul class="cd-issues">' + iss.map(function (x) { return '<li class="' + (x.bad ? 'bad' : 'warn') + '">' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '') +
-        (hasWarn && !iss.some(function (x) { return x.bad; }) ? '<label class="cd-ack"><input type="checkbox" data-ack' + (signed ? ' checked' : '') + '> I reviewed these warnings and they are right for this commitment. I am the validator of record (' + esc(S.me ? S.me.name || S.me.login : 'me') + ').</label>' : '') +
-        '</div></div>';
-    }).join('');
+        '</div></div>');
+    }).join('') + signoffPanel();
+  }
+  function vendorName(id) { var v = S.ref && S.ref.vendors.find(function (x) { return String(x.id) === String(id); }); return v ? v.name : 'no vendor'; }
+  function issueSummary(iss) {
+    var nb = iss.filter(function (x) { return x.bad; }).length, nw = iss.length - nb;
+    return nb ? '<span class="cd-sum bad">' + nb + ' to fix</span>' : nw ? '<span class="cd-sum warn">' + nw + ' warning' + (nw > 1 ? 's' : '') + '</span>' : '';
+  }
+  /* one sign-off for every warning in the batch; red items still block their own rows */
+  function signoffPanel() {
+    var pend = S.rows.filter(function (r) { return !r.done; }).map(function (r) { return { r: r, iss: issues(r) }; })
+      .filter(function (x) { return !x.iss.some(function (i) { return i.bad; }) && warnKey(x.iss); });
+    if (!pend.length) return '';
+    var all = pend.every(function (x) { return acked(x.r, x.iss); }), n = pend.reduce(function (s, x) { return s + x.iss.length; }, 0);
+    return '<div class="cd-signoff"><div class="bh-section-title">Warnings to sign off (' + n + ' on ' + pend.length + ' commitment' + (pend.length > 1 ? 's' : '') + ')</div><ul>' +
+      pend.map(function (x) { return '<li><b>' + esc(x.r.number) + ' ' + esc(x.r.title) + '</b> · ' + esc(vendorName(x.r.vendorId)) + '<ul>' + x.iss.map(function (i) { return '<li>' + esc(i.t) + '</li>'; }).join('') + '</ul></li>'; }).join('') +
+      '</ul><label class="cd-ack"><input type="checkbox" data-ack-all' + (all ? ' checked' : '') + '> I reviewed every warning above and they are right for these commitments. I am the validator of record (' + esc(S.me ? S.me.name || S.me.login : 'me') + ').</label></div>';
   }
   /* the prime contract's accepted alternates, as one-click lines for the cost table (the PM adds this trade partner's amount) */
   function pcAltName(label) { return String(label).replace(/\s*[-–]?\s*\$[\d,]+(\.\d+)?\s*$/, '').trim(); }
@@ -622,17 +689,22 @@
   function bindRows() {
     var host = $('#cm-rows');
     host.addEventListener('change', function (e) {
+      if (e.target.hasAttribute('data-ack-all')) {
+        S.rows.forEach(function (r) { if (r.done) return; var iss = issues(r); if (!iss.some(function (x) { return x.bad; })) r.ackKey = e.target.checked ? warnKey(iss) : ''; });
+        drawRows(); return;
+      }
       var rEl = e.target.closest('.cd-row'); if (!rEl) return;
       var row = S.rows[+rEl.dataset.i], f = e.target.dataset.f, l = e.target.dataset.l;
       if (e.target.hasAttribute('data-ack')) { row.ackKey = e.target.checked ? warnKey(issues(row)) : ''; drawRows(); return; }
       if (e.target.hasAttribute('data-own-b')) { readOwnB(row, e.target.files && e.target.files[0]); return; }
-      if (f) { row[f] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; if (f === 'vendorId' || f === 'type') { row.rider = null; row.riderPick = ''; if (row.vendorId) findRider(row); } }
+      if (f) { row[f] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; if (f === 'vendorId' || f === 'type') { row.rider = null; row.riderPick = ''; if (row.vendorId) findRider(row); } if (f === 'vendorId') row.signatoryId = pickSignatory(row.vendorId, ''); }
       if (l) { var j = +e.target.closest('tr').dataset.j; row.lines[j][l] = e.target.value; }
       drawRows();
     });
     host.addEventListener('click', function (e) {
       var b = e.target.closest('[data-act]'); if (!b) return;
       var rEl = b.closest('.cd-row'), row = S.rows[+rEl.dataset.i];
+      if (b.dataset.act === 'toggle') row.open = !row.open;
       if (b.dataset.act === 'del') S.rows.splice(+rEl.dataset.i, 1);
       if (b.dataset.act === 'addalt') row.adds = (String(row.adds || '').trim() ? String(row.adds).replace(/\s+$/, '') + '\n' : '') + b.dataset.alt + ' | ';
       if (b.dataset.act === 'al') row.lines.push({ costCodeId: '', typeId: '', desc: '', amount: '' });
@@ -640,9 +712,81 @@
       drawRows();
     });
     $('#cm-add').onclick = function () { S.rows.push(newRow()); drawRows(); };
-    $('#cm-paste').onclick = function () { $('#paste-text').value = ''; $('#dlg-paste').showModal(); };
-    $('#dlg-paste').addEventListener('close', function () { if ($('#dlg-paste').returnValue === 'ok') pasteRows($('#paste-text').value); });
+    $('#cm-paste').onclick = function () { $('#cm-xlsx').click(); };
+    $('#cm-xlsx').onchange = function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) importWorkbook(f); };
+    $('#cm-bfiles').onclick = function () { $('#cm-bin').click(); };
+    $('#cm-bin').onchange = function (e) { var fs = Array.prototype.slice.call(e.target.files || []); e.target.value = ''; addOwnBFiles(fs); };
     $('#cm-create').onclick = createReady;
+  }
+  /* ---- bulk workbook (Commitments + Lines sheets) ---- */
+  function typeOfLabel(s) { s = String(s).toLowerCase(); return /long/.test(s) ? 'LF' : /short/.test(s) ? 'SF' : /psa|professional/.test(s) ? 'PSA' : /off/.test(s) ? 'POOFF' : /po|purchase/.test(s) ? 'POON' : 'LF'; }
+  function xlDate(v, weekday) {   // Excel stores a typed date as a day number
+    if (!/^\d+(\.\d+)?$/.test(v) || Number(v) < 20000) return v;
+    var d = new Date(Date.UTC(1899, 11, 30) + Math.floor(Number(v)) * 864e5);
+    return d.toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' }, weekday ? { weekday: 'long' } : {}));
+  }
+  function pickSignatory(vendorId, name) {
+    if (!vendorId || !S.ref) return '';
+    var uname = function (u) { return u.name || ((u.first_name || '') + ' ' + (u.last_name || '')); };
+    var list = S.ref.users.filter(function (u) { return u.vendor && String(u.vendor.id) === String(vendorId); }), nm = normName(name);
+    var hit = nm && (list.find(function (u) { return normName(uname(u)) === nm; }) || list.find(function (u) { return normName(uname(u)).indexOf(nm) >= 0 || String(u.email_address || '').toLowerCase() === String(name).toLowerCase(); }));
+    if (hit) return String(hit.id);
+    return list.length === 1 ? String(list[0].id) : '';
+  }
+  async function importWorkbook(file) {
+    var R = S.ref, T = pcTerms();
+    msg('Reading ' + file.name + '…');
+    try {
+      var wb = await BHDocs.readXlsx(new Uint8Array(await file.arrayBuffer()));
+      var sheet = function (n) { var k = Object.keys(wb).find(function (x) { return x.trim().toLowerCase() === n; }); return k ? wb[k] : null; };
+      var C = sheet('commitments'), L = sheet('lines');
+      if (!C || !L) throw new Error('it needs a Commitments sheet and a Lines sheet. Download the bulk template from this page.');
+      var hdr = function (rows) { var h = (rows[0] || []).map(function (x) { return String(x || '').trim().toLowerCase(); }); return function (row, name) { var i = h.indexOf(name); return i < 0 || !row ? '' : String(row[i] == null ? '' : row[i]).trim(); }; };
+      var gc = hdr(C), gl = hdr(L), add = [], unknown = [], probs = [], lines = {};
+      L.slice(1).forEach(function (r) { var ref = gl(r, 'ref'); if (ref) (lines[ref] = lines[ref] || []).push(r); });
+      C.slice(1).forEach(function (r) {
+        if (!gc(r, 'vendor') && !gc(r, 'title')) return;
+        var ref = gc(r, 'ref'), vn = gc(r, 'vendor');
+        var v = R.vendors.find(function (x) { return normName(x.name) === normName(vn); }) || R.vendors.find(function (x) { return normName(vn) && normName(x.name).indexOf(normName(vn)) === 0; });
+        if (!v) unknown.push(vn || '(blank vendor)');
+        var type = typeOfLabel(gc(r, 'type')), b = gc(r, 'attachment b').toLowerCase(), extra = gc(r, 'extra section b items');
+        var row = newRow({ open: false, ref: ref, type: type, vendorId: v ? String(v.id) : '', title: gc(r, 'title'), bond: /^y/i.test(gc(r, 'p&p bond required')) ? 'Yes' : 'No',
+          bMode: type === 'LF' ? (/^own/.test(b) ? 'own' : /^build/.test(b) ? 'build' : '') : '', ownBName: gc(r, 'own b file name'),
+          scopeName: gc(r, 'scope name'), submittalDate: xlDate(gc(r, 'submittal deadline'), true), csi: gc(r, 'spec sections'), proposalDate: xlDate(gc(r, 'proposal date')),
+          adds: gc(r, 'alternates and adds'), items: (T ? T.items.join('\n') : '') + (extra ? '\n' + extra : ''), inclusions: gc(r, 'scope inclusions'), exclusions: gc(r, 'accepted exclusions'),
+          equipAvail: /^y/i.test(gc(r, 'bh equipment available')), description: gc(r, 'description'), lines: [] });
+        row.signatoryId = pickSignatory(row.vendorId, gc(r, 'vendor signatory'));
+        (lines[ref] || []).forEach(function (l) {
+          var code = gl(l, 'cost code').replace(/\s/g, ''), tc = gl(l, 'cost type').toUpperCase().charAt(0);
+          var cc = R.costCodes.find(function (x) { return String(x.full_code || x.code || '').replace(/\s/g, '') === code; });
+          var tt = R.types.find(function (x) { return typeCode(x) === tc; });
+          row.lines.push({ costCodeId: cc ? String(cc.id) : '', typeId: tt ? String(tt.id) : '', desc: gl(l, 'description') || row.title, amount: num(gl(l, 'amount')) });
+        });
+        if (!row.lines.length) { probs.push('Ref ' + (ref || '?') + ' (' + row.title + ') has no lines on the Lines sheet'); row.lines.push({ costCodeId: '', typeId: '', desc: '', amount: '' }); }
+        add.push(row);
+      });
+      if (!add.length) throw new Error('no commitments on the Commitments sheet.');
+      if (S.rows.length === 1 && !S.rows[0].vendorId && !S.rows[0].title) S.rows = [];
+      S.rows = S.rows.concat(add);
+      add.forEach(function (r) { if (r.vendorId) findRider(r); });
+      drawRows();
+      var note = add.length + ' commitment(s) loaded from ' + file.name + '. Open a row with Details to check or change it.', own = add.filter(function (r) { return r.bMode === 'own'; }).length;
+      if (unknown.length) note += ' Not in the project directory, pick these vendors on their rows: ' + unknown.join(', ') + '.';
+      if (probs.length) note += ' ' + probs.join('; ') + '.';
+      if (own) note += ' ' + own + ' Long Form(s) use their own Attachment B: click Add Attachment B files.';
+      msg(note, !!(unknown.length || probs.length));
+    } catch (e) { msg('Could not read the workbook: ' + e.message, true); }
+  }
+  function addOwnBFiles(files) {
+    var want = S.rows.filter(function (r) { return !r.done && r.type === 'LF' && r.bMode === 'own'; }), unmatched = [];
+    if (!want.length) { msg('No Long Form is set to use its own Attachment B. Set Attachment B to "Upload my own" first.', true); return; }
+    files.forEach(function (f) {
+      var lower = f.name.toLowerCase(), key = normName(f.name.replace(/\.[^.]+$/, ''));
+      var row = want.find(function (r) { return r.ownBName && r.ownBName.trim().toLowerCase() === lower; }) ||
+        want.find(function (r) { var v = S.ref.vendors.find(function (x) { return String(x.id) === String(r.vendorId); }); return !r.ownBName && v && key.indexOf(normName(v.name).slice(0, 10)) >= 0; });
+      if (row) readOwnB(row, f); else unmatched.push(f.name);
+    });
+    msg(unmatched.length ? 'Not matched to a Long Form set to its own B: ' + unmatched.join(', ') + '. Check the vendor name, or the Own B file name column.' : files.length + ' Attachment B file(s) matched and checked.', !!unmatched.length);
   }
   function pasteRows(text) {
     var R = S.ref, typeOf = function (s) { s = String(s).toLowerCase(); return /long/.test(s) ? 'LF' : /short/.test(s) ? 'SF' : /psa|professional/.test(s) ? 'PSA' : /off/.test(s) ? 'POOFF' : /po|purchase/.test(s) ? 'POON' : 'LF'; };
