@@ -451,7 +451,8 @@
               '<label class="wide">Submittal deadline<input data-f="submittalDate" value="' + esc(row.submittalDate) + '" placeholder="e.g. Friday, December 18, 2026"></label>' +
               '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>' +
               '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
-              '<label class="full">Alternates and adds in this price (cost table), one per line: description | amount. Base Bid is the commitment total less these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
+              '<label class="full">Alternates and adds in this trade partner\'s price (cost table). One per line: description | amount. Base Bid = commitment total minus these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
+              altPicks(row) +
               '<label class="full">Project specific items (Section B), one per line. Starts from the prime contract; edit for this trade partner.<textarea data-f="items" rows="6">' + esc(row.items) + '</textarea></label>' +
               '<label class="full cd-check"><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '><span>Let this trade partner use BH equipment on site for loading/unloading, with a usage agreement. Leave unticked for the standard General Item 33 (BH equipment not available).</span></label>'
             : '') +
@@ -467,6 +468,17 @@
         (hasWarn && !iss.some(function (x) { return x.bad; }) ? '<label class="cd-ack"><input type="checkbox" data-ack' + (signed ? ' checked' : '') + '> I reviewed these warnings and they are right for this commitment. I am the validator of record (' + esc(S.me ? S.me.name || S.me.login : 'me') + ').</label>' : '') +
         '</div></div>';
     }).join('');
+  }
+  /* the prime contract's accepted alternates, as one-click lines for the cost table (the PM adds this trade partner's amount) */
+  function pcAltName(label) { return String(label).replace(/\s*[-–]?\s*\$[\d,]+(\.\d+)?\s*$/, '').trim(); }
+  function altPicks(row) {
+    var T = pcTerms(), alts = (T ? T.alternates : []).filter(function (a) { return /^accepted/i.test(a.status) && !/^base bid/i.test(a.label); });
+    if (!alts.length) return '<div class="full bh-caption">No accepted alternates on the prime contract.</div>';
+    var inAdds = parseAdds(row.adds).map(function (a) { return a.desc.toLowerCase(); });
+    return '<div class="full bh-caption">Accepted on the prime contract (all go in Attachment B\'s alternates table). Add one to this price: ' + alts.map(function (a) {
+      var n = pcAltName(a.label), used = inAdds.indexOf(n.toLowerCase()) >= 0;
+      return '<button class="bh-btn-outline" data-act="addalt" data-alt="' + esc(n) + '"' + (used ? ' disabled' : '') + ' style="margin:2px 4px 2px 0">' + esc(n) + (used ? ' ✓' : '') + '</button>';
+    }).join('') + '</div>';
   }
   function riderOpts(row) {
     if (!row.vendorId) return '<option value="">Pick a vendor first</option>';
@@ -591,6 +603,16 @@
       var addSum = adds.reduce(function (s, a) { return s + a.amount; }, 0);
       if (adds.length && total - addSum <= 0) bad('Cost table: the alternates and adds (' + money(addSum) + ') are more than the commitment total (' + money(total) + '); the lines should include them.');
       if (!row.proposalDate.trim()) warn('No proposal date; the cost table will say "Base Bid" without a date.');
+      // edits that move away from the prime contract or the BH standard
+      var pcItems = T.items.map(function (x) { return x.trim().toLowerCase(); }), mine = linesOf(row.items).map(function (x) { return x.trim().toLowerCase(); });
+      var dropped = T.items.filter(function (x, k) { return mine.indexOf(pcItems[k]) < 0; });
+      if (String(row.items || '').trim() && dropped.length) warn('Section B leaves out ' + dropped.length + ' prime contract item(s): ' + dropped.map(function (x) { return '"' + x.slice(0, 50) + (x.length > 50 ? '…' : '') + '"'; }).join('; ') + '.');
+      if (row.equipAvail) warn('General Item 33 changed: BH equipment will be available to this trade partner for loading/unloading.');
+      var exl = linesOf(row.exclusions).join(' \n ');
+      if (/\bbond/i.test(exl) && row.bond === 'Yes') bad('Exclusions list bonds, but this commitment requires a P&P bond.');
+      if (/sales\s*tax/i.test(exl) && !T.taxExempt) bad('Exclusions list sales tax, but this job is not tax exempt: the price must include sales tax on materials.');
+      if (/retainage|retention/i.test(exl)) warn('Exclusions mention retainage; retainage terms come from the prime contract (' + T.retPct + '% ' + T.retDuration + ').');
+      if (/tax[- ]exempt|tax exemption/i.test(linesOf(row.inclusions).join(' ')) && !T.taxExempt) bad('Inclusions mention a tax exemption, but this job is not tax exempt.');
     }
     if (row.rider && row.rider.matches && row.rider.matches.length > 1 && !row.riderPick) bad('Several approved riders match this vendor; pick one.');
     if (!row.number) bad('No free commitment number left in the ' + TYPES[row.type].series + ' series.');
@@ -611,6 +633,7 @@
       var b = e.target.closest('[data-act]'); if (!b) return;
       var rEl = b.closest('.cd-row'), row = S.rows[+rEl.dataset.i];
       if (b.dataset.act === 'del') S.rows.splice(+rEl.dataset.i, 1);
+      if (b.dataset.act === 'addalt') row.adds = (String(row.adds || '').trim() ? String(row.adds).replace(/\s+$/, '') + '\n' : '') + b.dataset.alt + ' | ';
       if (b.dataset.act === 'al') row.lines.push({ costCodeId: '', typeId: '', desc: '', amount: '' });
       if (b.dataset.act === 'dl') { row.lines.splice(+b.closest('tr').dataset.j, 1); if (!row.lines.length) row.lines.push({ costCodeId: '', typeId: '', desc: '', amount: '' }); }
       drawRows();
@@ -646,7 +669,8 @@
   async function createReady() {
     var ready = S.rows.filter(function (r) { var iss = issues(r); return !r.done && !iss.some(function (x) { return x.bad; }) && acked(r, iss); });
     if (!ready.length) { msg('No rows are validated. Fix the items marked in red, and sign off the warnings, first.', true); return; }
-    if (!confirm('Create ' + ready.length + ' Draft commitment(s) in Procore on ' + (S.project.project_number || S.project.name) + '?')) return;
+    var withWarn = ready.filter(function (r) { return warnKey(issues(r)); }).map(function (r) { return r.number; });
+    if (!confirm('Create ' + ready.length + ' Draft commitment(s) in Procore on ' + (S.project.project_number || S.project.name) + '?' + (withWarn.length ? '\n\n' + withWarn.join(', ') + ' differ from the prime contract or the BH standard, and you signed off the warnings. Continue?' : ''))) return;
     $('#cm-create').disabled = true; $('#cm-log').textContent = '';
     for (var i = 0; i < ready.length; i++) {
       try { await createOne(ready[i]); }
