@@ -831,7 +831,7 @@ function saveMaint(){
 
 /* ---- SR detail ---- */
 let srUI = {id:null, addTask:false, labor:null, part:null, qc:false};
-function viewSR(id){ srUI = {id, addTask:false, labor:null, part:null, qc:false}; drawSR(true); }
+function viewSR(id){ srUI = {id, addTask:false, labor:null, part:null, editPart:null, qc:false}; drawSR(true); }
 function drawSR(first){
   const m = srById(srUI.id); if (!m) { closeModal(); return; }
   const it = itemById(m.itemId), edit = can("shop") && m.status==="Open", days = srDays(m), late = m.status==="Open" && days > srTarget();
@@ -849,8 +849,8 @@ function drawSR(first){
   }
   const taskHtml = (m.tasks||[]).map((t,ti)=>{ const hrs = (t.labor||[]).reduce((a,l)=>a+(+l.hours||0),0);
     const lab = (t.labor||[]).map((l,li)=>`<tr><td class="num">${fmtDate(l.date+"T00:00")}</td><td>${esc(l.who)}</td><td class="num" style="text-align:right">${l.hours}</td><td class="muted">${esc(l.note||"")}</td><td>${edit?`<button class="del" data-act="sr-labor-del" data-t="${ti}" data-i="${li}" aria-label="Remove labor">×</button>`:""}</td></tr>`).join("");
-    const prt = (t.parts||[]).map((p,pi)=>`<tr><td><b>${esc(p.name)}</b>${p.partNo?`<div class="small muted num">${esc(p.partNo)}</div>`:""}</td><td class="small">${p.invId?"From inventory":esc(p.vendor||"Vendor")}${p.po?`<div class="muted">PO ${esc(p.po)}</div>`:""}</td><td class="num" style="text-align:right">${p.qty}</td><td class="num" style="text-align:right">${money((+p.qty||0)*(+p.cost||0))}</td>
-      <td>${edit?`<select class="sm-select" data-change="sr-part-status" data-t="${ti}" data-i="${pi}" aria-label="Part status">${PART_STATUS.map(s=>`<option ${s===p.status?"selected":""}>${s}</option>`).join("")}</select>`:chipFor(p.status)}</td><td>${edit?`<button class="del" data-act="sr-part-del" data-t="${ti}" data-i="${pi}" aria-label="Remove part">×</button>`:""}</td></tr>`).join("");
+    const prt = (t.parts||[]).map((p,pi)=> edit && srUI.editPart===ti+":"+pi ? srPartEditRow(ti,pi,p) : `<tr><td><b>${esc(p.name)}</b>${p.partNo?`<div class="small muted num">${esc(p.partNo)}</div>`:""}</td><td class="small">${p.invId?"From inventory":esc(p.vendor||"Vendor")}${p.po?`<div class="muted">PO ${esc(p.po)}</div>`:""}</td><td class="num" style="text-align:right">${p.qty}</td><td class="num" style="text-align:right">${money((+p.qty||0)*(+p.cost||0))}</td>
+      <td>${edit?`<select class="sm-select" data-change="sr-part-status" data-t="${ti}" data-i="${pi}" aria-label="Part status">${PART_STATUS.map(s=>`<option ${s===p.status?"selected":""}>${s}</option>`).join("")}</select>`:chipFor(p.status)}</td><td style="white-space:nowrap">${edit?`<button class="linkbtn small" data-act="sr-part-edit" data-t="${ti}" data-i="${pi}">Edit</button> <button class="del" data-act="sr-part-del" data-t="${ti}" data-i="${pi}" aria-label="Remove part">×</button>`:""}</td></tr>`).join("");
     const lf = srUI.labor===ti, pf = srUI.part===ti;
     return `<div class="sr-task ${t.status==="Complete"?"is-done":t.status==="Cancelled"?"is-cancel":""}">
       <div class="sr-task-h"><span class="sr-task-n">Task ${ti+1}</span>
@@ -908,6 +908,13 @@ function drawSR(first){
   if (first || !$("#sr-body")) openModal(html, "sr");
   else { const y = $("#sr-body").scrollTop; $("#modal-root .modal").innerHTML = html; applyPerms($("#modal-root")); $("#sr-body").scrollTop = y; }
 }
+function srPartEditRow(ti, pi, p){
+  return `<tr class="sr-form-row"><td colspan="6"><div class="sr-partform">
+    <input id="pe-name" value="${esc(p.name)}" placeholder="Part name" aria-label="Part name"><input id="pe-no" value="${esc(p.partNo||"")}" placeholder="Part #" aria-label="Part number">
+    ${p.invId?`<span class="small muted" style="align-self:center">From inventory</span>`:`<input id="pe-vendor" value="${esc(p.vendor||"")}" placeholder="Vendor" aria-label="Vendor">`}<input id="pe-po" value="${esc(p.po||"")}" placeholder="PO #" aria-label="PO number">
+    <input id="pe-qty" type="number" step="0.1" min="0" value="${esc(p.qty)}" aria-label="Quantity"><input id="pe-cost" type="number" step="0.01" min="0" value="${esc(p.cost??"")}" placeholder="Unit cost" aria-label="Unit cost">
+    <button class="btn sm primary" data-act="sr-part-save" data-t="${ti}" data-i="${pi}">Save</button><button class="btn sm" data-act="sr-form-cancel">×</button></div></td></tr>`;
+}
 function srChange(fn, msg){ const m = srById(srUI.id); fn(m); srSync(m); save(); drawSR(); rerender(); if (msg) toast(msg); }
 function srAction(act, ds){
   const m = srById(srUI.id); if (!m) return false;
@@ -925,7 +932,7 @@ function srAction(act, ds){
     case "sr-task-add": { const subj = v("tk-subj"); if (!subj){ toast("Name the task"); return true; }
       srChange(m=>{ m.tasks.push({id:uid("t"), subject:subj, code:v("tk-code"), status:"Open", owner:v("tk-owner"), planned:v("tk-plan"), labor:[], parts:[]}); srLog(m, `Task added: ${subj}`); }); srUI.addTask = false; drawSR(); return true; }
     case "sr-task-del": srChange(m=>{ const [t] = m.tasks.splice(+ds.t,1); srLog(m, `Task removed: ${t.subject}`); }); return true;
-    case "sr-form-cancel": srUI.addTask = false; srUI.labor = srUI.part = null; drawSR(); return true;
+    case "sr-form-cancel": srUI.addTask = false; srUI.labor = srUI.part = srUI.editPart = null; drawSR(); return true;
     case "sr-labor-new": srUI.labor = +ds.t; srUI.part = null; srUI.addTask = false; drawSR(); $("#lb-hrs")?.focus(); return true;
     case "sr-labor-add": { const h = +v("lb-hrs"); if (!(h>0)){ toast("Enter the hours worked"); return true; }
       srChange(m=>{ const t = m.tasks[+ds.t]; t.labor.push({id:uid("l"), who:v("lb-who"), date:v("lb-date")||toLocalInput(now()).slice(0,10), hours:h, note:v("lb-note")}); if (t.status==="Open") t.status = "In work"; if (m.stage==="Accepted") { m.stage = "In work"; srLog(m, "Status → In work"); } srLog(m, `${h} hrs logged on "${t.subject}" by ${v("lb-who")||"—"}`); }); srUI.labor = null; drawSR(); return true; }
@@ -934,6 +941,11 @@ function srAction(act, ds){
     case "sr-part-add": { const src = v("pt-src"), inv = S.inventory.find(x=>x.id===src), name = inv ? inv.name : v("pt-name"), qty = +v("pt-qty");
       if (!name){ toast("Name the part"); return true; } if (!(qty>0)){ toast("Enter a quantity"); return true; }
       srChange(m=>{ const t = m.tasks[+ds.t]; t.parts.push({id:uid("p"), invId:inv?inv.id:"", name, partNo:v("pt-no")||(inv?.sku||""), vendor:inv?"":v("pt-vendor"), po:v("pt-po"), qty, cost:+v("pt-cost")||+(inv?.unitCost ?? 0)||0, status:v("pt-status")||"Ordered", taken:0}); srLog(m, `Part ${v("pt-status")||"Ordered"}: ${qty} × ${name}${v("pt-po")?` (PO ${v("pt-po")})`:""}`); }); srUI.part = null; drawSR(); return true; }
+    case "sr-part-edit": srUI.editPart = ds.t+":"+ds.i; srUI.part = srUI.labor = null; srUI.addTask = false; drawSR(); $("#pe-cost")?.focus(); return true;
+    case "sr-part-save": { const qty = +v("pe-qty"), name = v("pe-name"); if (!name){ toast("Name the part"); return true; } if (!(qty>0)){ toast("Enter a quantity"); return true; }
+      srChange(m=>{ const p = m.tasks[+ds.t].parts[+ds.i]; if (!p) return; const before = `${p.qty} × ${p.name} @ ${money(+p.cost||0)}`;
+        p.name = name; p.partNo = v("pe-no"); if (!p.invId) p.vendor = v("pe-vendor"); p.po = v("pe-po"); p.qty = qty; p.cost = +v("pe-cost")||0;
+        srLog(m, `Part edited: ${before} → ${p.qty} × ${p.name} @ ${money(p.cost)}`); }); srUI.editPart = null; drawSR(); return true; }
     case "sr-part-del": srChange(m=>{ const t = m.tasks[+ds.t], p = t.parts[+ds.i]; p.status = "Cancelled"; srSync(m); t.parts.splice(+ds.i,1); srLog(m, `Part removed: ${p.name}`); }); return true;
     case "sr-addfile": pickFiles("", true, async files=>{ mdraft = {files:(m.files||[]).slice(), live:m.id}; await addDocs(files); }); return true;
     case "sr-print": { const doc = srDoc(m); if (IN_VIEWER) saveFile(`${srNo(m)}-${slug(itemById(m.itemId)?.name||"asset")}.html`, srDoc(m, true), "text/html;charset=utf-8"); else printHtmlDoc(doc); return true; }
@@ -2588,7 +2600,7 @@ mapPerm("checkout","co-undo co-new co-item co-save co-in co-bulkin coin-save sto
 mapPerm("assets","group-combine group-combine-save a-retire a-restore a-hours-save a-photo-add a-photo-del a-photo-primary dup-item a-hours new-item edit-item save-item del-item stock-new stock-edit stock-save stock-del group-new group-edit group-save group-del");
 mapPerm("request","rq-add rq-remove rq-inc rq-dec rq-clear rq-review rq-line-del rq-send rq-cancel");
 mapPerm("admin","rq-decline rq-approve rq-decline-save rq-approve-save rq-order");
-mapPerm("shop","sr-accept sr-stage sr-qc-open sr-qc-pass sr-qc-fail sr-reopen sr-task-new sr-task-add sr-task-del sr-labor-new sr-labor-add sr-labor-del sr-part-new sr-part-add sr-part-del sr-addfile inv-retire inv-restore m-addfile m-file-del new-maint edit-maint save-maint complete-maint del-maint inv-new inv-edit inv-save inv-adj inv-adj-save inv-del m-addpart");
+mapPerm("shop","sr-accept sr-stage sr-qc-open sr-qc-pass sr-qc-fail sr-reopen sr-task-new sr-task-add sr-task-del sr-labor-new sr-labor-add sr-labor-del sr-part-new sr-part-add sr-part-edit sr-part-save sr-part-del sr-addfile inv-retire inv-restore m-addfile m-file-del new-maint edit-maint save-maint complete-maint del-maint inv-new inv-edit inv-save inv-adj inv-adj-save inv-del m-addpart");
 mapPerm("people","new-cust edit-cust new-loc edit-loc save-simple");
 mapPerm("setup","logo-up logo-del add-rate del-rate file-open reset");
 mapPerm("notes","a-comment a-file-add a-file-del");
@@ -3418,7 +3430,7 @@ document.addEventListener("click", e => {
     case "file-save": fileSave(); break;
     case "file-open": fileOpen(); break;
     case "reset": confirmBox("Reset all data?","This replaces every order, asset, customer and service record with the original rate sheet and sample orders. Save a data file first if you want to keep anything.","Reset data",()=>{ S = migrate(seed()); fileHandle=null; save(); render(); toast("Data reset"); }); break;
-    case "gopen": closeModal(); $("#gresults").hidden = true; $("#gsearch").value=""; if (ds.kind==="order") viewOrder(+ds.v); else if (ds.kind==="item") openAsset(ds.v); else if (ds.kind==="stock") go("asset-stock"); else if (ds.kind==="inv") invAdjust(ds.v); else if (ds.kind==="co") openCustodyCheckin([ds.v]); else if (ds.kind==="cust"){ ui.orders.q=custById(ds.v).name; ui.orders.tab="all"; go("orders"); } else { ui.orders.q=locById(ds.v).code; ui.orders.tab="all"; go("orders"); } break;
+    case "gopen": closeModal(); $("#gresults").hidden = true; $("#gsearch").value=""; if (ds.kind==="order") viewOrder(+ds.v); else if (ds.kind==="item") openAsset(ds.v); else if (ds.kind==="stock") go("asset-stock"); else if (ds.kind==="inv"){ const it = S.inventory.find(x=>x.id===ds.v); ui.inv.q = it ? it.name : ""; ui.inv.cat = ""; ui.inv.tab = it && it.retired ? "retired" : "active"; go("inventory"); } else if (ds.kind==="co") openCustodyCheckin([ds.v]); else if (ds.kind==="cust"){ ui.orders.q=custById(ds.v).name; ui.orders.tab="all"; go("orders"); } else { ui.orders.q=locById(ds.v).code; ui.orders.tab="all"; go("orders"); } break;
   }
 });
 document.addEventListener("change", e => {
