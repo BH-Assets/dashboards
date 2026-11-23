@@ -8,7 +8,7 @@
   var API = 'https://contracts-api.baileyharris.com';
   var CID = '15326';
   var CLIENT_ID = '1825a1c0-1ce3-4078-aeb7-a4714562c422', TENANT_ID = '848aa890-7982-4028-befa-3323d82583ce';
-  var SCOPES = ['User.Read', 'Sites.Selected'];
+  var SCOPES = ['User.Read', 'Sites.Selected', 'Mail.Send'];   // Mail.Send: the hub emails payables@ on approval and sends test reminders
   var SP_HOST = 'baileyharris.sharepoint.com';
   var OPS_SITE = '/sites/Operations', OPS_LIB = 'Documents';
   var TEMPLATE_DIR = '03 Forms and Templates/Contract Documents/Commitments';
@@ -174,6 +174,7 @@
     if (!S.project) return;
     await loadPrime();
     renderRows();
+    if (window.BHHub) window.BHHub.job();
     stamp();
   }
 
@@ -253,6 +254,7 @@
     catch (e) { S.pcRec = null; $('#pc-table tbody').innerHTML = '<tr><td colspan="4">' + (e.status === 404 ? 'No prime contract found in Procore for this job. Create it in Procore first (Part 1, step 1 of the PM guide).' : 'Could not load the prime contract: ' + esc(e.message) + '. Pick the job again or reload.') + '</td></tr>'; $('#pc-read').disabled = true; $('#pc-save').disabled = true; return; }
     S.docs = (S.pcRec.attachments || []).filter(function (a) { return /\.pdf$/i.test(a.name || a.filename || ''); }).map(function (a) { return { name: a.name || a.filename, url: a.url, source: 'procore' }; });
     renderDocs(); renderPrime();
+    if (window.BHHub) window.BHHub.summary();
     $('#pc-read').disabled = false; $('#pc-save').disabled = false;
     var by = lovLabel(cfVal(S.pcRec, CF.verifiedBy)) || (cfVal(S.pcRec, CF.verifiedBy) && cfVal(S.pcRec, CF.verifiedBy).name) || '';
     var dt = cfVal(S.pcRec, CF.verifiedDate);
@@ -441,7 +443,8 @@
     R.costCodes = await get('/rest/v1.0/cost_codes?project_id=' + pid);
     R.types = await get('/rest/v1.0/line_item_types?company_id=' + CID);
     var woc = await get('/rest/v1.0/work_order_contracts?project_id=' + pid), poc = await get('/rest/v1.0/purchase_order_contracts?project_id=' + pid);
-    R.numbers = [].concat(Array.isArray(woc) ? woc : [], Array.isArray(poc) ? poc : []).map(function (c) { return String(c.number || ''); });
+    R.woc = Array.isArray(woc) ? woc : []; R.poc = Array.isArray(poc) ? poc : [];
+    R.numbers = [].concat(R.woc, R.poc).map(function (c) { return String(c.number || ''); });
     ['vendors', 'users', 'costCodes', 'types'].forEach(function (k) { if (!Array.isArray(R[k])) { msg('Could not load ' + k + ' from Procore: ' + R[k].error, true); R[k] = []; } });
     R.vendors.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     S.ref = R; return R;
@@ -968,11 +971,13 @@
   function bindNav() {
     var show = function (v) {
       $$('.cd-view').forEach(function (s) { s.hidden = s.id !== 'v-' + v; });
-      $$('.bh-side-item[data-view]').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+      $$('[data-view]').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
       if (v === 'commitments' && S.project) renderRows();
+      if (window.BHHub) window.BHHub.show(v);
     };
-    $$('.bh-side-item[data-view]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); history.replaceState(null, '', '#' + a.dataset.view); show(a.dataset.view); }); });
-    show(/commitments/.test(location.hash) ? 'commitments' : 'prime');
+    $$('[data-view]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); history.replaceState(null, '', '#' + a.dataset.view); show(a.dataset.view); }); });
+    var h = (location.hash.match(/^#(prime|commitments|pay|email)\b/) || [])[1];
+    show(h || 'prime');
     $('#pc-read').onclick = readContract;
     $('#pc-save').onclick = savePrime;
     $('#pc-files').onchange = async function (e) {
@@ -982,6 +987,10 @@
     };
     bindRows();
   }
+
+  /* shared with hub.js (Pay apps and Reminder email tabs) */
+  window.BHDesk = { S: S, CF: CF, pc: pc, pcAll: pcAll, tokens: tokens, G: G, msg: msg, esc: esc, money: money, num: num, htmlToText: htmlToText, linesOf: linesOf,
+    cfVal: cfVal, lovLabel: lovLabel, pcTerms: pcTerms, loadRef: loadRef, account: function () { return acct; } };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
