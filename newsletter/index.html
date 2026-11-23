@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Newsletter · Bailey-Harris</title>
+<link rel="icon" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+/* ===== Bailey-Harris newsletter, built on the launcher's look (preview/index.html)
+   and the BH shell (claude/bh-ui-spec.md). Red, black, slate, cream and light gray
+   are chrome; green / amber / red fills mean status and nothing else.
+   Square corners, no shadows. Tokens come from /bh-shell.css, linked after this. ===== */
+:root{
+  --paper:#ffffff; --ink:#211E1E; --muted:#484B4D; --faint:#8a8d90;
+  --line:#E8E6E7; --gray:#E8E6E7; --cream:#F2ECE1;
+  --brand-red:#ED2B30; --maroon:#7F1B29; --charcoal:#484B4D;
+  --ok:#006100; --ok-soft:#C6EFCE; --warn:#9C6500; --warn-soft:#FFEB9C; --crit:#9C0006; --crit-soft:#FFC7CE;
+}
+*{box-sizing:border-box}
+[hidden]:not([hidden="until-found"]){display:none!important}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--bh-font,Figtree,Arial,sans-serif);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0}
+a{color:var(--ink)}
+button{font-family:inherit}
+.wrap{max-width:1440px;margin:0 auto;padding:0 56px}
+.wrap.page{padding-top:48px;padding-bottom:16px}
+
+/* ---- header (same as the launcher) ---- */
+header.lh{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.lh .wrap{display:flex;align-items:center;gap:18px;min-height:78px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.brand img{height:30px;width:auto;display:block}
+.brand .wm{font-size:12px;font-weight:800;letter-spacing:.04em;line-height:1.05;text-transform:uppercase}
+.brand .wm small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.06em}
+.crumb{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal);padding-left:16px;border-left:1px solid var(--line)}
+.lh .spacer{flex:1 1 20px}
+.search{position:relative;flex:0 1 300px;min-width:200px}
+.search input{width:100%;font:14px var(--bh-font,Figtree,sans-serif);color:var(--ink);background:#fff;
+  border:1px solid var(--charcoal);border-radius:0;min-height:40px;padding:0 34px 0 12px}
+.search input::placeholder{color:var(--faint)}
+.search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 11px/1 var(--bh-font,sans-serif);
+  color:var(--faint);border:1px solid var(--line);padding:3px 6px;background:#fff}
+.search input:not(:placeholder-shown) ~ kbd{display:none}
+.acct{display:flex;align-items:center;gap:10px;min-width:0;margin-left:auto}
+.acct .av{width:36px;height:36px;flex:none;background:var(--charcoal);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.acct .who{display:block;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap}
+.acct .role{display:block;font-size:12px;color:var(--muted);line-height:1.25;white-space:nowrap}
+.acct .so{display:inline-block;margin-top:5px;font:700 10px/1 var(--bh-font,Figtree,sans-serif);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink);background:#fff;border:1px solid var(--charcoal);padding:4px 8px;cursor:pointer}
+.acct .so:hover{background:var(--ink);color:#fff}
+
+/* ---- hero: The Laurel in red duotone, as on the launcher ---- */
+.hero{position:relative;overflow:hidden;background:var(--brand-red);min-height:400px}
+.hero-photo{position:absolute;inset:0;background:url("/hero.jpg") center 55% / cover no-repeat;
+  filter:grayscale(1) contrast(1.12) brightness(.95);mix-blend-mode:multiply}
+.hero-wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(33,30,30,.74) 0%,rgba(33,30,30,.5) 40%,rgba(33,30,30,.2) 75%,rgba(33,30,30,.12) 100%)}
+.hero-in{position:relative;padding:44px 40px 0;max-width:1280px;margin:0 auto;min-height:400px}
+.hero-in p.eyebrow{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff}
+.hero-in p.eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:var(--brand-red);margin-right:9px;vertical-align:0}
+.today{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.greet{margin-top:10px;font-size:58px;line-height:1;font-weight:500;text-transform:uppercase;letter-spacing:.005em;color:#fff}
+.greet .nm{display:block;font-weight:800}
+.intro{max-width:60ch;margin:16px 0 0;font-size:16px;color:rgba(255,255,255,.9)}
+.hero-card{position:absolute;left:0;right:0;bottom:40px;padding:0 40px;max-width:1280px;margin:0 auto}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.acts a{min-height:44px}
+.hero-card .acts a{background:#fff!important;color:var(--ink)!important;border:1px solid #fff!important;box-shadow:none}
+.hero-card .acts a:hover,.hero-card .acts a:focus-visible{background:var(--cream)!important;border-color:var(--cream)!important}
+.deco{position:absolute;right:40px;bottom:112px;display:flex;align-items:flex-start;gap:34px;pointer-events:none}
+.deco .dots{display:grid;grid-template-columns:repeat(4,22px);gap:10px}
+.deco .dots i{width:22px;height:22px;border-radius:50%;background:#fff;display:block}
+.deco .sq{width:106px;height:106px;background:#fff}
+.caption{position:absolute;right:16px;bottom:12px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
+
+/* ---- edition strip, like the launcher's jobs strip ---- */
+.edstrip{background:#fff;border-bottom:1px solid var(--line)}
+.edstrip .wrap{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;padding-top:11px;padding-bottom:11px}
+.edstrip .jt{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal)}
+.edstrip .jc{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.edstrip .jc b{font-size:17px;font-weight:800;color:var(--ink);margin-right:6px}
+.edstrip .jgo{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+.edstrip .jgo + .jgo{margin-left:0}
+.edstrip .jgo:hover{color:var(--maroon)}
+
+/* ---- editor band ---- */
+.edband{background:var(--cream);border-bottom:1px solid var(--line)}
+.edband .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.edband .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
+.edband .note{font-size:12.5px;color:var(--muted)}
+.edband .sp{flex:1}
+.bh-btn,.bh-btn-outline{min-height:38px!important}
+
+/* ---- layout ---- */
+main{padding:0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:start}
+.pulse{display:grid;gap:24px;align-content:start}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}}
+.banner{border-left:4px solid var(--charcoal);background:var(--cream);padding:12px 16px;font-size:13.5px;margin:0 0 24px}
+.banner b{display:block;margin-bottom:2px}
+.sec{margin:0 0 48px}
+.sechead{display:flex;align-items:center;gap:16px;margin:0 0 22px;flex-wrap:wrap}
+.sechead .blk{background:var(--brand-red);color:#fff;font-size:19px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;padding:9px 18px;line-height:1.2;position:relative}
+.sechead .blk::before{content:"";position:absolute;top:0;bottom:0;right:100%;width:100vw;background:inherit}
+.sechead .blk.dark{background:var(--ink)}
+.sechead .cap{font-size:13px;color:var(--muted)}
+.sechead .right{margin-left:auto;display:flex;gap:8px}
+
+/* ---- article cards: the launcher's desk tiles, with a photo ---- */
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tile{border-top:3px solid var(--ink);display:flex;flex-direction:column;min-width:0;background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.tile:hover{background:var(--cream)}
+.tile .ph{aspect-ratio:16/9;background:var(--gray) center / cover no-repeat;border-bottom:1px solid var(--line)}
+.tile .bd{padding:14px 16px 12px;display:flex;flex-direction:column;flex:1}
+.tile h3{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tile h3::before{content:"";width:11px;height:11px;flex:none;background:var(--brand-red)}
+.tile .big{font-size:17px;font-weight:800;line-height:1.25;margin:8px 0 0}
+.tile p{margin:6px 0 12px;color:var(--muted);font-size:13px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile .foot{display:flex;align-items:center;gap:10px;margin-top:auto}
+.tile .go{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.tile:hover .go{color:var(--maroon)}
+.tile .go::after{content:" \2192"}
+.tile.ext .go::after{content:" \2197"}
+.chip{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);padding:2px 6px}
+.chip.draft{background:var(--warn-soft);color:var(--warn)}
+.chip.dark{background:var(--ink);color:#fff}
+.empty{color:var(--faint);font-size:14px;padding:8px 0}
+
+/* ---- side panels, as on the launcher ---- */
+.panel{border-top:3px solid var(--ink);background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.panel > h2{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:14px 18px;border-bottom:1px solid var(--line)}
+.panel > h2::before{content:"";width:11px;height:11px;background:var(--brand-red);flex:none}
+.panel > h2 .n{margin-left:auto;font-size:12px;font-weight:600;color:var(--faint)}
+.panel .sub{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid var(--line)}
+.issue{display:block;padding:16px 18px;text-decoration:none;color:inherit;background:var(--cream);border-bottom:1px solid var(--line)}
+.issue .when{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
+.issue .h{font-size:17px;font-weight:800;margin-top:3px}
+.issue .x{color:var(--muted);font-size:12.5px;margin-top:3px}
+a.part{display:flex;align-items:center;gap:8px;padding:11px 18px;text-decoration:none;color:inherit;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:600}
+a.part:last-child{border-bottom:0}
+a.part:hover{background:var(--cream)}
+a.part[aria-current="page"]{background:var(--cream);box-shadow:inset 3px 0 0 var(--brand-red)}
+a.part .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.part .d{font-size:11.5px;font-weight:500;color:var(--faint);white-space:nowrap}
+a.part .go{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:2.2;flex:none}
+.panel .all{display:block;padding:11px 18px;border-top:1px solid var(--line);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;cursor:pointer;color:var(--ink)}
+.panel .all:hover{color:var(--maroon)}
+.panel .none{padding:12px 18px;font-size:13px;color:var(--faint)}
+
+/* ---- reading an article ---- */
+.art{max-width:760px}
+.art .kick{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--maroon)}
+.art h1{font-size:38px;line-height:1.1;font-weight:800;margin:8px 0 10px}
+.art .meta{font-size:13px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.art .cover{margin:22px 0 4px;width:100%;aspect-ratio:16/9;background:var(--gray) center / cover no-repeat}
+.body{font-size:16.5px;line-height:1.65;margin-top:22px}
+.body h2{font-size:22px;font-weight:800;margin:28px 0 8px;line-height:1.2}
+.body h3{font-size:17px;font-weight:800;margin:22px 0 6px;text-transform:uppercase;letter-spacing:.04em}
+.body p{margin:0 0 14px}
+.body ul,.body ol{margin:0 0 14px;padding-left:22px}
+.body li{margin:0 0 4px}
+.body a{color:var(--maroon);font-weight:600}
+.body img{display:block;max-width:100%;height:auto;margin:18px 0;background:var(--gray);min-height:40px}
+.body blockquote{margin:18px 0;padding:6px 0 6px 18px;border-left:4px solid var(--brand-red);font-size:18px;font-weight:600}
+.body hr{border:0;border-top:1px solid var(--line);margin:24px 0}
+.artnav{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px;max-width:760px}
+.artnav a{display:block;border-top:3px solid var(--ink);border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 16px;text-decoration:none}
+.artnav a:hover{background:var(--cream)}
+.artnav .l{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.artnav .t{display:block;font-weight:800;margin-top:2px}
+.artnav a.nx{text-align:right;grid-column:2}
+.extcard{border-top:3px solid var(--ink);border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px 22px;max-width:760px;margin-top:22px}
+.extcard p{margin:0 0 14px;color:var(--muted)}
+
+/* ---- sign-in gate ---- */
+.gatewrap{position:relative;min-height:calc(100vh - 86px);display:grid;place-items:center;padding:40px 20px;overflow:hidden;background:var(--brand-red)}
+.gate{position:relative;background:#fff;padding:40px 34px;text-align:center;max-width:430px;width:100%}
+.gate img{height:64px;width:auto;margin-bottom:20px}
+.gate h2{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.gate p{color:var(--muted);font-size:14px;margin:0 0 22px}
+
+/* ---- footer ---- */
+.foot{color:var(--faint);font-size:12px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+details.diag{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+details.diag summary{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+pre{background:#fafafa;border:1px solid var(--line);padding:12px;overflow-x:auto;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:12px 0 10px;white-space:pre-wrap;word-break:break-word}
+.endband{margin-top:46px;background:var(--ink);color:#fff;padding:26px 0 24px}
+.endband .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.endband img{height:40px;width:auto;flex:none}
+.flywheel{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.flywheel .loop{width:17px;height:17px;flex:none;stroke:var(--brand-red);fill:none;stroke-width:2.1;stroke-linecap:round}
+.flywheel span{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.88);white-space:nowrap}
+.flywheel i.ch{width:9px;height:11px;flex:none;background:var(--brand-red);clip-path:polygon(0 0,42% 0,100% 50%,42% 100%,0 100%,58% 50%)}
+.endband .since{font-size:11.5px;color:rgba(255,255,255,.42);margin-left:auto}
+
+/* ---- editor drawer (the launcher's team drawer, wider) ---- */
+.tscrim{position:fixed;inset:0;background:rgba(20,20,20,.35);z-index:40}
+.tdrawer{position:fixed;top:0;right:0;bottom:0;width:min(780px,100vw);background:#fff;z-index:41;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.12)}
+.tdrawer .tdh{display:flex;align-items:center;gap:8px;padding:14px 18px;border-top:3px solid var(--ink);border-bottom:1px solid var(--line)}
+.tdrawer .tdh b{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tdrawer .tdh b::before{content:"";display:inline-block;width:11px;height:11px;background:var(--brand-red);margin-right:9px;vertical-align:-1px}
+.tdrawer .tdx{margin-left:auto;font-size:20px;line-height:1;background:none;border:0;cursor:pointer;padding:2px 6px;color:var(--muted)}
+.tdbody{flex:1;overflow:auto;padding:18px}
+.tdfoot{display:flex;gap:10px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.tdfoot .msg{font-size:12.5px;color:var(--muted);flex:1;min-width:160px}
+.fg{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.fg .full{grid-column:1 / -1}
+.fl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fl > span{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--charcoal)}
+.fl small{font-size:11.5px;color:var(--faint)}
+.fl input,.fl select,.fl textarea{font:14px var(--bh-font,Figtree,sans-serif);color:var(--ink);border:1px solid var(--charcoal);border-radius:0;padding:9px 10px;background:#fff;width:100%}
+.fl textarea{min-height:64px;resize:vertical}
+.permalink{display:flex;gap:8px;align-items:center;background:#fafafa;border:1px solid var(--line);padding:8px 10px;font-size:12.5px;word-break:break-all}
+.permalink code{flex:1;font:12px ui-monospace,Menlo,Consolas,monospace}
+.rte{border:1px solid var(--charcoal)}
+.rte .tb{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);background:#fafafa}
+.rte .tb button{background:none;border:0;border-right:1px solid var(--line);padding:8px 11px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink);min-width:36px}
+.rte .tb button:hover{background:var(--cream)}
+.rte .ed{min-height:320px;padding:14px 16px;outline:none;font-size:15.5px;line-height:1.6}
+.rte .ed:empty::before{content:attr(data-ph);color:var(--faint)}
+.coverpick{display:flex;gap:12px;align-items:center}
+.coverpick .ph{width:160px;aspect-ratio:16/9;background:var(--gray) center / cover no-repeat;border:1px solid var(--line);flex:none}
+.danger{margin-left:auto;background:none;border:0;color:var(--crit);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.eslist a.part{cursor:pointer}
+
+@media (max-width:960px){
+  .wrap,.hero-in{padding-left:20px;padding-right:20px}
+  .wrap.page{padding-top:32px}
+  .greet{font-size:46px}
+  .deco{display:none}
+  .hero-card{padding:0 20px}
+  .search{order:5;flex:1 1 100%}
+  .crumb{display:none}
+}
+@media (max-width:640px){
+  header.lh{position:static}
+  .acct .role{display:none}
+  .hero,.hero-in{min-height:0}
+  .hero-in{padding-top:28px;padding-bottom:24px}
+  .greet{font-size:32px}
+  .hero-card{position:relative;bottom:auto;padding:0 20px 24px}
+  .caption{display:none}
+  .art h1{font-size:28px}
+  .fg{grid-template-columns:1fr}
+  .artnav{grid-template-columns:1fr}.artnav a.nx{grid-column:1}
+  .endband .since{margin-left:0;flex:1 1 100%}
+}
+@media print{header.lh,.hero,.edstrip,.edband,.pulse,.endband,details.diag,.foot,.artnav,.bh-topbar{display:none!important}.layout{display:block}}
+</style>
+<link rel="stylesheet" href="/bh-shell.css">
+</head>
+<body class="bh-page">
+
+<div class="bh-topbar"></div>
+<header class="lh">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Bailey-Harris home">
+      <img src="data:image/png;base64,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" alt="">
+      <span class="wm">Bailey-Harris<small>Construction</small></span>
+    </a>
+    <a class="crumb" href="#" id="crumb" style="text-decoration:none">Newsletter</a>
+    <span class="spacer"></span>
+    <div class="search" id="searchbox" hidden>
+      <input id="q" type="search" placeholder="Search the newsletter" autocomplete="off" spellcheck="false" aria-label="Search the newsletter">
+      <kbd>/</kbd>
+    </div>
+    <div class="acct" id="acct" hidden>
+      <span class="av" id="acctav" aria-hidden="true"></span>
+      <span><span class="who" id="acctname"></span><span class="role" id="acctrole"></span>
+        <button type="button" class="so" id="signout">Sign out</button></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="gatewrap" class="gatewrap" hidden>
+    <div class="hero-photo"></div>
+    <section class="gate">
+      <img src="data:image/png;base64,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" alt="Bailey-Harris">
+      <h2 id="gatetitle">Sign in to read the newsletter</h2>
+      <p id="gatemsg">Use your Bailey-Harris Microsoft account.</p>
+      <button class="bh-btn" id="signin">Sign in with Microsoft</button>
+    </section>
+  </div>
+
+  <div id="app" hidden>
+    <section class="hero" aria-label="This edition">
+      <div class="hero-photo"></div>
+      <div class="hero-wash"></div>
+      <div class="hero-in">
+        <p class="eyebrow">BH Newsletter</p>
+        <div class="today" id="herowhen">&nbsp;</div>
+        <h1 class="greet"><span id="herot1">&nbsp;</span><span class="nm" id="herot2">Newsletter</span></h1>
+        <p class="intro" id="herointro" hidden></p>
+        <div class="deco" aria-hidden="true"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="sq"></div></div>
+      </div>
+      <div class="hero-card"><nav class="acts" id="acts" aria-label="Sections in this edition"></nav></div>
+      <div class="caption">The Laurel Hotel &amp; Spa &middot; Auburn</div>
+    </section>
+
+    <nav class="edstrip" id="edstrip" aria-label="Edition" hidden></nav>
+    <div class="edband" id="edband" hidden></div>
+
+    <div class="wrap page">
+      <div id="fatal" class="banner" hidden></div>
+      <div class="layout">
+        <div id="mainview"></div>
+        <aside class="pulse" aria-label="Past editions">
+          <section class="panel" id="editionspanel"></section>
+          <section class="panel" id="emailpanel" hidden></section>
+        </aside>
+      </div>
+      <p class="foot"><span id="asof"></span></p>
+      <details class="diag">
+        <summary>Diagnostics</summary>
+        <pre id="diag">…</pre>
+        <button class="bh-btn-outline" id="copy">Copy diagnostics</button>
+      </details>
+    </div>
+
+    <div class="endband">
+      <div class="wrap">
+        <img src="data:image/png;base64,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" alt="">
+        <div class="flywheel" aria-label="Quality construction drives corporate profitability, which drives employee fulfillment, which drives quality construction">
+          <svg class="loop" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M18.4 2.2v4.2h-4.2"/></svg>
+          <span>Quality Construction</span><i class="ch"></i>
+          <span>Corporate Profitability</span><i class="ch"></i>
+          <span>Employee Fulfillment</span><i class="ch"></i>
+        </div>
+        <span class="since">Bailey-Harris Construction &middot; since 1979</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="tscrim" id="tscrim" hidden></div>
+<aside class="tdrawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drtitle" hidden>
+  <div class="tdh"><b id="drtitle">Edit</b><button type="button" class="tdx" id="drclose" aria-label="Close">&times;</button></div>
+  <div class="tdbody" id="drbody"></div>
+  <div class="tdfoot" id="drfoot"></div>
+</aside>
+
+<script src="/msal-browser.min.js"></script>
+<script>
+"use strict";
+/* ============ configuration ============ */
+/* Same app registration as the launcher and desks. Its Sites.Selected grant on
+   /sites/Dashboard is the only SharePoint access it has. */
+const CFG = {
+  clientId: "1825a1c0-1ce3-4078-aeb7-a4714562c422",
+  tenant:   "848aa890-7982-4028-befa-3323d82583ce",
+  site:     "baileyharris.sharepoint.com:/sites/Dashboard",
+  list:     "Newsletter",          /* Title = key, Payload = JSON (plain text) */
+  library:  "NewsletterData",      /* photos (images/…) and legacy.json */
+  mcLibrary:"LauncherData",        /* newsletter.json, written by newsletter_pull.js */
+  mcFile:   "newsletter.json",
+  redirect: location.origin + "/newsletter/"
+};
+const SCOPES = ["User.Read", "Sites.Selected"];
+/* Sections in the order they appear. Anything else an editor types is allowed and sorts after these. */
+const SECTIONS = [
+  ["hr", "HR Updates"], ["precon", "Precon Updates"], ["project", "Project Spotlight"],
+  ["employee", "Employee Spotlight"], ["safety", "Safety"], ["company", "Company News"]
+];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LOG = [];
+function log(k, v){ LOG.push(k + ": " + v); const d = $("#diag"); if (d) d.textContent = LOG.join("\n"); }
+const edLabel = ed => { const m = /^(\d{4})-(\d{2})$/.exec(ed || ""); return m ? MONTHS[+m[2] - 1] + " " + m[1] : (ed || ""); };
+const secName = k => (SECTIONS.find(s => s[0] === k) || [k, k])[1];
+const secRank = k => { const i = SECTIONS.findIndex(s => s[0] === k); return i < 0 ? 99 : i; };
+const slugify = s => String(s || "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "article";
+const fmtDate = s => s ? new Date(String(s).length <= 10 ? s + "T12:00:00" : s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+const nowIso = () => new Date().toISOString();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function initials(name){ const w = String(name).replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/); if (!w[0]) return "?"; return (w.length === 1 ? w[0].slice(0, 2) : w[0][0] + w[1][0]).toUpperCase(); }
+const OK_PROTO = { "http:":1, "https:":1, "mailto:":1, "tel:":1 };
+function safeUrl(u){ try { const p = new URL(String(u), location.origin); return OK_PROTO[p.protocol] ? p.href : null; } catch(_) { return null; } }
+const permalink = (ed, slug) => location.origin + "/newsletter/#" + ed + (slug ? "/" + slug : "");
+
+/* Only these tags survive, in articles as they are saved and again as they are shown.
+   Photos are <img data-img="driveItemId">; the page fetches them with the reader's own token. */
+const ALLOWED = { P:1, BR:1, B:1, STRONG:1, I:1, EM:1, U:1, H2:1, H3:1, UL:1, OL:1, LI:1, A:1, IMG:1, BLOCKQUOTE:1, HR:1, DIV:1, SPAN:1 };
+function clean(html){
+  const doc = new DOMParser().parseFromString("<div>" + String(html || "") + "</div>", "text/html");
+  const root = doc.body.firstChild;
+  (function walk(n){
+    [...n.childNodes].forEach(c => {
+      if (c.nodeType === 3) return;
+      if (c.nodeType !== 1 || !ALLOWED[c.tagName]){
+        if (c.nodeType === 1 && !/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|svg|SVG|TEMPLATE)$/.test(c.tagName)){ walk(c); while (c.firstChild) n.insertBefore(c.firstChild, c); }
+        c.remove(); return;
+      }
+      const keep = {};
+      if (c.tagName === "A"){ const u = safeUrl(c.getAttribute("href")); if (u) keep.href = u; else { walk(c); while (c.firstChild) n.insertBefore(c.firstChild, c); c.remove(); return; } }
+      if (c.tagName === "IMG"){ const id = c.getAttribute("data-img"); if (id && /^[A-Za-z0-9!_\-]+$/.test(id)) keep["data-img"] = id; else { c.remove(); return; } keep.alt = c.getAttribute("alt") || ""; }
+      [...c.attributes].forEach(a => c.removeAttribute(a.name));
+      Object.entries(keep).forEach(([k, v]) => c.setAttribute(k, v));
+      if (c.tagName === "A" && keep.href && /^https?:/.test(keep.href) && !keep.href.startsWith(location.origin)){ c.setAttribute("target", "_blank"); c.setAttribute("rel", "noopener noreferrer"); }
+      if (c.tagName === "DIV") { const p = doc.createElement("p"); while (c.firstChild) p.appendChild(c.firstChild); c.replaceWith(p); walk(p); return; }
+      if (c.tagName === "SPAN") { walk(c); while (c.firstChild) n.insertBefore(c.firstChild, c); c.remove(); return; }
+      walk(c);
+    });
+  })(root);
+  /* loose text at the top level goes into paragraphs */
+  const BLOCK = { P:1, H2:1, H3:1, UL:1, OL:1, BLOCKQUOTE:1, HR:1, IMG:1 };
+  let run = null;
+  [...root.childNodes].forEach(c => {
+    if (c.nodeType === 1 && BLOCK[c.tagName]){ run = null; return; }
+    if (c.nodeType === 3 && !c.textContent.trim() && !run) return;
+    if (!run){ run = doc.createElement("p"); root.insertBefore(run, c); }
+    run.appendChild(c);
+  });
+  return root.innerHTML.replace(/<p>\s*(<br>)?\s*<\/p>/g, "").trim();
+}
+const textOf = html => (new DOMParser().parseFromString(String(html || ""), "text/html").body.textContent || "").replace(/\s+/g, " ").trim();
+
+/* ============ auth + Graph ============ */
+let MS = null, ACCT = null;
+async function token(){
+  try { return (await MS.acquireTokenSilent({ scopes: SCOPES, account: ACCT })).accessToken; }
+  catch (e) {
+    if (window.msal && e instanceof msal.InteractionRequiredAuthError){ await MS.acquireTokenRedirect({ scopes: SCOPES, account: ACCT, state: location.hash.slice(1) }); }
+    throw e;
+  }
+}
+async function gx(path, o = {}){
+  const t = await token();
+  const h = Object.assign({ Authorization: "Bearer " + t }, o.json !== undefined ? { "Content-Type": "application/json" } : {}, o.headers || {});
+  const r = await fetch("https://graph.microsoft.com/v1.0" + path, { method: o.method || "GET", headers: h, body: o.json !== undefined ? JSON.stringify(o.json) : o.body });
+  if (r.status === 204) return null;
+  if (o.raw){ if (!r.ok){ const e = new Error("HTTP " + r.status); e.status = r.status; throw e; } return r; }
+  let j = null; try { j = await r.json(); } catch(_) {}
+  if (!r.ok){ const e = new Error((j && j.error && j.error.message) || ("HTTP " + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+
+/* ============ SharePoint store ============ */
+let SITE = null, LIST = null, DRIVE = null, MCDRIVE = null;
+const DB = new Map();     /* key -> { sp, data } */
+async function initStore(){
+  const s = await gx("/sites/" + CFG.site); SITE = s.id;
+  const l = await gx("/sites/" + SITE + "/lists?$select=id,displayName,name&$top=200");
+  const lst = (l.value || []).find(x => x.displayName === CFG.list || x.name === CFG.list);
+  LIST = lst && lst.id;
+  const d = await gx("/sites/" + SITE + "/drives?$select=id,name");
+  (d.value || []).forEach(x => { if (x.name === CFG.library) DRIVE = x.id; if (x.name === CFG.mcLibrary) MCDRIVE = x.id; });
+  log("site", "resolved; list " + (LIST ? "found" : "MISSING") + ", " + CFG.library + " " + (DRIVE ? "found" : "MISSING") + ", " + CFG.mcLibrary + " " + (MCDRIVE ? "found" : "missing"));
+}
+const itemsUrl = () => "/sites/" + SITE + "/lists/" + LIST + "/items";
+async function loadAll(){
+  DB.clear();
+  let url = itemsUrl() + "?$expand=fields($select=Title,Payload)&$top=999";
+  while (url){
+    const j = await gx(url.replace("https://graph.microsoft.com/v1.0", ""));
+    (j.value || []).forEach(it => { const f = it.fields || {}; if (!f.Title || !f.Payload) return; try { DB.set(f.Title, { sp: it.id, data: JSON.parse(f.Payload) }); } catch(_) {} });
+    url = j["@odata.nextLink"];
+  }
+  log("list items", DB.size);
+}
+async function put(key, data){
+  const fields = { Title: key, Payload: JSON.stringify(data) };
+  const ex = DB.get(key);
+  if (ex){ await gx(itemsUrl() + "/" + ex.sp + "/fields", { method: "PATCH", json: fields }); ex.data = data; }
+  else { const r = await gx(itemsUrl(), { method: "POST", json: { fields } }); DB.set(key, { sp: r.id, data }); }
+}
+async function del(key){ const ex = DB.get(key); if (!ex) return; await gx(itemsUrl() + "/" + ex.sp, { method: "DELETE" }); DB.delete(key); }
+
+/* ============ the model ============ */
+/* ed:YYYY-MM       edition  { edition, title, intro, status, emailUrl, publishedAt }
+   ar:YYYY-MM/slug  article  { edition, slug, section, sectionName, title, summary, body, cover, order, status, legacyUrl, author, updatedAt }
+   cfg:editors      { editors:[upn,…] } — who sees the editing tools. SharePoint permissions are what actually allow a save. */
+let EDITOR = false, MC = null, LEGACY = null, ME = null, MENAME = "";
+const editions = () => [...DB.entries()].filter(([k]) => k.startsWith("ed:")).map(([, v]) => v.data);
+const articles = () => [...DB.entries()].filter(([k]) => k.startsWith("ar:")).map(([, v]) => v.data);
+const visible = x => EDITOR || x.status === "published";
+function editionList(){
+  const map = new Map();
+  editions().forEach(e => map.set(e.edition, Object.assign({}, e)));
+  articles().forEach(a => { if (!map.has(a.edition)) map.set(a.edition, { edition: a.edition, title: edLabel(a.edition), status: a.legacyUrl ? "published" : "draft", implicit: true }); });
+  return [...map.values()].filter(visible).sort((a, b) => b.edition.localeCompare(a.edition));
+}
+function articlesIn(ed){
+  return articles().filter(a => a.edition === ed && visible(a))
+    .sort((a, b) => (a.order ?? 50) - (b.order ?? 50) || secRank(a.section) - secRank(b.section) || String(a.title).localeCompare(String(b.title)));
+}
+const latest = () => { const l = editionList().filter(e => e.status === "published"); return (l[0] || editionList()[0] || null); };
+function emailFor(ed){
+  const e = editions().find(x => x.edition === ed);
+  if (e && e.emailUrl) return safeUrl(e.emailUrl);
+  const c = ((MC && MC.campaigns) || []).find(c => String(c.sentOn || "").slice(0, 7) === ed);
+  return c ? safeUrl(c.url) : null;
+}
+
+/* ============ photos (fetched with the reader's token) ============ */
+const IMG = new Map();
+async function imgUrl(id){
+  if (!id || !DRIVE) return null;
+  if (!IMG.has(id)) IMG.set(id, gx("/drives/" + DRIVE + "/items/" + encodeURIComponent(id) + "/content", { raw: true }).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null));
+  return IMG.get(id);
+}
+function hydrate(root){
+  root.querySelectorAll("[data-cover]").forEach(async el => { const u = await imgUrl(el.getAttribute("data-cover")); if (u) el.style.backgroundImage = "url('" + u + "')"; });
+  root.querySelectorAll("img[data-img]").forEach(async el => { const u = await imgUrl(el.getAttribute("data-img")); if (u) el.src = u; });
+}
+
+/* ============ routing: #YYYY-MM and #YYYY-MM/slug — these are the links that go in Mailchimp ============ */
+function route(){
+  const h = decodeURIComponent(location.hash.slice(1));
+  const m = /^(\d{4}-\d{2})(?:\/([a-z0-9-]+))?$/.exec(h);
+  return m ? { ed: m[1], slug: m[2] || null } : { ed: null, slug: null };
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+
+/* ============ rendering ============ */
+const chev = '<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+function render(){
+  const q = $("#q").value.trim();
+  const r = route();
+  const ed = (r.ed && editionList().find(e => e.edition === r.ed)) || (r.ed ? { edition: r.ed, title: edLabel(r.ed), status: "missing" } : latest());
+  renderHero(ed);
+  renderStrip(ed);
+  renderEditorBand(ed);
+  renderEditions(ed);
+  renderEmail();
+  const main = $("#mainview");
+  if (q) main.innerHTML = searchView(q);
+  else if (!ed) main.innerHTML = '<section class="sec"><div class="sechead"><span class="blk">Newsletter</span></div><p class="empty">Nothing has been published yet.' + (EDITOR ? ' Use <b>New edition</b> above to start one.' : '') + '</p></section>';
+  else if (r.slug && ed.status !== "missing") main.innerHTML = articleView(ed, r.slug);
+  else main.innerHTML = editionView(ed);
+  hydrate(main);
+  document.title = (ed ? ed.title + " · " : "") + "Newsletter · Bailey-Harris";
+}
+
+function renderHero(ed){
+  if (!ed){ $("#herowhen").textContent = ""; $("#acts").innerHTML = ""; return; }
+  $("#herowhen").textContent = ed.edition === (latest() || {}).edition ? "This month's edition" : "Past edition";
+  $("#herot1").textContent = ed.title || edLabel(ed.edition);
+  $("#herot2").textContent = "Newsletter";
+  const intro = $("#herointro"); intro.hidden = !ed.intro; intro.textContent = ed.intro || "";
+  const secs = []; const seen = new Set();
+  articlesIn(ed.edition).forEach(a => { const k = a.sectionName || secName(a.section); if (!seen.has(k)){ seen.add(k); secs.push([k, a]); } });
+  $("#acts").innerHTML = secs.map(([k, a]) => a.legacyUrl && !a.body
+      ? '<a class="bh-btn" href="' + esc(safeUrl(a.legacyUrl)) + '" target="_blank" rel="noopener noreferrer">' + esc(k) + '</a>'
+      : '<a class="bh-btn" href="#' + esc(a.edition + "/" + a.slug) + '">' + esc(k) + '</a>').join("");
+}
+function renderStrip(ed){
+  const el = $("#edstrip");
+  if (!ed){ el.hidden = true; return; }
+  const arts = articlesIn(ed.edition), mail = emailFor(ed.edition);
+  el.innerHTML = '<div class="wrap"><span class="jt">' + esc(ed.title || edLabel(ed.edition)) + '</span>' +
+    '<span class="jc"><b>' + arts.length + '</b>' + (arts.length === 1 ? "article" : "articles") + '</span>' +
+    (ed.publishedAt ? '<span class="jc">Published ' + esc(fmtDate(ed.publishedAt)) + '</span>' : '') +
+    (ed.status === "draft" ? '<span class="chip draft">Draft · editors only</span>' : '') +
+    (route().slug ? '<a class="jgo" href="#' + esc(ed.edition) + '">&larr; All of ' + esc(ed.title || edLabel(ed.edition)) + '</a>' : '') +
+    (mail ? '<a class="jgo" href="' + esc(mail) + '" target="_blank" rel="noopener noreferrer">Email version &#8599;</a>' : '') +
+    '</div>';
+  el.hidden = false;
+}
+function renderEditorBand(ed){
+  const el = $("#edband");
+  if (!EDITOR){ el.hidden = true; return; }
+  const r = route();
+  const art = ed && r.slug ? DB.get("ar:" + ed.edition + "/" + r.slug) : null;
+  const legacyTodo = LEGACY && LEGACY.length && !articles().some(a => a.legacyUrl);
+  el.innerHTML = '<div class="wrap"><span class="lbl">Editing</span><span class="note">Drafts are shown to editors only.</span><span class="sp"></span>' +
+    (legacyTodo ? '<button class="bh-btn-outline" data-act="import">Import ' + LEGACY.length + ' past articles</button>' : '') +
+    '<button class="bh-btn-outline" data-act="newed">New edition</button>' +
+    (ed && ed.status !== "missing" ? '<button class="bh-btn-outline" data-act="editEd" data-ed="' + esc(ed.edition) + '">Edit edition</button>' : '') +
+    (art ? '<button class="bh-btn-outline" data-act="editAr" data-key="' + esc("ar:" + ed.edition + "/" + r.slug) + '">Edit this article</button>' : '') +
+    (ed ? '<button class="bh-btn" data-act="newAr" data-ed="' + esc(ed.edition) + '">Add article</button>' : '') +
+    '</div>';
+  el.hidden = false;
+}
+function renderEditions(cur){
+  const el = $("#editionspanel");
+  const list = editionList();
+  let html = '<h2>Past editions<span class="n">' + list.length + '</span></h2>';
+  if (!list.length) html += '<div class="none">None yet.</div>';
+  let yr = null;
+  list.forEach((e, i) => {
+    const y = e.edition.slice(0, 4);
+    if (i === 0){
+      html += '<a class="issue" href="#' + esc(e.edition) + '"><span class="when">' + (e.status === "published" ? "Latest edition" : "Draft") + '</span><div class="h">' + esc(e.title || edLabel(e.edition)) + '</div>' +
+        '<div class="x">' + articlesIn(e.edition).map(a => esc(a.sectionName || secName(a.section))).filter((v, j, s) => s.indexOf(v) === j).join(" &middot; ") + '</div></a>';
+      return;
+    }
+    if (y !== yr){ yr = y; html += '<div class="sub">' + esc(y) + '</div>'; }
+    html += '<a class="part" href="#' + esc(e.edition) + '"' + (cur && cur.edition === e.edition ? ' aria-current="page"' : '') + '><span class="n">' + esc(e.title || edLabel(e.edition)) + '</span>' +
+      (e.status === "draft" ? '<span class="chip draft">Draft</span>' : '<span class="d">' + articlesIn(e.edition).length + '</span>') + chev + '</a>';
+  });
+  el.innerHTML = html;
+}
+function renderEmail(){
+  const el = $("#emailpanel");
+  const c = ((MC && MC.campaigns) || []).filter(x => safeUrl(x.url));
+  if (!c.length){ el.hidden = true; return; }
+  el.innerHTML = '<h2>Email versions<span class="n">Mailchimp</span></h2>' +
+    c.slice(0, 8).map(x => '<a class="part" href="' + esc(safeUrl(x.url)) + '" target="_blank" rel="noopener noreferrer"><span class="n">' + esc(x.title || "Newsletter") + '</span><span class="d">' + esc(fmtDate(x.sentOn)) + '</span>' + chev + '</a>').join("") +
+    (c.length > 8 ? '<button class="all" data-act="allmail">All ' + c.length + ' emails</button>' : '');
+  el.hidden = false;
+}
+
+function tile(a){
+  const ext = a.legacyUrl && !a.body;
+  const href = ext ? safeUrl(a.legacyUrl) : "#" + a.edition + "/" + a.slug;
+  return '<a class="tile' + (ext ? ' ext' : '') + '" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+    (a.cover ? '<div class="ph" data-cover="' + esc(a.cover) + '"></div>' : '') +
+    '<div class="bd"><h3>' + esc(a.sectionName || secName(a.section)) + '</h3>' +
+    '<div class="big">' + esc(a.title) + '</div>' +
+    (a.summary ? '<p>' + esc(a.summary) + '</p>' : '<p></p>') +
+    '<div class="foot">' + (a.status === "draft" ? '<span class="chip draft">Draft</span>' : '') + (ext ? '<span class="chip">Marketing site</span>' : '') +
+    '<span class="go">' + (ext ? "Open" : "Read") + '</span></div></div></a>';
+}
+function editionView(ed){
+  if (ed.status === "missing") return '<section class="sec"><div class="sechead"><span class="blk">' + esc(edLabel(ed.edition)) + '</span></div><p class="empty">There is no edition for ' + esc(edLabel(ed.edition)) + '. <a href="#">Go to the latest edition</a>.</p></section>';
+  const arts = articlesIn(ed.edition);
+  return '<section class="sec"><div class="sechead"><span class="blk">' + esc(ed.title || edLabel(ed.edition)) + '</span><span class="cap">' + arts.length + (arts.length === 1 ? " article" : " articles") + '</span></div>' +
+    (arts.length ? '<div class="tiles">' + arts.map(tile).join("") + '</div>' : '<p class="empty">No articles in this edition yet.</p>') + '</section>';
+}
+function articleView(ed, slug){
+  const arts = articlesIn(ed.edition);
+  const i = arts.findIndex(a => a.slug === slug);
+  const a = arts[i];
+  if (!a) return '<section class="sec"><div class="sechead"><span class="blk">Not found</span></div><p class="empty">That article isn’t in ' + esc(ed.title || edLabel(ed.edition)) + '. <a href="#' + esc(ed.edition) + '">See the whole edition</a>.</p></section>';
+  const sec = a.sectionName || secName(a.section);
+  let html = '<section class="sec"><div class="sechead"><span class="blk">' + esc(sec) + '</span><span class="cap">' + esc(ed.title || edLabel(ed.edition)) + '</span></div><article class="art">' +
+    '<div class="kick">' + esc(ed.title || edLabel(ed.edition)) + '</div><h1>' + esc(a.title) + '</h1>' +
+    '<div class="meta">' + (a.author ? '<span>' + esc(a.author) + '</span>' : '') + (a.status === "draft" ? '<span class="chip draft">Draft · editors only</span>' : '') + '</div>';
+  if (a.legacyUrl && !a.body){
+    html += '<div class="extcard"><p>This article is on the Marketing SharePoint site.</p><a class="bh-btn" href="' + esc(safeUrl(a.legacyUrl)) + '" target="_blank" rel="noopener noreferrer">Open the article &#8599;</a></div>';
+  } else {
+    if (a.cover) html += '<div class="cover" data-cover="' + esc(a.cover) + '" role="img" aria-label="' + esc(a.title) + '"></div>';
+    html += '<div class="body">' + clean(a.body) + '</div>';
+  }
+  html += '</article><nav class="artnav">' +
+    (arts[i - 1] ? '<a href="#' + esc(ed.edition + "/" + arts[i - 1].slug) + '"><span class="l">&larr; Previous</span><span class="t">' + esc(arts[i - 1].title) + '</span></a>' : '') +
+    (arts[i + 1] ? '<a class="nx" href="#' + esc(ed.edition + "/" + arts[i + 1].slug) + '"><span class="l">Next &rarr;</span><span class="t">' + esc(arts[i + 1].title) + '</span></a>' : '') +
+    '</nav></section>';
+  return html;
+}
+function searchView(q){
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const hits = articles().filter(visible).filter(a => {
+    const hay = [a.title, a.summary, a.sectionName || secName(a.section), edLabel(a.edition), textOf(a.body)].join(" ").toLowerCase();
+    return words.every(w => hay.includes(w));
+  }).sort((a, b) => b.edition.localeCompare(a.edition));
+  return '<section class="sec"><div class="sechead"><span class="blk dark">Search</span><span class="cap">' + hits.length + ' match' + (hits.length === 1 ? "" : "es") + ' for “' + esc(q) + '”</span></div>' +
+    (hits.length ? '<div class="tiles">' + hits.map(a => tile(Object.assign({}, a, { sectionName: (a.sectionName || secName(a.section)) + " · " + edLabel(a.edition) }))).join("") + '</div>' : '<p class="empty">Nothing matches that.</p>') + '</section>';
+}
+
+/* ============ editing ============ */
+function openDrawer(title, body, foot){
+  $("#drtitle").textContent = title; $("#drbody").innerHTML = body; $("#drfoot").innerHTML = foot;
+  $("#drawer").hidden = false; $("#tscrim").hidden = false;
+  const f = $("#drbody").querySelector("input,select,textarea,[contenteditable]"); if (f) f.focus();
+}
+function closeDrawer(){ $("#drawer").hidden = true; $("#tscrim").hidden = true; }
+const dmsg = t => { const m = $("#drfoot .msg"); if (m) m.textContent = t || ""; };
+function saveErr(e){
+  if (e && e.status === 403) return "SharePoint refused the save (403). Your account needs Contribute on the Newsletter list and the NewsletterData library.";
+  return "Could not save: " + ((e && e.message) || e);
+}
+
+function editEdition(edKey){
+  const ex = edKey ? (DB.get("ed:" + edKey) || { data: { edition: edKey, title: edLabel(edKey) } }).data : null;
+  const d = new Date(); const nextEd = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  const e = Object.assign({ edition: nextEd, title: "", intro: "", status: "draft", emailUrl: "" }, ex || {});
+  openDrawer(ex ? "Edit edition" : "New edition",
+    '<div class="fg">' +
+    '<label class="fl"><span>Month</span><input type="month" id="f-ed" value="' + esc(e.edition) + '"' + (ex ? ' disabled' : '') + '><small>' + (ex ? 'Fixed once created, so links don’t break.' : 'One edition per month.') + '</small></label>' +
+    '<label class="fl"><span>Status</span><select id="f-st"><option value="draft"' + (e.status !== "published" ? " selected" : "") + '>Draft (editors only)</option><option value="published"' + (e.status === "published" ? " selected" : "") + '>Published</option></select></label>' +
+    '<label class="fl full"><span>Title</span><input id="f-ti" value="' + esc(e.title) + '" placeholder="e.g. December 2026"><small>Leave blank to use the month.</small></label>' +
+    '<label class="fl full"><span>Intro</span><textarea id="f-in" placeholder="Optional. One or two sentences under the title.">' + esc(e.intro) + '</textarea></label>' +
+    '<label class="fl full"><span>Mailchimp email link</span><input id="f-mc" value="' + esc(e.emailUrl || "") + '" placeholder="Optional. Found automatically from the send month."></label>' +
+    '<div class="fl full"><span>Link for Mailchimp</span><div class="permalink"><code id="f-pl">' + esc(permalink(e.edition)) + '</code><button class="bh-btn-outline" type="button" data-act="copy" data-for="f-pl">Copy</button></div></div>' +
+    '</div>',
+    '<span class="msg"></span><button class="bh-btn-outline" data-act="close">Cancel</button><button class="bh-btn" data-act="saveEd"' + (ex ? ' data-ed="' + esc(e.edition) + '"' : '') + '>Save edition</button>');
+  if (!ex) $("#f-ed").addEventListener("input", ev => { $("#f-pl").textContent = permalink(ev.target.value); });
+}
+async function saveEdition(btn){
+  const edv = $("#f-ed").value;
+  if (!/^\d{4}-\d{2}$/.test(edv)) return dmsg("Pick a month.");
+  const key = "ed:" + edv;
+  if (!btn.dataset.ed && DB.has(key)) return dmsg(edLabel(edv) + " already exists. Open it and use Edit edition.");
+  const prev = (DB.get(key) || {}).data || {};
+  const st = $("#f-st").value;
+  const mc = $("#f-mc").value.trim();
+  if (mc && !safeUrl(mc)) return dmsg("The Mailchimp link must start with https://");
+  const data = Object.assign({}, prev, { edition: edv, title: $("#f-ti").value.trim() || edLabel(edv), intro: $("#f-in").value.trim(), status: st, emailUrl: mc,
+    publishedAt: st === "published" ? (prev.publishedAt || nowIso()) : prev.publishedAt || null, updatedBy: ME, updatedAt: nowIso() });
+  btn.disabled = true; dmsg("Saving…");
+  try { await put(key, data); closeDrawer(); location.hash = edv; render(); }
+  catch (e) { dmsg(saveErr(e)); btn.disabled = false; }
+}
+
+let DRAFT = null;   /* the article open in the editor */
+function editArticle(key, edForNew){
+  const ex = key ? DB.get(key) : null;
+  const a = Object.assign({ edition: edForNew, slug: "", section: "hr", sectionName: "", title: "", summary: "", body: "", cover: "", order: 50, status: "draft", legacyUrl: "" }, ex ? JSON.parse(JSON.stringify(ex.data)) : {});
+  DRAFT = { key: key || null, a };
+  const eds = editionList().map(e => e.edition);
+  if (a.edition && !eds.includes(a.edition)) eds.unshift(a.edition);
+  const secOpts = SECTIONS.map(s => '<option value="' + s[0] + '"' + (s[0] === a.section ? " selected" : "") + '>' + esc(s[1]) + '</option>').join("") +
+    '<option value="_other"' + (!SECTIONS.some(s => s[0] === a.section) ? " selected" : "") + '>Other…</option>';
+  const legacy = !!a.legacyUrl && !a.body;
+  DRAFT.legacy = legacy;
+  openDrawer(ex ? "Edit article" : "New article",
+    '<div class="fg">' +
+    '<label class="fl"><span>Edition</span><select id="a-ed"' + (ex && !legacy ? ' disabled' : '') + '>' + eds.map(e => '<option value="' + esc(e) + '"' + (e === a.edition ? " selected" : "") + '>' + esc(edLabel(e)) + '</option>').join("") + '</select></label>' +
+    '<label class="fl"><span>Status</span><select id="a-st"><option value="draft"' + (a.status !== "published" ? " selected" : "") + '>Draft (editors only)</option><option value="published"' + (a.status === "published" ? " selected" : "") + '>Published</option></select></label>' +
+    '<label class="fl"><span>Section</span><select id="a-sec">' + secOpts + '</select></label>' +
+    '<label class="fl" id="a-oth-w"' + (SECTIONS.some(s => s[0] === a.section) ? ' hidden' : '') + '><span>Section name</span><input id="a-oth" value="' + esc(!SECTIONS.some(s => s[0] === a.section) ? (a.sectionName || a.section) : "") + '"></label>' +
+    '<label class="fl full"><span>Headline</span><input id="a-ti" value="' + esc(a.title) + '"></label>' +
+    '<label class="fl full"><span>Summary</span><textarea id="a-su" placeholder="One or two sentences for the card and the Mailchimp email.">' + esc(a.summary) + '</textarea></label>' +
+    (legacy
+      ? '<label class="fl full"><span>Marketing site page</span><input id="a-lg" value="' + esc(a.legacyUrl) + '"><small>A past article. It opens the original SharePoint page, which stays as it is.</small></label>'
+      : '<div class="fl full"><span>Cover photo</span><div class="coverpick"><div class="ph" id="a-cv"' + (a.cover ? ' data-cover="' + esc(a.cover) + '"' : '') + '></div>' +
+          '<div><input type="file" id="a-cvf" accept="image/*" hidden><button class="bh-btn-outline" type="button" data-act="pickcover">' + (a.cover ? "Replace" : "Add photo") + '</button> ' +
+          (a.cover ? '<button class="bh-btn-outline" type="button" data-act="dropcover">Remove</button>' : '') + '</div></div></div>' +
+        '<div class="fl full"><span>Article</span><div class="rte"><div class="tb">' +
+          '<button type="button" data-cmd="bold" title="Bold"><b>B</b></button><button type="button" data-cmd="italic" title="Italic"><i>I</i></button>' +
+          '<button type="button" data-cmd="h2" title="Heading">H2</button><button type="button" data-cmd="h3" title="Subheading">H3</button><button type="button" data-cmd="p" title="Paragraph">¶</button>' +
+          '<button type="button" data-cmd="insertUnorderedList" title="Bulleted list">&bull; List</button><button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>' +
+          '<button type="button" data-cmd="quote" title="Pull quote">&ldquo; &rdquo;</button><button type="button" data-cmd="link" title="Link">Link</button>' +
+          '<button type="button" data-cmd="photo" title="Photo">Photo</button><button type="button" data-cmd="hr" title="Divider">&mdash;</button>' +
+          '<button type="button" data-cmd="removeFormat" title="Clear formatting">Clear</button>' +
+          '<input type="file" id="a-imf" accept="image/*" hidden></div>' +
+          '<div class="ed body" id="a-body" contenteditable="true" data-ph="Write or paste the article here.">' + clean(a.body) + '</div></div></div>') +
+    '<label class="fl"><span>Order</span><input id="a-or" type="number" value="' + esc(a.order ?? 50) + '"><small>Lower numbers come first.</small></label>' +
+    '<div class="fl"><span>Link for Mailchimp</span><div class="permalink"><code id="a-pl">' + esc(a.slug ? permalink(a.edition, a.slug) : "Shown after the first save") + '</code>' + (a.slug ? '<button class="bh-btn-outline" type="button" data-act="copy" data-for="a-pl">Copy</button>' : '') + '</div><small>Stays the same if the headline changes.</small></div>' +
+    '</div>',
+    '<span class="msg"></span>' + (ex ? '<button class="danger" data-act="delAr">Delete</button>' : '') +
+    '<button class="bh-btn-outline" data-act="close">Cancel</button><button class="bh-btn" data-act="saveAr">Save article</button>');
+  $("#a-sec").addEventListener("change", ev => { $("#a-oth-w").hidden = ev.target.value !== "_other"; });
+  hydrate($("#drbody"));
+  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch(_) {}
+  const body = $("#a-body");
+  if (body) body.addEventListener("paste", ev => {
+    const html = ev.clipboardData && ev.clipboardData.getData("text/html");
+    if (!html) return;
+    ev.preventDefault(); document.execCommand("insertHTML", false, clean(html));
+  });
+}
+async function saveArticle(btn){
+  const a = DRAFT.a;
+  const secSel = $("#a-sec").value;
+  const section = secSel === "_other" ? slugify($("#a-oth").value) : secSel;
+  const sectionName = secSel === "_other" ? $("#a-oth").value.trim() : secName(secSel);
+  if (!sectionName) return dmsg("Name the section.");
+  const title = $("#a-ti").value.trim(); if (!title) return dmsg("Add a headline.");
+  const ed = DRAFT.key && !DRAFT.legacy ? a.edition : $("#a-ed").value;
+  const moved = DRAFT.key && DRAFT.legacy && ed !== a.edition;
+  if (moved) a.slug = "";   /* a past article moved to another month gets a fresh link; nothing in Mailchimp points at it */
+  if (!ed) return dmsg("Create the edition first.");
+  let slug = a.slug;
+  if (!slug){
+    const base = slugify(sectionName); slug = base; let n = 2;
+    while (DB.has("ar:" + ed + "/" + slug)) slug = base + "-" + n++;
+  }
+  const out = Object.assign({}, a, { edition: ed, slug, section, sectionName, title, summary: $("#a-su").value.trim(), status: $("#a-st").value,
+    order: Number($("#a-or").value) || 50, author: a.author || MENAME, updatedBy: ME, updatedAt: nowIso() });
+  if ($("#a-body")) out.body = clean($("#a-body").innerHTML);
+  if ($("#a-lg")){ const u = safeUrl($("#a-lg").value.trim()); if (!u) return dmsg("The page link must start with https://"); out.legacyUrl = u; }
+  const key = "ar:" + ed + "/" + slug;
+  btn.disabled = true; dmsg("Saving…");
+  try {
+    await put(key, out);
+    if (moved) await del(DRAFT.key);
+    if (!DB.has("ed:" + ed)) await put("ed:" + ed, { edition: ed, title: edLabel(ed), intro: "", status: "draft", updatedBy: ME, updatedAt: nowIso() });
+    closeDrawer(); location.hash = ed + "/" + slug; render();
+  } catch (e) { dmsg(saveErr(e)); btn.disabled = false; }
+}
+async function deleteArticle(btn){
+  if (btn.dataset.sure !== "1"){ btn.dataset.sure = "1"; btn.textContent = "Click again to delete"; return; }
+  btn.disabled = true; dmsg("Deleting…");
+  try { await del(DRAFT.key); closeDrawer(); location.hash = DRAFT.a.edition; render(); }
+  catch (e) { dmsg(saveErr(e)); btn.disabled = false; }
+}
+
+/* photos: shrunk in the browser to 1600px, uploaded to NewsletterData/images/YYYY-MM/ */
+async function uploadPhoto(file, ed){
+  if (!DRIVE) throw new Error("The NewsletterData library was not found.");
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+  const path = "images/" + (ed || "misc") + "/" + uid() + ".jpg";
+  const t = await token();
+  const r = await fetch("https://graph.microsoft.com/v1.0/drives/" + DRIVE + "/root:/" + path + ":/content", { method: "PUT", headers: { Authorization: "Bearer " + t, "Content-Type": "image/jpeg" }, body: blob });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok){ const e = new Error((j.error && j.error.message) || "HTTP " + r.status); e.status = r.status; throw e; }
+  IMG.set(j.id, Promise.resolve(URL.createObjectURL(blob)));
+  return j.id;
+}
+let savedRange = null;
+function rteCmd(cmd){
+  const ed = $("#a-body"); ed.focus();
+  if (savedRange){ const s = getSelection(); s.removeAllRanges(); s.addRange(savedRange); }
+  if (cmd === "h2" || cmd === "h3" || cmd === "p") document.execCommand("formatBlock", false, cmd.toUpperCase());
+  else if (cmd === "quote") document.execCommand("formatBlock", false, "BLOCKQUOTE");
+  else if (cmd === "hr") document.execCommand("insertHorizontalRule");
+  else if (cmd === "link"){
+    const u = prompt("Link address (https://…)"); if (!u) return;
+    const s = safeUrl(u.trim()); if (!s) return dmsg("Links must start with https:// or mailto:");
+    document.execCommand("createLink", false, s);
+  }
+  else if (cmd === "photo") $("#a-imf").click();
+  else document.execCommand(cmd);
+}
+
+async function importLegacy(btn){
+  btn.disabled = true;
+  const list = LEGACY || []; let n = 0, fail = 0;
+  const used = new Set([...DB.keys()]);
+  for (const x of list){
+    const base = slugify(x.sectionName || secName(x.section)); let slug = base, k = 2;
+    while (used.has("ar:" + x.edition + "/" + slug)) slug = base + "-" + k++;
+    used.add("ar:" + x.edition + "/" + slug);
+    try {
+      await put("ar:" + x.edition + "/" + slug, { edition: x.edition, slug, section: x.section, sectionName: x.sectionName, title: x.title, summary: "",
+        legacyUrl: x.legacyUrl, order: 50, status: "published", author: "", updatedBy: ME, updatedAt: nowIso() });
+      if (!DB.has("ed:" + x.edition)) await put("ed:" + x.edition, { edition: x.edition, title: edLabel(x.edition), intro: "", status: "published", publishedAt: x.created, updatedBy: ME, updatedAt: nowIso() });
+      n++;
+    } catch (e) { fail++; log("import", x.legacyUrl + " — " + e.message); if (e.status === 403) break; }
+    btn.textContent = "Importing… " + n + " of " + list.length;
+  }
+  log("import", n + " imported, " + fail + " failed");
+  if (fail) $("#fatal").hidden = false, $("#fatal").innerHTML = "<b>Import stopped.</b>" + esc(fail + " could not be saved. See Diagnostics.");
+  render();
+}
+
+/* ============ events ============ */
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-act],[data-cmd]");
+  if (!t) return;
+  if (t.dataset.cmd){ ev.preventDefault(); return rteCmd(t.dataset.cmd); }
+  const act = t.dataset.act;
+  if (act === "close") return closeDrawer();
+  if (act === "newed") return editEdition(null);
+  if (act === "editEd") return editEdition(t.dataset.ed);
+  if (act === "saveEd") return saveEdition(t);
+  if (act === "newAr") return editArticle(null, t.dataset.ed);
+  if (act === "editAr") return editArticle(t.dataset.key);
+  if (act === "saveAr") return saveArticle(t);
+  if (act === "delAr") return deleteArticle(t);
+  if (act === "import") return importLegacy(t);
+  if (act === "pickcover") return $("#a-cvf").click();
+  if (act === "dropcover"){ DRAFT.a.cover = ""; const p = $("#a-cv"); p.style.backgroundImage = ""; t.remove(); return; }
+  if (act === "copy"){ const s = $("#" + t.dataset.for).textContent; navigator.clipboard.writeText(s).then(() => { t.textContent = "Copied"; setTimeout(() => t.textContent = "Copy", 1500); }); return; }
+  if (act === "allmail"){ const el = $("#emailpanel"); MC.showAll = true;
+    el.innerHTML = '<h2>Email versions<span class="n">Mailchimp</span></h2>' + MC.campaigns.filter(x => safeUrl(x.url)).map(x => '<a class="part" href="' + esc(safeUrl(x.url)) + '" target="_blank" rel="noopener noreferrer"><span class="n">' + esc(x.title || "Newsletter") + '</span><span class="d">' + esc(fmtDate(x.sentOn)) + '</span>' + chev + '</a>').join(""); }
+});
+document.addEventListener("mousedown", ev => { if (ev.target.closest(".rte .tb")){ ev.preventDefault(); const s = getSelection(); if (s.rangeCount && $("#a-body") && $("#a-body").contains(s.anchorNode)) savedRange = s.getRangeAt(0).cloneRange(); } });
+document.addEventListener("change", async ev => {
+  if (ev.target.id === "a-cvf" && ev.target.files[0]){
+    dmsg("Uploading photo…");
+    try { const id = await uploadPhoto(ev.target.files[0], DRAFT.a.edition || $("#a-ed").value); DRAFT.a.cover = id; const p = $("#a-cv"); p.setAttribute("data-cover", id); hydrate($("#drbody")); dmsg("Photo added."); }
+    catch (e) { dmsg(saveErr(e)); }
+    ev.target.value = "";
+  }
+  if (ev.target.id === "a-imf" && ev.target.files[0]){
+    dmsg("Uploading photo…");
+    try {
+      const id = await uploadPhoto(ev.target.files[0], DRAFT.a.edition || $("#a-ed").value);
+      const ed = $("#a-body"); ed.focus();
+      if (savedRange){ const s = getSelection(); s.removeAllRanges(); s.addRange(savedRange); }
+      document.execCommand("insertHTML", false, '<img data-img="' + id + '" alt=""><p><br></p>');
+      hydrate(ed); dmsg("Photo added.");
+    } catch (e) { dmsg(saveErr(e)); }
+    ev.target.value = "";
+  }
+});
+$("#drclose").addEventListener("click", closeDrawer);
+$("#tscrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && !$("#drawer").hidden) closeDrawer();
+  if (ev.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){ ev.preventDefault(); $("#q").focus(); }
+});
+let qt = null;
+$("#q").addEventListener("input", () => { clearTimeout(qt); qt = setTimeout(render, 150); });
+$("#crumb").addEventListener("click", ev => { ev.preventDefault(); $("#q").value = ""; location.hash = ""; render(); });
+$("#copy").addEventListener("click", () => navigator.clipboard.writeText($("#diag").textContent));
+$("#signout").addEventListener("click", () => MS && MS.logoutRedirect({ account: ACCT, postLogoutRedirectUri: CFG.redirect }));
+$("#signin").addEventListener("click", () => MS.loginRedirect({ scopes: SCOPES, state: location.hash.slice(1) }));
+
+/* ============ start ============ */
+function gate(title, msg, showBtn){
+  $("#gatetitle").textContent = title; $("#gatemsg").textContent = msg;
+  $("#signin").hidden = !showBtn; $("#gatewrap").hidden = false; $("#app").hidden = true;
+}
+(async function(){
+  log("page", location.origin + location.pathname);
+  if (typeof msal === "undefined") return gate("Sign-in is unavailable", "The Microsoft sign-in script did not load. Reload the page.", false);
+  MS = new msal.PublicClientApplication({ auth: { clientId: CFG.clientId, authority: "https://login.microsoftonline.com/" + CFG.tenant, redirectUri: CFG.redirect, navigateToLoginRequestUrl: false },
+    cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false } });
+  await MS.initialize();
+  try {
+    const r = await MS.handleRedirectPromise();
+    if (r && r.account) MS.setActiveAccount(r.account);
+    /* a Mailchimp link survives sign-in: the article it pointed at rides along as the MSAL state */
+    if (r && r.state && /^\d{4}-\d{2}(\/[a-z0-9-]+)?$/.test(r.state)) history.replaceState(null, "", "#" + r.state);
+  } catch (e) { log("redirect", (e.errorCode || e.name || "") + " " + (e.errorMessage || e)); return gate("Sign-in was rejected", String((e && e.errorMessage) || e), true); }
+  ACCT = MS.getActiveAccount() || MS.getAllAccounts()[0];
+  if (!ACCT) return gate("Sign in to read the newsletter", "Use your Bailey-Harris Microsoft account.", true);
+  MS.setActiveAccount(ACCT);
+  ME = (ACCT.username || "").toLowerCase(); MENAME = ACCT.name || ACCT.username || "";
+  $("#acct").hidden = false; $("#searchbox").hidden = false;
+  $("#acctname").textContent = ACCT.name || ACCT.username; $("#acctav").textContent = initials(ACCT.name || ACCT.username || "?");
+  $("#app").hidden = false;
+  log("signed in as", ACCT.username);
+
+  try { await initStore(); }
+  catch (e) { log("site", e.message); return fatalMsg("Could not reach SharePoint.", e.status === 403 ? " Access was denied (403)." : " " + e.message); }
+  if (!LIST) return fatalMsg("The Newsletter list was not found on /sites/Dashboard.", " See NEWSLETTER-DEPLOY.md.");
+  try { await loadAll(); }
+  catch (e) { log("list", e.message); return fatalMsg("Could not read the newsletter.", e.status === 403 ? " Your account doesn’t have Read on the Newsletter list (403)." : " " + e.message); }
+
+  const ecfg = (DB.get("cfg:editors") || {}).data;
+  EDITOR = !!(ecfg && Array.isArray(ecfg.editors) && ecfg.editors.map(x => String(x).toLowerCase()).includes(ME));
+  log("editor", EDITOR ? "yes" : (ecfg ? "no" : "no — cfg:editors item missing"));
+
+  const jobs = [];
+  if (MCDRIVE) jobs.push(gx("/drives/" + MCDRIVE + "/root:/" + CFG.mcFile + ":/content", { raw: true }).then(r => r.json()).then(j => {
+    MC = { campaigns: (j.campaigns || (j.newsletter ? [{ title: j.newsletter.title, sentOn: j.newsletter.sentOn, url: j.newsletter.url }] : [])).slice().sort((a, b) => String(b.sentOn).localeCompare(String(a.sentOn))), generated: j.generated };
+    log(CFG.mcFile, MC.campaigns.length + " campaigns, generated " + (j.generated || "?"));
+  }).catch(e => log(CFG.mcFile, "not read — " + e.message)));
+  if (EDITOR && DRIVE) jobs.push(gx("/drives/" + DRIVE + "/root:/legacy.json:/content", { raw: true }).then(r => r.json()).then(j => { LEGACY = j.articles || []; log("legacy.json", LEGACY.length + " articles"); }).catch(e => log("legacy.json", "not read — " + e.message)));
+  await Promise.all(jobs);
+  $("#asof").textContent = "Newsletter list read " + new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + (MC && MC.generated ? " · Mailchimp checked " + fmtDate(MC.generated) : "");
+  render();
+})();
+function fatalMsg(t, d){ const f = $("#fatal"); f.hidden = false; f.innerHTML = "<b>" + esc(t) + "</b>" + esc(d || ""); log("ERROR", t + (d || "")); }
+</script>
+</body>
+</html>
