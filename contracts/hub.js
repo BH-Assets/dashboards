@@ -362,11 +362,10 @@
   /* =====================================================================
      REMINDER EMAIL — company template + this job's settings
      ===================================================================== */
-  var DEFAULT_TPL = {
-    subject: '{Job}: pay application due {Due date} for {Trade partner}',
-    body: 'Hi {Contact first name},\n\nYour pay application for {Job} is due {Due date}. Bill work completed through {Period end}, with no projection of work.\n\nUse your private link to submit it, or tell us you have no billing this period:\n{Submit button}  {No billing button}\n\n{Contract summary}\n\n{Job note}\n\nQuestions? Contact {PM name}, {PM email}.\n\nThank you,\nBailey-Harris Construction'
-  };
-  var FIELDS = ['{Trade partner}', '{Contact first name}', '{Job}', '{Due date}', '{Period end}', '{Submit button}', '{No billing button}', '{Contract summary}', '{Job note}', '{PM name}', '{PM email}'];
+  /* the email itself is built by reminder-email.js (window.BHReminder), the same file the reminder script uses */
+  var R = function () { return window.BHReminder; };
+  var DEFAULT_TPL = window.BHReminder ? window.BHReminder.DEFAULT_TPL : { subject: '', body: '' };
+  var FIELDS = window.BHReminder ? window.BHReminder.FIELDS : [];
   async function loadEmail() {
     var S = D().S, ed = $('#em-edit');
     if (!S.project) { ed.innerHTML = ''; $('#em-preview').innerHTML = ''; return; }
@@ -395,28 +394,27 @@
       '<button class="bh-btn-outline" id="em-test">Send me a test</button></div><div id="em-render"></div>';
     renderPreview();
   }
-  function contractSummary(c) {
+  /* preview figures from Procore and the pay app list; the monthly email itself uses the ComputerEase records and Billy compliance */
+  function previewData(c, note) {
+    var P = periodInfo(periodKeys()[0]), pj = D().S.project, m = me(), T = D().pcTerms();
     var last = rowsOf(c.number).filter(function (r) { return APPROVED[r.f.Status] && r.f.DocType !== 'no billing'; }).sort(function (a, b) { return Number(b.f.PayRequest || 0) - Number(a.f.PayRequest || 0); })[0];
-    var T = D().pcTerms();
-    var rows = [['Contract (Procore, with approved change orders)', money(c.grand_total)], ['Billed to date (last approved pay app' + (last ? ' #' + last.f.PayRequest : '') + ')', last ? money(last.f.CompletedToDate) : '—'], ['Retainage', (c.retainage_percent != null && c.retainage_percent !== '' ? Number(c.retainage_percent) : T.retPct) + '% ' + T.retDuration]];
-    return '<table style="border-collapse:collapse;background:#f7f5f1;width:100%;font-size:13px"><tr><td colspan="2" style="padding:10px 14px 4px;font-weight:700;letter-spacing:.04em">' + esc(c.number + ' · ' + (c.title || '').toUpperCase()) + '</td></tr>' + rows.map(function (r) { return '<tr><td style="padding:3px 14px;color:#484b4d">' + esc(r[0]) + '</td><td style="padding:3px 14px;text-align:right;font-weight:600">' + esc(r[1]) + '</td></tr>'; }).join('') + '<tr><td colspan="2" style="padding:0 0 8px"></td></tr></table>';
+    var pct = c.retainage_percent != null && c.retainage_percent !== '' ? Number(c.retainage_percent) : T.retPct;
+    var rec = last ? { pr: Number(last.f.PayRequest || 0), ctd: Number(last.f.CompletedToDate || 0), ret: Number(last.f.RetainageHeld || 0), prev: r2(Number(last.f.CompletedToDate || 0) - Number(last.f.RetainageHeld || 0)) } : null;
+    var isoD = function (x) { return iso(x); }, until = new Date(P.due); until.setDate(until.getDate() + 31);
+    return { vendor: (c.vendor && (c.vendor.company || c.vendor.name)) || '', firstName: '', job: { number: pj.project_number || '', name: pj.name }, due: isoD(P.due), periodEnd: isoD(P.end), linkUntil: isoD(until),
+      link: 'https://pay.baileyharris.com/', note: note || '', pm: { name: m.name, email: m.email },
+      subs: [{ number: c.number, title: c.title || '', nextPr: rec ? rec.pr + 1 : 1, orig: Number(c.grand_total || 0), earlier: 0, fresh: 0, adj: Number(c.grand_total || 0), cos: [], rec: rec,
+        retText: pct + '% ' + (/50/.test(T.retDuration) ? 'through 50%' : 'throughout'), last: null, comp: null }] };
   }
-  function render(tpl, c, note) {
-    var P = periodInfo(periodKeys()[0]), pj = D().S.project, m = me();
-    var btn = function (t, dark) { return '<a href="#" style="display:inline-block;padding:10px 18px;font-weight:700;text-decoration:none;' + (dark ? 'background:#211e1e;color:#ffffff' : 'border:1px solid #211e1e;color:#211e1e') + '">' + t + '</a>'; };
-    var vals = { '{Trade partner}': esc((c.vendor && (c.vendor.company || c.vendor.name)) || ''), '{Contact first name}': '[first name]', '{Job}': esc((pj.project_number ? pj.project_number + ' ' : '') + pj.name),
-      '{Due date}': esc(fmtD(P.due, true)), '{Period end}': esc(P.end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })), '{Submit button}': btn('Submit pay app', true), '{No billing button}': btn('No billing this period'),
-      '{Contract summary}': contractSummary(c), '{Job note}': esc(note || ''), '{PM name}': esc(m.name), '{PM email}': esc(m.email) };
-    var fill = function (s, html) { var out = html ? esc(s) : s; Object.keys(vals).forEach(function (k) { out = out.split(html ? esc(k) : k).join(html ? vals[k] : String(vals[k]).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&')); }); return out; };
-    var body = fill(tpl.body, true).split(/\n{2,}/).map(function (p) { return p.trim() ? '<p style="margin:0 0 12px">' + p.replace(/\n/g, '<br>') + '</p>' : ''; }).join('');
-    return { subject: fill(tpl.subject, false), html: '<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.55;color:#211e1e;max-width:640px"><div style="border-top:4px solid #ed2b30;padding-top:16px">' + body + '</div></div>' };
-  }
+  function render(tpl, c, note) { return R().build(tpl, previewData(c, note)); }
   function current() { return { subject: ($('#em-subject') || {}).value || H.tpl.subject, body: ($('#em-body') || {}).value || H.tpl.body }; }
   function renderPreview() {
     var list = subs(), c = list[Number(($('#em-as') || {}).value || 0)];
     if (!c) { $('#em-render').innerHTML = '<p class="bh-caption">No approved, executed subcontracts to preview with.</p>'; return; }
-    var r = render(current(), c, ($('#em-note') || {}).value);
-    $('#em-render').innerHTML = '<div class="mut small">To: ' + esc((c.vendor && (c.vendor.company || c.vendor.name)) || '') + ' (subcontract signer)</div><div class="hub-subj">' + esc(r.subject) + '</div>' + r.html;
+    var r = render(current(), c, ($('#em-note') || {}).value), asText = H.emText;
+    $('#em-render').innerHTML = '<div class="hub-viewtoggle" role="group" aria-label="Preview format"><button type="button" class="hub-chip' + (asText ? '' : ' is-on') + '" data-emview="html" aria-pressed="' + !asText + '">HTML</button><button type="button" class="hub-chip' + (asText ? ' is-on' : '') + '" data-emview="text" aria-pressed="' + !!asText + '">Plain text</button></div>' +
+      '<div class="mut small">To: ' + esc((c.vendor && (c.vendor.company || c.vendor.name)) || '') + ' (subcontract signer) · first name, change orders, our records, last check and Billy compliance come from ComputerEase and Billy when it sends</div><div class="hub-subj">' + esc(r.subject) + '</div>' +
+      (asText ? '<pre class="hub-plain">' + esc(r.text) + '</pre>' : '<div class="hub-mail">' + r.inner + '</div>');
   }
   async function saveTpl(reset) {
     var m = me(), t = reset ? Object.assign({}, DEFAULT_TPL) : current();
@@ -431,7 +429,12 @@
   async function sendTest() {
     var list = subs(), c = list[Number($('#em-as').value || 0)]; if (!c) return;
     var r = render(current(), c, $('#em-note').value), m = me();
-    try { await sendMail([m.email], '[TEST] ' + r.subject, r.html); D().msg('Test sent to ' + m.email + '.'); } catch (e) { D().msg('Test not sent: ' + e.message, true); }
+    r.subject = '[TEST] ' + r.subject;
+    try {
+      var res = await gcall('POST', '/me/sendMail', R().mime(r, m.email, [m.email]), { 'Content-Type': 'text/plain' });   // MIME: HTML with a plain-text part
+      if (!res.ok) throw new Error((res.body && res.body.error && res.body.error.message) || ('HTTP ' + res.status) + (res.status === 403 ? ' (Mail.Send permission not granted yet)' : ''));
+      D().msg('Test sent to ' + m.email + ' (HTML with a plain-text version).');
+    } catch (e) { D().msg('Test not sent: ' + e.message, true); }
   }
   function insertField(f) {
     var a = document.activeElement && (document.activeElement.id === 'em-subject' || document.activeElement.id === 'em-body') ? document.activeElement : (H.lastFocus || $('#em-body'));
@@ -448,6 +451,7 @@
     if (t.dataset && t.dataset.file != null) { var fs = $('#pay-review')._files || []; if (fs[+t.dataset.file]) openFile(fs[+t.dataset.file]); return; }
     if (t.hasAttribute && t.hasAttribute('data-close')) { H.sel = null; renderPay(); return; }
     if (t.dataset && t.dataset.field) { insertField(t.dataset.field); return; }
+    if (t.dataset && t.dataset.emview) { H.emText = t.dataset.emview === 'text'; renderPreview(); return; }
     if (t.id === 'em-save-tpl') saveTpl(false); else if (t.id === 'em-reset') { if (confirm('Put the default wording back in the company template?')) saveTpl(true); }
     else if (t.id === 'em-save-job') saveJob(); else if (t.id === 'em-test') sendTest(); else if (t.id === 'pay-refresh') loadPay(true);
   });
