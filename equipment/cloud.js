@@ -27,14 +27,46 @@
     if (!acct) { await pca.loginRedirect({ scopes: SCOPES }); return false; }
     pca.setActiveAccount(acct); return true;
   }
-  async function idToken() {
-    try { return (await pca.acquireTokenSilent({ scopes: SCOPES, account: acct })).idToken; }
-    catch (e) { await pca.acquireTokenRedirect({ scopes: SCOPES, account: acct }); throw e; }
+  /* ID tokens last about an hour, and MSAL can hand back a cached one that has already expired, which the Worker
+     then refuses ("Microsoft sign-in not accepted"). So: refresh it when it has under 5 minutes left; if the silent
+     refresh fails, try single sign-on in the background; only if that fails too, ask the person to sign in again,
+     with a button, so nothing on the screen is lost. (23 Nov 2026) */
+  var signInWait = null;
+  var expMs = function (r) { return r && r.idTokenClaims && r.idTokenClaims.exp ? r.idTokenClaims.exp * 1000 : 0; };
+  async function idToken(force) {
+    try {
+      var r = await pca.acquireTokenSilent({ scopes: SCOPES, account: acct, forceRefresh: !!force });
+      if (!force && expMs(r) && expMs(r) - Date.now() < 5 * 60e3) return idToken(true);
+      if (expMs(r) && expMs(r) < Date.now() + 60e3) throw new Error('stale id token');
+      return r.idToken;
+    } catch (e) {
+      try { var s = await pca.ssoSilent({ scopes: SCOPES, loginHint: acct && acct.username }); acct = s.account || acct; pca.setActiveAccount(acct); return s.idToken; }
+      catch (e2) { return askToSignIn(); }
+    }
   }
-  async function api(path, opt) {
+  function askToSignIn() {
+    if (signInWait) return signInWait;
+    signInWait = new Promise(function (resolve) {
+      showBanner('Your Microsoft sign-in has expired. Sign in again to keep saving; your changes stay on this screen.', true);
+      var b = document.querySelector('#cl-banner');
+      b.innerHTML = b.innerHTML.replace(/<button[^>]*data-cl="reload"[^>]*>[^<]*<\/button>/, '') + ' <button class="btn sm primary" data-cl="signin">Sign in again</button>';
+      CL.resumeSignIn = resolve;
+    });
+    return signInWait;
+  }
+  // the button: a popup keeps this page (and anything not saved yet) as it is
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-cl="signin"]')) return;
+    pca.acquireTokenPopup({ scopes: SCOPES, account: acct, loginHint: acct && acct.username }).then(function (r) {
+      acct = r.account || acct; pca.setActiveAccount(acct); var b = document.querySelector('#cl-banner'); if (b) b.remove();
+      var done = CL.resumeSignIn; signInWait = null; CL.resumeSignIn = null; if (done) done(r.idToken);
+    }).catch(function () { toast('Sign-in did not finish. Allow pop-ups for dashboard.baileyharris.com, then try again.'); });
+  });
+  async function api(path, opt, retried) {
     opt = opt || {};
-    var headers = Object.assign({ Authorization: 'Bearer ' + await idToken() }, opt.json !== undefined ? { 'Content-Type': 'application/json' } : {}, opt.headers || {});
+    var headers = Object.assign({ Authorization: 'Bearer ' + await idToken(!!retried) }, opt.json !== undefined ? { 'Content-Type': 'application/json' } : {}, opt.headers || {});
     var r = await fetch(API + path, { method: opt.method || 'GET', headers: headers, body: opt.json !== undefined ? JSON.stringify(opt.json) : opt.body });
+    if (r.status === 401 && !retried) return api(path, opt, true);   // token refused: get a fresh one and try once more
     var t = await r.text(), j = null; try { j = JSON.parse(t); } catch (e) { }
     if (!r.ok && r.status !== 207) { var er = new Error((j && j.error) || ('The Equipment service answered ' + r.status)); er.status = r.status; er.body = j; throw er; }
     return j;
@@ -471,12 +503,14 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-cl]'); if (!b) return;
     if (b.dataset.cl === 'reload') location.reload();
-    else { document.querySelector('#cl-banner').remove(); CL.conflicts = []; }
+    else if (b.dataset.cl === 'close') { var bn = document.querySelector('#cl-banner'); if (bn) bn.remove(); CL.conflicts = []; }
   });
   window.addEventListener('beforeunload', function (e) { if (CL.saving || CL.timer && CL.base && JSON.stringify(snapshot()) !== JSON.stringify(CL.base)) { e.preventDefault(); e.returnValue = ''; } });
 
   /* ---------------- start ---------------- */
   (async function () {
+    // MSAL's hidden sign-in frame and sign-in popup land back on this page with ?code= / #code=; the opening page reads it, so don't start the app there
+    if ((window.self !== window.top || window.opener) && /[#&?](code|error)=/.test(location.hash + location.search)) return;
     var st = document.querySelector('#auth-root');
     var msg = function (t) { if (st) st.innerHTML = '<div class="auth"><div class="auth-card"><div class="logo auth-logo">' + brandHtml('auth') + '</div><p>' + t + '</p></div></div>'; };
     msg('Signing you in…');

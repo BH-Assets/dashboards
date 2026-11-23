@@ -329,12 +329,12 @@ function syncSales(o, why){
 const ACTIVE = ["Booked","Rented Out"];
 const isReady = o => o.status==="Booked" && parseD(o.out) <= now();
 const isOverdue = o => o.status==="Rented Out" && parseD(o.ret) < now();
-function orderStatus(o){ return isOverdue(o) ? "Overdue" : isReady(o) ? "Ready to go out" : o.status; }
+function orderStatus(o){ if (o.kind==="Sale" && o.status==="Returned") return "Sold"; return isOverdue(o) ? "Overdue" : isReady(o) ? "Ready to go out" : o.status; }
 const SEVERITY = [["Low","Minor – Asset can keep working, fix when convenient"],["Medium","Needs repair soon – Limit use until fixed"],["High","Down or unsafe – Do not use until repaired"]];
 const SEV_RANK = {High:0, Medium:1, Low:2};
 function sevChip(v){ return v ? `<span class="chip sev-${v.toLowerCase()}">${esc(v)}</span>` : '<span class="muted">—</span>'; }
 function chipFor(st){
-  const cls = {...SR_CHIPS, "Rented Out":"rented","Available":"available","Booked":"reserved","Customer Pickup":"neutral","Customer Returned":"available","BHESC Delivered":"rented","BHESC Pickup":"checked","Ready to go out":"maint","Overdue":"overdue","In Maintenance":"maint","Returned":"returned","Retired":"retired","Cancelled":"cancelled","Open":"maint","Completed":"available","Checked Out":"checked","Queued":"neutral","In progress":"rented","Waiting on parts":"maint","Done":"available","In stock":"available","Low stock":"maint","Out of stock":"overdue","Admin":"checked","Manager":"rented","Rental Coordinator":"available","Mechanic":"maint","Field Crew":"neutral","Viewer":"neutral","Active":"available","Disabled":"cancelled","No password":"maint","Temporary password":"maint"}[st]||"neutral";
+  const cls = {...SR_CHIPS, "Rented Out":"rented","Available":"available","Booked":"reserved","Customer Pickup":"neutral","Customer Returned":"available","BHESC Delivered":"rented","BHESC Pickup":"checked","Ready to go out":"maint","Overdue":"overdue","In Maintenance":"maint","Returned":"returned","Sold":"available","Retired":"retired","Cancelled":"cancelled","Open":"maint","Completed":"available","Checked Out":"checked","Queued":"neutral","In progress":"rented","Waiting on parts":"maint","Done":"available","In stock":"available","Low stock":"maint","Out of stock":"overdue","Admin":"checked","Manager":"rented","Rental Coordinator":"available","Mechanic":"maint","Field Crew":"neutral","Viewer":"neutral","Active":"available","Disabled":"cancelled","No password":"maint","Temporary password":"maint"}[st]||"neutral";
   return `<span class="chip ${cls}">${esc(st)}</span>`;
 }
 function itemById(id){ return S.items.find(i=>i.id===id); }
@@ -1714,9 +1714,13 @@ function saveOrder(){
     toast(o.no!==origNo ? `Order #${origNo} is now #${o.no}` : `Order #${o.no} saved`);
   }
   o.sales = (o.sales||[]).filter(x=>x.invId && +x.qty>0); if (!o.sales.length) delete o.sales;
+  const saleOnly = !(o.lines||[]).length && !!(o.sales||[]).length;
+  if (saleOnly && o.status!=="Cancelled"){ if (o.kind!=="Sale") (o.log ||= []).push({by:myName(),at,text:"Inventory only, no equipment: saved as a sale"});
+    o.kind = "Sale"; o.status = "Returned"; o.ret = o.out; o.returnedAt = o.returnedAt || o.out; o.actualReturn = o.actualReturn || o.out; delete o.cycle; }
+  else if (o.kind==="Sale" && (o.lines||[]).length){ delete o.kind; (o.log ||= []).push({by:myName(),at,text:"Equipment added: now a rental"}); }
   syncSales(o, "order edited");
   if (o.fromRequest){ const r = (S.requests||[]).find(x=>x.id===o.fromRequest); if (r && r.status==="Pending"){ reqDecide(r, "Approved", "", o.no); o.requestNo = r.no; toast(`${rqNo(r)} approved as order #${o.no}`); } delete o.fromRequest; }
-  draft = null; save(); closeModal(); rerender();
+  draft = null; save(); closeModal(); rerender(); if (o.kind==="Sale") toast(`Order #${o.no} saved as a sale (inventory only, no rental)`);
 }
 
 /* ---- Order detail ---- */
@@ -1730,8 +1734,8 @@ function viewOrder(no){
     ${late?`<div class="warnbox"><b>${late} day${late>1?"s":""} past the return date.</b> If checked in today, rental comes to about <b class="num">${money(accrued)}</b> instead of ${money(t.rental)}.</div>`:""}
     <div class="kv">
       <div><span>Customer</span>${esc(c?.name||"—")}</div><div><span>Location</span>${esc(locLabel(l))}</div><div><span>Pickup</span>${esc(o.pickup||"--")}</div>
-      <div><span>Rent out</span><span class="num" style="text-transform:none;letter-spacing:0;font-size:inherit;color:inherit;font-weight:400">${fmtDT(o.out).replace("<br>"," ")}</span></div>
-      <div><span>${o.status==="Returned"?"Returned":"Return date"}</span><span class="num" style="text-transform:none;letter-spacing:0;font-size:inherit;color:inherit;font-weight:400">${fmtDT(orderRentalEnd(o)).replace("<br>"," ")}</span></div>
+      <div><span>${o.kind==="Sale"?"Sale date":"Rent out"}</span><span class="num" style="text-transform:none;letter-spacing:0;font-size:inherit;color:inherit;font-weight:400">${fmtDT(o.out).replace("<br>"," ")}</span></div>
+      <div ${o.kind==="Sale"?"hidden":""}><span>${o.status==="Returned"?"Returned":"Return date"}</span><span class="num" style="text-transform:none;letter-spacing:0;font-size:inherit;color:inherit;font-weight:400">${fmtDT(orderRentalEnd(o)).replace("<br>"," ")}</span></div>
       <div><span>Description</span>${esc(o.description)||"—"}</div>
     </div>
     <div class="lines">${t.lines.map(x=>{const it=itemById(x.itemId); return `<div class="line"><div><button class="linkbtn" data-act="view-item" data-id="${esc(x.itemId)}"><b>#${esc(x.itemId)}</b></button> ${esc(it?.name||"(deleted asset)")}<div class="calc">${esc(x.label)} (${x.days} days)</div></div><div class="num">${money(x.total)}</div><span></span></div>`;}).join("")}
@@ -2375,15 +2379,18 @@ function viewXPhoto(kind, id){ const rec = kind==="inv" ? S.inventory.find(x=>x.
   openModal(`<header><h2>${esc(rec.name)}</h2><button class="x" data-act="close" aria-label="Close">×</button></header><div class="mbody" style="align-items:center"><img src="${rec.photo}" alt="${esc(rec.name)}" style="max-width:100%;max-height:70vh;border-radius:4px"></div><footer><button class="btn" data-act="${kind==="inv"?"inv-edit":"stock-edit"}" data-id="${id}">Edit item</button></footer>`); }
 
 /* ================= Asset Stock (quantity-tracked) ================= */
+ui.stk = {q:""};
 function vStock(){
   const rows = S.stock.map(s=>({s,out:stockOut(s.id)}));
+  const sq = (ui.stk.q||"").trim().toLowerCase(), shown = sq ? rows.filter(({s})=>[s.name, s.category, keptAt(s), s.notes].join(" ").toLowerCase().includes(sq)) : rows;
   return band("Asset Stock","Items you track by quantity instead of one by one, such as cones, barricades, cords or shoring. Check them out by the count.",`<button class="btn primary" data-act="stock-new">+ Add stock item</button>`) + `
   <div class="content">
     <div class="kpis"><div class="kpi"><span class="lbl">Items tracked</span><span class="val num">${rows.length}</span><span class="note">${rows.reduce((t,r)=>t+(+r.s.qty||0),0)} units owned</span></div>
     <div class="kpi"><span class="lbl">Checked out</span><span class="val num">${rows.reduce((t,r)=>t+r.out,0)}</span><span class="note">units out with crews</span></div>
     <div class="kpi ${rows.some(r=>(+r.s.qty||0)-r.out<=0)?"bad":""}"><span class="lbl">None available</span><span class="val num">${rows.filter(r=>(+r.s.qty||0)-r.out<=0).length}</span><span class="note">items with 0 left to check out</span></div></div>
-    <div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>Item</th><th>Group</th><th style="text-align:right">Total</th><th style="text-align:right">Checked out</th><th style="text-align:right">Available</th><th>Rates</th><th>Out with</th><th>Kept at</th><th>Notes</th><th></th></tr></thead><tbody>
-  ${rows.length?rows.map(({s,out})=>`<tr><td><div class="idcell">${photoThumb(s.photo,"stock",s.id,"stock")}<b>${esc(s.name)}</b></div></td><td class="muted" style="white-space:nowrap" title="${esc(groupLabel(s.category||""))}">${esc(s.category)||"—"}</td><td class="num" style="text-align:right">${s.qty} ${esc(s.unit)}</td><td class="num" style="text-align:right">${out}</td><td class="num" style="text-align:right">${s.qty-out<=0?chipFor("Out of stock"):`<b>${s.qty-out}</b>`}</td><td class="small num">${rateParts(s).map(([l,v])=>`${l[0]} ${money0(v)}`).join(" · ")||'<span class="muted">—</span>'}</td><td class="small">${S.custody.filter(c=>c.kind==="stock"&&c.stockId===s.id&&!c.inAt).map(c=>`${esc(c.holder)} <span class="num muted">×${c.qty}</span>${custodyOverdue(c)?' <span style="color:var(--bad)">late</span>':""}`).join("<br>")||'<span class="muted">—</span>'}</td><td>${esc(keptAt(s))}</td><td><span class="trunc">${esc(s.notes)}</span></td><td><div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" data-act="stock-co" data-id="${s.id}" ${s.qty-out>0?"":"disabled"}>Check out</button><button class="btn sm" data-act="stock-edit" data-id="${s.id}">Edit</button></div></td></tr>`).join(""):`<tr><td colspan="9"><div class="empty"><strong>No stock items yet</strong>Add things you own in quantity, like 40 traffic cones or 12 extension cords. They can then be checked out by count from Check In/Out.</div></td></tr>`}
+    <div class="toolbar" style="margin-top:14px;gap:8px;flex-wrap:wrap"><div class="search" style="max-width:320px">${ico("search")}<input id="stk-q" type="search" placeholder="Search item, group, location" value="${esc(ui.stk.q||"")}" data-input="stkq" aria-label="Search asset stock"></div>${sq?`<span class="small muted">${shown.length} of ${rows.length}</span>`:""}</div>
+    <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Item</th><th>Group</th><th style="text-align:right">Total</th><th style="text-align:right">Checked out</th><th style="text-align:right">Available</th><th>Rates</th><th>Out with</th><th>Kept at</th><th>Notes</th><th></th></tr></thead><tbody>
+  ${shown.length?shown.map(({s,out})=>`<tr><td><div class="idcell">${photoThumb(s.photo,"stock",s.id,"stock")}<b>${esc(s.name)}</b></div></td><td class="muted" style="white-space:nowrap" title="${esc(groupLabel(s.category||""))}">${esc(s.category)||"—"}</td><td class="num" style="text-align:right">${s.qty} ${esc(s.unit)}</td><td class="num" style="text-align:right">${out}</td><td class="num" style="text-align:right">${s.qty-out<=0?chipFor("Out of stock"):`<b>${s.qty-out}</b>`}</td><td class="small num">${rateParts(s).map(([l,v])=>`${l[0]} ${money0(v)}`).join(" · ")||'<span class="muted">—</span>'}</td><td class="small">${S.custody.filter(c=>c.kind==="stock"&&c.stockId===s.id&&!c.inAt).map(c=>`${esc(c.holder)} <span class="num muted">×${c.qty}</span>${custodyOverdue(c)?' <span style="color:var(--bad)">late</span>':""}`).join("<br>")||'<span class="muted">—</span>'}</td><td>${esc(keptAt(s))}</td><td><span class="trunc">${esc(s.notes)}</span></td><td><div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" data-act="stock-co" data-id="${s.id}" ${s.qty-out>0?"":"disabled"}>Check out</button><button class="btn sm" data-act="stock-edit" data-id="${s.id}">Edit</button></div></td></tr>`).join(""):(rows.length ? `<tr><td colspan="9"><div class="empty"><strong>Nothing matches</strong>Try another search.</div></td></tr>` : `<tr><td colspan="9"><div class="empty"><strong>No stock items yet</strong>Add things you own in quantity, like 40 traffic cones or 12 extension cords. They can then be checked out by count from Check In/Out.</div></td></tr>`)}
   </tbody></table></div></div>`;
 }
 function stockForm(id){
@@ -2815,7 +2822,10 @@ function invoiceData(o, scope={}){
   return {o, final, through, from, lines, rental, bundleDisc, delivery, charges, sales, adj, subtotal, tax, total:subtotal+tax, invDate, due,
     estimated: !final && !cn, overdue: isOverdue(o), cyc, cn, bill, prior, invNo};
 }
-function invoiceBody(d){
+function invoiceBody(d){ const h = invoiceBodyRental(d); if (d.o.kind!=="Sale") return h;
+  return h.replace("<h1>Invoice</h1>", "<h1>Sale invoice</h1>").replace(/<div class="inv-flag[^"]*">[\s\S]*?<\/div>/, '<div class="inv-flag final">Inventory sale</div>')
+    .replace(/<div><h2>Rental period<\/h2>[\s\S]*?<\/div>\n  <\/section>/, `<div><h2>Sale</h2><b>Date:</b> ${fmtDate(d.o.out)}</div>\n  </section>`); }
+function invoiceBodyRental(d){
   const o = d.o, c = custById(o.customerId), l = locById(o.locationId), st = S.settings, e = esc;
   const dt = s => fmtDate(s), dtt = s => `${fmtDate(s)} ${s.slice(11,16)}`;
   const addr = (st.address||"").split("\n").filter(Boolean).map(e).join("<br>");
@@ -3496,6 +3506,7 @@ document.addEventListener("input", e => {
   if (ds.input==="oq"){ ui.orders.q = t.value; clearTimeout(tmr); tmr = setTimeout(rerender,150); }
   if (ds.input==="avq"){ ui.av.q = t.value; clearTimeout(tmr); tmr = setTimeout(()=>{ rerender(); refocus("av-q"); },200); }
   if (ds.input==="rqq"){ ui.req.q = t.value; clearTimeout(tmr); tmr = setTimeout(()=>{ rerender(); refocus("rq-q"); },200); }
+  if (ds.input==="stkq"){ ui.stk.q = t.value; clearTimeout(tmr); tmr = setTimeout(()=>{ rerender(); refocus("stk-q"); },200); }
   if (ds.input==="invq"){ ui.inv.q = t.value; clearTimeout(tmr); tmr = setTimeout(()=>{ rerender(); refocus("inv-q"); },200); }
   if (ds.input==="mq"){ ui.maint.q = t.value; clearTimeout(tmr); tmr = setTimeout(()=>{ rerender(); refocus("m-q"); },200); }
   if (ds.input==="iq"){ ui.items.q = t.value; clearTimeout(tmr); tmr = setTimeout(rerender,150); }
