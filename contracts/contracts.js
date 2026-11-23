@@ -451,8 +451,9 @@
               '<label class="wide">Submittal deadline<input data-f="submittalDate" value="' + esc(row.submittalDate) + '" placeholder="e.g. Friday, December 18, 2026"></label>' +
               '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>' +
               '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
+              '<div class="full cd-field"><label for="adds-' + row.id + '">Alternates and adds in this trade partner\'s price (cost table). One per line: description | amount. Base Bid = commitment total minus these.</label>' +
               altPicks(row) +
-              '<label class="full">Alternates and adds in this trade partner\'s price (cost table). One per line: description | amount. Base Bid = commitment total minus these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
+              '<textarea id="adds-' + row.id + '" data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></div>' +
               '<label class="full">Project specific items (Section B), one per line. Starts from the prime contract; edit for this trade partner.<textarea data-f="items" rows="6">' + esc(row.items) + '</textarea></label>' +
               '<label class="full cd-check"><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '><span>Let this trade partner use BH equipment on site for loading/unloading, with a usage agreement. Leave unticked for the standard General Item 33 (BH equipment not available).</span></label>'
             : '') +
