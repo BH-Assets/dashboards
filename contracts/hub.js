@@ -77,6 +77,7 @@
   function periodInfo(key) {
     var y = +key.slice(0, 4), m = +key.slice(5, 7), day = billingDay();
     var due = nextBusiness(new Date(y, m - 1, day)), end = new Date(y, m - 1, 0), rem = new Date(due); rem.setDate(rem.getDate() - leadDays());
+    while (rem.getDay() === 0 || rem.getDay() === 6 || holidays(rem.getFullYear())[iso(rem)]) rem.setDate(rem.getDate() - 1);   // same rule as the reminder script
     return { key: key, due: due, end: end, rem: rem, moved: due.getDate() !== day, day: day };
   }
   var ord = function (n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
@@ -99,12 +100,14 @@
   /* ---------------- job summary and tab captions ---------------- */
   function summary() {
     var S = D().S, r = S.pcRec, el = $('#hub-sum');
-    if (!r || !S.project) { el.hidden = true; return; }
-    var T = D().pcTerms(), val = r.grand_total || r.revised_contract_amount || r.original_contract_amount;
+    $('#hub-title').textContent = S.project ? S.project.name : 'Pick a job';
+    if (!r || !S.project) { el.hidden = true; $('#hub-kick').textContent = S.project ? String(S.project.project_number || '') : 'PROJECT HUB'; return; }
+    var T = D().pcTerms(), val = r.grand_total || r.revised_contract_amount || r.original_contract_amount, owner = r.vendor && (r.vendor.name || r.vendor.company);
+    $('#hub-kick').textContent = [S.project.project_number, owner].filter(Boolean).join(' · ').toUpperCase();
     var sc = r.substantial_completion_date ? new Date(r.substantial_completion_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
     var P = periodInfo(periodKeys()[0]);
-    el.innerHTML = [['Prime contract', val ? money(val).replace(/\.00$/, '') : '—'], ['Retainage', T.retPct + '% ' + T.retDuration], ['Pay apps due', T.billing + ' monthly'], ['Tax exempt', T.taxExempt ? 'Yes' : 'No'], ['Substantial completion', sc],
-      ['Prime contract', T.verified ? 'Verified' : 'Not verified']].map(function (x, i) { return '<div' + (i === 5 && !T.verified ? ' class="is-bad"' : '') + '><span>' + esc(x[0] === 'Prime contract' && i === 5 ? 'Status' : x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('');
+    el.innerHTML = [['Prime contract', val ? money(val).replace(/\.00$/, '') : '—'], ['Retainage', T.retPct + '% ' + T.retDuration], ['Pay apps due', T.billing + ' monthly'], ['Tax exempt', T.taxExempt ? 'Yes' : 'No'], ['Substantial completion', sc], ['Status', T.verified ? 'Verified' : 'Not verified']]
+      .map(function (x, i) { return '<div' + (i === 5 && !T.verified ? ' class="is-bad"' : '') + '><dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('');
     el.hidden = false;
     $('#t-prime').textContent = T.verified ? 'Prime contract verified' : 'Verify the prime contract';
     $('#t-pay').textContent = monthName(P.key).split(' ')[0] + ' · due ' + fmtD(P.due);
