@@ -400,7 +400,7 @@
       f('cl-issue', 'Issue or request', r.issue, true, 'area') + f('cl-change', 'What changed', r.change, true, 'area') +
       '<div class="field"><label for="cl-status">Status</label><select id="cl-status">' + CL_STATUSES.map(function (s) { return '<option ' + (s === r.status ? 'selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
       f('cl-done', 'Live since', r.done, false, 'date') + f('cl-notes', 'Notes', r.notes, true) +
-      '<p class="small muted full">Setting the status to Implemented fills in today as Live since, if it is empty.</p></div></div>' +
+      '<p class="small muted full">Choosing Implemented fills in today as Live since, if it is empty. You can change the date.</p></div></div>' +
       '<footer>' + (n ? '<button class="btn danger" data-cl-log="del" data-n="' + n + '">Delete</button>' : '') + '<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-cl-log="save" data-n="' + (n || '') + '">Save</button></footer>', 'narrow');
   }
   async function logSave(n, del) {
@@ -417,6 +417,11 @@
     }
     try { await saveLog(rows); closeModal(); rerender(); toast(del ? 'Deleted' : 'Change log saved'); } catch (e) { toast(e.message); }
   }
+  // picking Implemented fills in today's date straight away (if Live since is empty), so it shows before Save
+  document.addEventListener('change', function (e) {
+    if (e.target.id !== 'cl-status') return;
+    var d = document.getElementById('cl-done'); if (d && e.target.value === 'Implemented' && !d.value) d.value = today();
+  });
   VIEWS.changelog = vChangeLog;
   var setup0 = VIEWS.setup;
   VIEWS.setup = function () {
