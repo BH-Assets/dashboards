@@ -405,7 +405,7 @@
     return '';
   }
   function newRow(seed) {
-    return Object.assign({ id: Math.random().toString(36).slice(2), type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', proposalDate: '', adds: '', bMode: 'build', ownB: null, items: (function () { try { var T = pcTerms(); return T ? T.items.join('\n') : ''; } catch (_) { return ''; } })(), equipAvail: false, inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
+    return Object.assign({ id: Math.random().toString(36).slice(2), type: 'LF', vendorId: '', title: '', signatoryId: '', bhSignatoryId: S.me ? S.me.id : '', bond: 'No', scopeName: '', csi: '', submittalDate: '', proposalDate: '', adds: '', bMode: '', ownB: null, items: (function () { try { var T = pcTerms(); return T ? T.items.join('\n') : ''; } catch (_) { return ''; } })(), equipAvail: false, inclusions: '', exclusions: '', description: '', lines: [{ costCodeId: '', typeId: '', desc: '', amount: '' }], rider: null, riderPick: '' }, seed || {});
   }
   async function renderRows() {
     var host = $('#cm-rows'), T = pcTerms();
@@ -445,9 +445,9 @@
         '<label class="wide">Title<input data-f="title" value="' + esc(row.title) + '"></label>' +
         '<label>Commitment signatory (vendor)<select data-f="signatoryId">' + uOpts(row.signatoryId, row.vendorId) + '</select></label>' +
         '<label>BH signatory (project PM)<select data-f="bhSignatoryId">' + uOpts(row.bhSignatoryId) + '</select></label>' +
-        (lf ? '<label class="wide">Attachment B<select data-f="bMode"><option value="build"' + (own ? '' : ' selected') + '>Build it here (pre-filled from the prime contract)</option><option value="own"' + (own ? ' selected' : '') + '>Upload my own and check it</option></select></label>' : '') +
+        (lf ? '<label class="wide">Attachment B: choose one (required)<select data-f="bMode"' + (row.bMode ? '' : ' class="is-missing"') + '><option value=""' + (row.bMode ? '' : ' selected') + ' disabled>Choose one…</option><option value="build"' + (row.bMode === 'build' ? ' selected' : '') + '>Build it here, pre-filled from the prime contract</option><option value="own"' + (own ? ' selected' : '') + '>Upload my own; the desk checks it</option></select></label>' : '') +
         (lf && own ? '<label class="full">Your Attachment B (Word or PDF). The desk checks it against the prime contract and attaches it as is.<input type="file" data-own-b accept=".docx,.pdf">' + (row.ownB ? '<span class="bh-caption">' + esc(row.ownB.name) + (row.ownB.reading ? ' — reading…' : '') + '</span>' : '') + '</label>' : '') +
-        (lf && !own ? '<label class="wide">Scope name (Attachment B)<input data-f="scopeName" value="' + esc(row.scopeName) + '" placeholder="e.g. Drywall and Framing"></label>' +
+        (lf && row.bMode === 'build' ? '<label class="wide">Scope name (Attachment B)<input data-f="scopeName" value="' + esc(row.scopeName) + '" placeholder="e.g. Drywall and Framing"></label>' +
               '<label class="wide">Submittal deadline<input data-f="submittalDate" value="' + esc(row.submittalDate) + '" placeholder="e.g. Friday, December 18, 2026"></label>' +
               '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>' +
               '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
@@ -456,7 +456,7 @@
               '<label class="full cd-check"><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '><span>Let this trade partner use BH equipment on site for loading/unloading, with a usage agreement. Leave unticked for the standard General Item 33 (BH equipment not available).</span></label>'
             : '') +
         (!lf ? '<label class="full">Description<textarea data-f="description" rows="2">' + esc(row.description) + '</textarea></label>' : '') +
-        (lf && own ? '' : '<label class="wide">' + (lf ? 'Scope inclusions for Attachment B (one per line)' : 'Inclusions (one per line)') + '<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
+        (lf && row.bMode !== 'build' ? '' : '<label class="wide">' + (lf ? 'Scope inclusions for Attachment B (one per line)' : 'Inclusions (one per line)') + '<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
         '<label class="wide">' + (lf ? 'Accepted exclusions for Attachment B (one per line; Bonds, Dumpsters and Sales taxes are added by the rules)' : 'Exclusions accepted (one per line)') + '<textarea data-f="exclusions">' + esc(row.exclusions) + '</textarea></label>') +
         '<div class="cd-lines"><table><thead><tr><th style="width:30%">Cost code</th><th style="width:16%">Cost type</th><th>Description</th><th style="width:14%">Amount</th><th style="width:40px"></th></tr></thead><tbody>' +
         row.lines.map(function (l, j) { return '<tr data-j="' + j + '"><td><select data-l="costCodeId">' + ccOpts(l.costCodeId) + '</select></td><td><select data-l="typeId">' + tOpts(l.typeId) + '</select></td><td><input data-l="desc" value="' + esc(l.desc) + '"></td><td><input class="amt" data-l="amount" value="' + esc(l.amount) + '"></td><td><button class="bh-btn-outline" data-act="dl" aria-label="Remove line">&times;</button></td></tr>'; }).join('') +
@@ -580,7 +580,8 @@
       if (isPO && DUMPSTER.test(l.desc + ' ' + row.title) && c !== 'O') bad('Line ' + n + ': dumpsters, temporary toilets and handwash stations, and jobsite trailers on a PO are always O.');
     });
     if (row.type === 'SF' && total > 25000) bad('Short Form is limited to $25,000; use a Long Form.');
-    if (row.type === 'LF' && row.bMode === 'own') checkOwnB(row).forEach(function (x) { out.push(x); });
+    if (row.type === 'LF' && !row.bMode) bad('Attachment B: choose "Build it here" or "Upload my own".');
+    else if (row.type === 'LF' && row.bMode === 'own') checkOwnB(row).forEach(function (x) { out.push(x); });
     else if (row.type === 'LF') {
       if (!row.scopeName.trim()) bad('Add the scope name for Attachment B.');
       if (!linesOf(row.inclusions).length) warn('No inclusions entered; Attachment B will have an empty scope list.');
