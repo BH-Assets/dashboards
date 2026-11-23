@@ -1568,7 +1568,7 @@ function vSetup(){
   const s = S.settings;
   return band("Setup","Company details, delivery and charge rates, and where your data is saved.") + `
   <div class="content">
-    <div class="grid2">
+    <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:20px">
       <div class="panel"><h3>Company</h3><div class="body"><div class="form">
         <div class="field full"><label>Company logo</label><div class="photo-row"><div class="logo-prev">${s.logo?`<img src="${s.logo}" alt="Current logo">`:'<span class="small muted">No logo</span>'}</div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" data-act="logo-up">${s.logo?"Change logo":"Upload logo"}</button>${s.logo?`<button type="button" class="btn sm" data-act="logo-del">Remove</button>`:""}</div><span class="hint">PNG, JPG or SVG. A transparent PNG looks best. It appears in the top bar, on the sign-in screen and on invoices.</span></div></div></div>
         <div class="field"><label for="s-company">Company</label><input id="s-company" data-set="company" value="${esc(s.company)}"></div>
@@ -1585,17 +1585,19 @@ function vSetup(){
         <div class="field full"><label for="s-invnote">Invoice note</label><textarea id="s-invnote" data-set="invoiceNote" placeholder="Remit to, job-cost codes, thank-you note">${esc(s.invoiceNote||"")}</textarea></div>
         <div class="field full"><label for="s-policy">Rental policy (for your records, not printed on invoices)</label><textarea id="s-policy" data-set="policy">${esc(s.policy)}</textarea></div>
       </div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:20px">
+      <div class="panel rate-table"><h3>Delivery rates (per trip) <button class="btn sm" data-act="add-rate" data-v="delivery">+ Add</button></h3><div class="tablewrap" style="border:0"><table><thead><tr><th>Zone</th><th>Rate</th><th></th></tr></thead><tbody>${s.delivery.map((d,i)=>`<tr><td><input id="dz-${i}" data-rate="delivery" data-i="${i}" data-f="name" value="${esc(d.name)}" aria-label="Zone"></td><td><input id="dr-${i}" type="number" step="0.01" data-rate="delivery" data-i="${i}" data-f="rate" value="${d.rate}" aria-label="Rate"></td><td><button class="del" data-act="del-rate" data-v="delivery" data-i="${i}" aria-label="Remove">×</button></td></tr>`).join("")}</tbody></table></div></div>
+      <div class="panel rate-table"><h3>Other charges <button class="btn sm" data-act="add-rate" data-v="charges">+ Add</button></h3><div class="tablewrap" style="border:0"><table><thead><tr><th>Charge</th><th>Rate</th><th>Per</th><th></th></tr></thead><tbody>${s.charges.map((d,i)=>`<tr><td><input id="cn-${i}" data-rate="charges" data-i="${i}" data-f="name" value="${esc(d.name)}" aria-label="Charge"></td><td><input id="cr-${i}" type="number" step="0.01" data-rate="charges" data-i="${i}" data-f="rate" value="${d.rate}" aria-label="Rate"></td><td><input id="cu-${i}" data-rate="charges" data-i="${i}" data-f="unit" value="${esc(d.unit)}" aria-label="Unit"></td><td><button class="del" data-act="del-rate" data-v="charges" data-i="${i}" aria-label="Remove">×</button></td></tr>`).join("")}</tbody></table></div></div>
+    </div>
+    ${can("users")?`<div class="panel"><h3>Users &amp; roles <button class="btn sm" data-act="goto" data-to="users">Manage users</button></h3><div class="body small">Managed by Microsoft 365. Everyone signs in with their Bailey-Harris account; open Manage users to see who has access to what.</div></div>`:""}
+    <div style="margin-top:20px">
       <div class="panel"><h3>Your data</h3><div class="body" style="display:flex;flex-direction:column;gap:12px">
         <div class="infobox">Everything saves to the Equipment site in SharePoint as you work. There is no data file to keep.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="export-orders">Orders CSV</button><button class="btn" data-act="export-items">Assets CSV</button></div>
         <div class="small muted">Data size ${fmtBytes(JSON.stringify(S).length)} · ${S.items.length} assets · ${S.orders.length} orders · ${S.customers.length} customers · ${S.locations.length} locations</div>
       </div></div>
     </div>
-    <div class="grid2">
-      <div class="panel rate-table"><h3>Delivery rates (per trip) <button class="btn sm" data-act="add-rate" data-v="delivery">+ Add</button></h3><div class="tablewrap" style="border:0"><table><thead><tr><th>Zone</th><th>Rate</th><th></th></tr></thead><tbody>${s.delivery.map((d,i)=>`<tr><td><input id="dz-${i}" data-rate="delivery" data-i="${i}" data-f="name" value="${esc(d.name)}" aria-label="Zone"></td><td><input id="dr-${i}" type="number" step="0.01" data-rate="delivery" data-i="${i}" data-f="rate" value="${d.rate}" aria-label="Rate"></td><td><button class="del" data-act="del-rate" data-v="delivery" data-i="${i}" aria-label="Remove">×</button></td></tr>`).join("")}</tbody></table></div></div>
-      <div class="panel rate-table"><h3>Other charges <button class="btn sm" data-act="add-rate" data-v="charges">+ Add</button></h3><div class="tablewrap" style="border:0"><table><thead><tr><th>Charge</th><th>Rate</th><th>Per</th><th></th></tr></thead><tbody>${s.charges.map((d,i)=>`<tr><td><input id="cn-${i}" data-rate="charges" data-i="${i}" data-f="name" value="${esc(d.name)}" aria-label="Charge"></td><td><input id="cr-${i}" type="number" step="0.01" data-rate="charges" data-i="${i}" data-f="rate" value="${d.rate}" aria-label="Rate"></td><td><input id="cu-${i}" data-rate="charges" data-i="${i}" data-f="unit" value="${esc(d.unit)}" aria-label="Unit"></td><td><button class="del" data-act="del-rate" data-v="charges" data-i="${i}" aria-label="Remove">×</button></td></tr>`).join("")}</tbody></table></div></div>
-    </div>
-    ${can("users")?`<div class="panel"><h3>Users &amp; roles <button class="btn sm" data-act="goto" data-to="users">Manage users</button></h3><div class="body small">Managed by Microsoft 365. Everyone signs in with their Bailey-Harris account; open Manage users to see who has access to what.</div></div>`:""}
   </div>`;
 }
 

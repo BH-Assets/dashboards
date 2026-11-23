@@ -137,6 +137,7 @@
     var s = Object.assign({}, d.settings || {}), cn = d.counters || {};
     s.nextSR = Math.max(+cn.nextSR || 1001, 1 + Math.max.apply(null, [0].concat((d.maintenance || []).map(function (m) { return +m.no || 0; }))));
     s.nextRQ = +cn.nextRQ || 1001;
+    CL.changelog = d.changelog || null;
     var f = d.flags || {};
     S = { v: f.v || 1, nextOrder: Math.max(+cn.nextOrder || 1001, 1 + Math.max.apply(null, [0].concat((d.orders || []).map(function (o) { return +o.no || 0; })))),
       nextCheckout: +cn.nextCheckout || 1001, settings: s, groups: d.groups || [], groupsByNumber: f.groupsByNumber, yardRepair1: f.yardRepair1, invToShop1: f.invToShop1,
@@ -269,7 +270,7 @@
   /* navigation: add "Crew requests" for anyone who can approve */
   var mayApprove = function () { return CL.role === 'Admin' || CL.role === 'Management' || CL.role === 'Super/PM'; };
   var route0 = route;
-  route = function () { var h = location.hash.replace('#', ''); if (h === 'approvals' && mayApprove()) return 'approvals'; return route0(); };
+  route = function () { var h = location.hash.replace('#', ''); if (h === 'approvals' && mayApprove()) return 'approvals'; if (h === 'changelog' && CL.role === 'Admin') return 'changelog'; return route0(); };
   var nav0 = navList;
   navList = function () {
     var n = nav0();
@@ -358,6 +359,80 @@
   st.textContent = 'body.cl-locked [data-act="theme"],body.cl-locked [data-to="setup"],body.cl-locked .col-grip,body.cl-locked [data-act="dw-edit"]{display:none!important}';
   document.head.appendChild(st);
 
+  /* ---------------- Change log (Admins only), under Setup - Tiffany, 23 Nov 2026 ----------------
+     Every bug or change John or Tiffany reports: what, who, status, when it went live.
+     Kept in the EqSettings list as the "changelog" row; the Worker only gives it to Admins. */
+  var CL_STATUSES = ['Not started', 'In progress', 'Ready to publish', 'Implemented', "Won't fix"];
+  var CL_SEED = [
+    { n: 1, reported: '2026-11-23', by: 'John', area: 'Maintenance', issue: "Parts on a task can't be edited after they are entered.",
+      change: 'Each part has an Edit link: name, part #, vendor, PO, quantity and unit cost. Each edit is written to the service request history. For parts from inventory, changing the quantity adjusts stock by the difference.', status: 'Implemented', done: '2026-11-23', notes: '' },
+    { n: 2, reported: '2026-11-23', by: 'John', area: 'Search', issue: 'Picking an inventory item from the top search opened Adjust quantity instead of the item.',
+      change: 'Now opens the Inventory page filtered to that item, with its quantity, who has it, and Edit and Adjust.', status: 'Implemented', done: '2026-11-23', notes: '' }
+  ];
+  var logRows = function () { return (CL.changelog && CL.changelog.rows) || []; };
+  var today = function () { return toLocalInput(now()).slice(0, 10); };
+  var dStr = function (d) { return d ? fmtDate(d + 'T00:00') : ''; };
+  var statusChip = function (s) { var c = s === 'Implemented' ? 'available' : (s === 'Ready to publish' || s === 'In progress') ? 'maint' : 'neutral'; return '<span class="chip ' + c + '">' + esc(s) + '</span>'; };
+  async function saveLog(rows) {
+    var rec = { rows: rows, updatedAt: new Date().toISOString(), updatedBy: CL.user.name };
+    var res = await api('/api/save', { method: 'POST', json: { changes: [{ coll: 'settings', key: 'changelog', op: 'upsert', rec: rec, etag: CL.etags['settings:changelog'] || '' }] } });
+    if ((res.failed || []).length) { await CL.reload(); throw new Error(res.failed[0].conflict ? 'Someone else changed the log first. It has been reloaded; make your change again.' : res.failed[0].error); }
+    CL.etags['settings:changelog'] = res.etags['settings:changelog']; CL.changelog = rec;
+  }
+  CL.saveLog = saveLog;
+  function vChangeLog() {
+    if (CL.role !== 'Admin') return band('Change log', '', '') + '<div class="content"><div class="empty"><strong>Admins only</strong></div></div>';
+    var rows = logRows().slice().sort(function (a, b) { return b.n - a.n; });
+    var count = function (s) { return rows.filter(function (r) { return r.status === s; }).length; };
+    return band('Change log', 'Bugs and changes John or Tiffany have reported, and whether each one is live yet. Newest first.', '<button class="btn" data-act="goto" data-to="setup">Back to Setup</button><button class="btn primary" data-cl-log="new">+ Add entry</button>') +
+      '<div class="content"><div class="kpis">' + ['Implemented', 'Ready to publish', 'In progress', 'Not started'].map(function (s) { return '<div class="kpi"><span class="lbl">' + s + '</span><span class="val num">' + count(s) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>#</th><th>Reported</th><th>By</th><th>Area</th><th>Issue or request</th><th>What changed</th><th>Status</th><th>Live since</th></tr></thead><tbody>' +
+      (rows.map(function (r) { return '<tr data-cl-row="' + r.n + '" style="cursor:pointer"><td class="num">' + r.n + '</td><td class="num" style="white-space:nowrap">' + esc(dStr(r.reported)) + '</td><td>' + esc(r.by) + '</td><td>' + esc(r.area) + '</td><td>' + esc(r.issue) + (r.notes ? '<div class="small muted">' + esc(r.notes) + '</div>' : '') + '</td><td class="small">' + esc(r.change || '') + '</td><td>' + statusChip(r.status) + '</td><td class="num" style="white-space:nowrap">' + esc(dStr(r.done)) + '</td></tr>'; }).join('') ||
+        '<tr><td colspan="8"><div class="empty"><strong>Nothing logged yet</strong></div></td></tr>') + '</tbody></table></div>' +
+      (CL.changelog && CL.changelog.updatedAt ? '<p class="small muted" style="margin-top:8px">Last updated ' + esc(new Date(CL.changelog.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + (CL.changelog.updatedBy ? ' by ' + esc(CL.changelog.updatedBy) : '') + '.</p>' : '') + '</div>';
+  }
+  function logForm(n) {
+    var r = n ? logRows().find(function (x) { return x.n === n; }) : { reported: today(), by: (CL.user.name || '').split(' ')[0], area: '', issue: '', change: '', status: 'Not started', done: '', notes: '' };
+    if (!r) return;
+    var f = function (id, label, val, full, type) { return '<div class="field' + (full ? ' full' : '') + '"><label for="' + id + '">' + label + '</label>' + (type === 'area' ? '<textarea id="' + id + '">' + esc(val) + '</textarea>' : '<input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(val) + '">') + '</div>'; };
+    openModal('<header><h2>' + (n ? 'Change log #' + n : 'Add to the change log') + '</h2><button class="x" data-act="close" aria-label="Close">×</button></header><div class="mbody"><div class="form">' +
+      f('cl-reported', 'Date reported', r.reported, false, 'date') + f('cl-by', 'Found by', r.by) + f('cl-area', 'Area', r.area, true) +
+      f('cl-issue', 'Issue or request', r.issue, true, 'area') + f('cl-change', 'What changed', r.change, true, 'area') +
+      '<div class="field"><label for="cl-status">Status</label><select id="cl-status">' + CL_STATUSES.map(function (s) { return '<option ' + (s === r.status ? 'selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
+      f('cl-done', 'Live since', r.done, false, 'date') + f('cl-notes', 'Notes', r.notes, true) +
+      '<p class="small muted full">Setting the status to Implemented fills in today as Live since, if it is empty.</p></div></div>' +
+      '<footer>' + (n ? '<button class="btn danger" data-cl-log="del" data-n="' + n + '">Delete</button>' : '') + '<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-cl-log="save" data-n="' + (n || '') + '">Save</button></footer>', 'narrow');
+  }
+  async function logSave(n, del) {
+    var g = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    var rows = logRows().map(function (r) { return Object.assign({}, r); });
+    if (del && !logSave.sure) { confirmBox('Delete change log #' + n + '?', 'This removes the entry for John and you.', 'Delete', function () { logSave.sure = true; logSave(n, true).finally(function () { logSave.sure = false; }); }); return; }
+    if (del) rows = rows.filter(function (r) { return r.n !== n; });
+    else {
+      if (!g('cl-issue')) { toast('Describe the issue or request'); return; }
+      var rec = { reported: g('cl-reported') || today(), by: g('cl-by'), area: g('cl-area'), issue: g('cl-issue'), change: g('cl-change'), status: g('cl-status'), done: g('cl-done'), notes: g('cl-notes') };
+      if (rec.status === 'Implemented' && !rec.done) rec.done = today();
+      if (n) { var i = rows.findIndex(function (r) { return r.n === n; }); rows[i] = Object.assign(rows[i], rec); }
+      else { rec.n = 1 + Math.max.apply(null, [0].concat(rows.map(function (r) { return r.n; }))); rows.push(rec); }
+    }
+    try { await saveLog(rows); closeModal(); rerender(); toast(del ? 'Deleted' : 'Change log saved'); } catch (e) { toast(e.message); }
+  }
+  VIEWS.changelog = vChangeLog;
+  var setup0 = VIEWS.setup;
+  VIEWS.setup = function () {
+    var html = setup0(), n = logRows().filter(function (r) { return r.status !== 'Implemented' && r.status !== "Won't fix"; }).length;
+    var panel = '<div class="panel" style="margin-bottom:14px"><h3>Change log <button class="btn sm" data-act="goto" data-to="changelog">Open</button></h3><div class="body small">Bugs and changes you or John have reported and whether each one is live. ' +
+      logRows().length + ' logged' + (n ? ', ' + n + ' not live yet' : ', all live') + '.</div></div>';
+    return CL.role === 'Admin' ? html.replace('<div class="content">', '<div class="content">' + panel) : html;
+  };
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cl-log]'), row = e.target.closest('[data-cl-row]');
+    if (b) { e.preventDefault(); var a = b.dataset.clLog, n = +b.dataset.n || 0; if (a === 'new') logForm(0); else if (a === 'save') logSave(n, false); else if (a === 'del') logSave(n, true); }
+    else if (row && CL.role === 'Admin') logForm(+row.dataset.clRow);
+  });
+  // first time an Admin opens the app after this ships: start the log with John's two fixes
+  CL.seedLog = async function () { if (CL.role === 'Admin' && !CL.changelog) { try { await saveLog(CL_SEED.map(function (r) { return Object.assign({}, r); })); } catch (e) { } } };
+
   /* bits the patched screens call */
   window.cloudJobSelect = function () {
     var last = localStorage.getItem(KEY + '-lastjob') || '', mine = CL.jobs || [];
@@ -405,6 +480,7 @@
       msg('Loading the equipment list…');
       await load();
       render();
+      CL.seedLog && CL.seedLog();
       var bar = document.querySelector('.topbar'); if (bar && !document.querySelector('#cl-save')) { var s = document.createElement('span'); s.id = 'cl-save'; s.className = 'small muted'; s.style.marginLeft = '8px'; bar.appendChild(s); }
       setSaveState(CL.role === 'Admin' ? 'Saved' : '');
     } catch (e) {
