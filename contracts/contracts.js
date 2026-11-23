@@ -475,10 +475,10 @@
     var T = pcTerms(), alts = (T ? T.alternates : []).filter(function (a) { return /^accepted/i.test(a.status) && !/^base bid/i.test(a.label); });
     if (!alts.length) return '<div class="full bh-caption">No accepted alternates on the prime contract.</div>';
     var inAdds = parseAdds(row.adds).map(function (a) { return a.desc.toLowerCase(); });
-    return '<div class="full bh-caption">Accepted on the prime contract (all go in Attachment B\'s alternates table). Add one to this price: ' + alts.map(function (a) {
+    return '<div class="full bh-caption cd-alts">Accepted on the prime contract (all go in Attachment B\'s alternates table). Add to this price: ' + alts.map(function (a) {
       var n = pcAltName(a.label), used = inAdds.indexOf(n.toLowerCase()) >= 0;
-      return '<button class="bh-btn-outline" data-act="addalt" data-alt="' + esc(n) + '"' + (used ? ' disabled' : '') + ' style="margin:2px 4px 2px 0">' + esc(n) + (used ? ' ✓' : '') + '</button>';
-    }).join('') + '</div>';
+      return '<button type="button" class="cd-altlink" data-act="addalt" data-alt="' + esc(n) + '"' + (used ? ' disabled' : '') + '>' + esc(n) + (used ? ' ✓' : '') + '</button>';
+    }).join('<span class="cd-sep"> · </span>') + '</div>';
   }
   function riderOpts(row) {
     if (!row.vendorId) return '<option value="">Pick a vendor first</option>';
