@@ -13,7 +13,7 @@
   var OPS_SITE = '/sites/Operations', OPS_LIB = 'Documents';
   var TEMPLATE_DIR = '03 Forms and Templates/Contract Documents/Commitments';
   var RIDER_DIR = '01 Working/Project Management/Approved Riders';
-  var CF = { validatedBy: 640531, validatedDate: 640532, validationNotes: null,   // PC Verified By / Date, shared with the commitment fieldsets
+  var CF = { validatedBy: null, validatedDate: null, validationNotes: null,   // not written to commitments: the PC Verified By / Date on the prime contract is the record
     billing: 194473, taxExempt: 640523, ownerPlatform: 640528, subNotice: 640533, subItems: 640530, alternates: 640537,
     verifiedBy: 640531, verifiedDate: 640532, retDuration: 318332, ld: 269476, payTerms: 269489, finalPay: 322642, builderRisk: 320426,
     ownerAI: 640766 /* PC: Owner Additional Insureds (flows to Attachment F) */, insReq: 274391, pdfType: 194471, poPdfType: 325741, vendorType: 536773, bhSignatory: 300705, subSignatory: 302837, bond: 526946, riderNeeded: 542583 };
@@ -453,11 +453,11 @@
               '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
               '<label class="full">Alternates and adds in this price (cost table), one per line: description | amount. Base Bid is the commitment total less these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
               '<label class="full">Project specific items (Section B), one per line. Starts from the prime contract; edit for this trade partner.<textarea data-f="items" rows="6">' + esc(row.items) + '</textarea></label>' +
-              '<label class="full"><span><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '> BH equipment on site available for loading/unloading with a usage agreement (changes General Item 33)</span></label>'
+              '<label class="full cd-check"><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '><span>Let this trade partner use BH equipment on site for loading/unloading, with a usage agreement. Leave unticked for the standard General Item 33 (BH equipment not available).</span></label>'
             : '') +
         (!lf ? '<label class="full">Description<textarea data-f="description" rows="2">' + esc(row.description) + '</textarea></label>' : '') +
-        (lf && own ? '' : '<label class="wide">Inclusions (one per line)<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
-        '<label class="wide">Exclusions accepted (one per line)<textarea data-f="exclusions">' + esc(row.exclusions) + '</textarea></label>') +
+        (lf && own ? '' : '<label class="wide">' + (lf ? 'Scope inclusions for Attachment B (one per line)' : 'Inclusions (one per line)') + '<textarea data-f="inclusions">' + esc(row.inclusions) + '</textarea></label>' +
+        '<label class="wide">' + (lf ? 'Accepted exclusions for Attachment B (one per line; Bonds, Dumpsters and Sales taxes are added by the rules)' : 'Exclusions accepted (one per line)') + '<textarea data-f="exclusions">' + esc(row.exclusions) + '</textarea></label>') +
         '<div class="cd-lines"><table><thead><tr><th style="width:30%">Cost code</th><th style="width:16%">Cost type</th><th>Description</th><th style="width:14%">Amount</th><th style="width:40px"></th></tr></thead><tbody>' +
         row.lines.map(function (l, j) { return '<tr data-j="' + j + '"><td><select data-l="costCodeId">' + ccOpts(l.costCodeId) + '</select></td><td><select data-l="typeId">' + tOpts(l.typeId) + '</select></td><td><input data-l="desc" value="' + esc(l.desc) + '"></td><td><input class="amt" data-l="amount" value="' + esc(l.amount) + '"></td><td><button class="bh-btn-outline" data-act="dl" aria-label="Remove line">&times;</button></td></tr>'; }).join('') +
         '</tbody></table><button class="bh-btn-outline" data-act="al" style="margin-top:6px">Add line</button></div>' +
