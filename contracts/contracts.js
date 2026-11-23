@@ -451,8 +451,8 @@
               '<label class="wide">Submittal deadline<input data-f="submittalDate" value="' + esc(row.submittalDate) + '" placeholder="e.g. Friday, December 18, 2026"></label>' +
               '<label class="full">Specification sections (one per line)<textarea data-f="csi" rows="2">' + esc(row.csi) + '</textarea></label>' +
               '<label class="wide">Proposal date (cost table)<input data-f="proposalDate" value="' + esc(row.proposalDate) + '" placeholder="e.g. June 5th, 2025"></label>' +
-              '<label class="full">Alternates and adds in this trade partner\'s price (cost table). One per line: description | amount. Base Bid = commitment total minus these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
               altPicks(row) +
+              '<label class="full">Alternates and adds in this trade partner\'s price (cost table). One per line: description | amount. Base Bid = commitment total minus these.<textarea data-f="adds" rows="2" placeholder="Alternate 1 – Wood Panels, Circulation Areas | 142000">' + esc(row.adds) + '</textarea></label>' +
               '<label class="full">Project specific items (Section B), one per line. Starts from the prime contract; edit for this trade partner.<textarea data-f="items" rows="6">' + esc(row.items) + '</textarea></label>' +
               '<label class="full cd-check"><input type="checkbox" data-f="equipAvail"' + (row.equipAvail ? ' checked' : '') + '><span>Let this trade partner use BH equipment on site for loading/unloading, with a usage agreement. Leave unticked for the standard General Item 33 (BH equipment not available).</span></label>'
             : '') +
@@ -475,7 +475,7 @@
     var T = pcTerms(), alts = (T ? T.alternates : []).filter(function (a) { return /^accepted/i.test(a.status) && !/^base bid/i.test(a.label); });
     if (!alts.length) return '<div class="full bh-caption">No accepted alternates on the prime contract.</div>';
     var inAdds = parseAdds(row.adds).map(function (a) { return a.desc.toLowerCase(); });
-    return '<div class="full bh-caption cd-alts">Accepted on the prime contract (all go in Attachment B\'s alternates table). Add to this price: ' + alts.map(function (a) {
+    return '<div class="full bh-caption cd-alts">Add any of the following to this subcontract: ' + alts.map(function (a) {
       var n = pcAltName(a.label), used = inAdds.indexOf(n.toLowerCase()) >= 0;
       return '<button type="button" class="cd-altlink" data-act="addalt" data-alt="' + esc(n) + '"' + (used ? ' disabled' : '') + '>' + esc(n) + (used ? ' ✓' : '') + '</button>';
     }).join('<span class="cd-sep"> · </span>') + '</div>';
