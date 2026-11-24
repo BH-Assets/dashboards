@@ -275,8 +275,12 @@
         input = '<span class="bh-caption">Edit in Procore</span>';
       } else if (f.kind === 'lov' || f.kind === 'lovm') {
         var opts = S.lov[f.cf] || [];
-        var curLabel = String(typeof val === 'string' ? val : lovLabel(val)).toLowerCase(), picks = curLabel.split(/\s*,\s*/);
-        var isSel = function (o) { var l = String(o.label).toLowerCase(); return f.kind === 'lovm' ? picks.indexOf(l) >= 0 || (curLabel && curLabel.indexOf(l) >= 0) : l === curLabel; };
+        // the reader's answer matched to Procore's own labels; no match keeps what Procore has and says so
+        var curIds = [].concat(cfVal(rec, f.cf) || []).map(function (x) { return String(x && x.id != null ? x.id : ''); }).filter(Boolean);
+        var hits = p && p.value != null ? matchOpts(f, p.value) : null;
+        var selIds = hits && hits.length ? hits.map(function (o) { return String(o.id); }) : curIds;
+        if (hits && !hits.length) p.nomatch = true;
+        var isSel = function (o) { return selIds.indexOf(String(o.id)) >= 0; };
         input = '<select data-k="' + f.key + '"' + (f.kind === 'lovm' ? ' multiple size="' + Math.min(4, Math.max(2, opts.length)) + '"' : '') + '>' + (f.kind === 'lovm' ? '' : '<option value=""></option>') + opts.map(function (o) { return '<option value="' + o.id + '"' + (isSel(o) ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join('') + '</select>';
       } else if (f.kind === 'date' || f.kind === 'datetime') {
         input = '<input type="date" data-k="' + f.key + '" value="' + esc(String(val || '').slice(0, 10)) + '">';
@@ -289,10 +293,33 @@
       } else {
         input = '<input type="text" data-k="' + f.key + '" value="' + esc(val) + '">';
       }
-      var src = p && p.source ? '<div class="src">' + esc(p.source) + (p.quote ? '<q>' + esc(p.quote) + '</q>' : '') + '</div>' : (f.dflt && !cur ? '<div class="src">Company default</div>' : '');
+      var src = p && p.source ? '<div class="src">' + (p.nomatch ? '<b class="nomatch">The contract says "' + esc(Array.isArray(p.value) ? p.value.join(', ') : p.value) + '": no Procore option matches it, so the current value is kept. Pick one, or add the option to the list in Procore.</b>' : '') + esc(p.source) + (p.quote ? '<q>' + esc(p.quote) + '</q>' : '') + '</div>' : (f.dflt && !cur ? '<div class="src">Company default</div>' : '');
       var diff = p && p.value != null && normCmp(p.value) !== normCmp(cur) && cur;
       return '<tr' + (diff ? ' class="is-diff" title="The contract reading differs from what Procore holds"' : '') + '><td><b>' + esc(f.label) + '</b>' + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</td><td class="cur"><div>' + esc(cur || '—') + '</div></td><td>' + input + '</td><td>' + src + '</td></tr>';
     }).join('');
+  }
+  /* match a reader answer ("Required", "Contractor", "Stipulated Sum") to the field's Procore options ("Yes", "Bailey Harris", "Fixed Price / Lump Sum") */
+  var optNorm = function (x) { return String(x == null ? '' : x).toLowerCase().replace(/bailey[\s-]*harris(\s+construction)?(\s+co\.?)?(,?\s+inc\.?)?/g, 'bailey harris').replace(/[^a-z0-9%]+/g, ' ').trim(); };
+  var OPT_SYN = [[/^(required|yes|true|y|provided|included)$/, 'yes'], [/^(not required|no|false|n|none|waived|not included)$/, 'no'],
+    [/(payment|performance) bonds? (equal|required|in the amount|of 100)/, 'yes'],
+    [/cost plus.*(gmp|guaranteed maximum)|(gmp|guaranteed maximum).*cost plus/, 'cost plus gmp'], [/guaranteed maximum|\bgmp\b/, 'gmp'], [/stipulated sum|lump sum|fixed price|fixed sum/, 'lump sum'], [/cost plus|cost of the work plus/, 'cost plus'],
+    [/time and materials?|^t m$|\bt ?& ?m\b/, 't m'], [/unit price/, 'unit price'],
+    [/^contractor$|design builder|general contractor|\bgc\b|bailey harris|construction manager/, 'bailey harris'], [/^owner\b/, 'owner'],
+    [/(thru|through|until) 50|50 ?% (complete|of)/, 'thru 50'], [/throughout|entire|until final|full term/, 'throughout']];
+  var optKey = function (x) { var n = optNorm(x); for (var i = 0; i < OPT_SYN.length; i++) if (OPT_SYN[i][0].test(n)) return OPT_SYN[i][1]; return n; };
+  function matchOpts(f, val) {
+    var opts = S.lov[f.cf] || [];
+    var vals = Array.isArray(val) ? val.map(function (x) { return x && typeof x === 'object' ? (x.label || x.name || '') : x; })
+      : f.kind === 'lovm' ? String(val && typeof val === 'object' ? lovLabel(val) : val).split(/\s*[;\n]\s*|\s*,\s+(?=[A-Za-z])/) : [val && typeof val === 'object' ? lovLabel(val) : val];
+    var out = [];
+    vals.forEach(function (v) {
+      if (!String(v || '').trim()) return;
+      var nv = optNorm(v), kv = optKey(v);
+      var hit = opts.find(function (o) { return optNorm(o.label) === nv; }) || opts.find(function (o) { return optKey(o.label) === kv; });
+      if (!hit) { var c = opts.filter(function (o) { var ko = optKey(o.label); return ko.length > 2 && kv.length > 2 && (kv.indexOf(ko) >= 0 || ko.indexOf(kv) >= 0); }); if (c.length === 1) hit = c[0]; }
+      if (hit && out.indexOf(hit) < 0) out.push(hit);
+    });
+    return f.kind === 'lovm' ? out : out.slice(0, 1);
   }
   var normCmp = function (v) { if (Array.isArray(v)) v = v.map(function (x) { return typeof x === 'object' ? x.label : x; }).join(' '); return String(v == null ? '' : v).toLowerCase().replace(/[^a-z0-9%]/g, ''); };
 
@@ -324,6 +351,12 @@
     var permits = hits.some(function (h) { return /consultant|advisor|agent|service provider|subcontractor|representative|professional|need to know/i.test(h); });
     var ai = hits.some(function (h) { return /artificial intelligence|\bAI\b|machine learning|large language/i.test(h); });
     return { found: true, blocked: ai || (bars.length > 0 && !permits), quote: (bars[0] || hits[0]).slice(0, 400) };
+  }
+  /* the Procore option labels for the reader's pick-list fields, so it answers with a label the desk can select */
+  function readerOptions() {
+    var keys = { contract_type: 'contract_type', aia_form: 'aia_form', retainage_duration: 'retainage_duration', builders_risk_provider: 'builders_risk_provider', pp_bond: 'performance_payment_bond', tax_exempt: 'tax_exempt' }, out = {};
+    FIELDS.forEach(function (f) { if (keys[f.key] && f.cf && (S.lov[f.cf] || []).length) out[keys[f.key]] = { labels: S.lov[f.cf].map(function (o) { return o.label; }), multiple: f.kind === 'lovm' }; });
+    return out;
   }
   async function readContract() {
     var btn = $('#pc-read'); btn.disabled = true; msg('Reading the contract PDFs in this browser…');
@@ -357,7 +390,7 @@
       if (conf.found && conf.blocked) { msg('This contract has a confidentiality clause that does not allow sharing with service providers, so nothing was sent for reading. Fill the fields from the contract by hand. Clause: "' + conf.quote + '"', true); return; }
       if (!sections.length) { msg(scanned.length ? 'Only scanned PDFs were found (' + scanned.join(', ') + '). Fill the fields by hand from the contract.' : 'No contract terms found in the PDFs.', true); return; }
       msg('Sending ' + sections.length + ' pages of contract terms for reading…' + (conf.found ? ' (A confidentiality clause was found; it allows sharing with service providers.)' : ''));
-      var res = await api('/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project: (S.project.project_number || '') + ' ' + S.project.name, sections: sections }) });
+      var res = await api('/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project: (S.project.project_number || '') + ' ' + S.project.name, sections: sections, options: readerOptions() }) });
       var f = res.fields || {};
       S.proposals = {};
       var map = { retainage_percent: 'retainage_percent', retainage_duration: 'retainage_duration', contract_date: 'contract_date', tax_exempt: 'tax_exempt', liquidated_damages: 'liquidated_damages',
