@@ -215,3 +215,7 @@ body.hub-page{background:#f7f5f1;margin:0}
 .hub-pclink:hover{border-bottom-color:#211e1e}
 .hub-pclink span{font-size:11px;color:#484b4d}
 .hub-lines .hub-pclink.small{display:inline-block;margin:0 0 8px;font-size:12px}
+
+/* the review panel takes more room so the three-way table reads across (24 Nov 2026) */
+@media (min-width:1100px){#v-pay .hub-split .hub-main{flex:1 1 460px}#v-pay .hub-side{flex:1.4 1 600px;max-width:720px}}
+.hub-cmp td:first-child{min-width:190px}

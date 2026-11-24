@@ -233,6 +233,7 @@
     var last = rowsOf(f.Subcontract).filter(function (r) { return r.id !== row.id && APPROVED[r.f.Status] && r.f.DocType !== 'no billing' && Number(r.f.PayRequest || 0) < Number(f.PayRequest || 1e9); })
       .sort(function (a, b) { return Number(b.f.PayRequest || 0) - Number(a.f.PayRequest || 0); })[0];
     if (last) { var lp = r2(Number(last.f.CompletedToDate || 0) - Number(last.f.RetainageHeld || 0)); if (Math.abs(lp - prev) > 1) warn('Previous approved applications ' + money(prev) + '; approved pay app #' + last.f.PayRequest + ' earned ' + money(lp) + '.'); else ok('Previous approved applications match pay app #' + last.f.PayRequest + '.'); }
+    else if (H.apd && H.apd.ce[String(f.Subcontract || '').trim().toUpperCase()]) { var Kp = compare(row); if (Kp.ce && Math.abs(Kp.ce.prev - prev) <= 1) ok('Previous approved applications match CE: ' + money(Kp.ce.prev) + (Kp.ce.lastPr ? ' through ' + Kp.ce.lastPr : '') + '.'); }
     else warn('No earlier approved pay app on file to check previous payments against.');
     var K = H.apd ? compare(row) : null;
     if (K && K.disc) { if (/2% early-payment discount/i.test(f.StatusLog || '') || f.MatchBasis !== 'portal') ok('2% discount applies (' + K.discFrom + '): ' + money(K.disc) + ' off, net ' + money(K.net) + '.'); else warn('The subcontract has the 2% discount but the portal did not take it: ' + money(K.disc) + ' off, net ' + money(K.net) + '. Check the Attachment G.'); }
@@ -516,14 +517,15 @@
     var dif = function (a, b) { return a != null && b != null && Math.abs(a - b) > 1; };
     var cell = function (v, ref) { if (v == null) return forEmail ? '—' : '<span class="mut">—</span>'; var off = dif(ref, v);
       return money(v) + (forEmail ? (off ? ' *' : '') : (ref == null ? '' : off ? ' <span class="hub-pill bad">' + (ref - v > 0 ? '+' : '−') + money(Math.abs(r2(ref - v))) + '</span>' : ' <span class="hub-pill ok">✓</span>')); };
-    var C = K.ce || {}, P = K.pc || {};
+    var C = K.ce || {}, P = K.pc || {}, mny = function (v) { return v < 0 ? '−' + money(-v) : money(v); };
+    var plain = function (v) { return v == null ? (forEmail ? '—' : '<span class="mut">—</span>') : money(v); };   // shown, not compared
     var prevNote = K.deskPrev ? 'Previous approved pay app #' + K.deskPrev.pr + ': ' + money(K.deskPrev.v) : (K.ce ? 'CE approved applications' + (C.lastPr ? ' through ' + C.lastPr : '') : 'No earlier approved application on file');
     var rows = [
       ['1. Original contract', nn(f.OriginalContract), C.orig, P.orig],
       ['2. Approved change orders', nn(f.ChangeOrders), C.cos, P.cos],
       ['3. Adjusted contract', nn(f.AdjustedContract), C.adj, P.adj],
-      ['4. Completed and stored to date', ctd, K.ce ? C.ctd : null, null, K.ce ? 'CE: billed before this pay app (' + C.n + ' invoice' + (C.n === 1 ? '' : 's') + ')' : ''],
-      ['5. Retainage', ret, null, P.ret, P.rule ? 'Procore: ' + P.rule + ' on line 4' : ''],
+      ['4. Completed and stored to date', ctd, K.ce ? { plain: C.ctd } : null, null, K.ce && ctd != null ? 'CE has ' + money(C.ctd) + ' billed through ' + (C.lastPr || 'its last invoice') + '; this pay app adds ' + money(r2(ctd - C.ctd)) : ''],
+      ['5. Retainage', ret, K.ce ? { plain: C.ret } : null, P.ret, (P.rule ? 'Procore: ' + P.rule + ' on line 4' : '') + (K.ce ? (P.rule ? '. ' : '') + 'CE column: held through ' + (C.lastPr || 'last invoice') : '')],
       ['6. Earned less retainage', earned, null, null],
       ['7. Less previous approved applications for payment', prev, K.ce ? C.prev : null, K.deskPrev ? K.deskPrev.v : null, prevNote + (K.deskPrev ? ' (Procore column)' : '')],
       ['8. Balance due this period', nn(f.BalanceDue), null, null, earned != null && prev != null && dif(r2(earned - prev), nn(f.BalanceDue)) ? 'Lines 6 − 7 = ' + money(r2(earned - prev)) : '']
@@ -533,7 +535,7 @@
     var lab = forEmail ? ' style="padding:4px 10px 4px 0;border-bottom:1px solid #e8e6e7"' : '';
     return '<table class="hub-cmp"' + (forEmail ? ' style="border-collapse:collapse;font-size:13px"' : '') + '><thead><tr><th' + (forEmail ? ' style="text-align:left;color:#484b4d"' : '') + '>Attachment G</th><th' + thS + '>Pay app</th><th' + thS + '>CE</th><th' + thS + '>Procore</th></tr></thead><tbody>' +
       rows.map(function (x, i) { var b = i === 7 || x[0].indexOf('Net') === 0;
-        return '<tr' + (b && !forEmail ? ' class="tot"' : '') + '><td' + lab + '>' + (b ? '<b>' + esc(x[0]) + '</b>' : esc(x[0])) + (x[4] ? '<div class="mut small"' + (forEmail ? ' style="color:#6b6b6b;font-size:11px"' : '') + '>' + esc(x[4]) + '</div>' : '') + '</td><td' + tdS + '>' + (x[1] == null ? '—' : (b ? '<b>' + money(x[1]) + '</b>' : money(x[1]))) + '</td><td' + tdS + '>' + cell(x[2], x[1]) + '</td><td' + tdS + '>' + cell(x[3], x[1]) + '</td></tr>'; }).join('') +
+        return '<tr' + (b && !forEmail ? ' class="tot"' : '') + '><td' + lab + '>' + (b ? '<b>' + esc(x[0]) + '</b>' : esc(x[0])) + (x[4] ? '<div class="mut small"' + (forEmail ? ' style="color:#6b6b6b;font-size:11px"' : '') + '>' + esc(x[4]) + '</div>' : '') + '</td><td' + tdS + '>' + (x[1] == null ? '—' : (b ? '<b>' + mny(x[1]) + '</b>' : mny(x[1]))) + '</td><td' + tdS + '>' + (x[2] && typeof x[2] === 'object' ? plain(x[2].plain) : cell(x[2], x[1])) + '</td><td' + tdS + '>' + cell(x[3], x[1]) + '</td></tr>'; }).join('') +
       '</tbody></table>' + (forEmail ? '<p style="font-size:11px;color:#6b6b6b">* differs from the pay app by more than $1. CE as of ' + esc(H.apd && H.apd.ceAsOf ? String(H.apd.ceAsOf).slice(0, 10) : '?') + '; Procore from the commitments pull.</p>' : '');
   }
 
