@@ -1089,12 +1089,34 @@ const AP_STAGE = { "received":"Intake", "AP verified":"Intake", "not a pay app":
   "approved and entered":"Entered", "duplicate archived":"Duplicate archived", "email only":"Duplicate archived",
   "handled outside desk":"Duplicate archived" };
 const digitsOf = v => String(v == null ? "" : v).replace(/[^0-9]/g, "");
+/* Pay App Queue (24 Nov 2026): pay apps a trade partner submitted through the portal
+   (pay.baileyharris.com) that nobody has approved or returned yet. Same test as the
+   Project Hub's "Submitted": latest revision of each pay app, not approved, not
+   "revise and resubmit", not "no billing". PMs see their own jobs; these people see every job. */
+const PAYAPP_ALL = ["tiffany.blackmon@baileyharris.com", "bsims@baileyharris.com"];
+const PAYAPP_DONE = new Set(["ready for entry", "PM approved", "approved as noted", "approved and entered", "revise and resubmit",
+  "duplicate archived", "email only", "handled outside desk", "no billing this period"]);
+function payAppQueue(rows){
+  const g = {};
+  rows.filter(r => r.f.MatchBasis === "portal" && r.f.DocType !== "no billing" && r.f.DocType !== "invoice")
+    .forEach(r => { const k = String(r.f.OriginalTitle || r.f.Title || "").trim(); (g[k] = g[k] || []).push(r); });
+  return Object.values(g).map(x => x.sort((a, b) => (numv(a.f.Revision || 1) - numv(b.f.Revision || 1)) || (a.id - b.id))[x.length - 1])
+    .filter(r => !PAYAPP_DONE.has(String(r.f.Status || "")))
+    .sort((a, b) => String(a.f.ReceivedAt || "").localeCompare(String(b.f.ReceivedAt || "")));
+}
+function myPayQueue(){
+  if (!Array.isArray(H.payQ)) return null;
+  if (PAYAPP_ALL.includes(H.email)) return { all: true, rows: H.payQ };
+  if (!H.mine.length) return null;
+  const mine = new Set(H.mine.map(j => String(j).trim().toUpperCase().replace(/\s+/g, "")));
+  return { all: false, rows: H.payQ.filter(r => mine.has(String(r.f.JobNumber || "").trim().toUpperCase().replace(/\s+/g, ""))) };
+}
 
 async function apListRows(){
   const s = await graph("/sites/" + SP_HOST + ":" + AP_SITE + "?$select=id");
   if (!(s.ok && s.body && s.body.id)){ log("ap queue", "APDesk site HTTP " + s.status); return null; }
   let url = "/sites/" + s.body.id + "/lists/" + encodeURIComponent(AP_LIST) +
-    "/items?$expand=fields($select=Status,AssignedApprover,Title,OriginalTitle,Revision,Subcontract,PayRequest)&$select=id&$top=500";
+    "/items?$expand=fields($select=Status,AssignedApprover,Title,OriginalTitle,Revision,Subcontract,PayRequest,JobNumber,MatchBasis,DocType,Vendor,ReceivedAt,BillingPeriod)&$select=id&$top=500";
   const out = []; let pages = 0;
   while (url && pages < 20){
     const r = await graph(url);
@@ -1140,12 +1162,12 @@ async function loadApQueues(email, dept, drives){
   const rows = await apListRows();
   apRowsAll = rows;
   if (!rows) return;
-  apReviewCount = rows.filter(r => r.f.Status === "with PM" &&
-    String(r.f.AssignedApprover || "").trim().toLowerCase() === email).length;
-  const acct = AP_ACCOUNTING_PEOPLE.includes(email) || AP_ACCOUNTING_DEPTS.includes(String(dept || "").trim().toLowerCase()) || /^accounting/i.test(String(dept || "").trim());
-  if (acct) apQueueCount = await apIntakeCount(rows, drives);
-  log("ap queue", apReviewCount + " waiting on " + email + (acct ? ", " + apQueueCount + " at Accounting intake" : ""));
+  /* 24 Nov 2026: AP Desk approvals and the AP intake queue are on hold, so
+     apReviewCount / apQueueCount stay 0. What is kept is the Pay App Queue. */
+  H.payQ = payAppQueue(rows);
+  log("pay app queue", H.payQ.length + " portal pay apps waiting for approval, all jobs");
   renderActions(lastActions);
+  if (H.role) renderHome();
 }
 
 function renderActions(items){
@@ -1155,8 +1177,10 @@ function renderActions(items){
   try { localStorage.setItem("bh.acts", JSON.stringify(lastActions)); } catch(_) {}
   const ok = lastActions.map(a => Object.assign({}, a, { _u: safeUrl(a.url) })).filter(a => a._u);
   const queue = [];
-  if (apReviewCount > 0) queue.push({ name: "Approve invoices (" + apReviewCount + ")", _u: safeUrl("/ap/#review") });
-  if (apQueueCount > 0)  queue.push({ name: "Open AP Queue (" + apQueueCount + ")", _u: safeUrl("/ap/#intake") });
+  /* "Approve invoices" and "Open AP Queue" removed 24 Nov 2026 (AP Desk on hold);
+     "Approve Pay Apps (n)" opens the Project Hub's pay apps, same count as the Pay App Queue card */
+  let pq = null; try { pq = myPayQueue(); } catch(_) {}   /* H is not declared yet on the first, cached render */
+  if (pq && pq.rows.length) queue.push({ name: "Approve Pay Apps (" + pq.rows.length + ")", _u: safeUrl("/contracts/#pay") });
   ok.splice(Math.min(2, ok.length), 0, ...queue);
   host.innerHTML = ok.slice(0, 6).map((a, i) =>
     '<a class="' + (i ? 'bh-btn-outline' : 'bh-btn') + '" href="' + esc(a._u) + '"' +
@@ -2349,6 +2373,7 @@ async function homeLoad(me, groups, siteLinks){
   [H.role, H.why] = pickRole(H.me, H.email);
   log("home view", H.role + " (" + H.why + ")");
   H.mine = myPmJobs(H.email);
+  renderActions(lastActions);   /* the Pay App Queue button needs H.mine */
   renderHome();
   const want = { pm: ["projects_data.json", "ce_data.json", "changes_data.json", "commitment_lines.json", "cost_history.json"],
     exec: ["projects_data.json", "ce_data.json", "changes_data.json", "commitment_lines.json", "cost_history.json"],
@@ -2427,9 +2452,13 @@ const more = (arr, k, txt) => arr.length > k ? ["+" + (arr.length - k) + " " + (
 
 function cardsCommon(){
   const out = [];
-  if (apReviewCount > 0) out.push(card({ l: "Invoices to code and approve", n: apReviewCount, s: "pay apps and invoices routed to you",
-    li: (apHeads() || []).filter(r => r.f.Status === "with PM" && String(r.f.AssignedApprover || "").trim().toLowerCase() === H.email).slice(0, 3).map(r => esc(r.f.Title || "")),
-    go: "AP Desk, PM review", href: "/ap/#review", sev: "bad" }));
+  const q = myPayQueue();
+  if (q){
+    const day = v => v ? new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+    out.push(card({ l: "Pay App Queue", n: q.rows.length, s: "submitted through the portal, waiting for approval" + (q.all ? " · every job" : ""),
+      li: q.rows.slice(0, 3).map(r => esc([r.f.JobNumber, r.f.Vendor || r.f.Subcontract, r.f.PayRequest ? "pay app " + r.f.PayRequest : "", day(r.f.ReceivedAt)].filter(Boolean).join(" · "))).concat(more(q.rows, 3)),
+      go: "Project Hub, pay apps", href: "/contracts/#pay", sev: q.rows.length ? "warn" : "", zero: "no portal pay apps waiting for approval" }));
+  }
   return out;
 }
 function cardTodo(){
@@ -2484,7 +2513,7 @@ function cardsPM(){
 }
 
 function cardsAcct(){
-  const out = [], heads = apHeads();
+  const out = [], heads = null;   /* AP Desk queues on hold, 24 Nov 2026 */
   if (heads){
     const by = st => heads.filter(r => (AP_STAGE[r.f.Status] || "Intake") === st);
     const intake = H.apIntake || by("Intake"), ready = by("Ready for entry"), fix = by("Correction needed"), pm = by("PM review");
@@ -2530,7 +2559,6 @@ function cardsOffice(){
       li: exp.slice(0, 3).map(x => esc(String(x.title || "").replace(/^(renew|expired):\s*/i, "") + " · " + new Date(x.due + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }))).concat(more(exp, 3)),
       go: "Task Desk, renewals", href: "/tasks/", sev: "warn", zero: "nothing expiring in " + HOME_RULES.expireDays + " days" }));
   } else { const td = cardTodo(); if (td) out.push(td); }
-  if (apQueueCount > 0) out.push(card({ l: "AP intake", n: apQueueCount, s: "not yet routed", li: ["You are on the Accounting list"], go: "AP Desk, intake", href: "/ap/#intake", sev: "" }));
   if (Array.isArray(H.ideas)) out.push(card({ l: "Roadmap ideas", n: H.ideas.length, s: "suggested in the last " + HOME_RULES.ideaDays + " days",
     li: H.ideas.slice(0, 3).map(x => esc(x.t)).concat(more(H.ideas, 3)), go: "AI roadmap", href: "/roadmap/", sev: "", zero: "no new roadmap ideas" }));
   if (MD.mail && MD.mail.flagOk){ const fl = MD.mail.flagged || [];
@@ -2593,9 +2621,9 @@ const DESK_LINKS = {
   portfolio: ["Portfolio", "", "Every job: what needs a decision, backlog and fee"]
 };
 const ROLE_DESKS = {
-  pm: [["job", "new", "Health, changes, money and buyout for your jobs"], ["ap", "", "Code and approve the invoices routed to you"], ["comp", "", "Trade partner COIs on your jobs"]],
-  acct: [["ap", "", "Intake, routing, PM review and entry"], ["controls", "soon"], ["comp", "", "Holds and COIs on trade partners being paid"]],
-  office: [["tasks", ""], ["ap", "", "Intake and the Accounting queue"], ["roadmap", ""]],
+  pm: [["job", "new", "Health, changes, money and buyout for your jobs"], ["comp", "", "Trade partner COIs on your jobs"]],
+  acct: [["controls", "soon"], ["comp", "", "Holds and COIs on trade partners being paid"]],
+  office: [["tasks", ""], ["roadmap", ""]],
   exec: [["portfolio", "soon"], ["controls", "soon"], ["job", "new", "Drill into any one job"]]
 };
 /* desks added for one person on top of their role's set (24 Nov 2026);
@@ -2740,8 +2768,8 @@ function renderHome(){
       sum = '<strong>' + plural(H.mine.length, "active job") + '</strong>' + (dec ? ", " + dec.n + " with something to decide" : "") + (mtxt ? ", and " + mtxt : "") + "."; }
     else if (H.role === "exec"){ const dec = live.find(c => c.l === "Jobs needing a decision");
       sum = dec ? '<strong>' + plural(dec.n, "job") + '</strong> need' + (dec.n === 1 ? "s" : "") + ' a decision' + (mtxt ? ", and " + mtxt : "") + "." : (mtxt ? mtxt.charAt(0).toUpperCase() + mtxt.slice(1) + "." : ""); }
-    else if (H.role === "acct"){ const q = live.filter(c => /^(AP intake|Ready for entry|Corrections needed)/.test(c.l)).length;
-      sum = '<strong>' + plural(q, "queue") + '</strong> ' + (q === 1 ? "has" : "have") + ' work in ' + (q === 1 ? "it" : "them") + (mtxt ? ", and " + mtxt : "") + "."; }
+    else if (H.role === "acct"){ const pq = live.find(c => c.l === "Pay App Queue");
+      sum = pq ? '<strong>' + plural(pq.n, "pay app") + '</strong> waiting for approval' + (mtxt ? ", and " + mtxt : "") + "." : (mtxt ? mtxt.charAt(0).toUpperCase() + mtxt.slice(1) + "." : ""); }
     else { const t = live.find(c => c.l === "My tasks" || c.l === "To Do tasks");
       sum = t ? '<strong>' + plural(t.n, "task") + '</strong> due today' + (mtxt ? ", and " + mtxt : "") + "." : (mtxt ? mtxt.charAt(0).toUpperCase() + mtxt.slice(1) + "." : ""); }
     $("#hsum").innerHTML = H.ready || H.role === "office" ? sum : "";
