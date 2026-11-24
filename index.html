@@ -2344,6 +2344,7 @@ function jobChecks(r){
 /* ---------- loading, per view ---------- */
 async function homeLoad(me, groups, siteLinks){
   H.me = me || {}; H.groups = groups || new Set(); H.siteRoles = (siteLinks && siteLinks.roles) || {};
+  H.siteDesks = Object.fromEntries(Object.entries((siteLinks && siteLinks.desks) || {}).map(([k, v]) => [String(k).trim().toLowerCase(), Array.isArray(v) ? v.map(String) : []]));
   H.email = String(H.me.mail || H.me.userPrincipalName || myEmail || "").trim().toLowerCase();
   [H.role, H.why] = pickRole(H.me, H.email);
   log("home view", H.role + " (" + H.why + ")");
@@ -2586,6 +2587,7 @@ const DESK_LINKS = {
   precon: ["Precon Desk", "/precon/", "Price a job against what we have built"],
   prequal: ["Prequal & Sub Rating", "/prequal/", "Trade partner ratings"],
   tasks: ["Task Desk", "/tasks/", "Your work, your inbox, and what is about to expire"],
+  newsletter: ["Newsletter", "/newsletter/", "Build this month's edition and publish it"],
   roadmap: ["AI roadmap", "/roadmap/", "Ideas, what is being built and what is live"],
   controls: ["Controls desk", "", "WIP, projections, Procore-to-CE sync and data health"],
   portfolio: ["Portfolio", "", "Every job: what needs a decision, backlog and fee"]
@@ -2596,6 +2598,13 @@ const ROLE_DESKS = {
   office: [["tasks", ""], ["ap", "", "Intake and the Accounting queue"], ["roadmap", ""]],
   exec: [["portfolio", "soon"], ["controls", "soon"], ["job", "new", "Drill into any one job"]]
 };
+/* desks added for one person on top of their role's set (24 Nov 2026);
+   links.json site.desks ({"email": ["newsletter", ...]}) adds to this without a deploy */
+const PERSON_DESKS = { "campbell.sandlin@baileyharris.com": ["newsletter"] };
+function myExtraDesks(){
+  const e = H.email, add = (PERSON_DESKS[e] || []).concat((H.siteDesks && H.siteDesks[e]) || []);
+  return add.filter((k, i) => DESK_LINKS[k] && add.indexOf(k) === i);
+}
 const ROLE_APPS = {
   pm: ["Procore", "DroneDeploy", "Bluebeam", "DocuSign", "Outlook", "Teams"],
   acct: ["Spark", "ServisFirst", "Billy", "DocuSign", "Bamboo HR", "FieldEase"],
@@ -2611,7 +2620,9 @@ function deskLocked(k){ const d = DESKS.find(x => x.key === k); return !!(d && d
 function renderDesks(){
   const host = $("#tiles"); if (!host) return;
   const role = H.role || "office";
-  host.innerHTML = (ROLE_DESKS[role] || []).map(([k, cls, blurb]) => {
+  const base = ROLE_DESKS[role] || [];
+  const extra = myExtraDesks().filter(k => !base.some(x => x[0] === k)).map(k => [k, ""]);
+  host.innerHTML = base.concat(extra).map(([k, cls, blurb]) => {
     const d = DESK_LINKS[k], soon = cls === "soon" || !d[1];
     const ext = /^https?:/i.test(d[1]);
     return (soon ? '<div class="h-dk soon"' : '<a class="h-dk ' + cls + '" href="' + esc(d[1]) + '"' + (ext ? ' rel="noopener"' : '')) +
