@@ -4,7 +4,7 @@
   {
    "id": "ai-licences",
    "lane": "foundations",
-   "stage": "next",
+   "stage": "building",
    "title": "AI tools for each team",
    "text": "A planned rollout of the right AI tool for each department, with training first.",
    "who": "Everyone"
@@ -68,7 +68,7 @@
   {
    "id": "coi-intake",
    "lane": "project",
-   "stage": "building",
+   "stage": "live",
    "title": "Send a COI, it gets filed",
    "text": "Forward a certificate of insurance to one address (or drop it in one place) and it is filed in Billy against the right job and trade partner.",
    "who": "Project teams, accounting"
@@ -115,14 +115,6 @@
    "who": "Everyone (behind the scenes)"
   },
   {
-   "id": "docusign-buyout",
-   "lane": "project",
-   "stage": "testing",
-   "title": "Who has the contract to sign",
-   "text": "The buyout view shows when a subcontract is out for signature and whether it is waiting on us or the trade partner.",
-   "who": "Project teams"
-  },
-  {
    "id": "field-app",
    "lane": "field",
    "stage": "next",
@@ -141,7 +133,7 @@
   {
    "id": "it-invoices",
    "lane": "office",
-   "stage": "testing",
+   "stage": "later",
    "title": "IT vendor invoice capture",
    "text": "Utility, phone and copier invoices are read from payables@ and logged automatically for budget tracking.",
    "who": "IT, accounting"
@@ -171,14 +163,6 @@
    "who": "Accounting"
   },
   {
-   "id": "payapp-portal",
-   "lane": "office",
-   "stage": "building",
-   "title": "Trade partner pay app portal",
-   "text": "Each month trade partners get a secure link with their contract and change orders filled in. They enter this period and sign, and it lands on the AP Desk.",
-   "who": "Trade partners, accounting, project managers"
-  },
-  {
    "id": "precon-desk",
    "lane": "project",
    "stage": "building",
@@ -201,14 +185,6 @@
    "title": "Procore assistant (pilot)",
    "text": "Ask plain questions about a job and get answers straight from Procore: RFIs, submittals, commitments. Read-only. Two field and project leaders are piloting it.",
    "who": "Superintendents, project managers"
-  },
-  {
-   "id": "project-dash",
-   "lane": "project",
-   "stage": "building",
-   "title": "Project Information dashboard",
-   "text": "Contract, cost, forecast, change orders and buyout for every active job in one place, from Procore and ComputerEase.",
-   "who": "Project teams, leadership"
   },
   {
    "id": "sched-brief",
@@ -250,14 +226,6 @@
    "title": "Three-week look-ahead for the field",
    "text": "A look-ahead pulled from the job schedule that superintendents can confirm or correct from the jobsite, so the schedule matches what is really happening.",
    "who": "Superintendents, foremen"
-  },
-  {
-   "id": "sched-standards",
-   "lane": "foundations",
-   "stage": "next",
-   "title": "Standard schedule setup",
-   "text": "One way to code and build every job schedule, so schedules can be checked automatically and compared across jobs.",
-   "who": "Project scheduler, project managers"
   },
   {
    "id": "sp-takeoff",
