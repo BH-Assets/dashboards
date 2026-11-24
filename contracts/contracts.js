@@ -126,6 +126,7 @@
   async function start() {
     bindNav();
     try { if (!(await signIn())) return; } catch (e) { msg('Microsoft sign-in failed: ' + e.message, true); return; }
+    if (window.BHHub && window.BHHub.signedIn) window.BHHub.signedIn();   // Pay apps: "Waiting for your approval" needs no Procore
     await connection();
   }
   async function connection() {
@@ -165,6 +166,7 @@
     if (last && S.projects.some(function (p) { return String(p.id) === last; })) { sel.value = last; await pickJob(); }
     sel.onchange = pickJob;
     stamp();
+    if (window.BHHub && window.BHHub.ready) window.BHHub.ready();   // #pay/item/<id> links from the PM email
   }
   async function pickJob() {
     var id = $('#job').value; msg('');
@@ -293,7 +295,7 @@
       } else {
         input = '<input type="text" data-k="' + f.key + '" value="' + esc(val) + '">';
       }
-      var src = p && p.source ? '<div class="src">' + (p.nomatch ? '<b class="nomatch">The contract says "' + esc(Array.isArray(p.value) ? p.value.join(', ') : p.value) + '": no Procore option matches it, so the current value is kept. Pick one, or add the option to the list in Procore.</b>' : '') + esc(p.source) + (p.quote ? '<q>' + esc(p.quote) + '</q>' : '') + '</div>' : (f.dflt && !cur ? '<div class="src">Company default</div>' : '');
+      var src = p && p.source ? '<div class="src">' + (p.warn ? '<b class="nomatch">' + esc(p.warn) + '</b>' : '') + (p.nomatch ? '<b class="nomatch">The contract says "' + esc(Array.isArray(p.value) ? p.value.join(', ') : p.value) + '": no Procore option matches it, so the current value is kept. Pick one, or add the option to the list in Procore.</b>' : '') + esc(p.source) + (p.quote ? '<q>' + esc(p.quote) + '</q>' : '') + '</div>' : (f.dflt && !cur ? '<div class="src">Company default</div>' : '');
       var diff = p && p.value != null && normCmp(p.value) !== normCmp(cur) && cur;
       return '<tr' + (diff ? ' class="is-diff" title="The contract reading differs from what Procore holds"' : '') + '><td><b>' + esc(f.label) + '</b>' + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</td><td class="cur"><div>' + esc(cur || '—') + '</div></td><td>' + input + '</td><td>' + src + '</td></tr>';
     }).join('');
@@ -399,6 +401,11 @@
         substantial_completion_date: 'substantial_completion_date', contract_estimated_completion_date: 'contract_estimated_completion_date', description: 'description', accepted_alternates: 'accepted_alternates', builders_risk_provider: 'builders_risk_provider', final_payment: 'final_payment', owner_additional_insureds: 'owner_additional_insureds' };
       var empty = function (v) { return v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length); };
       Object.keys(map).forEach(function (k) { if (f[k] && !empty(f[k].value)) S.proposals[map[k]] = f[k]; });
+      // a sales tax alternate or deduct is not an exemption: keep Procore's value and say why
+      var tx = S.proposals.tax_exempt;
+      if (tx && /^y/i.test(String(tx.value)) && /\balternate\b|\balt\.?\s*#?\d|\bdeduct|\ballowance|\bomit/i.test((tx.quote || '') + ' ' + (tx.source || ''))) {
+        S.proposals.tax_exempt = { value: null, source: tx.source, quote: tx.quote, warn: 'The reader based "tax exempt" on an alternate or deduct that omits sales tax. That is not an exemption and applies only if the owner accepted it, so Procore\'s value is kept. Set Yes only if the contract says the owner/project is exempt.' };
+      }
       if (f.owner_platform && f.owner_platform.value) S.proposals.owner_platform = { value: true, source: f.owner_platform.source, quote: 'Owner system: ' + f.owner_platform.value };
       if (f.owner_notice_deadlines && f.owner_notice_deadlines.value) S.proposals.sub_notice = { value: null, source: 'Owner deadlines: ' + (Array.isArray(f.owner_notice_deadlines.value) ? f.owner_notice_deadlines.value.join('; ') : f.owner_notice_deadlines.value), quote: '' };
       renderPrime();

@@ -195,3 +195,17 @@ body.hub-page{background:#f7f5f1;margin:0}
 .hub-mail{border:1px solid var(--bh-light-gray,#e8e6e7);overflow-x:auto}
 .hub-plain{white-space:pre-wrap;font:12.5px/1.5 Consolas,'Courier New',monospace;background:#f7f5f1;border:1px solid var(--bh-light-gray,#e8e6e7);padding:14px;margin:0;overflow-x:auto}
 .cd-pc .src .nomatch{display:block;margin-bottom:4px;color:#8a5a00;font-weight:600}
+
+/* Pay apps: waiting for your approval (24 Nov 2026) */
+.hub-mine{margin:0 0 24px;padding:16px;border:1px solid #e8e6e7;background:#fff}
+.hub-mine-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.hub-mine-head .bh-section-title{margin:0}
+.hub-mine:empty{display:none}
+
+/* PM review: pay app | CE | Procore (24 Nov 2026) */
+.hub-cmp{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.hub-cmp th{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#484b4d;text-align:left;padding:6px 6px;border-bottom:2px solid #211e1e}
+.hub-cmp th.num,.hub-cmp td.num{text-align:right;white-space:nowrap}
+.hub-cmp td{padding:6px;border-bottom:1px solid #e8e6e7;vertical-align:top}
+.hub-cmp tr.tot td{background:#f2ece1}
+.hub-cmp .hub-pill{font-size:10px;padding:1px 5px}
