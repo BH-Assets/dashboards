@@ -209,3 +209,9 @@ body.hub-page{background:#f7f5f1;margin:0}
 .hub-cmp td{padding:6px;border-bottom:1px solid #e8e6e7;vertical-align:top}
 .hub-cmp tr.tot td{background:#f2ece1}
 .hub-cmp .hub-pill{font-size:10px;padding:1px 5px}
+
+/* Buyout: commitment number opens Procore (24 Nov 2026) */
+.hub-pclink{color:#211e1e;text-decoration:none;border-bottom:1px solid #c9c6c7}
+.hub-pclink:hover{border-bottom-color:#211e1e}
+.hub-pclink span{font-size:11px;color:#484b4d}
+.hub-lines .hub-pclink.small{display:inline-block;margin:0 0 8px;font-size:12px}

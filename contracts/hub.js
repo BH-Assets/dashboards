@@ -138,6 +138,7 @@
     if ((type === 'Long Form' || type === 'Short Form') && T && rp !== Number(T.retPct)) return { k: 'warn', t: 'Retainage ' + rp + '%; prime contract ' + T.retPct + '%' };
     return { k: 'ok', t: 'Matches' };
   }
+  var pcUrl = function (ep, id) { return 'https://app.procore.com/' + encodeURIComponent(D().S.project.id) + '/project/commitments/' + ep + '/' + encodeURIComponent(id); };
   async function renderBuy() {
     var S = D().S, el = $('#buy-list');
     if (!S.project) { el.innerHTML = ''; return; }
@@ -153,9 +154,9 @@
       var st = c.status === 'Approved' && c.executed ? ['ok', 'Executed'] : c.status === 'Draft' ? ['mut', 'Draft'] : c.status === 'Approved' ? ['warn', 'Not executed'] : ['warn', c.status || '—'];
       var lines = H.lines[key];
       return '<tr class="hub-buyrow' + (open ? ' is-open' : '') + '" data-key="' + esc(key) + '" tabindex="0" aria-expanded="' + open + '">' +
-        '<td><span class="hub-caret" aria-hidden="true">' + (open ? '▾' : '▸') + '</span><b>' + esc(c.number) + '</b></td><td>' + esc((c.vendor && (c.vendor.company || c.vendor.name)) || '') + '</td><td class="mut">' + esc(c.title || '') + '</td><td>' + esc(type) + '</td>' +
+        '<td><span class="hub-caret" aria-hidden="true">' + (open ? '▾' : '▸') + '</span><a class="hub-pclink" href="' + esc(pcUrl(x.ep, c.id)) + '" target="_blank" rel="noopener" title="Open ' + esc(c.number) + ' in Procore"><b>' + esc(c.number) + '</b> <span aria-hidden="true">↗</span></a></td><td>' + esc((c.vendor && (c.vendor.company || c.vendor.name)) || '') + '</td><td class="mut">' + esc(c.title || '') + '</td><td>' + esc(type) + '</td>' +
         '<td class="num">' + money(v) + '</td><td><span class="hub-pill ' + st[0] + '">' + esc(st[1]) + '</span></td><td class="hub-ck ' + ck.k + '">' + esc(ck.t) + '</td></tr>' +
-        (open ? '<tr class="hub-lines"><td colspan="7">' + (lines === 'loading' ? '<span class="bh-caption">Loading cost codes…</span>' : lines && lines.error ? '<span class="hub-ck bad">' + esc(lines.error) + '</span>' : linesTable(lines || [])) + '</td></tr>' : '');
+        (open ? '<tr class="hub-lines"><td colspan="7"><a class="hub-pclink small" href="' + esc(pcUrl(x.ep, c.id)) + '" target="_blank" rel="noopener">Open ' + esc(c.number) + ' in Procore ↗</a>' + (lines === 'loading' ? '<span class="bh-caption">Loading cost codes…</span>' : lines && lines.error ? '<span class="hub-ck bad">' + esc(lines.error) + '</span>' : linesTable(lines || [])) + '</td></tr>' : '');
     });
     el.innerHTML = '<div class="hub-kpis small">' + [['Commitments', all.length], ['Committed', money(total).replace(/\.\d\d$/, '')], ['Executed', exec + ' of ' + all.length], ['Prime contract issues', issues]].map(function (k) { return '<div><span>' + esc(k[0]) + '</span><b>' + esc(String(k[1])) + '</b></div>'; }).join('') + '</div>' +
       '<div class="bh-table-wrap"><table class="bh-table hub-table"><thead><tr><th>Number</th><th>Trade partner</th><th>Scope</th><th>Type</th><th class="num">Value</th><th>Status</th><th>Prime contract check</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
@@ -624,6 +625,7 @@
   /* ---------------- wiring ---------------- */
   document.addEventListener('click', function (e) {
     var t = e.target;
+    if (t.closest && t.closest('a.hub-pclink')) return;   // the commitment number opens Procore in a new tab
     var br = t.closest && t.closest('.hub-buyrow'); if (br) { toggleBuy(br.dataset.key); return; }
     if (t.dataset && t.dataset.review) { H.sel = (H.rows || []).find(function (r) { return String(r.id) === t.dataset.review; }) || null; renderPay(); var rv = $('#pay-review'); if (rv && rv.scrollIntoView && window.innerWidth < 1100) rv.scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.dataset && t.dataset.decide) { decide(t.dataset.decide); return; }
@@ -635,7 +637,7 @@
     if (t.id === 'em-save-tpl') saveTpl(false); else if (t.id === 'em-reset') { if (confirm('Put the default wording back in the company template?')) saveTpl(true); }
     else if (t.id === 'em-save-job') saveJob(); else if (t.id === 'em-test') sendTest(); else if (t.id === 'pay-refresh') loadPay(true);
   });
-  document.addEventListener('keydown', function (e) { var br = e.target.closest && e.target.closest('.hub-buyrow'); if (br && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleBuy(br.dataset.key); } });
+  document.addEventListener('keydown', function (e) { if (e.target.closest && e.target.closest('a.hub-pclink')) return; var br = e.target.closest && e.target.closest('.hub-buyrow'); if (br && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleBuy(br.dataset.key); } });
   document.addEventListener('input', function (e) { if (/^em-(subject|body|note)$/.test(e.target.id)) { H.lastFocus = e.target.id === 'em-note' ? H.lastFocus : e.target; renderPreview(); } });
   document.addEventListener('focusin', function (e) { if (e.target.id === 'em-subject' || e.target.id === 'em-body') H.lastFocus = e.target; });
   document.addEventListener('change', function (e) { if (e.target.id === 'pay-notify') saveNotify(e.target.checked); if (e.target.id === 'pay-period') { H.period = e.target.value; H.sel = null; renderPay(); } if (e.target.id === 'em-as') renderPreview(); });
