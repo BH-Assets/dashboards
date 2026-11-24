@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-09",
+ "updated": "2026-11-24",
  "items": [
   {
    "id": "ai-licences",
@@ -28,7 +28,7 @@
   {
    "id": "ap-ai-reader",
    "lane": "office",
-   "stage": "next",
+   "stage": "later",
    "title": "AI second reader for invoices",
    "text": "AI reads each invoice and pay application alongside the scanner. Where they disagree, or a check fails, it goes to a person with the reason shown.",
    "who": "Accounting"
@@ -36,7 +36,7 @@
   {
    "id": "ap-desk",
    "lane": "office",
-   "stage": "testing",
+   "stage": "later",
    "title": "AP Desk",
    "text": "Pay applications and invoices from payables@ in one queue: checked against Procore and ComputerEase, routed to the right approver and tracked until entered.",
    "who": "Accounting, project managers"
@@ -68,7 +68,7 @@
   {
    "id": "coi-intake",
    "lane": "project",
-   "stage": "next",
+   "stage": "building",
    "title": "Send a COI, it gets filed",
    "text": "Forward a certificate of insurance to one address (or drop it in one place) and it is filed in Billy against the right job and trade partner.",
    "who": "Project teams, accounting"
@@ -100,11 +100,19 @@
   {
    "id": "crew-allocation",
    "lane": "field",
-   "stage": "later",
-   "title": "Crew planning for self-perform",
-   "text": "Match crews to work by skill and track productivity, built with Auburn University Building Science as a research partner.",
+   "stage": "next",
+   "title": "AI crew planning for self-perform",
+   "text": "Recommends crew assignments across jobs by skills, certifications, availability and travel, and pairs newer workers with experienced ones. A research project with Auburn University Building Science, planned for 2027.",
    "who": "Self-perform team",
    "partner": "Auburn University"
+  },
+  {
+   "id": "data-platform",
+   "lane": "foundations",
+   "stage": "next",
+   "title": "A company database for the desks",
+   "text": "Moving dashboard records out of SharePoint files into a company database our IT provider runs, so desks load faster and keep a full history. Documents stay in SharePoint.",
+   "who": "Everyone (behind the scenes)"
   },
   {
    "id": "docusign-buyout",
@@ -141,7 +149,7 @@
   {
    "id": "job-master",
    "lane": "foundations",
-   "stage": "testing",
+   "stage": "live",
    "title": "One job list across systems",
    "text": "Every job's Procore, ComputerEase and Unanet numbers, PM team and status in one table, so every desk and app agrees on which job is which.",
    "who": "Everyone (behind the scenes)"
@@ -157,7 +165,7 @@
   {
    "id": "lien-waivers",
    "lane": "office",
-   "stage": "next",
+   "stage": "later",
    "title": "Lien waiver tracking",
    "text": "See which waivers are in and which are still owed for each payment.",
    "who": "Accounting"
@@ -165,7 +173,7 @@
   {
    "id": "payapp-portal",
    "lane": "office",
-   "stage": "next",
+   "stage": "building",
    "title": "Trade partner pay app portal",
    "text": "Each month trade partners get a secure link with their contract and change orders filled in. They enter this period and sign, and it lands on the AP Desk.",
    "who": "Trade partners, accounting, project managers"
@@ -230,7 +238,7 @@
   {
    "id": "sched-health",
    "lane": "project",
-   "stage": "later",
+   "stage": "building",
    "title": "Schedule health check",
    "text": "Each time a schedule is updated, an automatic check flags missing logic, hard dates, open ends and stale progress, with a simple score, before anyone relies on it.",
    "who": "Project scheduler, project managers"
